@@ -2,7 +2,7 @@
  * @file
  * Common assembler related routines and classes
  * @copyright
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 
-// Basic assembler routines that all syn targets use
+// Basic assembler routines that all iris targets use
 #ifndef IRIS_ASM_BASE_H
 #define IRIS_ASM_BASE_H
 #include <functional>
@@ -37,9 +37,9 @@
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/raw_string.hpp>
 #include <tao/pegtl/contrib/abnf.hpp>
-#include "BaseArithmetic.h"
+#include "Types.h"
 
-namespace syn {
+namespace iris {
 	using ErrorReportingFunction = std::function<void(const std::string&)>;
 	template<typename T, T count>
 	T getRegister(const char* text, ErrorReportingFunction onError) noexcept {
@@ -68,8 +68,8 @@ namespace syn {
 		std::string temp(text);
 		// always replace the second element as it is always the b, x, etc
 		temp[1] = '0';
-		constexpr auto width = syn::bitwidth<T>;
-		static_assert(width <= syn::bitwidth<unsigned long long>, "Please provide custom implementation of getBinaryImmediate since type is too large to fit in a unsigned long long!");
+		constexpr auto width = iris::bitwidth<T>;
+		static_assert(width <= iris::bitwidth<unsigned long long>, "Please provide custom implementation of getBinaryImmediate since type is too large to fit in a unsigned long long!");
 		std::bitset<width> bits(temp);
 		return static_cast<T>(bits.to_ullong());
 	}
@@ -309,10 +309,10 @@ namespace syn {
     struct StatefulOneArgumentDirective : StatefulTwoPartComponent<State, Symbol, Value, Separator> { };
 
 	template<typename State, typename Data>
-	struct WordDirective : syn::StatefulOneArgumentDirective<State, SymbolWordDirective, Data> { };
+	struct WordDirective : iris::StatefulOneArgumentDirective<State, SymbolWordDirective, Data> { };
 
 	template<typename State, typename Data>
-	struct DwordDirective : syn::StatefulOneArgumentDirective<State, SymbolDwordDirective, Data> { };
+	struct DwordDirective : iris::StatefulOneArgumentDirective<State, SymbolDwordDirective, Data> { };
 
     template<typename State, typename Number, typename Separator = AsmSeparator>
     struct StatefulOrgDirective : StatefulOneArgumentDirective<State, SymbolOrgDirective, Number, Separator> { };
@@ -462,7 +462,7 @@ namespace syn {
     template<typename T, typename Separator>
     struct ThenField : tao::TAOCPP_PEGTL_NAMESPACE::seq<Separator, T> { };
 
-} // end namespace syn
+} // end namespace iris
 
 
 #endif // end IRIS_ASM_BASE_H

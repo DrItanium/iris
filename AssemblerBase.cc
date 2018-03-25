@@ -1,5 +1,5 @@
 /*
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -24,8 +24,9 @@
  */
 
 #include "AssemblerBase.h"
-namespace syn {
+#include "Problem.h"
+namespace iris {
 	void reportError(const std::string& msg) {
-		throw syn::Problem(msg);
+		throw iris::Problem(msg);
 	}
 }
