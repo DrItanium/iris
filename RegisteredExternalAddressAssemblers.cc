@@ -27,12 +27,10 @@
 // register all of the machine cores here since the cores should not be aware
 // of these kinds of registrations
 #include "AssemblerExternalAddressRegistrar.h"
-#include "Cisc0ClipsExtensions.h"
 #include "IrisClipsExtensions.h"
 
 namespace syn {
     void installExternalAddressAssemblers(void* env) {
-        cisc0::installAssemblerParsingState(env);
         iris::installAssemblerParsingState(env);
     }
 }

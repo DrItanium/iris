@@ -27,7 +27,6 @@
 #include "ClipsExtensions.h"
 #include "MemoryBlock.h"
 #include "AssemblerExternalAddressRegistrar.h"
-#include "Cisc0CoreWrapper.h"
 #include "IrisCoreWrapper.h"
 #include "IOController.h"
 
@@ -44,7 +43,6 @@ int main(int argc, char* argv[]) {
 	syn::installExtensions(mainEnv);
 	syn::installMemoryBlockTypes(mainEnv);
     syn::installExternalAddressAssemblers(mainEnv);
-	cisc0::installCoreWrapper(mainEnv);
     iris::installCoreWrapper(mainEnv);
 	RerouteStdin(mainEnv, argc, argv);
 	CommandLoop(mainEnv);
