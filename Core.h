@@ -34,6 +34,8 @@
 
 namespace iris {
 	union Number {
+		Number(bool value) : integer(value ? -1 : 0 ) { }
+		Number(byte b) : address(b) { }
 		Number(int i) : integer(Integer(i)) { }
 		Number(unsigned int i ) : address(Address(i)) { }
 		Number(Integer i) : integer(i) { }
@@ -101,9 +103,9 @@ namespace iris {
 			static constexpr Address registerCount = 256;
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address32 addressSize = 0x10000;
-			using MemoryBlock16 = std::unique_ptr<Number[addressSize]>;
-			using MemoryBlock32 = std::unique_ptr<RawInstruction[addressSize]>;
-			using RegisterFile = std::unique_ptr<Register[registerCount]>;
+			using MemoryBlock16 = std::unique_ptr<Number[]>;
+			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
+			using RegisterFile = std::unique_ptr<Register[]>;
 		public:
 			Core();
 		public:
@@ -176,6 +178,26 @@ namespace iris {
 			RawInstruction encodeArguments(const OneRegisterWithImmediate&) noexcept;
 			RawInstruction encodeArguments(const TwoRegisterWithImmediate&) noexcept;
 			RawInstruction encodeInstruction(const DecodedInstruction& inst) noexcept;
+		private:
+			const Register& getRegister(RegisterIndex reg) const noexcept;
+			inline Number getRegisterValue(RegisterIndex reg) const noexcept { return getRegister(reg).getValue(); }
+			void setRegister(RegisterIndex reg, Number value) noexcept;
+			template<typename T>
+			void setDestination(const T& value, Number n) noexcept {
+				setRegister(value._args.dest, n);
+			}
+			template<typename T>
+			Number getSource(const T& value) const noexcept {
+				return getRegister(value._args.src).getValue();
+			}
+			template<typename T>
+			Number getSource2(const T& value) const noexcept {
+				if constexpr (std::is_same_v<T, TwoRegisterWithImmediate>) {
+					return Number(value._args.src2);
+				} else {
+					return getRegister(value._args.src2).getValue();
+				}
+			}
 		private:
 			Address _pc;
 			MemoryBlock16 _data, _stack;
