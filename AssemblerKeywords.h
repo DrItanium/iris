@@ -1,5 +1,5 @@
 /*
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -36,13 +36,6 @@ namespace iris {
 	// DIRECTIVES
     DefSymbol(DataDirective, ".data");
     DefSymbol(CodeDirective, ".code");
-#define X(str, _, id) DefSymbol(id, str);
-#include "desc/iris/ArithmeticOp.desc"
-#include "desc/iris/MoveOp.desc"
-#include "desc/iris/JumpOp.desc"
-#include "desc/iris/CompareOp.desc"
-#include "desc/iris/ConditionRegisterOp.desc"
-#undef X
 } // end namespace iris
 
 

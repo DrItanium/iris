@@ -32,15 +32,12 @@
 #include <typeinfo>
 #include <iostream>
 #include <map>
-#include "Base.h"
+#include "Types.h"
 #include "AssemblerBase.h"
 #include "Problem.h"
-#include "IrisCore.h"
-#include "IrisClipsExtensions.h"
-#include "ClipsExtensions.h"
-#include "IrisCoreAssembler.h"
-#include "IrisCoreAssemblerStateWrapper.h"
-#include "MultifieldBuilder.h"
+#include "Core.h"
+#include "Assembler.h"
+#include "AssemblerStateWrapper.h"
 
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/analyze.hpp>
@@ -50,16 +47,7 @@
 #include <vector>
 
 namespace iris {
-    namespace assembler {
-        class AssemblerState;
-    } // end namespace assembler
-} // end namespace iris
-namespace syn {
-    DefWrapperSymbolicName(iris::assembler::AssemblerState, "iris:assembly-parsing-state");
-	DefExternalAddressWrapperType(iris::assembler::AssemblerState, iris::AssemblerStateWrapper);
-} // end namespace syn
-
-namespace iris {
+	/*
     void AssemblerStateWrapper::getEncodedValues(void* env, CLIPSValuePtr ret) {
         //get()->output(env, ret);
         output(env, ret);
@@ -115,4 +103,5 @@ namespace iris {
         AssemblerStateWrapper::registerWithEnvironment(env, "iris-asm-parser");
         AssemblerStateWrapper::registerWithEnvironment(env, "iris-assembler");
     }
+	*/
 }

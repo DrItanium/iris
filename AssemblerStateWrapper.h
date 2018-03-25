@@ -2,7 +2,7 @@
  * @file
  * An interface between clips and the iris assembler
  * @copyright
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -34,33 +34,10 @@
 #include <typeinfo>
 #include <iostream>
 #include <map>
-#include "Base.h"
 #include "AssemblerBase.h"
 #include "Problem.h"
-#include "IrisCore.h"
 #include <vector>
-#include "IrisClipsExtensions.h"
-#include "ClipsExtensions.h"
-#include "CommonAssemblerWrapper.h"
 
 namespace iris {
-    namespace assembler {
-	    class AssemblerState;
-    }
-    class AssemblerStateWrapper : public syn::AssemblerWrapper<assembler::AssemblerState> {
-
-        public:
-            using Self = AssemblerStateWrapper;
-            using Parent = syn::AssemblerWrapper<assembler::AssemblerState>;
-         public:
-			using Parent::Parent;
-			virtual ~AssemblerStateWrapper()  { }
-            virtual bool parseLine(void* env, syn::DataObjectPtr ret, const std::string& line) override;
-            virtual bool resolve(void* env, syn::DataObjectPtr ret) override;
-			virtual void getEncodedValues(void* env, syn::DataObjectPtr ret) override;
-         private:
-            void output(void* env, CLIPSValue* ret) noexcept;
-    };
-
 } // end namespace iris
 #endif // end IRIS_CORE_ASSEMBLER_H__
