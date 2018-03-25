@@ -153,6 +153,8 @@ namespace iris {
 			void addLabel(const std::string& name, Section section);
 			Address getLabel(const std::string& name) const { return getLabel(name, _currentSection); }
 			Address getLabel(const std::string& name, Section section) const;
+			void setCurrentSection(Section s) noexcept { _currentSection = s; }
+			Section getCurrentSection() const noexcept { return _currentSection; }
 		private:
 			Section _currentSection = sectionCode;
 			SectionState<Data32, CodeSection> _code;
@@ -160,6 +162,28 @@ namespace iris {
 			SectionState<Data16, StackSection> _stack;
 			std::list<EvaluationFunction> _evalLater;
 	};
+	/**
+	 * Change the address of the current section
+	 * @param addr where to set the address in the current section to
+	 * @return function to perform the assignment
+	 */
+	EvaluationFunction org(Address addr) noexcept;
+	/**
+	 * Change the current section to the code section
+	 * @return function to perform the change
+	 */
+	EvaluationFunction code() noexcept;
+	/**
+	 * Change the current section to the data section
+	 * @return function to perform the change
+	 */
+	EvaluationFunction data() noexcept;
+	/**
+	 * Change the current section to the stack section
+	 * @return function to perform the change
+	 */
+	EvaluationFunction stack() noexcept;
+
 	
 //    namespace assembler {
 //        /**
