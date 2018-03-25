@@ -32,16 +32,38 @@
 #include <typeinfo>
 #include <iostream>
 #include <map>
-#include "Base.h"
+//#include "Base.h"
 #include "AssemblerBase.h"
 #include "Problem.h"
-#include "IrisCore.h"
-#include "IrisClipsExtensions.h"
-#include "ClipsExtensions.h"
-#include "IrisCoreAssemblerStructures.h"
-#include "IrisCoreEncodingOperations.h"
+//#include "IrisCore.h"
+//#include "IrisClipsExtensions.h"
+//#include "ClipsExtensions.h"
+//#include "IrisCoreAssemblerStructures.h"
+//#include "IrisCoreEncodingOperations.h"
+#include "AssemblerStructures.h"
 
 namespace iris {
+	AssemblerState::AssemblerState(Address c, Address d, Address s) : _codeAddress(c), _dataAddress(d), _stackAddress(s) { }
+	AssemblerState::~AssemblerState() { }
+	void AssemblerState::addData(EvaluationFunction fn, EvaluationStyle style) {
+		std::visit([this, fn](auto&& value) {
+					using T = std::decay_t<decltype(value)>;
+					if constexpr (std::is_same_v<T, AssemblerState::NormalEvaluation>) {
+						fn(*this);
+					} else if constexpr (std::is_same_v<T, AssemblerState::DeferEvaluation>) {
+						_evalLater.emplace_back(fn);
+					} else {
+						static_assert(AlwaysFalse<T>::value, "Unimplemented type!");
+					}
+				}, style);
+	}
+	void AssemblerState::addData(Data32 data, Section32 section) {
+
+	}
+	void AssemblerState::addData(Data16 data, Section16 section) {
+
+	}
+	/*
     namespace assembler {
         AssemblerData::AssemblerData() noexcept : instruction(false), address(0), dataValue(0), group(0), operation(0), destination(0), source0(0), source1(0), hasLexeme(false), fullImmediate(false) { }
 
@@ -493,4 +515,5 @@ namespace iris {
 #undef X
         DefEndStringToEnumFn(MoveOp)
 
+		*/
 } // end namespace iris

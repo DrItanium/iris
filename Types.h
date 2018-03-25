@@ -22,6 +22,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef TYPES_H__
+#define TYPES_H__
 #include <cstdint>
 #include <climits>
 
@@ -153,3 +155,4 @@ namespace iris {
     struct AlwaysFalse : std::false_type { };
 
 } // end namespace iris
+#endif
