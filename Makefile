@@ -47,8 +47,4 @@ clean:
 
 .PHONY: all options clean install uninstall docs
 
-
-
-
-
 include deps.make

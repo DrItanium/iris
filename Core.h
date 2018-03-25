@@ -58,8 +58,8 @@ namespace iris {
 			static constexpr Address registerCount = 256;
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address32 addressSize = 0x10000;
-			using MemoryBlock16 = std::unique_ptr<Number[]>;
-			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
+			using MemoryBlock16 = std::unique_ptr<Number[addressSize]>;
+			using MemoryBlock32 = std::unique_ptr<RawInstruction[addressSize]>;
 	};
 	//class Core : public syn::ClipsCore<word> {
     //    public:
