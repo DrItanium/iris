@@ -124,4 +124,8 @@ namespace iris {
 	constexpr bool isOdd(T value) noexcept {
 		return !isEven<T>(value);
 	}
+
+    template<typename T>
+    struct AlwaysFalse : std::false_type { };
+
 } // end namespace iris

@@ -26,111 +26,133 @@
 
 #ifndef _TARGET_IRIS16_IRIS_H
 #define _TARGET_IRIS16_IRIS_H
-#include <cstdint>
 #include <memory>
-
-#include "Base.h"
+#include "Types.h"
 #include "Problem.h"
-#include "ExecutionUnits.h"
-#include "ClipsCore.h"
-#include "IOController.h"
-#include "IrisCoreTypes.h"
-#include "ClipsExtensions.h"
-#include "IrisCoreEncodingOperations.h"
 
 namespace iris {
-	class Core : public syn::ClipsCore<word> {
-        public:
-            template<dword capacity>
-            using WordMemorySpace = syn::FixedSizeLoadStoreUnit<word, dword, capacity>;
-            using WordMemorySpace64k = WordMemorySpace<ArchitectureConstants::AddressCount>;
-            using RegisterFile = WordMemorySpace<ArchitectureConstants::RegisterCount>;
-            using PredicateRegisterFile = syn::FixedSizeLoadStoreUnit<bool, byte, ArchitectureConstants::ConditionRegisterCount>;
-            using ErrorStorage = WordMemorySpace<ArchitectureConstants::RegistersToSaveOnError>;
-            using InstructionPointer = syn::Register<QuadWord, ArchitectureConstants::AddressMax>;
-            using LinkRegister = syn::Register<QuadWord, ArchitectureConstants::AddressMax>;
-            using PredicateRegisterBlock = syn::Register<word, ArchitectureConstants::AddressMax>;
-			using Parent = syn::ClipsCore<word>;
-		public:
-			Core(syn::CLIPSIOController& io) noexcept;
-			virtual ~Core();
-			virtual void initialize() override;
-			virtual void shutdown() override;
-			virtual bool cycle() override;
-			virtual bool handleOperation(void* env, CLIPSValue* ret) override;
-			virtual word readFromBus(word addr) override;
-			virtual void writeToBus(word addr, word value) override;
-		private:
-            inline QuadWord getInstructionPointer() const noexcept { return _ip.get(); }
-            inline QuadWord getLinkRegister() const noexcept { return _lr.get(); }
-            void setInstructionPointer(QuadWord value) noexcept;
-            void setLinkRegister(QuadWord value) noexcept;
-			bool getPredicateRegister(byte index) const;
-            void setPredicateRegister(byte index, bool value);
-            void incrementInstructionPointer() noexcept;
-
-		private:
-			void dispatch() noexcept;
-            template<int index>
-            inline word& getRegister() noexcept {
-                return gpr[InstructionDecoder::getRegisterIndex<index>(current)];
-            }
-            template<int index>
-            inline byte getPredicateIndex() const noexcept {
-                return InstructionDecoder::getPredicateIndex<index>(current);
-            }
-
-            template<int index>
-            inline bool getPredicate() const noexcept {
-                return getPredicateRegister(getPredicateIndex<index>());
-            }
-            template<int index>
-            inline void setPredicate(bool value) noexcept {
-                setPredicateRegister(getPredicateIndex<index>(), value);
-            }
-            word& destinationRegister() noexcept;
-            word& source0Register() noexcept;
-            word& source1Register() noexcept;
-
-            bool getPredicateResult() const noexcept;
-			bool getPredicateInverseResult() const noexcept;
-			bool getPredicateSource0() const noexcept;
-			bool getPredicateSource1() const noexcept;
-            byte getPredicateResultIndex() const noexcept;
-			byte getPredicateInverseResultIndex() const noexcept;
-			byte getPredicateSource0Index() const noexcept;
-			byte getPredicateSource1Index() const noexcept;
-            void setPredicateResult(bool value) noexcept;
-			void setPredicateInverseResult(bool value) noexcept;
-			void setPredicateSource0(bool value) noexcept;
-			void setPredicateSource1(bool value) noexcept;
-            word getHalfImmediate() const noexcept;
-            word getImmediate() const noexcept;
-            byte getDestinationIndex() const noexcept;
-		private:
-			void saveSystemState() noexcept;
-			void restoreSystemState() noexcept;
-			void dispatchInterruptHandler();
-			void restorePredicateRegisters(word input, word mask) noexcept;
-			word savePredicateRegisters(word mask) noexcept;
-
-
-		private:
-			bool execute;
-			bool advanceIp;
-			raw_instruction current;
-            InstructionPointer _ip;
-            LinkRegister _lr;
-			word _error;
-			RegisterFile gpr;
-			WordMemorySpace64k data;
-			syn::FixedSizeLoadStoreUnit<dword, dword, ArchitectureConstants::AddressMax + 1> instruction;
-			WordMemorySpace64k stack;
-			PredicateRegisterBlock _cr;
-			ErrorStorage _onError;
-			bool _saveAdvanceIp = false;
-			bool _saveExecute = false;
-            bool _inInterruptHandler = false;
+	union Number {
+		Number(int i) : integer(Integer(i)) { }
+		Number(unsigned int i ) : address(Address(i)) { }
+		Number(Integer i) : integer(i) { }
+		Number(Address a) : address(a) { }
+		Number(const Number& other) : address(other.address) { }
+		bool getTruth() noexcept { return address != 0; }
+		template<typename T>
+		T get() {
+			using K = std::decay_t<T>;
+			if constexpr (std::is_same_v<K, Integer>) {
+				return integer;
+			} else if constexpr (std::is_same_v<K, Address>) {
+				return address;
+			} else {
+				static_assert(AlwaysFalse<T>::value, "Number type does not store this kind of value!");
+			}
+		}
+		Integer integer;
+		Address address;
+		byte bytes[sizeof(Address)];
 	};
+	class Core {
+		public: 
+			static constexpr Address registerCount = 256;
+			static constexpr Address maxAddress = 0xFFFF;
+			static constexpr Address32 addressSize = 0x10000;
+			using MemoryBlock16 = std::unique_ptr<Number[]>;
+			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
+	};
+	//class Core : public syn::ClipsCore<word> {
+    //    public:
+    //        template<dword capacity>
+    //        using WordMemorySpace = syn::FixedSizeLoadStoreUnit<word, dword, capacity>;
+    //        using WordMemorySpace64k = WordMemorySpace<ArchitectureConstants::AddressCount>;
+    //        using RegisterFile = WordMemorySpace<ArchitectureConstants::RegisterCount>;
+    //        using PredicateRegisterFile = syn::FixedSizeLoadStoreUnit<bool, byte, ArchitectureConstants::ConditionRegisterCount>;
+    //        using ErrorStorage = WordMemorySpace<ArchitectureConstants::RegistersToSaveOnError>;
+    //        using InstructionPointer = syn::Register<QuadWord, ArchitectureConstants::AddressMax>;
+    //        using LinkRegister = syn::Register<QuadWord, ArchitectureConstants::AddressMax>;
+    //        using PredicateRegisterBlock = syn::Register<word, ArchitectureConstants::AddressMax>;
+	//		using Parent = syn::ClipsCore<word>;
+	//	public:
+	//		Core(syn::CLIPSIOController& io) noexcept;
+	//		virtual ~Core();
+	//		virtual void initialize() override;
+	//		virtual void shutdown() override;
+	//		virtual bool cycle() override;
+	//		virtual bool handleOperation(void* env, CLIPSValue* ret) override;
+	//		virtual word readFromBus(word addr) override;
+	//		virtual void writeToBus(word addr, word value) override;
+	//	private:
+    //        inline QuadWord getInstructionPointer() const noexcept { return _ip.get(); }
+    //        inline QuadWord getLinkRegister() const noexcept { return _lr.get(); }
+    //        void setInstructionPointer(QuadWord value) noexcept;
+    //        void setLinkRegister(QuadWord value) noexcept;
+	//		bool getPredicateRegister(byte index) const;
+    //        void setPredicateRegister(byte index, bool value);
+    //        void incrementInstructionPointer() noexcept;
+
+	//	private:
+	//		void dispatch() noexcept;
+    //        template<int index>
+    //        inline word& getRegister() noexcept {
+    //            return gpr[InstructionDecoder::getRegisterIndex<index>(current)];
+    //        }
+    //        template<int index>
+    //        inline byte getPredicateIndex() const noexcept {
+    //            return InstructionDecoder::getPredicateIndex<index>(current);
+    //        }
+
+    //        template<int index>
+    //        inline bool getPredicate() const noexcept {
+    //            return getPredicateRegister(getPredicateIndex<index>());
+    //        }
+    //        template<int index>
+    //        inline void setPredicate(bool value) noexcept {
+    //            setPredicateRegister(getPredicateIndex<index>(), value);
+    //        }
+    //        word& destinationRegister() noexcept;
+    //        word& source0Register() noexcept;
+    //        word& source1Register() noexcept;
+
+    //        bool getPredicateResult() const noexcept;
+	//		bool getPredicateInverseResult() const noexcept;
+	//		bool getPredicateSource0() const noexcept;
+	//		bool getPredicateSource1() const noexcept;
+    //        byte getPredicateResultIndex() const noexcept;
+	//		byte getPredicateInverseResultIndex() const noexcept;
+	//		byte getPredicateSource0Index() const noexcept;
+	//		byte getPredicateSource1Index() const noexcept;
+    //        void setPredicateResult(bool value) noexcept;
+	//		void setPredicateInverseResult(bool value) noexcept;
+	//		void setPredicateSource0(bool value) noexcept;
+	//		void setPredicateSource1(bool value) noexcept;
+    //        word getHalfImmediate() const noexcept;
+    //        word getImmediate() const noexcept;
+    //        byte getDestinationIndex() const noexcept;
+	//	private:
+	//		void saveSystemState() noexcept;
+	//		void restoreSystemState() noexcept;
+	//		void dispatchInterruptHandler();
+	//		void restorePredicateRegisters(word input, word mask) noexcept;
+	//		word savePredicateRegisters(word mask) noexcept;
+
+
+	//	private:
+	//		bool execute;
+	//		bool advanceIp;
+	//		raw_instruction current;
+    //        InstructionPointer _ip;
+    //        LinkRegister _lr;
+	//		word _error;
+	//		RegisterFile gpr;
+	//		WordMemorySpace64k data;
+	//		syn::FixedSizeLoadStoreUnit<dword, dword, ArchitectureConstants::AddressMax + 1> instruction;
+	//		WordMemorySpace64k stack;
+	//		PredicateRegisterBlock _cr;
+	//		ErrorStorage _onError;
+	//		bool _saveAdvanceIp = false;
+	//		bool _saveExecute = false;
+    //        bool _inInterruptHandler = false;
+	//};
 }
 #endif
