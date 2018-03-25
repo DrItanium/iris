@@ -58,10 +58,44 @@ namespace iris {
 				}, style);
 	}
 	void AssemblerState::addData(Data32 data, Section32 section) {
-
+		std::visit([data, this](auto&& value) {
+					using T = std::decay_t<decltype(value)>;
+					if constexpr (std::is_same_v<T, CodeSection>) {
+						_codeToInstall.emplace(_codeAddress, data);
+						++_codeAddress;
+					} else {
+						static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
+					}
+				}, section);
 	}
 	void AssemblerState::addData(Data16 data, Section16 section) {
-
+		std::visit([data, this](auto&& value) {
+					using T = std::decay_t<decltype(value)>;
+					if constexpr (std::is_same_v<T, DataSection>) {
+						_dataToInstall.emplace(_dataAddress, data);
+						++_dataAddress;
+					} else if constexpr (std::is_same_v<T, StackSection>) {
+						_stackToInstall.emplace(_stackAddress, data);
+						++_stackAddress;
+					} else {
+						static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
+					}
+				}, section);
+	}
+	void AssemblerState::addLabel(const std::string& name, Section sec) {
+		auto addr = std::visit([name, this](auto&& value) {
+						using T = std::decay_t<decltype(value)>;
+						if constexpr (std::is_same_v<T, CodeSection>) {
+							return _codeAddress;
+						} else if constexpr (std::is_same_v<T, DataSection>) {
+							return _dataAddress;
+						} else if constexpr (std::is_same_v<T, StackSection>) {
+							return _stackAddress;
+						} else {
+							static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
+						}
+					}, sec);
+		_labels.emplace(name, addr);
 	}
 	/*
     namespace assembler {

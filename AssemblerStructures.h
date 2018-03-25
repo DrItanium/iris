@@ -89,12 +89,14 @@ namespace iris {
 			void addData(EvaluationFunction fn, EvaluationStyle style = normal); 
 			void addData(Data32 data, Section32 section = sectionCode);
 			void addData(Data16 data, Section16 section = sectionData);
+			void addLabel(const std::string& name, Section section = sectionCode);
 		private:
 			Address _codeAddress, _dataAddress, _stackAddress;
 			std::map<Address, Data32> _codeToInstall;
 			std::map<Address, Data16> _dataToInstall;
 			std::map<Address, Data16> _stackToInstall;
 			std::list<EvaluationFunction> _evalLater;
+			std::map<std::string, Address> _labels;
 	};
 
 
