@@ -43,7 +43,7 @@
 #include "AssemblerStructures.h"
 
 namespace iris {
-	AssemblerState::AssemblerState(Address c, Address d, Address s) : _codeAddress(c), _dataAddress(d), _stackAddress(s) { }
+	AssemblerState::AssemblerState(Address c, Address d, Address s) : _code(c), _data(d), _stack(s) { }
 	AssemblerState::~AssemblerState() { }
 	void AssemblerState::addData(EvaluationFunction fn, EvaluationStyle style) {
 		std::visit([this, fn](auto&& value) {
@@ -57,26 +57,29 @@ namespace iris {
 					}
 				}, style);
 	}
-	void AssemblerState::addData(Data32 data, Section32 section) {
+	void AssemblerState::addData(Data32 data, Section section) {
 		std::visit([data, this](auto&& value) {
 					using T = std::decay_t<decltype(value)>;
 					if constexpr (std::is_same_v<T, CodeSection>) {
-						_codeToInstall.emplace(_codeAddress, data);
-						++_codeAddress;
+						_code.addData(data);
+					} else if constexpr (std::is_same_v<T, DataSection>) {
+						throw Problem("Cannot put a data32 into the data section!");
+					} else if constexpr (std::is_same_v<T, StackSection>) {
+						throw Problem("Cannot put a data32 into the stack section!");
 					} else {
 						static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 					}
 				}, section);
 	}
-	void AssemblerState::addData(Data16 data, Section16 section) {
+	void AssemblerState::addData(Data16 data, Section section) {
 		std::visit([data, this](auto&& value) {
 					using T = std::decay_t<decltype(value)>;
 					if constexpr (std::is_same_v<T, DataSection>) {
-						_dataToInstall.emplace(_dataAddress, data);
-						++_dataAddress;
+						_data.addData(data);
 					} else if constexpr (std::is_same_v<T, StackSection>) {
-						_stackToInstall.emplace(_stackAddress, data);
-						++_stackAddress;
+						_stack.addData(data);
+					} else if constexpr (std::is_same_v<T, CodeSection>) {
+						throw Problem("Cannot put a data16 into the code section!");
 					} else {
 						static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 					}
@@ -84,24 +87,13 @@ namespace iris {
 	}
 	void AssemblerState::addLabel(const std::string& name, Section sec) {
 		std::visit([name, this](auto&& value) {
-						auto errorOnAlreadyExisting = [name](std::map<std::string, Address>& container, const std::string& kind) {
-							if (auto result = container.find(name) ; result != container.end()) {
-								std::stringstream ss;
-								ss << name << " is an already defined " << kind << " label!";
-								auto str = ss.str();
-								throw Problem(str);
-							}
-						};
 						using T = std::decay_t<decltype(value)>;
 						if constexpr (std::is_same_v<T, CodeSection>) {
-							errorOnAlreadyExisting(_labelsCode, "code");
-							_labelsCode.emplace(name, _codeAddress);
+							_code.addLabel(name);
 						} else if constexpr (std::is_same_v<T, DataSection>) {
-							errorOnAlreadyExisting(_labelsData, "data");
-							_labelsData.emplace(name, _codeAddress);
+							_data.addLabel(name);
 						} else if constexpr (std::is_same_v<T, StackSection>) {
-							errorOnAlreadyExisting(_labelsStack, "stack");
-							_labelsStack.emplace(name, _stackAddress);
+							_stack.addLabel(name);
 						} else {
 							static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 						}
@@ -109,23 +101,13 @@ namespace iris {
 	}
 	Address AssemblerState::getLabel(const std::string& name, Section sec) const {
 		return std::visit([name, this](auto&& value) {
-							auto fn = [name](const LabelMap& map, const std::string& kind) {
-										if (auto result = map.find(name); result != map.end()) {
-											return result->second;
-										} else {
-											std::stringstream ss;
-											ss << "Could not find an entry for " << kind << " label: " << name;
-											auto str = ss.str();
-											throw Problem(str);
-										}
-							};
 							using T = std::decay_t<decltype(value)>;
 							if constexpr (std::is_same_v<T, CodeSection>) {
-								return fn(_labelsCode, "code");
+								return _code.getLabel(name);
 							} else if constexpr (std::is_same_v<T, DataSection>) {
-								return fn(_labelsData, "data");
+								return _data.getLabel(name);
 							} else if constexpr (std::is_same_v<T, StackSection>) {
-								return fn(_labelsStack, "stack");
+								return _stack.getLabel(name);
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 							}
@@ -138,41 +120,6 @@ namespace iris {
 		return std::visit([this](auto&& value) { return getAddress(value); }, section);
 	}
 
-	void Assembler::addData(Data32 data) {
-		std::visit([this, data](auto&& value) {
-					using T = std::decay_t<decltype(value)>;
-					if constexpr (std::is_same_v<T, CodeSection>) {
-						_state.addData(data, sectionCode);
-					} else {
-						throw Problem("Can only install data32 values when in a compatible data32 section!");
-					}
-				}, _currentSection);
-	}
-	void Assembler::addData(Data16 data) {
-		std::visit([this, data](auto&& value) {
-					using T = std::decay_t<decltype(value)>;
-					if constexpr (std::is_same_v<T, DataSection>) {
-						_state.addData(data, sectionData);
-					} else if constexpr (std::is_same_v<T, StackSection>) {
-						_state.addData(data, sectionStack);
-					} else {
-						throw Problem("Can only install data16 values when in a compatible data16 section!");
-					}
-				}, _currentSection);
-	}
-	void Assembler::label(const std::string& name) { _state.addLabel(name, _currentSection); }
-	Address Assembler::getLabel(const std::string& name) const {
-		return getLabel(name, _currentSection);
-	}
-	Address Assembler::getLabel(const std::string& name, Section section) const {
-		return _state.getLabel(name, section);
-	}
-	void Assembler::setAddress(Address addr, Section section) noexcept {
-		_state.setAddress(addr, section);
-	}
-	Address Assembler::getAddress(Section section) const noexcept {
-		return _state.getAddress(section);
-	}
 
 	/*
     namespace assembler {

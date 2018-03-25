@@ -71,6 +71,55 @@ namespace iris {
 	constexpr DataSection sectionData = DataSection();
 	constexpr StackSection sectionStack = StackSection();
 	using LabelMap = std::map<std::string, Address>;
+	template<typename S>
+	std::string getSectionName() noexcept {
+		if constexpr (std::is_same_v<S, CodeSection>) {
+			return "code";
+		} else if constexpr (std::is_same_v<S, DataSection>) {
+			return "data";
+		} else if constexpr (std::is_same_v<S, StackSection>) {
+			return "stack";
+		} else {
+			static_assert(AlwaysFalse<S>::value, "Illegal section!");
+		}
+	}
+	template<typename T, typename S>
+	class SectionState {
+		public:
+			using DataContainer = std::map<Address, T>;
+		public:
+			SectionState(Address addr = 0) : _address(addr) { }
+			~SectionState() { }
+			Address getAddress() const noexcept { return _address; }
+			void setAddress(Address value) noexcept { _address = value; }
+			void addLabel(const std::string& name) {
+				if (auto r = _labels.find(name); r != _labels.end()) {
+					std::stringstream ss;
+					ss << "Label " << name << " was already found in " << getSectionName<S>() << " section!";
+					auto str = ss.str();
+					throw Problem(str);
+				} 
+				_labels.emplace(name, _address);
+			}
+			Address getLabel(const std::string& name) const {
+				if (auto r = _labels.find(name); r == _labels.end()) {
+					std::stringstream ss;
+					ss << "Label " << name << " was not found in " << getSectionName<S>() << " section!";
+					auto str = ss.str();
+					throw Problem(str);
+				} else {
+					return r->second;
+				}
+			}
+			void addData(T value) noexcept {
+				_toInstall.emplace(_address, value);
+				++_address;
+			}
+		private:
+			Address _address;
+			DataContainer _toInstall;
+			LabelMap _labels;
+	};
 	class AssemblerState {
 		public:
 			struct DeferEvaluation final { };
@@ -81,57 +130,36 @@ namespace iris {
 		public:
 			AssemblerState(Address codeAddress = 0, Address dataAddress = 0, Address stackAddress = 0);
 			~AssemblerState();
-		private:
-			Address getCodeAddress() const noexcept { return _codeAddress; }
-			void setCodeAddress(Address value) noexcept { _codeAddress = value; }
-			Address getDataAddress() const noexcept { return _dataAddress; }
-			void setDataAddress(Address value) noexcept { _dataAddress = value; }
-			Address getStackAddress() const noexcept { return _stackAddress; }
-			void setStackAddress(Address value) noexcept { _stackAddress = value; }
 		public:
-			void setAddress(Address addr, CodeSection) noexcept { setCodeAddress(addr); }
-			void setAddress(Address addr, DataSection) noexcept { setDataAddress(addr); }
-			void setAddress(Address addr, StackSection) noexcept { setStackAddress(addr); }
-			Address getAddress(CodeSection) const noexcept { return getCodeAddress(); }
-			Address getAddress(DataSection) const noexcept { return getDataAddress(); }
-			Address getAddress(StackSection) const noexcept { return getStackAddress(); }
+			void setAddress(Address addr) noexcept { setAddress(addr, _currentSection); }
+			void setAddress(Address addr, CodeSection) noexcept { _code.setAddress(addr); }
+			void setAddress(Address addr, DataSection) noexcept { _data.setAddress(addr); }
+			void setAddress(Address addr, StackSection) noexcept { _stack.setAddress(addr); }
 			void setAddress(Address value, Section section) noexcept;
+			
+			Address getAddress() const noexcept { return getAddress(_currentSection); }
+			Address getAddress(CodeSection) const noexcept { return _code.getAddress(); }
+			Address getAddress(DataSection) const noexcept { return _data.getAddress(); }
+			Address getAddress(StackSection) const noexcept { return _stack.getAddress(); }
 			Address getAddress(Section section) const noexcept;
 
 			void addData(EvaluationFunction fn, EvaluationStyle style = normal); 
-			void addData(Data32 data, Section32 section = sectionCode);
-			void addData(Data16 data, Section16 section = sectionData);
-			void addLabel(const std::string& name, Section section = sectionCode);
-			Address getLabel(const std::string& name, Section section = sectionCode) const;
-		private:
-			Address _codeAddress, _dataAddress, _stackAddress;
-			std::map<Address, Data32> _codeToInstall;
-			std::map<Address, Data16> _dataToInstall;
-			std::map<Address, Data16> _stackToInstall;
-			std::list<EvaluationFunction> _evalLater;
-			LabelMap _labelsCode, _labelsData, _labelsStack;
-	};
-	class Assembler {
-		public:
-			Assembler(Address code = 0, Address data = 0, Address stack = 0) : _state(code, data, stack) { };
-			Section getCurrentSection() const noexcept { return _currentSection; }
-			void setCurrentSection(Section section) noexcept { _currentSection = section; }
-			void setAddress(Address value) noexcept { setAddress(value, _currentSection); }
-			void setAddress(Address value, Section section) noexcept;
-			Address getAddress() const noexcept { return getAddress(_currentSection); }
-			Address getAddress(Section section) const noexcept;
-			void addData(EvaluationFunction fn, AssemblerState::EvaluationStyle style = AssemblerState::normal) { _state.addData(fn, style); }
-			void addData(Data32 data);
-			void addData(Data16 data);
-			void label(const std::string& name);
-			Address getLabel(const std::string& name) const;
+
+			void addData(Data32 data) { addData(data, _currentSection); }
+			void addData(Data32 data, Section section);
+			void addData(Data16 data) { addData(data, _currentSection); }
+			void addData(Data16 data, Section section);
+			void addLabel(const std::string& name) { addLabel(name, _currentSection); }
+			void addLabel(const std::string& name, Section section);
+			Address getLabel(const std::string& name) const { return getLabel(name, _currentSection); }
 			Address getLabel(const std::string& name, Section section) const;
 		private:
 			Section _currentSection = sectionCode;
-			AssemblerState _state;
+			SectionState<Data32, CodeSection> _code;
+			SectionState<Data16, DataSection> _data;
+			SectionState<Data16, StackSection> _stack;
+			std::list<EvaluationFunction> _evalLater;
 	};
-
-
 	
 //    namespace assembler {
 //        /**
