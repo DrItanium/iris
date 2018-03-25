@@ -107,21 +107,6 @@ namespace iris {
 		public:
 			Core();
 		public:
-			static constexpr RegisterIndex getDestinationIndex(RawInstruction i) noexcept {
-				return decodeBits<RawInstruction, RegisterIndex, 0x0000'FF00, 8>(i);
-			}
-			static constexpr RegisterIndex getSourceIndex(RawInstruction i) noexcept {
-				return decodeBits<RawInstruction, RegisterIndex, 0x00FF'0000, 16>(i);
-			}
-			static constexpr RegisterIndex getSource2Index(RawInstruction i) noexcept {
-				return decodeBits<RawInstruction, RegisterIndex, 0xFF00'0000, 24>(i);
-			}
-			static constexpr Address getImmediate16(RawInstruction i) noexcept {
-				return decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(i);
-			}
-			static constexpr byte getImmediate8(RawInstruction i) noexcept {
-				return decodeBits<RawInstruction, byte, 0xFF00'0000, 24>(i);
-			}
 
 			// the different containers for instruction forms are defined here
 			struct NoArguments final { };
@@ -153,7 +138,7 @@ namespace iris {
 			struct title final { \
 				title ( ) { } \
 				title (const style & v) : _args(v) { } \
-				constexpr Opcode opcode() noexcept { return Opcode :: title ; } \
+				constexpr Opcode opcode() const noexcept { return Opcode :: title ; } \
 				style _args ; } ; 
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
