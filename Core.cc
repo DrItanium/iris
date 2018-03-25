@@ -43,6 +43,31 @@ namespace iris {
 	}
 
 	Core::Core() { }
+	void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
+	void Core::decodeArguments(RawInstruction i, Core::OneRegister& a) noexcept {
+		a.dest = Core::getDestinationIndex(i);
+	}
+	void Core::decodeArguments(RawInstruction i, Core::TwoRegister& a) noexcept {
+		a.dest = Core::getDestinationIndex(i);
+		a.src = Core::getSourceIndex(i);
+	}
+	void Core::decodeArguments(RawInstruction i, Core::ThreeRegister& a) noexcept {
+		a.dest = Core::getDestinationIndex(i);
+		a.src = Core::getSourceIndex(i);
+		a.src2 = Core::getSource2Index(i);
+	}
+	void Core::decodeArguments(RawInstruction i, Core::Immediate16& a) noexcept {
+		a.imm = Core::getImmediate16(i);
+	}
+	void Core::decodeArguments(RawInstruction i, Core::OneRegisterWithImmediate& a) noexcept {
+		a.imm = Core::getImmediate16(i);
+		a.dest = Core::getDestinationIndex(i);
+	}
+	void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
+		a.dest = Core::getDestinationIndex(i);
+		a.src = Core::getSourceIndex(i);
+		a.src2 = Core::getImmediate8(i);
+	}
 	Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
 		Core::DecodedInstruction tmp;
 		switch (decodeBits<RawInstruction, Opcode, 0x0000'00FF, 0>(i)) {

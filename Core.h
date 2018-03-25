@@ -77,9 +77,8 @@ namespace iris {
 			virtual void setValue(Number) noexcept override;
 	};
 	using RegisterIndex = byte;
-	using OptionalRegisterIndex = std::optional<RegisterIndex>;
-	using DestinationRegister = OptionalRegisterIndex;
-	using SourceRegister = OptionalRegisterIndex;
+	using DestinationRegister = RegisterIndex;
+	using SourceRegister = RegisterIndex;
 	enum class Opcode : Address {
 #define X(title, style) title, 
 #define FirstX(title, style) X(title, style)
@@ -108,6 +107,22 @@ namespace iris {
 		public:
 			Core();
 		public:
+			static constexpr RegisterIndex getDestinationIndex(RawInstruction i) noexcept {
+				return decodeBits<RawInstruction, RegisterIndex, 0x0000'FF00, 8>(i);
+			}
+			static constexpr RegisterIndex getSourceIndex(RawInstruction i) noexcept {
+				return decodeBits<RawInstruction, RegisterIndex, 0x00FF'0000, 16>(i);
+			}
+			static constexpr RegisterIndex getSource2Index(RawInstruction i) noexcept {
+				return decodeBits<RawInstruction, RegisterIndex, 0xFF00'0000, 24>(i);
+			}
+			static constexpr Address getImmediate16(RawInstruction i) noexcept {
+				return decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(i);
+			}
+			static constexpr byte getImmediate8(RawInstruction i) noexcept {
+				return decodeBits<RawInstruction, byte, 0xFF00'0000, 24>(i);
+			}
+
 			// the different containers for instruction forms are defined here
 			struct NoArguments final { };
 			struct OneRegister final { 
