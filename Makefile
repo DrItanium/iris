@@ -3,19 +3,8 @@
 # See LICENSE file for copyright and license details.
 
 include config.mk
-ARCH_OBJECTS = IrisCore.o
-
-ASM_PARSERS_OBJECTS = IrisCoreAssemblerStructures.o \
-					  AssemblerBase.o
-
-COMMON_THINGS = Core.o \
-				WrappedIODevice.o \
-				IOController.o \
-				ClipsExtensions.o \
-			 	MultifieldBuilder.o \
-				MemoryBlock.o
-
-REPL_FINAL_BINARY = syn_repl
+	
+COMMON_THINGS = Core.o
 
 REPL_FINAL_OBJECTS = Repl.o \
 					 RegisteredExternalAddressAssemblers.o \
@@ -32,37 +21,14 @@ DEFINE_OBJECTS = defines_iris.h
 ALL_OBJECTS = ${COMMON_THINGS} \
 			  ${ARCH_OBJECTS} \
 			  ${REPL_OBJECTS} \
-			  ${DEFINE_CLPS} \
 			  ${REPL_FINAL_OBJECTS}
 
-COMMON_CLP_FILES = lib/reset-run-exit.clp
-COMMON_GEN_ENCODER_DECODER_FILES= ${COMMON_CLP_FILES} \
-								  cmd/deffield.clp \
-								  cmd/deffunctions.clp \
-								  lib/cortex.clp \
-								  Base.h
 
-TEST_SUITES = lib/target/iris/test_Base.clp \
-			  lib/target/iris/test_Exec.clp \
-			  lib/target/test_maya.clp \
-			  lib/target/test_ClipsExtensions.clp
+all: options ${ALL_BINARIES}
 
-
-all: options bootstrap ${ALL_BINARIES}
-
-docs: bootstrap ${ALL_BINARIES}
+docs: ${ALL_BINARIES}
 	@echo "running doxygen"
 	@doxygen
-
-maya:
-	@echo "Building maya..."
-	@cd misc/maya && $(MAKE)
-	@echo "Finished building maya"
-	@echo "Copying maya to root..."
-	@cp misc/maya/maya .
-	@cp misc/maya/libmaya.a .
-
-libmaya.a: maya
 
 options:
 	@echo syn build options:
@@ -81,18 +47,12 @@ options:
 	@echo CXX $<
 	@${CXX} ${CXXFLAGS} -c $< -o $@
 
-${REPL_FINAL_BINARY}: ${REPL_FINAL_OBJECTS} libmaya.a 
-	@echo Building ${REPL_FINAL_BINARY}
-	@${CXX} ${LDFLAGS} -o ${REPL_FINAL_BINARY} ${REPL_FINAL_OBJECTS} libmaya.a 
 
 clean:
 	@echo Cleaning...
 	@rm -f ${ALL_OBJECTS} ${ALL_BINARIES}
 
 nuke: clean
-	@echo "Cleaning maya..."
-	@cd misc/maya && $(MAKE) clean
-	@rm -rf doc/html maya libmaya.a
 
 install: ${ALL_BINARIES}
 	@echo installing executables to ${DESTDIR}${PREFIX}/bin
@@ -108,37 +68,31 @@ uninstall:
 		rm -f ${DESTDIR}${PREFIX}/bin/$$n ; \
 	done
 
-tests: bootstrap ${ALL_BINARIES} ${TEST_SUITES}
-	@echo "Running tests..."
-	@for n in ${TEST_SUITES}; do \
-		./syn_repl -f2 $$n -f2 cmd/test-case-invoke.clp ; \
-	done
 
 
 
-.PHONY: all options clean install uninstall docs tests bootstrap
-
-bootstrap: ${DEFINE_OBJECTS} 
+.PHONY: all options clean install uninstall docs nuke
 
 
 
 
-define generateFields
-	./deffield.sh -f2 $(1) -f2 lib/reset-run-exit.clp > $(2).h
-endef
 
-define generateDefines
-	echo "Generating encoders, decoders, and enumerations for $(1)..."
-	$(call generateFields,def/$(1)/instruction.clp,defines_$(1))
-endef
-
-define generateDefinesRule
-
-defines_$(1).h: maya ${COMMON_GEN_ENCODER_DECODER_FILES} def/$(1)/instruction.clp
-	@$(call generateDefines,$(1))
-
-endef
-
-$(foreach i,iris,$(eval $(call generateDefinesRule,$(i))))
+#define generateFields
+#	./deffield.sh -f2 $(1) -f2 lib/reset-run-exit.clp > $(2).h
+#endef
+#
+#define generateDefines
+#	echo "Generating encoders, decoders, and enumerations for $(1)..."
+#	$(call generateFields,def/$(1)/instruction.clp,defines_$(1))
+#endef
+#
+#define generateDefinesRule
+#
+#defines_$(1).h: ${COMMON_GEN_ENCODER_DECODER_FILES} def/$(1)/instruction.clp
+#	@$(call generateDefines,$(1))
+#
+#endef
+#
+#$(foreach i,iris,$(eval $(call generateDefinesRule,$(i))))
 
 include deps.make
