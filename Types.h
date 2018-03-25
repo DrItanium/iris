@@ -1,5 +1,7 @@
 #include <cstdint>
 
+#define INDIRECTOR(a, ...) PRIMITIVE_INDIRECTOR(a, __VA_ARGS__)
+#define PRIMITIVE_INDIRECTOR(a, ...) a ## __VA_ARGS__
 namespace iris {
 	using byte = uint8_t;
 	using Integer = int16_t;
