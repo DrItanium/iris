@@ -4,32 +4,22 @@
 
 include config.mk
 	
-COMMON_THINGS = Core.o
+ARCH_OBJECTS = Core.o
+ASSEMBLER_OBJECTS = Assembler.o \
+					AssemblerBase.o
 
-REPL_FINAL_OBJECTS = Repl.o \
-					 RegisteredExternalAddressAssemblers.o \
-					 IrisCoreAssemblerStateWrapper.o \
-					 IrisCoreWrapper.o \
-					 ${COMMON_THINGS} \
-					 ${ARCH_OBJECTS} \
-					 ${ASM_PARSERS_OBJECTS} \
-
-DEFINE_OBJECTS = defines_iris.h
-
-ALL_OBJECTS = ${COMMON_THINGS} \
-			  ${ARCH_OBJECTS} \
-			  ${REPL_OBJECTS} \
-			  ${REPL_FINAL_OBJECTS}
+ALL_OBJECTS = ${ARCH_OBJECTS} \
+			  ${ASSEMBLER_OBJECTS}
 
 
-all: options ${ALL_BINARIES}
+all: options 
 
-docs: ${ALL_BINARIES}
+docs: 
 	@echo "running doxygen"
 	@doxygen
 
 options:
-	@echo syn build options:
+	@echo iris build options:
 	@echo "CXXFLAGS = ${CXXFLAGS}"
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
@@ -45,6 +35,6 @@ clean:
 	@echo Cleaning...
 	@rm -f ${ALL_OBJECTS} 
 
-.PHONY: all options clean install uninstall docs
+.PHONY: all options clean docs
 
 include deps.make
