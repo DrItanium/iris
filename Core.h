@@ -1,5 +1,5 @@
 /*
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -106,6 +106,8 @@ namespace iris {
 			using MemoryBlock32 = std::unique_ptr<RawInstruction[addressSize]>;
 			using RegisterFile = std::unique_ptr<Register[registerCount]>;
 		public:
+			Core();
+		public:
 			// the different containers for instruction forms are defined here
 			struct NoArguments final { };
 			struct OneRegister final { 
@@ -150,14 +152,14 @@ namespace iris {
 #undef FirstX
 				>;
 		private:
-			void decodeArguments(NoArguments&) noexcept;
-			void decodeArguments(OneRegister&) noexcept;
-			void decodeArguments(TwoRegister&) noexcept;
-			void decodeArguments(ThreeRegister&) noexcept;
-			void decodeArguments(Immediate16&) noexcept;
-			void decodeArguments(OneRegisterWithImmediate&) noexcept;
-			void decodeArguments(TwoRegisterWithImmediate&) noexcept;
-			DecodedInstruction decodeInstruction(RawInstruction val) noexcept;
+			void decodeArguments(RawInstruction, NoArguments&) noexcept;
+			void decodeArguments(RawInstruction, OneRegister&) noexcept;
+			void decodeArguments(RawInstruction, TwoRegister&) noexcept;
+			void decodeArguments(RawInstruction, ThreeRegister&) noexcept;
+			void decodeArguments(RawInstruction, Immediate16&) noexcept;
+			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
+			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
+			DecodedInstruction decodeInstruction(RawInstruction val);
 			RawInstruction encodeArguments(const NoArguments&) noexcept;
 			RawInstruction encodeArguments(const OneRegister&) noexcept;
 			RawInstruction encodeArguments(const TwoRegister&) noexcept;

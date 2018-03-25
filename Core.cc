@@ -1,5 +1,5 @@
 /*
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -41,6 +41,26 @@ namespace iris {
 	void HardwiredRegister::setValue(Number) noexcept {
 		// do nothing, ignore writes
 	}
+
+	Core::Core() { }
+	Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
+		Core::DecodedInstruction tmp;
+		switch (decodeBits<RawInstruction, Opcode, 0x0000'00FF, 0>(i)) {
+#define X(title, style) \
+			case Opcode :: title : \
+				tmp = Core::title () ; \
+				break;
+#define FirstX(title, style) X(title, style)
+#include "Opcodes.def"
+#undef X
+#undef FirstX
+			default:
+				throw Problem("Illegal Opcode!");
+		}
+		std::visit([this, i](auto&& value) { decodeArguments(i, value._args); }, tmp);
+		return tmp;
+	}
+
 //	constexpr word encodeWord(byte a, byte b) noexcept {
 //		return syn::encodeUint16LE(a, b);
 //	}

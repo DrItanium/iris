@@ -1,5 +1,5 @@
 /*
- * syn
+ * iris
  * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
 #define IRIS_PROBLEM_H
 #include <string>
 #include <iostream>
-namespace syn {
+namespace iris {
 
 	class Problem {
 		public:
