@@ -149,6 +149,13 @@ namespace iris {
 	RawInstruction Core::encodeInstruction(const Core::DecodedInstruction& i) noexcept {
 		return std::visit([this](auto&& v) { return encodeBits<RawInstruction, byte, 0x0000'00FF, 0>(encodeArguments(v._args), byte(v.opcode())); }, i);
 	}
+	void Core::dispatchInstruction(const Core::DecodedInstruction& di) {
+		std::visit([this](auto&& v) { perform(v); }, di);
+	}
+
+#define DefExec(title) \
+	void Core::perform ( const Core:: title & op ) 
+#undef DefExec
 
 //	constexpr word encodeWord(byte a, byte b) noexcept {
 //		return syn::encodeUint16LE(a, b);

@@ -152,6 +152,14 @@ namespace iris {
 #undef FirstX
 				>;
 		private:
+			// functions to contain the logic for each opcode
+			void dispatchInstruction(const DecodedInstruction& inst);
+#define X(title, style) void perform ( const title & value );
+#define FirstX(title, style) X(title, style)
+#include "Opcodes.def"
+#undef X
+#undef FirstX
+		private:
 			void decodeArguments(RawInstruction, NoArguments&) noexcept;
 			void decodeArguments(RawInstruction, OneRegister&) noexcept;
 			void decodeArguments(RawInstruction, TwoRegister&) noexcept;
