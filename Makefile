@@ -3,13 +3,9 @@
 # See LICENSE file for copyright and license details.
 
 include config.mk
-ARCH_OBJECTS = IrisCore.o \
-			   Cisc0Core.o \
-			   Cisc0CoreModel0.o \
-			   Cisc0CoreModel1.o
+ARCH_OBJECTS = IrisCore.o
 
-ASM_PARSERS_OBJECTS = Cisc0CoreAssembler.o \
-					  IrisCoreAssemblerStructures.o \
+ASM_PARSERS_OBJECTS = IrisCoreAssemblerStructures.o \
 					  AssemblerBase.o
 
 COMMON_THINGS = Core.o \
@@ -23,20 +19,15 @@ REPL_FINAL_BINARY = syn_repl
 
 REPL_FINAL_OBJECTS = Repl.o \
 					 RegisteredExternalAddressAssemblers.o \
-					 Cisc0CoreAssemblerWrapper.o \
-					 Cisc0CoreInstructionEncoder.o \
 					 IrisCoreAssemblerStateWrapper.o \
-					 Cisc0CoreWrapper.o \
 					 IrisCoreWrapper.o \
-					 Cisc0CoreDecodedInstruction.o \
 					 ${COMMON_THINGS} \
 					 ${ARCH_OBJECTS} \
 					 ${ASM_PARSERS_OBJECTS} \
 
 ALL_BINARIES = ${REPL_FINAL_BINARY}
 
-DEFINE_OBJECTS = defines_iris.h \
-				 defines_cisc0.h
+DEFINE_OBJECTS = defines_iris.h
 
 ALL_OBJECTS = ${COMMON_THINGS} \
 			  ${ARCH_OBJECTS} \
@@ -53,7 +44,6 @@ COMMON_GEN_ENCODER_DECODER_FILES= ${COMMON_CLP_FILES} \
 
 TEST_SUITES = lib/target/iris/test_Base.clp \
 			  lib/target/iris/test_Exec.clp \
-			  lib/target/cisc0/test_Base.clp \
 			  lib/target/test_maya.clp \
 			  lib/target/test_ClipsExtensions.clp
 
@@ -149,6 +139,6 @@ defines_$(1).h: maya ${COMMON_GEN_ENCODER_DECODER_FILES} def/$(1)/instruction.cl
 
 endef
 
-$(foreach i,iris cisc0,$(eval $(call generateDefinesRule,$(i))))
+$(foreach i,iris,$(eval $(call generateDefinesRule,$(i))))
 
 include deps.make
