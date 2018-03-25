@@ -29,7 +29,6 @@
 
 #ifndef IRIS_CORE_ASSEMBLER_H__
 #define IRIS_CORE_ASSEMBLER_H__
-#include "AssemblerBase.h"
 #include "Problem.h"
 #include "AssemblerKeywords.h"
 #include "AssemblerStructures.h"
@@ -968,15 +967,13 @@ namespace iris {
 //			std::string _title;
 //	};
 //
-//#define DefSymbol(title, str) \
-//    struct Symbol ## title : public TAOCPP_PEGTL_STRING( str ) { }
+//#define DefSymbol(title, str) struct Symbol ## title : public TAOCPP_PEGTL_STRING( str ) { }
 //    DefSymbol(OrgDirective, ".org");
 //    DefSymbol(LabelDirective, ".label");
 //    DefSymbol(WordDirective,  ".word");
 //    DefSymbol(DwordDirective, ".dword");
 //
-//#define DefKeyword(title, str) \
-//    struct Keyword ## title : public TAOCPP_PEGTL_KEYWORD( str ) { }
+//#define DefKeyword(title, str) struct Keyword ## title : public TAOCPP_PEGTL_KEYWORD( str ) { }
 //    DefKeyword(Immediate, "immediate");
 //
 //

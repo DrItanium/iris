@@ -30,7 +30,7 @@
 #ifndef IRIS_CORE_ASSEMBLER_STRUCTURES_H__
 #define IRIS_CORE_ASSEMBLER_STRUCTURES_H__
 #include "Types.h"
-#include "AssemblerBase.h"
+#include "Assembler.h"
 #include "Problem.h"
 #include "Core.h"
 
@@ -47,6 +47,7 @@
 #include <variant>
 #include <memory>
 #include <list>
+#include <functional>
 
 namespace iris {
 	Opcode stringToOpcode(const std::string& str) noexcept;

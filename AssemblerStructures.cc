@@ -33,7 +33,7 @@
 #include <iostream>
 #include <map>
 //#include "Base.h"
-#include "AssemblerBase.h"
+#include "Assembler.h"
 #include "Problem.h"
 //#include "IrisCore.h"
 //#include "IrisClipsExtensions.h"

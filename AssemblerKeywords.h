@@ -28,14 +28,14 @@
 #ifndef IRIS_CORE_ASSEMBLER_KEYWORDS_H__
 #define IRIS_CORE_ASSEMBLER_KEYWORDS_H__
 
-#include "AssemblerBase.h"
+//#include "AssemblerBase.h"
 
 
 namespace iris {
 
 	// DIRECTIVES
-    DefSymbol(DataDirective, ".data");
-    DefSymbol(CodeDirective, ".code");
+    //DefSymbol(DataDirective, ".data");
+    //DefSymbol(CodeDirective, ".code");
 } // end namespace iris
 
 
