@@ -34,12 +34,12 @@
 
 namespace iris {
 	union Number {
+		Number(Address a = 0) : address(a) { }
 		Number(bool value) : integer(value ? -1 : 0 ) { }
 		Number(byte b) : address(b) { }
 		Number(int i) : integer(Integer(i)) { }
 		Number(unsigned int i ) : address(Address(i)) { }
 		Number(Integer i) : integer(i) { }
-		Number(Address a) : address(a) { }
 		Number(const Number& other) : address(other.address) { }
 		bool getTruth() const noexcept { return address != 0; }
 		template<typename T>
@@ -61,6 +61,7 @@ namespace iris {
 	};
 	class Register {
 		public:
+			Register();
 			Register(Number initialValue);
 			~Register();
 			virtual void setValue(Number value) noexcept;

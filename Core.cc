@@ -284,7 +284,7 @@ namespace iris {
 		_pc = getRegisterValue(op._args.dest).address;
 	}
 	DefExec(BranchConditional) {
-		if (getSource(op).getTruth()) {
+		if (getRegisterValue(op._args.dest).getTruth()) {
 			_pc = op._args.imm;
 		}
 	}
@@ -294,7 +294,7 @@ namespace iris {
 		}
 	}
 	DefExec(BranchConditionalIndirectLink) {
-		if (getSoruce(op).getTruth()) {
+		if (getSource(op).getTruth()) {
 			setRegister(op._args.src2, _pc);
 			_pc = getRegisterValue(op._args.dest).address;
 		}
