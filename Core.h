@@ -27,6 +27,8 @@
 #ifndef _TARGET_IRIS16_IRIS_H
 #define _TARGET_IRIS16_IRIS_H
 #include <memory>
+#include <variant>
+#include <optional>
 #include "Types.h"
 #include "Problem.h"
 
@@ -37,14 +39,16 @@ namespace iris {
 		Number(Integer i) : integer(i) { }
 		Number(Address a) : address(a) { }
 		Number(const Number& other) : address(other.address) { }
-		bool getTruth() noexcept { return address != 0; }
+		bool getTruth() const noexcept { return address != 0; }
 		template<typename T>
-		T get() {
+		T get() const noexcept {
 			using K = std::decay_t<T>;
 			if constexpr (std::is_same_v<K, Integer>) {
 				return integer;
 			} else if constexpr (std::is_same_v<K, Address>) {
 				return address;
+			} else if constexpr (std::is_same_v<K, bool>) {
+				return getTruth();
 			} else {
 				static_assert(AlwaysFalse<T>::value, "Number type does not store this kind of value!");
 			}
@@ -53,6 +57,37 @@ namespace iris {
 		Address address;
 		byte bytes[sizeof(Address)];
 	};
+	class Register {
+		public:
+			Register(Number initialValue);
+			~Register();
+			virtual void setValue(Number value) noexcept;
+			Number getValue() const noexcept { return _value; }
+			bool getTruth() const noexcept { return _value.getTruth(); }
+			template<typename T>
+			T get() const noexcept {
+				return _value.get<T>();
+			}
+		private:
+			Number _value;
+	};
+	class HardwiredRegister : public Register {
+		public:
+			using Register::Register;
+			virtual void setValue(Number) noexcept override;
+	};
+	using RegisterIndex = byte;
+	using OptionalRegisterIndex = std::optional<RegisterIndex>;
+	using DestinationRegister = OptionalRegisterIndex;
+	using SourceRegister = OptionalRegisterIndex;
+	/**
+	 * The iris core is a 16-bit harvard architecture that has multiple memory
+	 * spaces. Each of them being 64k words (or double word) each. 
+	 * There are four spaces: Code (double word), Data, Stack, and IO. 
+	 *
+	 * this is a slightly improved version of the iris core as it has support
+	 * for multiple stack pointers and such.
+	 */
 	class Core {
 		public: 
 			static constexpr Address registerCount = 256;
@@ -60,6 +95,45 @@ namespace iris {
 			static constexpr Address32 addressSize = 0x10000;
 			using MemoryBlock16 = std::unique_ptr<Number[addressSize]>;
 			using MemoryBlock32 = std::unique_ptr<RawInstruction[addressSize]>;
+			using RegisterFile = std::unique_ptr<Register[registerCount]>;
+		public:
+			// the different containers for instruction forms are defined here
+			/**
+			 * takes in no arguments
+			 */
+			struct NoArguments final { };
+			struct OneRegister final { 
+				DestinationRegister dest;
+			};
+			struct TwoRegister final {
+				DestinationRegister dest;
+				SourceRegister src;
+			};
+			struct ThreeRegister final {
+				DestinationRegister dest;
+				SourceRegister src;
+				SourceRegister src2;
+			};
+			struct Immediate16 final {
+				Address imm;
+			};
+			struct OneRegisterWithImmediate final {
+				DestinationRegister dest;
+				Address imm;
+			};
+			struct TwoRegisterWithImmediate final {
+				DestinationRegister dest;
+				SourceRegister src;
+				byte src2;
+			};
+
+		private:
+			Address _pc;
+			MemoryBlock16 _data, _stack;
+			// IO space is special and is really a mapping to native goings
+			// on!
+			RegisterFile _registers;
+
 	};
 	//class Core : public syn::ClipsCore<word> {
     //    public:

@@ -31,6 +31,16 @@
 
 
 namespace iris {
+	Register::Register(Number v) : _value(v) { }
+	Register::~Register() {
+		_value = 0;
+	}
+	void Register::setValue(Number v) noexcept {
+		_value = v;
+	}
+	void HardwiredRegister::setValue(Number) noexcept {
+		// do nothing, ignore writes
+	}
 //	constexpr word encodeWord(byte a, byte b) noexcept {
 //		return syn::encodeUint16LE(a, b);
 //	}
