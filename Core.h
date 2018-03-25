@@ -80,31 +80,15 @@ namespace iris {
 	using OptionalRegisterIndex = std::optional<RegisterIndex>;
 	using DestinationRegister = OptionalRegisterIndex;
 	using SourceRegister = OptionalRegisterIndex;
-	enum class InstructionGroup : byte {
-#define X(title) title,
-#include "desc/InstructionGroup.desc"
-#undef X
-		Count,
-	};
-	enum class ArithmeticOp : byte {
-#define X(title, style) title,
+	enum class Opcode : Address {
+#define X(title, style) title, 
 #define FirstX(title, style) X(title, style)
-#include "desc/ArithmeticOp.desc"
+#include "Opcodes.def"
 #undef FirstX
 #undef X
 		Count,
 	};
-	enum class CompareOp : byte {
-#define X(title, style) title,
-#define FirstX(title, style) X(title, style)
-#include "desc/CompareOp.desc"
-#undef FirstX
-#undef X
-		Count,
-	};
-	static_assert(byte(ArithmeticOp::Count) <= 32, "Too many instructions defined for arithmetic group!");
-	static_assert(byte(CompareOp::Count) <= 32, "Too many instructions defined for compare group!");
-	static_assert(byte(InstructionGroup::Count) <= 8, "Too many instruction groups defined!");
+	static_assert(Address(Opcode::Count) <= 256, "Too many instructions defined!");
 	/**
 	 * The iris core is a 16-bit harvard architecture that has multiple memory
 	 * spaces. Each of them being 64k words (or double word) each. 
@@ -148,7 +132,23 @@ namespace iris {
 				SourceRegister src;
 				byte src2;
 			};
-			using DecodedInstruction = std::variant<std::monostate>;
+#define X(title, style) \
+			struct title final { \
+				title ( ) { } \
+				title (const style & v) : _args(v) { } \
+				constexpr Opcode opcode() noexcept { return Opcode :: title ; } \
+				style _args ; } ; 
+#define FirstX(title, style) X(title, style)
+#include "Opcodes.def"
+#undef FirstX
+#undef X
+			using DecodedInstruction = std::variant<
+#define FirstX(title, style) title
+#define X(title, style) ,title
+#include "Opcodes.def"
+#undef X
+#undef FirstX
+				>;
 		private:
 			void decodeArguments(NoArguments&) noexcept;
 			void decodeArguments(OneRegister&) noexcept;
