@@ -29,14 +29,10 @@
 
 #ifndef IRIS_CORE_ASSEMBLER_H__
 #define IRIS_CORE_ASSEMBLER_H__
-#include "Base.h"
 #include "AssemblerBase.h"
 #include "Problem.h"
-#include "IrisCoreEncodingOperations.h"
-#include "IrisClipsExtensions.h"
-#include "ClipsExtensions.h"
-#include "IrisCoreAssemblerKeywords.h"
-#include "IrisCoreAssemblerStructures.h"
+#include "AssemblerKeywords.h"
+#include "AssemblerStructures.h"
 
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/analyze.hpp>

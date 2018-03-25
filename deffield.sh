@@ -1,3 +1,0 @@
-#!/bin/bash
-
-./maya -f2 lib/cortex.clp -f2 lib/lisp.clp -f2 cmd/deffield.clp $@
