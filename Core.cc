@@ -239,6 +239,22 @@ namespace iris {
 		auto offset = getSource2(op).address;
 		_data[base + offset] = getSource(op);
 	}
+	DefExec(Push) {
+		auto stackAddress = getRegisterValue(op._args.dest).address - 1;
+		auto value = getSource(op).address;
+		_stack[stackAddress] = value;
+		setRegister(op._args.dest, stackAddress);
+	}
+	DefExec(PushImmediate) {
+		auto stackAddress = getRegisterValue(op._args.dest).address - 1;
+		auto value = op._args.imm;
+		_stack[stackAddress] = value;
+		setRegister(op._args.dest, stackAddress);
+	}
+	DefExec(Pop) {
+		setDestination(op, _stack[getRegisterValue(op._args.src).address]);
+		setRegister(op._args.src, getRegisterValue(op._args.src).address + 1);
+	}
 
 }
 #undef DefExec
