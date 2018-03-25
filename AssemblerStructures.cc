@@ -83,20 +83,97 @@ namespace iris {
 				}, section);
 	}
 	void AssemblerState::addLabel(const std::string& name, Section sec) {
-		auto addr = std::visit([name, this](auto&& value) {
+		std::visit([name, this](auto&& value) {
+						auto errorOnAlreadyExisting = [name](std::map<std::string, Address>& container, const std::string& kind) {
+							if (auto result = container.find(name) ; result != container.end()) {
+								std::stringstream ss;
+								ss << name << " is an already defined " << kind << " label!";
+								auto str = ss.str();
+								throw Problem(str);
+							}
+						};
 						using T = std::decay_t<decltype(value)>;
 						if constexpr (std::is_same_v<T, CodeSection>) {
-							return _codeAddress;
+							errorOnAlreadyExisting(_labelsCode, "code");
+							_labelsCode.emplace(name, _codeAddress);
 						} else if constexpr (std::is_same_v<T, DataSection>) {
-							return _dataAddress;
+							errorOnAlreadyExisting(_labelsData, "data");
+							_labelsData.emplace(name, _codeAddress);
 						} else if constexpr (std::is_same_v<T, StackSection>) {
-							return _stackAddress;
+							errorOnAlreadyExisting(_labelsStack, "stack");
+							_labelsStack.emplace(name, _stackAddress);
 						} else {
 							static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 						}
 					}, sec);
-		_labels.emplace(name, addr);
 	}
+	Address AssemblerState::getLabel(const std::string& name, Section sec) const {
+		return std::visit([name, this](auto&& value) {
+							auto fn = [name](const LabelMap& map, const std::string& kind) {
+										if (auto result = map.find(name); result != map.end()) {
+											return result->second;
+										} else {
+											std::stringstream ss;
+											ss << "Could not find an entry for " << kind << " label: " << name;
+											auto str = ss.str();
+											throw Problem(str);
+										}
+							};
+							using T = std::decay_t<decltype(value)>;
+							if constexpr (std::is_same_v<T, CodeSection>) {
+								return fn(_labelsCode, "code");
+							} else if constexpr (std::is_same_v<T, DataSection>) {
+								return fn(_labelsData, "data");
+							} else if constexpr (std::is_same_v<T, StackSection>) {
+								return fn(_labelsStack, "stack");
+							} else {
+								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
+							}
+						}, sec);
+	}
+	void AssemblerState::setAddress(Address value, Section section) noexcept {
+		std::visit([address = value, this](auto&& value) { setAddress(address, value); }, section);
+	}
+	Address AssemblerState::getAddress(Section section) const noexcept {
+		return std::visit([this](auto&& value) { return getAddress(value); }, section);
+	}
+
+	void Assembler::addData(Data32 data) {
+		std::visit([this, data](auto&& value) {
+					using T = std::decay_t<decltype(value)>;
+					if constexpr (std::is_same_v<T, CodeSection>) {
+						_state.addData(data, sectionCode);
+					} else {
+						throw Problem("Can only install data32 values when in a compatible data32 section!");
+					}
+				}, _currentSection);
+	}
+	void Assembler::addData(Data16 data) {
+		std::visit([this, data](auto&& value) {
+					using T = std::decay_t<decltype(value)>;
+					if constexpr (std::is_same_v<T, DataSection>) {
+						_state.addData(data, sectionData);
+					} else if constexpr (std::is_same_v<T, StackSection>) {
+						_state.addData(data, sectionStack);
+					} else {
+						throw Problem("Can only install data16 values when in a compatible data16 section!");
+					}
+				}, _currentSection);
+	}
+	void Assembler::label(const std::string& name) { _state.addLabel(name, _currentSection); }
+	Address Assembler::getLabel(const std::string& name) const {
+		return getLabel(name, _currentSection);
+	}
+	Address Assembler::getLabel(const std::string& name, Section section) const {
+		return _state.getLabel(name, section);
+	}
+	void Assembler::setAddress(Address addr, Section section) noexcept {
+		_state.setAddress(addr, section);
+	}
+	Address Assembler::getAddress(Section section) const noexcept {
+		return _state.getAddress(section);
+	}
+
 	/*
     namespace assembler {
         AssemblerData::AssemblerData() noexcept : instruction(false), address(0), dataValue(0), group(0), operation(0), destination(0), source0(0), source1(0), hasLexeme(false), fullImmediate(false) { }

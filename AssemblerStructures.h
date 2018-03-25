@@ -70,6 +70,7 @@ namespace iris {
 	constexpr CodeSection sectionCode = CodeSection();
 	constexpr DataSection sectionData = DataSection();
 	constexpr StackSection sectionStack = StackSection();
+	using LabelMap = std::map<std::string, Address>;
 	class AssemblerState {
 		public:
 			struct DeferEvaluation final { };
@@ -80,23 +81,54 @@ namespace iris {
 		public:
 			AssemblerState(Address codeAddress = 0, Address dataAddress = 0, Address stackAddress = 0);
 			~AssemblerState();
+		private:
 			Address getCodeAddress() const noexcept { return _codeAddress; }
 			void setCodeAddress(Address value) noexcept { _codeAddress = value; }
 			Address getDataAddress() const noexcept { return _dataAddress; }
 			void setDataAddress(Address value) noexcept { _dataAddress = value; }
 			Address getStackAddress() const noexcept { return _stackAddress; }
 			void setStackAddress(Address value) noexcept { _stackAddress = value; }
+		public:
+			void setAddress(Address addr, CodeSection) noexcept { setCodeAddress(addr); }
+			void setAddress(Address addr, DataSection) noexcept { setDataAddress(addr); }
+			void setAddress(Address addr, StackSection) noexcept { setStackAddress(addr); }
+			Address getAddress(CodeSection) const noexcept { return getCodeAddress(); }
+			Address getAddress(DataSection) const noexcept { return getDataAddress(); }
+			Address getAddress(StackSection) const noexcept { return getStackAddress(); }
+			void setAddress(Address value, Section section) noexcept;
+			Address getAddress(Section section) const noexcept;
+
 			void addData(EvaluationFunction fn, EvaluationStyle style = normal); 
 			void addData(Data32 data, Section32 section = sectionCode);
 			void addData(Data16 data, Section16 section = sectionData);
 			void addLabel(const std::string& name, Section section = sectionCode);
+			Address getLabel(const std::string& name, Section section = sectionCode) const;
 		private:
 			Address _codeAddress, _dataAddress, _stackAddress;
 			std::map<Address, Data32> _codeToInstall;
 			std::map<Address, Data16> _dataToInstall;
 			std::map<Address, Data16> _stackToInstall;
 			std::list<EvaluationFunction> _evalLater;
-			std::map<std::string, Address> _labels;
+			LabelMap _labelsCode, _labelsData, _labelsStack;
+	};
+	class Assembler {
+		public:
+			Assembler(Address code = 0, Address data = 0, Address stack = 0) : _state(code, data, stack) { };
+			Section getCurrentSection() const noexcept { return _currentSection; }
+			void setCurrentSection(Section section) noexcept { _currentSection = section; }
+			void setAddress(Address value) noexcept { setAddress(value, _currentSection); }
+			void setAddress(Address value, Section section) noexcept;
+			Address getAddress() const noexcept { return getAddress(_currentSection); }
+			Address getAddress(Section section) const noexcept;
+			void addData(EvaluationFunction fn, AssemblerState::EvaluationStyle style = AssemblerState::normal) { _state.addData(fn, style); }
+			void addData(Data32 data);
+			void addData(Data16 data);
+			void label(const std::string& name);
+			Address getLabel(const std::string& name) const;
+			Address getLabel(const std::string& name, Section section) const;
+		private:
+			Section _currentSection = sectionCode;
+			AssemblerState _state;
 	};
 
 
