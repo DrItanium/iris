@@ -83,7 +83,12 @@ namespace iris {
 		// do nothing, ignore writes
 	}
 
-	Core::Core() { }
+	Core::Core() : _pc(0) { 
+		_code = std::make_unique<RawInstruction[]>(addressSize);
+		_data = std::make_unique<Number[]>(addressSize);
+		_stack = std::make_unique<Number[]>(addressSize);
+		_registers = std::make_unique<Register[]>(registerCount);
+	}
 	void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
 	void Core::decodeArguments(RawInstruction i, Core::OneRegister& a) noexcept {
 		a.dest = getDestinationIndex(i);
@@ -255,7 +260,51 @@ namespace iris {
 		setDestination(op, _stack[getRegisterValue(op._args.src).address]);
 		setRegister(op._args.src, getRegisterValue(op._args.src).address + 1);
 	}
+	DefExec(LoadCode) {
+		auto inst = _code[getSource2(op).address];
+		setRegister(op._args.dest, decodeBits<RawInstruction, Address, 0x0000'FFFF, 0>(inst));
+		setRegister(op._args.src, decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(inst));
+	}
 
-}
+	DefExec(StoreCode) {
+		auto lower = getSource(op).address;
+		auto upper = getSource2(op).address;
+		_code[getRegisterValue(op._args.dest).address] = encodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(encodeBits<RawInstruction, Address, 0x0000'FFFF, 0>(0, lower), upper);
+	}
+	DefExec(Branch) { _pc = op._args.imm; }
+	DefExec(BranchAndLink) {
+		setDestination(op, _pc);
+		_pc = op._args.imm;
+	}
+	DefExec(BranchIndirect) {
+		_pc = getRegisterValue(op._args.dest).address;
+	}
+	DefExec(BranchIndirectLink) {
+		setRegister(op._args.src, _pc);
+		_pc = getRegisterValue(op._args.dest).address;
+	}
+	DefExec(BranchConditional) {
+		if (getSource(op).getTruth()) {
+			_pc = op._args.imm;
+		}
+	}
+	DefExec(BranchConditionalIndirect) {
+		if (getSource(op).getTruth()) {
+			_pc = getRegisterValue(op._args.dest).address;
+		}
+	}
+	DefExec(BranchConditionalIndirectLink) {
+		if (getSoruce(op).getTruth()) {
+			setRegister(op._args.src2, _pc);
+			_pc = getRegisterValue(op._args.dest).address;
+		}
+	}
+
 #undef DefExec
-
+	RawInstruction Core::extractInstruction() noexcept {
+		// extract the current instruction and then go next
+		auto result = _code[_pc];
+		++_pc;
+		return result;
+	}
+} // end namespace iris

@@ -156,6 +156,7 @@ namespace iris {
 		private:
 			// functions to contain the logic for each opcode
 			void dispatchInstruction(const DecodedInstruction& inst);
+			RawInstruction extractInstruction() noexcept;
 #define X(title, style) void perform ( const title & value );
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
@@ -201,6 +202,7 @@ namespace iris {
 		private:
 			Address _pc;
 			MemoryBlock16 _data, _stack;
+			MemoryBlock32 _code;
 			// IO space is special and is really a mapping to native goings
 			// on!
 			RegisterFile _registers;
