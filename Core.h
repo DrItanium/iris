@@ -80,6 +80,31 @@ namespace iris {
 	using OptionalRegisterIndex = std::optional<RegisterIndex>;
 	using DestinationRegister = OptionalRegisterIndex;
 	using SourceRegister = OptionalRegisterIndex;
+	enum class InstructionGroup : byte {
+#define X(title) title,
+#include "desc/InstructionGroup.desc"
+#undef X
+		Count,
+	};
+	enum class ArithmeticOp : byte {
+#define X(title, style) title,
+#define FirstX(title, style) X(title, style)
+#include "desc/ArithmeticOp.desc"
+#undef FirstX
+#undef X
+		Count,
+	};
+	enum class CompareOp : byte {
+#define X(title, style) title,
+#define FirstX(title, style) X(title, style)
+#include "desc/CompareOp.desc"
+#undef FirstX
+#undef X
+		Count,
+	};
+	static_assert(byte(ArithmeticOp::Count) <= 32, "Too many instructions defined for arithmetic group!");
+	static_assert(byte(CompareOp::Count) <= 32, "Too many instructions defined for compare group!");
+	static_assert(byte(InstructionGroup::Count) <= 8, "Too many instruction groups defined!");
 	/**
 	 * The iris core is a 16-bit harvard architecture that has multiple memory
 	 * spaces. Each of them being 64k words (or double word) each. 
@@ -98,9 +123,6 @@ namespace iris {
 			using RegisterFile = std::unique_ptr<Register[registerCount]>;
 		public:
 			// the different containers for instruction forms are defined here
-			/**
-			 * takes in no arguments
-			 */
 			struct NoArguments final { };
 			struct OneRegister final { 
 				DestinationRegister dest;
@@ -126,7 +148,24 @@ namespace iris {
 				SourceRegister src;
 				byte src2;
 			};
-
+			using DecodedInstruction = std::variant<std::monostate>;
+		private:
+			void decodeArguments(NoArguments&) noexcept;
+			void decodeArguments(OneRegister&) noexcept;
+			void decodeArguments(TwoRegister&) noexcept;
+			void decodeArguments(ThreeRegister&) noexcept;
+			void decodeArguments(Immediate16&) noexcept;
+			void decodeArguments(OneRegisterWithImmediate&) noexcept;
+			void decodeArguments(TwoRegisterWithImmediate&) noexcept;
+			DecodedInstruction decodeInstruction(RawInstruction val) noexcept;
+			RawInstruction encodeArguments(const NoArguments&) noexcept;
+			RawInstruction encodeArguments(const OneRegister&) noexcept;
+			RawInstruction encodeArguments(const TwoRegister&) noexcept;
+			RawInstruction encodeArguments(const ThreeRegister&) noexcept;
+			RawInstruction encodeArguments(const Immediate16&) noexcept;
+			RawInstruction encodeArguments(const OneRegisterWithImmediate&) noexcept;
+			RawInstruction encodeArguments(const TwoRegisterWithImmediate&) noexcept;
+			RawInstruction encodeInstruction(const DecodedInstruction& inst) noexcept;
 		private:
 			Address _pc;
 			MemoryBlock16 _data, _stack;
