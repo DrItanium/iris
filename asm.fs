@@ -1,5 +1,4 @@
 ( assembler words )
-
 : mask-immediate16 ( value -- imm16 ) FFFF# bitwise-andu ;
 : mask-imm8 ( reg -- masked-reg ) FF# bitwise-andu ;
 : position-byte ( reg shift -- reg<<shift ) 
@@ -42,6 +41,25 @@
   swap
   destination-register
   bitwise-oru ;
+
+variable dataLoc 
+variable codeLoc 
+variable stackLoc 
+variable currentsection
+: deflabel ( -- ) variable ;
+: get-current-address ( -- value ) currentsection @ @ ;
+: label-here ( variable -- ) get-current-address swap ! ;
+: current-section-var ( -- value ) currentsection @ ; 
+: set-current-address ( value -- ) mask-immediate16 current-section-var ! ;
+: .code ( -- ) codeLoc currentsection ! ;
+: .data ( -- ) dataLoc currentsection ! ;
+: .stack ( -- ) stackLoc currentsection ! ;
+: .org ( addr -- ) set-current-address ;
+: next-word ( -- ) get-current-address 1+ set-current-address ;
+: section-entry ( section address value -- ) 
+  -rot swap 
+  3drop ( TODO: fix this once we've implemented binary dumping) ;
+: .data16 ( value -- ) mask-immediate16 ;
 
 enum-start
 : AsmNop ( -- n ) literal ;
@@ -171,5 +189,10 @@ enum-done
 : !bcr ( args* -- n ) TwoRegister AsmBranchConditionalIndirect bitwise-oru ;
 : !bcrl ( args* -- n ) ThreeRegister AsmBranchConditionalIndirectLink bitwise-oru ;
 : !terminateExecution ( args* -- n ) OneRegister AsmTerminateExecution bitwise-oru ;
+
+
+.stack 0 .org 
+.data 0 .org
+.code 0 .org
 
 close-input-file
