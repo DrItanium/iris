@@ -180,6 +180,7 @@ namespace iris {
     struct Lexeme : identifier { };
 
 
+
     template<typename Other>
     struct LexemeOr : sor<Lexeme, Other> { };
 
@@ -260,10 +261,33 @@ namespace iris {
     	}
 		Address _value;
 	};
+	struct LabelDirectiveHandler {
+		template<typename Input>
+		LabelDirectiveHandler(const Input& in, AssemblerState& parent) {
+
+		}
+		template<typename Input>
+		void success(const Input& in, AssemblerState& parent) {
+			parent.addLabel(_name);
+		}
+		std::string _name;
+	};
+
+	template<>
+	struct Action<Lexeme> {
+		template<typename Input>
+		static void apply(const Input& in, LabelDirectiveHandler& parent) {
+			parent._name = in.string();
+		}
+	};
 	struct CodeDirective : StatefulSingleEntrySequence<DirectiveCodeHandler, sor<TAOCPP_PEGTL_KEYWORD(".text"), TAOCPP_PEGTL_KEYWORD(".code")>> { };
 	struct DataDirective : StatefulSingleEntrySequence<DirectiveDataHandler, TAOCPP_PEGTL_KEYWORD(".data")> { };
 	struct StackDirective : StatefulSingleEntrySequence<DirectiveStackHandler, TAOCPP_PEGTL_KEYWORD(".stack")> { };
 	struct OrgDirective : TwoPartComponent<TAOCPP_PEGTL_KEYWORD(".org"), StatefulNumberAll<OrgDirectiveHandler>> { };
+	struct LabelDirective : state<LabelDirectiveHandler, TwoPartComponent<TAOCPP_PEGTL_KEYWORD(".label"), Lexeme>> { };
+	// @todo add support for .integer, .address, and label embedding directives
+	// @todo add support for string embedding
+	struct Directive : sor<CodeDirective, DataDirective, StackDirective, OrgDirective, LabelDirective> { };
 
 	template<typename T, typename K>
 	void populateContainer(const std::string& str, T& parent) {
@@ -286,11 +310,11 @@ namespace iris {
 	template<> struct Action < Base10Number > : PopulateNumberType<Decimal> { };
 
 
-    struct Anything : state<AssemblerState, sor<
+    struct Anything : sor<
 		Separator,
 		//Instruction,
-		//Directive,
-		SingleLineComment<';'>>> { };
+		Directive,
+		SingleLineComment<';'>> { };
     struct Main : MainFileParser<Anything> { };
 
 // namespace assembler {
