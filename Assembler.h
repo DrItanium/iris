@@ -53,27 +53,27 @@ namespace iris {
     /**
      * Defines the parsing logic for the iris architecture assembler
      */
-		template<typename R>
-		struct Action : nothing<R> { };
-		struct EndOfLineComment : until<eolf> { };
-		template<char tag>
-		struct SingleLineComment : disable<one<tag>, EndOfLineComment> { };
+	template<typename R>
+	struct Action : nothing<R> { };
+	struct EndOfLineComment : until<eolf> { };
+	template<char tag>
+	struct SingleLineComment : disable<one<tag>, EndOfLineComment> { };
 
-		struct AsmSeparator : plus<ascii::space> { };
-		struct OptionalSpace : star<ascii::space> { };
-		struct SymbolComma : one<','> { };
-		struct SymbolEqualsSign : one<'='> { };
-		struct SymbolLeftParen : one<'('> { };
-		struct SymbolRightParen : one<')'> { };
-		template<typename End, typename Entry>
-		struct MainParser : until<End, must<Entry>> { };
-		template<typename Entry>
-		struct MainFileParser :  MainParser<eof, Entry> { };
-		template<char prefix>
-		struct GenericRegister : if_must<one<prefix>, plus<digit>> { };
+	struct AsmSeparator : plus<ascii::space> { };
+	struct OptionalSpace : star<ascii::space> { };
+	struct SymbolComma : one<','> { };
+	struct SymbolEqualsSign : one<'='> { };
+	struct SymbolLeftParen : one<'('> { };
+	struct SymbolRightParen : one<')'> { };
+	template<typename End, typename Entry>
+	struct MainParser : until<End, must<Entry>> { };
+	template<typename Entry>
+	struct MainFileParser :  MainParser<eof, Entry> { };
+	template<char prefix>
+	struct GenericRegister : if_must<one<prefix>, plus<digit>> { };
 
-		using GPR = GenericRegister<'r'>;
-		
+	using GPR = GenericRegister<'r'>;
+	
 	template<auto count>
 	RegisterIndex getRegisterIndex(const std::string& name) {
 		using T = RegisterIndex;
@@ -203,6 +203,7 @@ namespace iris {
 			return getBinaryImmediate<T>(str);
 		} else if constexpr (std::is_same_v<K, Hexadecimal>) {
 			return getHexImmediate<T>(str);
+		} else if constexpr (std::is_same_v<K, Register>) {
 		} else {
 			static_assert(AlwaysFalse<K>::value, "Provided number kind is not supported!");
 		}
@@ -294,6 +295,12 @@ namespace iris {
 		using A = std::decay_t<T>;
 		if constexpr (std::is_same_v<A, OrgDirectiveHandler>) {
 			parent._value = parseNumber<decltype(parent._value), K>(str);
+		} else if constexpr (std::is_same_v<A, Core::Immediate16>) {
+			parent.imm = parseNumber<decltype(parent.imm), K>(str);
+		} else if constexpr (std::is_same_v<A, Core::OneRegisterWithImmediate>) {
+			parent.imm = parseNumber<decltype(parent.imm), K>(str);
+		} else if constexpr (std::is_same_v<A, Core::TwoRegisterWithImmediate>) {
+			parent.src2 = parseNumber<decltype(parent.src2), K>(str);
 		} else {
 			static_assert(AlwaysFalse<A>::value, "Unsupported type!");
 		}
@@ -304,12 +311,27 @@ namespace iris {
 		static void apply(const I& in, OrgDirectiveHandler& state) {
 			populateContainer<OrgDirectiveHandler, K>(in.string(), state);
 		}
+		template<typename I>
+		static void apply(const I& in, Core::Immediate16& state) {
+			populateContainer<decltype(state), K>(in.string(), state);
+		}
+		template<typename I>
+		static void apply(const I& in, Core::OneRegisterWithImmediate& state) {
+			populateContainer<decltype(state), K>(in.string(), state);
+		}
+		template<typename I>
+		static void apply(const I& in, Core::TwoRegisterWithImmediate& state) {
+			populateContainer<decltype(state), K>(in.string(), state);
+		}
     };
 	template<> struct Action < HexadecimalNumber > : PopulateNumberType<Hexadecimal> { };
 	template<> struct Action < BinaryNumber > : PopulateNumberType<Binary> { };
 	template<> struct Action < Base10Number > : PopulateNumberType<Decimal> { };
-
-
+#define FirstX(c, t, str) class Keyword ## c : TAOCPP_PEGTL_KEYWORD(#str) { };
+#define X(c, t, s) FirstX(c, t, s)
+#include "Opcodes.def"
+#undef X
+#undef FirstX
     struct Anything : sor<
 		Separator,
 		//Instruction,
