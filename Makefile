@@ -14,11 +14,18 @@ SIMULATOR = simiris
 SIMULATOR_OBJECTS = ${ARCH_OBJECTS} \
 					Simulator.o
 
-ALL_BINARIES = ${SIMULATOR}
+LINKER = linkiris
+
+LINKER_OBJECTS = ${ARCH_OBJECTS} \
+				 Linker.o
+
+ALL_BINARIES = ${SIMULATOR} \
+			   ${LINKER}
 
 ALL_OBJECTS = ${ARCH_OBJECTS} \
 			  ${ASSEMBLER_OBJECTS} \
 			  ${SIMULATOR_OBJECTS} \
+			  ${LINKER_OBJECTS} \
 			  ${ALL_BINARIES}
 
 
@@ -31,6 +38,11 @@ docs:
 ${SIMULATOR}: ${SIMULATOR_OBJECTS}
 	@echo LD $@
 	@${CXX} ${LDFLAGS} -o ${SIMULATOR} ${SIMULATOR_OBJECTS}
+
+${LINKER}: ${LINKER_OBJECTS}
+	@echo LD $@
+	@${CXX} ${LDFLAGS} -o ${LINKER} ${LINKER_OBJECTS}
+
 
 options:
 	@echo iris build options:
