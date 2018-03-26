@@ -29,6 +29,7 @@
 #include <memory>
 #include <variant>
 #include <optional>
+#include <type_traits>
 #include "Types.h"
 #include "Problem.h"
 
@@ -121,22 +122,17 @@ namespace iris {
 			void install(Address address, T value, SectionInstallationTarget target) {
 				std::visit([this,address, value](auto&& kind) {
 							using K = std::decay_t<decltype(kind)>;
-							using V = std::decay_t<decltype(value)>;
 							if constexpr (std::is_same_v<K, InstallToRegister>) {
-								static_assert(std::is_same_v<V, Address> || std::is_same_v<V, Integer>, "Registers only accept Addresses or Integers!");
 								if (address >= registerCount) {
 									throw Problem("Illegal register index!");
 								} else {
 									_registers[address].setValue(value);
 								}
 							} else if constexpr (std::is_same_v<K, InstallToCode>) {
-								static_assert(std::is_same_v<V, RawInstruction>, "Code section must be of type RawInstruction!");
 								_code[address] = value;
 							} else if constexpr (std::is_same_v<K, InstallToData>) {
-								static_assert(std::is_same_v<V, Address> || std::is_same_v<V, Integer>, "Data Section only accepts Addresses or Integers!");
 								_data[address] = Number(value);
 							} else if constexpr (std::is_same_v<K, InstallToStack>) {
-								static_assert(std::is_same_v<V, Address> || std::is_same_v<V, Integer>, "Stack Section only accepts Addresses or Integers!");
 								_stack[address] = Number(value);
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");

@@ -29,6 +29,7 @@
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <type_traits>
 
 
 void usage(const std::string& name) {
