@@ -64,20 +64,18 @@ namespace iris {
 			Register();
 			Register(Number initialValue);
 			~Register();
-			virtual void setValue(Number value) noexcept;
+			void setValue(Number value) noexcept;
 			Number getValue() const noexcept { return _value; }
 			bool getTruth() const noexcept { return _value.getTruth(); }
 			template<typename T>
 			T get() const noexcept {
 				return _value.get<T>();
 			}
+			void disableWrites() noexcept { _noWrites = true; }
+			bool writesDisabled() const noexcept { return _noWrites; }
 		private:
 			Number _value;
-	};
-	class HardwiredRegister : public Register {
-		public:
-			using Register::Register;
-			virtual void setValue(Number) noexcept override;
+			bool _noWrites = false;
 	};
 	using RegisterIndex = byte;
 	using DestinationRegister = RegisterIndex;

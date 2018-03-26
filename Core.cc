@@ -72,15 +72,15 @@ namespace iris {
 	constexpr RawInstruction setRegisterPair(RegisterIndex dest, RegisterIndex src, RawInstruction i = 0) noexcept {
 		return setDestinationIndex(dest, setSourceIndex(src, i));
 	}
+	Register::Register() : Register(0) { }
 	Register::Register(Number v) : _value(v) { }
 	Register::~Register() {
 		_value = 0;
 	}
 	void Register::setValue(Number v) noexcept {
-		_value = v;
-	}
-	void HardwiredRegister::setValue(Number) noexcept {
-		// do nothing, ignore writes
+		if (!_noWrites) {
+			_value = v;
+		}
 	}
 
 	Core::Core() : _pc(0) { 
@@ -304,6 +304,8 @@ namespace iris {
 		_keepExecuting = getRegisterValue(op._args.dest).getTruth();
 	}
 
+	DefExec(Nop) { }
+
 #undef DefExec
 	RawInstruction Core::extractInstruction() noexcept {
 		// extract the current instruction and then go next
@@ -373,5 +375,10 @@ namespace iris {
 			_data[i].address = (getAddress());
 			_stack[i].address = (getAddress());
 		}
+	}
+	void Core::init() {
+		// disable writing to register 0
+		_registers[0].setValue(0);
+		_registers[0].disableWrites();
 	}
 } // end namespace iris

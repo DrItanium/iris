@@ -8,15 +8,29 @@ ARCH_OBJECTS = Core.o
 ASSEMBLER_OBJECTS = Assembler.o \
 					AssemblerBase.o
 
+
+SIMULATOR = simiris
+
+SIMULATOR_OBJECTS = ${ARCH_OBJECTS} \
+					Simulator.o
+
+ALL_BINARIES = ${SIMULATOR}
+
 ALL_OBJECTS = ${ARCH_OBJECTS} \
-			  ${ASSEMBLER_OBJECTS}
+			  ${ASSEMBLER_OBJECTS} \
+			  ${SIMULATOR_OBJECTS} \
+			  ${ALL_BINARIES}
 
 
-all: options 
+all: options  ${ALL_BINARIES}
 
 docs: 
 	@echo "running doxygen"
 	@doxygen
+
+${SIMULATOR}: ${SIMULATOR_OBJECTS}
+	@echo LD $@
+	@${CXX} ${LDFLAGS} -o $@ $<
 
 options:
 	@echo iris build options:
