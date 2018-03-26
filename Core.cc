@@ -117,11 +117,11 @@ namespace iris {
 	Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
 		Core::DecodedInstruction tmp;
 		switch (decodeBits<RawInstruction, Opcode, 0x0000'00FF, 0>(i)) {
-#define X(title, style) \
+#define X(title, style, z) \
 			case Opcode :: title : \
 				tmp = Core::title () ; \
 				break;
-#define FirstX(title, style) X(title, style)
+#define FirstX(title, style, z) X(title, style, z)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
