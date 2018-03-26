@@ -133,6 +133,9 @@ namespace iris {
     template<typename Rule>
     struct SingleEntrySequence : seq<Rule> { };
 
+    template<typename State, typename C>
+    struct StatefulSingleEntrySequence : state<State, SingleEntrySequence<C>> { };
+
     template<typename C0, typename C1, typename Separator = AsmSeparator>
     struct TwoPartComponent : seq<C0, Separator, C1> { };
 
@@ -145,12 +148,6 @@ namespace iris {
 
 	template<typename State, typename First, typename Second, typename Third, typename Sep0 = AsmSeparator, typename Sep1 = AsmSeparator>
 	struct StatefulThreePartComponent : state<State, ThreePartComponent<First, Second, Third, Sep0, Sep1>> { };
-
-	template<typename First, typename Second, typename Third, typename Fourth, typename S0 = AsmSeparator, typename S1 = AsmSeparator, typename S2 = AsmSeparator>
-	struct FourPartComponent : seq<First, S0, Second, S1, Third, S2, Fourth> { };
-
-	template<typename State, typename First, typename Second, typename Third, typename Fourth, typename S0 = AsmSeparator, typename S1 = AsmSeparator, typename S2 = AsmSeparator>
-	struct StatefulFourPartComponent : state<State, FourPartComponent<First, Second, Third, Fourth, S0, S1, S2>> { };
 
     template<typename Register>
 	using OneRegister = SingleEntrySequence<Register>;
@@ -192,7 +189,110 @@ namespace iris {
 	struct StatefulNumber : state<S, sor<NumberTypes...>> { };
 
 	template<typename S>
-	struct StatefulNumberAll : StatefulNumber<S, HexadecimalNumber, Base10Number, BinaryNumber> { };
+	struct StatefulNumberAll : StatefulNumber<S, HexadecimalNumber, Base10Number, BinaryNumber> { 
+	};
+	struct Decimal final { };
+	struct Binary final { };
+	struct Hexadecimal final { };
+	template<typename T, typename K>
+	T parseNumber(const std::string& str) {
+		if constexpr (std::is_same_v<K, Decimal>) {
+			return getDecimalImmediate<T>(str);
+		} else if constexpr (std::is_same_v<K, Binary>) {
+			return getBinaryImmediate<T>(str);
+		} else if constexpr (std::is_same_v<K, Hexadecimal>) {
+			return getHexImmediate<T>(str);
+		} else {
+			static_assert(AlwaysFalse<K>::value, "Provided number kind is not supported!");
+		}
+	}
+
+//#define DefAction(rule) template<> struct Action< rule >
+//#define DefApplyGeneric(type) template<typename Input> static void apply(const Input& in, type & state)
+//#define DefApplyGenericEmpty(type) DefApplyGeneric(type) { }
+//        DefAction(Lexeme) {
+//            DefApplyGeneric(AssemblerData) {
+//    			state.hasLexeme = true;
+//    			state.currentLexeme = in.string();
+//            }
+//    		DefApplyGeneric(syn::StringContainer) {
+//    			state.setValue(in.string());
+//    		}
+//    		DefApplyGeneric(syn::NumberOrStringContainer<word>) {
+//				state.setValue(in.string());
+//    		}
+//
+	using Separator = AsmSeparator;
+
+	struct DirectiveCodeHandler {
+		template<typename Input>
+		DirectiveCodeHandler(const Input& in, AssemblerState& parent) {
+			parent.addData(code());
+		}
+		template<typename Input>
+		void success(const Input& in, AssemblerState& parent) {
+			parent.addData(code());
+		}
+	};
+	struct DirectiveDataHandler {
+		template<typename Input>
+		DirectiveDataHandler(const Input& in, AssemblerState& parent) {
+		}
+		template<typename Input>
+		void success(const Input& in, AssemblerState& parent) {
+			parent.addData(data());
+		}
+	};
+	struct DirectiveStackHandler {
+		template<typename Input>
+		DirectiveStackHandler(const Input& in, AssemblerState& parent) { }
+		template<typename Input>
+		void success(const Input& in, AssemblerState& parent) {
+			parent.addData(stack());
+		}
+	};
+	struct OrgDirectiveHandler {
+		template<typename Input>
+		OrgDirectiveHandler(const Input& in, AssemblerState&) { }
+    	template<typename Input>
+    	void success(const Input& in, AssemblerState& parent) {
+			parent.addData(org(_value));
+    	}
+		Address _value;
+	};
+	struct CodeDirective : StatefulSingleEntrySequence<DirectiveCodeHandler, sor<TAOCPP_PEGTL_KEYWORD(".text"), TAOCPP_PEGTL_KEYWORD(".code")>> { };
+	struct DataDirective : StatefulSingleEntrySequence<DirectiveDataHandler, TAOCPP_PEGTL_KEYWORD(".data")> { };
+	struct StackDirective : StatefulSingleEntrySequence<DirectiveStackHandler, TAOCPP_PEGTL_KEYWORD(".stack")> { };
+	struct OrgDirective : TwoPartComponent<TAOCPP_PEGTL_KEYWORD(".org"), StatefulNumberAll<OrgDirectiveHandler>> { };
+
+	template<typename T, typename K>
+	void populateContainer(const std::string& str, T& parent) {
+		using A = std::decay_t<T>;
+		if constexpr (std::is_same_v<A, OrgDirectiveHandler>) {
+			parent._value = parseNumber<decltype(parent._value), K>(str);
+		} else {
+			static_assert(AlwaysFalse<A>::value, "Unsupported type!");
+		}
+	}
+    template<typename K>
+    struct PopulateNumberType {
+		template<typename I>
+		static void apply(const I& in, OrgDirectiveHandler& state) {
+			populateContainer<OrgDirectiveHandler, K>(in.string(), state);
+		}
+    };
+	template<> struct Action < HexadecimalNumber > : PopulateNumberType<Hexadecimal> { };
+	template<> struct Action < BinaryNumber > : PopulateNumberType<Binary> { };
+	template<> struct Action < Base10Number > : PopulateNumberType<Decimal> { };
+
+
+    struct Anything : state<AssemblerState, sor<
+		Separator,
+		//Instruction,
+		//Directive,
+		SingleLineComment<';'>>> { };
+    struct Main : MainFileParser<Anything> { };
+
 // namespace assembler {
 //    	struct HalfImmediateContainer;
 //        struct ImmediateContainer : syn::NumberContainer<word> {
@@ -272,18 +372,6 @@ namespace iris {
 //        using DestinationPredicates = syn::TwoRegister<StatefulRegister<DestinationPredicateRegister>, StatefulRegister<DestinationPredicateInverseRegister>>;
 //
 //    	struct FullImmediateContainer;
-//    	template<syn::KnownNumberTypes t>
-//    	struct PopulateNumberType {
-//    		DefApplyGeneric(ImmediateContainer) {
-//    			syn::populateContainer<word, t>(in.string(), state);
-//    		}
-//    		DefApplyGeneric(FullImmediateContainer) {
-//    			syn::populateContainer<word, t>(in.string(), state);
-//    		}
-//    	};
-//        DefAction(syn::HexadecimalNumber) : PopulateNumberType<syn::KnownNumberTypes::Hexadecimal>{ };
-//        DefAction(syn::BinaryNumber) : PopulateNumberType<syn::KnownNumberTypes::Binary> { };
-//        DefAction(syn::Base10Number) : PopulateNumberType<syn::KnownNumberTypes::Decimal> { };
 //    	template<typename State = ImmediateContainer>
 //        struct Number : syn::StatefulNumberAll<State> { };
 //        using Lexeme = syn::Lexeme;
@@ -1003,42 +1091,7 @@ namespace iris {
 //	struct Action : tao::TAOCPP_PEGTL_NAMESPACE::nothing<R> { };
 //
 //	void reportError(const std::string& msg);
-//	template<typename T>
-//	T parseHex(const std::string& str) {
-//		return getHexImmediate<T>(str, reportError);
-//	}
 //
-//	template<typename T>
-//	T parseBinary(const std::string& str) {
-//		return getBinaryImmediate<T>(str, reportError);
-//	}
-//
-//	template<typename T>
-//	T parseDecimal(const std::string& str) {
-//		return getDecimalImmediate<T>(str, reportError);
-//	}
-//
-//	enum class KnownNumberTypes {
-//		Decimal,
-//		Binary,
-//		Hexadecimal,
-//	};
-//	template<typename T, KnownNumberTypes type>
-//	void populateContainer(const std::string& str, NumberContainer<T>& parent) {
-//		switch(type) {
-//			case KnownNumberTypes::Decimal:
-//				parent.setValue(parseDecimal<T>(str));
-//				break;
-//			case KnownNumberTypes::Hexadecimal:
-//				parent.setValue(parseHex<T>(str));
-//				break;
-//			case KnownNumberTypes::Binary:
-//				parent.setValue(parseBinary<T>(str));
-//				break;
-//			default:
-//				reportError("Unimplemented known number type!");
-//		}
-//	}
 //
 //#define DefAction(rule) template<> struct Action< rule >
 //#define DefApplyGeneric(type) template<typename Input> static void apply(const Input& in, type & state)
