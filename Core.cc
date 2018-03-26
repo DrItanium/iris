@@ -300,8 +300,8 @@ namespace iris {
 		}
 	}
 
-	DefExec(DumpOnShutdown) {
-		_dumpOnShutdown = getRegisterValue(op._args.dest).getTruth();
+	DefExec(TerminateExecution) {
+		_keepExecuting = getRegisterValue(op._args.dest).getTruth();
 	}
 
 #undef DefExec

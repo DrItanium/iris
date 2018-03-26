@@ -114,7 +114,6 @@ namespace iris {
 			void execute();
 			void dump(std::ostream& out);
 			void install(std::istream& in);
-			bool dumpMemory() const noexcept { return _dumpOnShutdown; }
 		public:
 
 			// the different containers for instruction forms are defined here
@@ -228,7 +227,6 @@ namespace iris {
 			// on!
 			RegisterFile _registers;
 			bool _keepExecuting = true;
-			bool _dumpOnShutdown = false;
 
 	};
 }
