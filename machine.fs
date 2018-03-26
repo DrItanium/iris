@@ -1,7 +1,7 @@
 ( machine related words )
-: *register-count* ( -- 256) 256 ;
-: *space-size* ( -- 0x10000) 10000# ;
-: *max-address* ( -- 0xFFFF) *space-size* 1 - ;
+: *register-count* ( -- 256 ) 256 ;
+: *space-size* ( -- 0x10000 ) 10000# ;
+: *max-address* ( -- 0xFFFF ) *space-size* 1- ;
 : *word-size* ( -- 2 ) 2 ;
 : *double-word-size* ( -- n ) *word-size* *word-size* + ;
 
