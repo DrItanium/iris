@@ -30,7 +30,6 @@
 #ifndef IRIS_CORE_ASSEMBLER_H__
 #define IRIS_CORE_ASSEMBLER_H__
 #include "Problem.h"
-#include "AssemblerKeywords.h"
 #include "AssemblerStructures.h"
 
 #include <tao/pegtl.hpp>
