@@ -60,6 +60,7 @@ X(BranchIndirectLink, TwoRegister, brl)
 X(BranchConditional, OneRegisterWithImmediate, bc)
 X(BranchConditionalIndirect, TwoRegister, bcr)
 X(BranchConditionalIndirectLink, ThreeRegister, bcrl)
+X(DumpOnShutdown, OneRegister, dumpOnShutdown)
 
 //X(LoadIO, TwoRegister, ldio)
 //X(StoreIO, TwoRegister, stio)

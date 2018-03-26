@@ -1,6 +1,6 @@
 /*
  * iris
- * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
+ * Copyright (c) 2013-2018, Joshua Scoggins and Contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -300,6 +300,10 @@ namespace iris {
 		}
 	}
 
+	DefExec(DumpOnShutdown) {
+		_dumpOnShutdown = getRegisterValue(op._args.dest).getTruth();
+	}
+
 #undef DefExec
 	RawInstruction Core::extractInstruction() noexcept {
 		// extract the current instruction and then go next
@@ -319,12 +323,7 @@ namespace iris {
 			cycle();
 		}
 	}
-	void Core::init() {
 
-	}
-	void Core::shutdown() {
-
-	}
 	void Core::dump(std::ostream& out) {
 		// start with registers
 		auto putAddress = [&out](Address v) {

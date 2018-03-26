@@ -3,7 +3,7 @@
  * An interface between clips and the iris assembler
  * @copyright
  * iris
- * Copyright (c) 2013-2017, Joshua Scoggins and Contributors
+ * Copyright (c) 2013-2018, Joshua Scoggins and Contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
