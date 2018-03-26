@@ -109,6 +109,11 @@ namespace iris {
 			using RegisterFile = std::unique_ptr<Register[]>;
 		public:
 			Core();
+			void init();
+			void shutdown();
+			void execute();
+			void dump(std::ostream& out);
+			void install(std::istream& in);
 		public:
 
 			// the different containers for instruction forms are defined here
@@ -213,12 +218,15 @@ namespace iris {
 				}
 			}
 		private:
+			void cycle();
+		private:
 			Address _pc;
 			MemoryBlock16 _data, _stack;
 			MemoryBlock32 _code;
 			// IO space is special and is really a mapping to native goings
 			// on!
 			RegisterFile _registers;
+			bool _keepExecuting = true;
 
 	};
 	//class Core : public syn::ClipsCore<word> {
