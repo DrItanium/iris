@@ -26,6 +26,7 @@
 #define TYPES_H__
 #include <cstdint>
 #include <climits>
+#include <type_traits>
 
 #define INDIRECTOR(a, ...) PRIMITIVE_INDIRECTOR(a, __VA_ARGS__)
 #define PRIMITIVE_INDIRECTOR(a, ...) a ## __VA_ARGS__
