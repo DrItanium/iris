@@ -4,3 +4,4 @@
 : enum-next  ( n1 -- n2 n2 ) 1+ dup ;
 : enum-done  ( n1 -- ) drop ;
 
+close-input-file

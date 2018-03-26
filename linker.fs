@@ -7,3 +7,5 @@
 : core-memory-capacity *memory-size* ;
 
 *data32-space-byte-count* *register-byte-count* + *data16-space-byte-count* 2* + resize-memory
+
+close-input-file

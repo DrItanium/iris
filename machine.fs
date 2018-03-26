@@ -9,3 +9,5 @@
 : number-of-bytes-for-space ( s -- c ) *max-address* * ;
 : *data16-space-byte-count* ( -- n ) *word-size* number-of-bytes-for-space ;
 : *data32-space-byte-count* ( -- n ) *double-word-size* number-of-bytes-for-space ;
+
+close-input-file

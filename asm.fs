@@ -63,3 +63,7 @@ enum-next  : asm-bcr ( -- n ) literal ;
 enum-next  : asm-bcrl ( -- n ) literal ;
 enum-next  : asm-terminateExecution ( -- n ) literal ;
 enum-done
+
+
+
+close-input-file
