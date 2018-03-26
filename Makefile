@@ -30,7 +30,7 @@ docs:
 
 ${SIMULATOR}: ${SIMULATOR_OBJECTS}
 	@echo LD $@
-	@${CXX} ${LDFLAGS} -o $@ $<
+	@${CXX} ${LDFLAGS} -o ${SIMULATOR} ${SIMULATOR_OBJECTS}
 
 options:
 	@echo iris build options:

@@ -381,4 +381,7 @@ namespace iris {
 		_registers[0].setValue(0);
 		_registers[0].disableWrites();
 	}
+	void Core::shutdown() {
+
+	}
 } // end namespace iris
