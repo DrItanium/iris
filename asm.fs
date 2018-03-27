@@ -41,11 +41,21 @@
   swap
   destination-register
   bitwise-oru ;
-
+: {asm ( a -- ) {bin ;
+: asm} ( -- ) bin} ;
 variable dataLoc 
 variable codeLoc 
 variable stackLoc 
 variable currentsection
+variable sectionid
+
+{enum
+ : section:register ( -- n ) literal ; enum,
+ : section:code ( -- n ) literal ; enum,
+ : section:data ( -- n ) literal ; enum,
+ : section:stack ( -- n ) literal ;
+enum}
+
 : deflabel ( -- ) variable ;
 : get-current-address ( -- value ) currentsection @ @ ;
 : label-here ( variable -- ) get-current-address swap ! ;
@@ -56,76 +66,75 @@ variable currentsection
 : .stack ( -- ) stackLoc currentsection ! ;
 : .org ( addr -- ) set-current-address ;
 : next-word ( -- ) get-current-address 1+ set-current-address ;
-: section-entry ( section address value -- ) 
-  -rot swap 
-  3drop ( TODO: fix this once we've implemented binary dumping) ;
+: section-entry ( section address value -- ) -rot swap bin<< bin<<q bin<<h ;
 : .data16 ( value -- ) mask-immediate16 ;
 
-enum-start
-: AsmNop ( -- n ) literal ;
-enum-next : AsmAdd ( -- n ) literal ;
-enum-next : AsmSub ( -- n ) literal ;
-enum-next : AsmMul ( -- n ) literal ;
-enum-next : AsmDiv ( -- n ) literal ;
-enum-next : AsmRem ( -- n ) literal ;
-enum-next : AsmShiftLeft ( -- n ) literal ;
-enum-next : AsmShiftRight ( -- n ) literal ;
-enum-next : AsmAnd ( -- n ) literal ;
-enum-next : AsmOr ( -- n ) literal ;
-enum-next : AsmNot ( -- n ) literal ;
-enum-next : AsmXor ( -- n ) literal ;
-enum-next : AsmNand ( -- n ) literal ;
-enum-next : AsmNor ( -- n ) literal ;
-enum-next : AsmAddImmediate ( -- n ) literal ;
-enum-next : AsmSubImmediate ( -- n ) literal ;
-enum-next : AsmMulImmediate ( -- n ) literal ;
-enum-next : AsmDivImmediate ( -- n ) literal ;
-enum-next : AsmRemImmediate ( -- n ) literal ;
-enum-next : AsmShiftLeftImmediate ( -- n ) literal ;
-enum-next : AsmShiftRightImmediate ( -- n ) literal ;
-enum-next : AsmMin ( -- n ) literal ;
-enum-next : AsmMax ( -- n ) literal ;
-enum-next : AsmLogicalXor ( -- n ) literal ;
-enum-next : AsmLogicalNot ( -- n ) literal ;
-enum-next : AsmLogicalAnd ( -- n ) literal ;
-enum-next : AsmLogicalOr ( -- n ) literal ;
-enum-next : AsmLogicalNand ( -- n ) literal ;
-enum-next : AsmLogicalNor ( -- n ) literal ;
-enum-next : AsmEq ( -- n ) literal ;
-enum-next : AsmEqImmediate ( -- n ) literal ;
-enum-next : AsmNeq ( -- n ) literal ;
-enum-next : AsmNeqImmediate ( -- n ) literal ;
-enum-next : AsmLessThan ( -- n ) literal ;
-enum-next : AsmLessThanImmediate ( -- n ) literal ;
-enum-next : AsmGreaterThan ( -- n ) literal ;
-enum-next : AsmGreaterThanImmediate ( -- n ) literal ;
-enum-next : AsmLessThanOrEqualTo ( -- n ) literal ;
-enum-next : AsmLessThanOrEqualToImmediate ( -- n ) literal ;
-enum-next : AsmGreaterThanOrEqualTo ( -- n ) literal ;
-enum-next : AsmGreaterThanOrEqualToImmediate ( -- n ) literal ;
-enum-next : AsmMove ( -- n ) literal ;
-enum-next : AsmSet ( -- n ) literal ;
-enum-next : AsmSwap ( -- n ) literal ;
-enum-next : AsmLoad ( -- n ) literal ;
-enum-next : AsmLoadImmediate ( -- n ) literal ;
-enum-next : AsmLoadWithOffset ( -- n ) literal ;
-enum-next : AsmStore ( -- n ) literal ;
-enum-next : AsmStoreImmediate ( -- n ) literal ;
-enum-next : AsmStoreWithOffset ( -- n ) literal ;
-enum-next : AsmPush ( -- n ) literal ;
-enum-next : AsmPushImmediate ( -- n ) literal ;
-enum-next : AsmPop ( -- n ) literal ;
-enum-next : AsmLoadCode ( -- n ) literal ;
-enum-next : AsmStoreCode ( -- n ) literal ;
-enum-next : AsmBranch ( -- n ) literal ;
-enum-next : AsmBranchAndLink ( -- n ) literal ;
-enum-next : AsmBranchIndirect ( -- n ) literal ;
-enum-next : AsmBranchIndirectLink ( -- n ) literal ;
-enum-next : AsmBranchConditional ( -- n ) literal ;
-enum-next : AsmBranchConditionalIndirect ( -- n ) literal ;
-enum-next : AsmBranchConditionalIndirectLink ( -- n ) literal ;
-enum-next : AsmTerminateExecution ( -- n ) literal ;
-enum-done
+{enum
+: AsmNop ( -- n ) literal ; enum, 
+: AsmAdd ( -- n ) literal ; enum, 
+: AsmSub ( -- n ) literal ; enum, 
+: AsmMul ( -- n ) literal ; enum, 
+: AsmDiv ( -- n ) literal ; enum, 
+: AsmRem ( -- n ) literal ; enum, 
+: AsmShiftLeft ( -- n ) literal ; enum, 
+: AsmShiftRight ( -- n ) literal ; enum, 
+: AsmAnd ( -- n ) literal ; enum, 
+: AsmOr ( -- n ) literal ; enum, 
+: AsmNot ( -- n ) literal ; enum, 
+: AsmXor ( -- n ) literal ; enum, 
+: AsmNand ( -- n ) literal ; enum, 
+: AsmNor ( -- n ) literal ; enum, 
+: AsmAddImmediate ( -- n ) literal ; enum, 
+: AsmSubImmediate ( -- n ) literal ; enum, 
+: AsmMulImmediate ( -- n ) literal ; enum, 
+: AsmDivImmediate ( -- n ) literal ; enum, 
+: AsmRemImmediate ( -- n ) literal ; enum, 
+: AsmShiftLeftImmediate ( -- n ) literal ; enum, 
+: AsmShiftRightImmediate ( -- n ) literal ; enum, 
+: AsmMin ( -- n ) literal ; enum, 
+: AsmMax ( -- n ) literal ; enum, 
+: AsmLogicalXor ( -- n ) literal ; enum, 
+: AsmLogicalNot ( -- n ) literal ; enum, 
+: AsmLogicalAnd ( -- n ) literal ; enum, 
+: AsmLogicalOr ( -- n ) literal ; enum, 
+: AsmLogicalNand ( -- n ) literal ; enum, 
+: AsmLogicalNor ( -- n ) literal ; enum, 
+: AsmEq ( -- n ) literal ; enum, 
+: AsmEqImmediate ( -- n ) literal ; enum, 
+: AsmNeq ( -- n ) literal ; enum, 
+: AsmNeqImmediate ( -- n ) literal ; enum, 
+: AsmLessThan ( -- n ) literal ; enum, 
+: AsmLessThanImmediate ( -- n ) literal ; enum, 
+: AsmGreaterThan ( -- n ) literal ; enum, 
+: AsmGreaterThanImmediate ( -- n ) literal ; enum, 
+: AsmLessThanOrEqualTo ( -- n ) literal ; enum, 
+: AsmLessThanOrEqualToImmediate ( -- n ) literal ; enum, 
+: AsmGreaterThanOrEqualTo ( -- n ) literal ; enum, 
+: AsmGreaterThanOrEqualToImmediate ( -- n ) literal ; enum, 
+: AsmMove ( -- n ) literal ; enum, 
+: AsmSet ( -- n ) literal ; enum, 
+: AsmSwap ( -- n ) literal ; enum, 
+: AsmLoad ( -- n ) literal ; enum, 
+: AsmLoadImmediate ( -- n ) literal ; enum, 
+: AsmLoadWithOffset ( -- n ) literal ; enum, 
+: AsmStore ( -- n ) literal ; enum, 
+: AsmStoreImmediate ( -- n ) literal ; enum, 
+: AsmStoreWithOffset ( -- n ) literal ; enum, 
+: AsmPush ( -- n ) literal ; enum, 
+: AsmPushImmediate ( -- n ) literal ; enum, 
+: AsmPop ( -- n ) literal ; enum, 
+: AsmLoadCode ( -- n ) literal ; enum, 
+: AsmStoreCode ( -- n ) literal ; enum, 
+: AsmBranch ( -- n ) literal ; enum, 
+: AsmBranchAndLink ( -- n ) literal ; enum, 
+: AsmBranchIndirect ( -- n ) literal ; enum, 
+: AsmBranchIndirectLink ( -- n ) literal ; enum, 
+: AsmBranchConditional ( -- n ) literal ; enum, 
+: AsmBranchConditionalIndirect ( -- n ) literal ; enum, 
+: AsmBranchConditionalIndirectLink ( -- n ) literal ; enum, 
+: AsmTerminateExecution ( -- n ) literal ;
+enum}
+
 : !nop ( args* -- n ) NoArguments AsmNop bitwise-oru ;
 : !add ( args* -- n ) ThreeRegister AsmAdd bitwise-oru ;
 : !sub ( args* -- n ) ThreeRegister AsmSub bitwise-oru ;
