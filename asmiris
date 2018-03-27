@@ -1,5 +1,18 @@
 #!/bin/bash
-
+function usage {
+    echo 
+    echo "asmiris <input-file> <output-file>"
+    echo
+}
+function leave {
+    exit 1
+}
+if [ -z "$1" ] || [ -z "$2" ] ; then
+    usage
+    leave
+fi
+SOURCE="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT=$SOURCE
 INPUT_FILE=$1
 OUTPUT_FILE=$2
-echo " \" $INPUT_FILE\" \" $OUTPUT_FILE\" assemble quit " | misc/forth_interpreter/forth asmiris.fs 
+echo " \" $INPUT_FILE\" \" $OUTPUT_FILE\" assemble bye " | $ROOT/misc/forth_interpreter/forth $ROOT/asmiris.fs 
