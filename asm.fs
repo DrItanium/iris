@@ -289,6 +289,7 @@ enum}
 ( aliases )
 : zero ( -- n ) r0 ; : sp ( -- n ) r1 ; : lr ( -- n ) r2 ; : t0 ( -- n ) r3 ;
 : t1 ( -- n ) r4 ;   : t2 ( -- n ) r5 ; : t3 ( -- n ) r6 ; : t4 ( -- n ) r7 ;
+: sp2 ( -- n ) r8 ; 
 
 
 .stack 0 .org 
