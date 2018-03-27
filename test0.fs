@@ -9,6 +9,7 @@
     0 zero !set
     zero sp2 !move
     7FFF# sp !set
+    r0 !terminateExecution
 asm}
 close-input-file
 
