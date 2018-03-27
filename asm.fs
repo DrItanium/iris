@@ -87,8 +87,7 @@ enum}
   in-section:stack?    if stack! then, else 
   2drop " can't install into unknown section" .  CR then then then then ;
 
-
-
+: assemble ( in out -- ) swap open-input-file ;
 
 {enum
 : AsmNop ( -- n ) literal ; enum, 
