@@ -8,31 +8,45 @@ deflabel ShutdownProcessor
 deflabel OperationAdd
 deflabel OperationSubtract
 deflabel JumpTableStart
+deflabel JumpTableLocation
 deflabel OperationMultiply
+: increment-variable ( var -- ) 
+  dup ( var var )
+  @ ( var value ) 
+  1+ ( var value+1 )
+  swap ( value+1 var )
+  ! ;
+: jump-table-entry ( n -- ) 
+  .data 
+  JumpTableLocation .org@ 
+  .data16 
+  JumpTableLocation increment-variable ;
+
+: {func ( l -- ) dup label-here jump-table-entry ;
+: func} ( -- ) !return ;
 {asm 
+.data 
+0000# .org
+JumpTableStart label-here
+JumpTableLocation label-here
+7FFF# sp register!
+0 zero register!
+0 sp2 register!
 .code
-    0 zero !set
-    zero sp2 !move
-    7FFF# sp !set
-ShutdownProcessor label-here
-    args1 !terminateExecution
+ShutdownProcessor {func 
+    args1 !terminateExecution 
+    func}
 OperationAdd {func 
-   args3 !add 
-   func}
+    args3 !add
+    func}
 OperationSubtract {func
    args3 !sub
    func}
 OperationMultiply {func
    args3 !mul
    func}
-.data 
-FF00# .org
-JumpTableStart label-here
-    ShutdownProcessor .data16
-    OperationAdd .data16
-    OperationSubtract .data16
-    OperationMultiply .data16
-    0 .data16
+JumpTableStart @ jump-table-start register!
+JumpTableEnd @ jump-table-end register!
 asm}
 close-input-file
 
