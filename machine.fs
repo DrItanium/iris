@@ -11,12 +11,12 @@
 : *data32-space-byte-count* ( -- n ) *double-word-size* number-of-bytes-for-space ;
 
 : get-lower8 ( i -- n ) FF# bitwise-andu ;
-: get-lower16 ( i -- n ) FFFF# bitwise-andu;
+: get-lower16 ( i -- n ) FFFF# bitwise-andu ;
 : decode-byte ( i pos -- reg ) 8 * >>u get-lower8 ;
 : decode-word ( i pos -- immediate ) 16 * >>u get-lower16 ;
 
 : decode-opcode ( i -- opcode ) get-lower8 ;
-: decode-destination ( i -- n ) 1 decode-byte;
+: decode-destination ( i -- n ) 1 decode-byte ;
 : decode-source ( i -- n ) 2 decode-byte ;
 : decode-source2 ( i -- n ) 3 decode-byte ;
 : decode-imm8 ( i -- n ) decode-source2 ;
@@ -43,7 +43,7 @@
 
 : decode-one-register-with-immediate ( i -- imm16 dest ) 
   dup ( i i )
-  decode-immediate-only ( i imm16 );
+  decode-immediate-only ( i imm16 )
   swap ( imm16 i )
   decode-destination ( imm16 dest ) ;
 
