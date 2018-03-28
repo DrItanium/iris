@@ -38,6 +38,10 @@ JumpTableLocation label-here
 0 zero register!
 0 sp2 register!
 .code
+1 jump-table-end arg0 !subi
+jump-table-start t0 !ld
+lr t0 !brl
+0100# .org
 TableCall {func 
     lr sp2 !push \ save the link register to the subroutine stack
     jump-table-start arg0 t0 !add \ first we need to combine the jump-table-start with arg0
@@ -65,9 +69,6 @@ OperationDuplicate {func
     OperationPushParameter @ lr !bl
     sp2 lr !pop
     func}
-ShutdownProcessor {func 
-    args1 !terminateExecution 
-    func}
 OperationAdd {func 
     args3 !add
     func}
@@ -77,6 +78,11 @@ OperationSubtract {func
 OperationMultiply {func
    args3 !mul
    func}
+ShutdownProcessor {func 
+    args1 !terminateExecution 
+    func}
+.code 0000# .org
+
 JumpTableStart @ jump-table-start register!
 JumpTableLocation @ jump-table-end register!
 asm}
