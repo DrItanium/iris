@@ -288,7 +288,16 @@ enum}
 ( aliases )
 : zero ( -- n ) r0 ; : sp ( -- n ) r1 ; : lr ( -- n ) r2 ; : t0 ( -- n ) r3 ;
 : t1 ( -- n ) r4 ;   : t2 ( -- n ) r5 ; : t3 ( -- n ) r6 ; : t4 ( -- n ) r7 ;
-: sp2 ( -- n ) r8 ; 
+: sp2 ( -- n ) r8 ;  : arg0 ( -- n ) r9 ; : arg1 ( -- n ) r10 ; : arg2 ( -- n ) r11 ;
+: arg3 ( -- n ) r12 ; : ret0 ( -- n ) r13 ; : ret1 ( -- n ) r14 ;
+: !return ( -- ) lr !br ;
+
+: {func ( l -- ) label-here ;
+: func} ( -- ) !return ;
+
+: args1 ( -- r0 ) ret0 ;
+: args2 ( -- a0 r0 ) arg0 args1 ;
+: args3 ( -- a1 a0 r0 ) arg1 args2 ;
 
 
 .stack 0 .org 
