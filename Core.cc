@@ -166,7 +166,12 @@ namespace iris {
 #define DefExec(title) \
 	void Core::perform ( const Core:: title & op ) 
 	DefExec(Add) { setDestination(op, getSource(op).integer + getSource2(op).integer); }
-	DefExec(Sub) { setDestination(op, getSource(op).integer - getSource2(op).integer); }
+	DefExec(Sub) { 
+        auto a = getSource(op).integer;
+        auto b = getSource2(op).integer;
+        auto c = a - b;
+        setDestination(op, c);
+    }
 	DefExec(Mul) { setDestination(op, getSource(op).integer * getSource2(op).integer); }
 	DefExec(Div) { setDestination(op, getSource(op).integer / getSource2(op).integer); }
 	DefExec(Rem) { setDestination(op, getSource(op).integer % getSource2(op).integer); }
@@ -371,11 +376,14 @@ namespace iris {
 		for (int i = 0; i < Core::registerCount; ++i) {
 			_registers[i].setValue(Number(getAddress()));
 		}
-		for (int i = 0; i < Core::maxAddress; ++i) {
-			_code[i] = getDoubleAddress();
-			_data[i].address = (getAddress());
-			_stack[i].address = (getAddress());
-		}
+        auto walkThroughSection = [](auto fn) {
+            for (int i = 0; i < Core::maxAddress; ++i) {
+                fn(i);
+            }
+        };
+        walkThroughSection([this, getDoubleAddress](int i) { _code[i] = getDoubleAddress(); });
+        walkThroughSection([this, getAddress](int i) { _data[i].address = getAddress(); });
+        walkThroughSection([this, getAddress](int i) { _stack[i].address = getAddress(); });
 	}
 	void Core::init() {
 		// disable writing to register 0

@@ -37,7 +37,7 @@ namespace iris {
 	union Number {
 		Number(Address a = 0) : address(a) { }
 		Number(bool value) : integer(value ? -1 : 0 ) { }
-		Number(byte b) : address(b) { }
+		Number(byte b) : Number(Address(b) & 0xFF) { }
 		Number(int i) : integer(Integer(i)) { }
 		Number(unsigned int i ) : address(Address(i)) { }
 		Number(Integer i) : integer(i) { }
