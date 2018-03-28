@@ -66,6 +66,7 @@ enum}
 : .data ( -- ) dataLoc currentsection ! section:data set-current-section ;
 : .stack ( -- ) stackLoc currentsection ! section:stack set-current-section ;
 : .org ( addr -- ) set-current-address ;
+: .org@ ( var -- ) @ .org ;
 : next-word ( -- ) get-current-address 1+ .org ;
 : then,     ( -- ) next-word ;
 : section-entry ( value address section -- ) bin<<q bin<<q bin<<h ;
@@ -286,14 +287,19 @@ enum}
 : r248 ( -- 248 ) 248 ; : r249 ( -- 249 ) 249 ; : r250 ( -- 250 ) 250 ; : r251 ( -- 251 ) 251 ;
 : r252 ( -- 252 ) 252 ; : r253 ( -- 253 ) 253 ; : r254 ( -- 254 ) 254 ; : r255 ( -- 255 ) 255 ;
 ( aliases )
+: system-register-start ( -- n ) r0 ;
 : zero ( -- n ) r0 ; : sp ( -- n ) r1 ; : lr ( -- n ) r2 ; : t0 ( -- n ) r3 ;
 : t1 ( -- n ) r4 ;   : t2 ( -- n ) r5 ; : t3 ( -- n ) r6 ; : t4 ( -- n ) r7 ;
 : sp2 ( -- n ) r8 ;  : arg0 ( -- n ) r9 ; : arg1 ( -- n ) r10 ; : arg2 ( -- n ) r11 ;
-: arg3 ( -- n ) r12 ; : ret0 ( -- n ) r13 ; : ret1 ( -- n ) r14 ;
+: arg3 ( -- n ) r12 ; : ret0 ( -- n ) r13 ; : ret1 ( -- n ) r14 ; 
+: jump-table-start ( -- n ) r15 ; : jump-table-end ( -- n ) r16 ;
+: system-register-end ( -- n ) r63 ;
+
+
+: user-variable-start ( -- n ) r64 ;
+: user-variable-end ( -- n ) r255 ;
 : !return ( -- ) lr !br ;
 
-: {func ( l -- ) label-here ;
-: func} ( -- ) !return ;
 
 : args1 ( -- r0 ) ret0 ;
 : args2 ( -- a0 r0 ) arg0 args1 ;
