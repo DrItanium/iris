@@ -10,6 +10,11 @@ deflabel OperationSubtract
 deflabel JumpTableStart
 deflabel JumpTableLocation
 deflabel OperationMultiply
+deflabel TableCall
+deflabel OperationPopParameter
+deflabel OperationPushParameter
+deflabel OperationDrop
+deflabel OperationDuplicate
 : increment-variable ( var -- ) 
   dup ( var var )
   @ ( var value ) 
@@ -33,6 +38,33 @@ JumpTableLocation label-here
 0 zero register!
 0 sp2 register!
 .code
+TableCall {func 
+    lr sp2 !push \ save the link register to the subroutine stack
+    jump-table-start arg0 t0 !add \ first we need to combine the jump-table-start with arg0
+    t0 t1 !ld \ load the actual stored address
+    lr t1 !brl \ perform the indirect call
+    sp2 lr !pop \ restore before returning
+    func}
+OperationPopParameter {func 
+    sp ret0 !pop \ get the top of the stack
+    func}
+OperationPushParameter {func
+    arg0 sp !push \ push onto the top of the stack
+    func}
+OperationDrop {func
+    lr sp2 !push \ save the link register to the subroutine stack
+    OperationPopParameter @ lr !bl \ call pop parameter
+    zero ret0 !move \ delete the contents
+    sp2 lr !pop 
+    func}
+OperationDuplicate {func 
+    lr sp2 !push \ save link register
+    OperationPopParameter @ lr !bl 
+    ret0 arg0 !move
+    OperationPushParameter @ lr !bl
+    OperationPushParameter @ lr !bl
+    sp2 lr !pop
+    func}
 ShutdownProcessor {func 
     args1 !terminateExecution 
     func}
@@ -46,7 +78,7 @@ OperationMultiply {func
    args3 !mul
    func}
 JumpTableStart @ jump-table-start register!
-JumpTableEnd @ jump-table-end register!
+JumpTableLocation @ jump-table-end register!
 asm}
 close-input-file
 
