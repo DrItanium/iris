@@ -337,16 +337,17 @@ namespace iris {
 			putAddress(decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(v));
 		};
 		auto putRegister = [putAddress](const Register& reg) { putAddress(reg.getValue().address); };
+        auto walkThroughSection = [](auto fn) {
+            for (int i = 0; i < Core::maxAddress; ++i) {
+                fn(i);
+            }
+        };
 		for (int i = 0; i < Core::registerCount; ++i) {
 			putRegister(_registers[i]);
 		}
-		for (int i = 0; i < Core::maxAddress; ++i) {
-			// interleave the data, it is then nearly impossible to hex edit
-			// but cuts down on repetitive code
-			putDoubleAddress(_code[i]);
-			putAddress(_data[i].get<Address>());
-			putAddress(_stack[i].get<Address>());
-		}
+        walkThroughSection([this, putDoubleAddress](int i) { putDoubleAddress(_code[i]); });
+        walkThroughSection([this, putAddress](int i) { putAddress(_data[i].get<Address>()); });
+        walkThroughSection([this, putAddress](int i) { putAddress(_stack[i].get<Address>()); });
 	}
 	void Core::install(std::istream& in) {
 		auto getByte = [&in]() {

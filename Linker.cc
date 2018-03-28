@@ -79,7 +79,10 @@ int main(int argc, char** argv) {
 		};
 		while (in) {
 			// read each entry to see what to do with it
-			auto section = getByte();
+			auto section = getAddress();
+            if (in.gcount() == 0) {
+                break;
+            }
 			auto address = getAddress();
 			auto value = getDoubleAddress();
 			auto lowerHalf = iris::decodeBits<decltype(value), iris::Address, 0x0000'FFFF, 0>(value);
@@ -101,11 +104,6 @@ int main(int argc, char** argv) {
 					std::cerr << "\tThe culprint file is: " << path << std::endl;
 					return 1;
 			}
-		}
-		if (in.fail()) {
-			std::cerr << "An error occurred while installing section entries, terminating..." << std::endl;
-			std::cerr << "\tThe culprit file is: " << path << std::endl;
-			return 1;
 		}
 		if (in.bad()) {
 			std::cerr << "A really bad error occurred while installing section entries, terminating..." << std::endl;
