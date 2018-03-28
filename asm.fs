@@ -68,7 +68,7 @@ enum}
 : .org ( addr -- ) set-current-address ;
 : next-word ( -- ) get-current-address 1+ .org ;
 : then,     ( -- ) next-word ;
-: section-entry ( value address section -- ) bin<< bin<<q bin<<h ;
+: section-entry ( value address section -- ) bin<<q bin<<q bin<<h ;
 : known-section-entry ( value address -- ) sectionid @ section-entry ;
 : register! ( value address -- ) .register known-section-entry ;
 : stack! ( value address -- ) .stack known-section-entry ;
