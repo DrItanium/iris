@@ -239,7 +239,11 @@ namespace iris {
 		}
 	}
 	DefExec(Set) { setDestination(op, op._args.imm); }
-	DefExec(Load) { setDestination(op, _data[getRegisterValue(op._args.src).address]); }
+	DefExec(Load) { 
+        auto addr = getRegisterValue(op._args.src).address;
+        auto value = _data[addr];
+        setDestination(op, value);
+    }
 	DefExec(LoadImmediate) { setDestination(op, _data[op._args.imm]); }
 	DefExec(LoadWithOffset) { setDestination(op, _data[getSource(op).address + getSource2(op).address]); }
 	DefExec(Store) { _data[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
@@ -250,14 +254,14 @@ namespace iris {
 		_data[base + offset] = getSource(op);
 	}
 	DefExec(Push) {
-		auto stackAddress = getRegisterValue(op._args.dest).address - 1;
-		auto value = getSource(op).address;
+		Address stackAddress = getRegisterValue(op._args.dest).address - 1;
+		Address value = getSource(op).address;
 		_stack[stackAddress] = value;
 		setRegister(op._args.dest, stackAddress);
 	}
 	DefExec(PushImmediate) {
-		auto stackAddress = getRegisterValue(op._args.dest).address - 1;
-		auto value = op._args.imm;
+		Address stackAddress = getRegisterValue(op._args.dest).address - 1;
+		Address value = op._args.imm;
 		_stack[stackAddress] = value;
 		setRegister(op._args.dest, stackAddress);
 	}

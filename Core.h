@@ -236,7 +236,8 @@ namespace iris {
 			}
 			template<typename T>
 			Number getSource2(const T& value) const noexcept {
-				if constexpr (std::is_same_v<T, TwoRegisterWithImmediate>) {
+                using K = decltype(value._args);
+				if constexpr (std::is_same_v<K, TwoRegisterWithImmediate>) {
 					return Number(value._args.src2);
 				} else {
 					return getRegister(value._args.src2).getValue();
