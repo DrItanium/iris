@@ -245,14 +245,8 @@ namespace iris {
         setDestination(op, value);
     }
 	DefExec(LoadImmediate) { setDestination(op, _data[op._args.imm]); }
-	DefExec(LoadWithOffset) { setDestination(op, _data[getSource(op).address + getSource2(op).address]); }
 	DefExec(Store) { _data[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
 	DefExec(StoreImmediate) { _data[getRegisterValue(op._args.dest).address] = op._args.imm; }
-	DefExec(StoreWithOffset) { 
-		auto base = getRegisterValue(op._args.dest).address;
-		auto offset = getSource2(op).address;
-		_data[base + offset] = getSource(op);
-	}
 	DefExec(Push) {
 		Address stackAddress = getRegisterValue(op._args.dest).address - 1;
 		Address value = getSource(op).address;
@@ -314,8 +308,27 @@ namespace iris {
 	}
 
 	DefExec(Nop) { }
-
+    DefExec(LoadIO) {
+        auto addr = getSource(op).address;
+        for (auto& a : _io) {
+            if (a.respondsTo(addr)) {
+                setDestination(op, a.read(addr));
+            }
+        }
+    }
+    DefExec(StoreIO) {
+        auto addr = getRegisterValue(op._args.dest).address;
+        auto value = getSource(op).address;
+        for (auto& a : _io) {
+            if (a.respondsTo(addr)) {
+                a.write(addr, value);
+            }
+        }
+    }
 #undef DefExec
+    void Core::installIODevice(Core::IODevice dev) {
+        _io.emplace_back(dev);
+    }
 	RawInstruction Core::extractInstruction() noexcept {
 		// extract the current instruction and then go next
 		auto result = _code[_pc];
@@ -389,10 +402,54 @@ namespace iris {
         walkThroughSection([this, getAddress](int i) { _data[i].address = getAddress(); });
         walkThroughSection([this, getAddress](int i) { _stack[i].address = getAddress(); });
 	}
+    Address Core::IODevice::read(Address addr) {
+        if (_read) {
+            return _read(addr - _begin);
+        } else {
+            return 0;
+        }
+    }
+    void Core::IODevice::write(Address addr, Address value) {
+        if (_write) {
+            _write(addr - _begin, value);
+        }
+    }
+    bool Core::IODevice::respondsTo(Address addr) const noexcept {
+        return (addr >= _begin) && (addr < _end);
+    }
+    Address readFromStandardIn(Address index) {
+        if (index == 0) {
+            return Address(byte(char(std::cin.get())));
+        } else {
+            // doesn't make sense to do this
+            return 0;
+        }
+    }
+    void writeToStandardOut(Address index, Address value) {
+        if (index == 0) {
+            std::cout << char(value);
+        } else if (index == 1) {
+            // control setup / extra actions
+            switch (value) {
+                case 0: // perform a flush
+                    std::cout.flush();
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            throw Problem("Unimplemented address!");
+        }
+    }
 	void Core::init() {
 		// disable writing to register 0
 		_registers[0].setValue(0);
 		_registers[0].disableWrites();
+        // setup the basic IO device for console input output
+        IODevice sink(0);
+        IODevice console(1, 2, readFromStandardIn, writeToStandardOut);
+        installIODevice(sink);
+        installIODevice(console);
 	}
 	void Core::shutdown() {
 

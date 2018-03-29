@@ -137,10 +137,8 @@ enum}
 : AsmSwap ( -- n ) literal ; enum, 
 : AsmLoad ( -- n ) literal ; enum, 
 : AsmLoadImmediate ( -- n ) literal ; enum, 
-: AsmLoadWithOffset ( -- n ) literal ; enum, 
 : AsmStore ( -- n ) literal ; enum, 
 : AsmStoreImmediate ( -- n ) literal ; enum, 
-: AsmStoreWithOffset ( -- n ) literal ; enum, 
 : AsmPush ( -- n ) literal ; enum, 
 : AsmPushImmediate ( -- n ) literal ; enum, 
 : AsmPop ( -- n ) literal ; enum, 
@@ -153,7 +151,9 @@ enum}
 : AsmBranchConditional ( -- n ) literal ; enum, 
 : AsmBranchConditionalIndirect ( -- n ) literal ; enum, 
 : AsmBranchConditionalIndirectLink ( -- n ) literal ; enum, 
-: AsmTerminateExecution ( -- n ) literal ;
+: AsmTerminateExecution ( -- n ) literal ; enum,
+: AsmLoadIO ( -- n ) literal ; enum,
+: AsmStoreIO ( -- n ) literal ; enum,
 enum}
 
 : code<< ( a b -- ) .code asm<< ;
@@ -204,10 +204,8 @@ enum}
 : !swap ( args* -- n ) TwoRegister AsmSwap finish-op code<< ;
 : !ld ( args* -- n ) TwoRegister AsmLoad finish-op code<< ;
 : !ldi ( args* -- n ) OneRegisterWithImmediate AsmLoadImmediate finish-op code<< ;
-: !ldwo ( args* -- n ) TwoRegisterWithImmediate AsmLoadWithOffset finish-op code<< ;
 : !st ( args* -- n ) TwoRegister AsmStore finish-op code<< ;
 : !sti ( args* -- n ) OneRegisterWithImmediate AsmStoreImmediate finish-op code<< ;
-: !stwo ( args* -- n ) TwoRegisterWithImmediate AsmStoreWithOffset finish-op code<< ;
 : !push ( args* -- n ) TwoRegister AsmPush finish-op code<< ;
 : !pushi ( args* -- n ) OneRegisterWithImmediate AsmPushImmediate finish-op code<< ;
 : !pop ( args* -- n ) TwoRegister AsmPop finish-op code<< ;
@@ -221,6 +219,8 @@ enum}
 : !bcr ( args* -- n ) TwoRegister AsmBranchConditionalIndirect finish-op code<< ;
 : !bcrl ( args* -- n ) ThreeRegister AsmBranchConditionalIndirectLink finish-op code<< ;
 : !terminateExecution ( args* -- n ) OneRegister AsmTerminateExecution finish-op code<< ;
+: !ldio ( args* -- n ) TwoRegister AsmLoadIO finish-op code<< ;
+: !stio ( args* -- n ) TwoRegister AsmStoreIO finish-op code<< ;
 
 : r0 ( -- 0 ) 0 ; : r1 ( -- 1 ) 1 ; : r2 ( -- 2 ) 2 ; : r3 ( -- 3 ) 3 ;
 : r4 ( -- 4 ) 4 ; : r5 ( -- 5 ) 5 ; : r6 ( -- 6 ) 6 ; : r7 ( -- 7 ) 7 ;

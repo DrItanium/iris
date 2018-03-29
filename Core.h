@@ -29,7 +29,9 @@
 #include <memory>
 #include <variant>
 #include <optional>
+#include <functional>
 #include <type_traits>
+#include <list>
 #include "Types.h"
 #include "Problem.h"
 
@@ -139,6 +141,27 @@ namespace iris {
 							}
 						}, target);
 			}
+            using IOWriter = std::function<void(Address, Address)>;
+            using IOReader = std::function<Address(Address)>;
+            class IODevice {
+                public:
+                    IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : 
+                        _begin(responseBegin), 
+                        _end(length + responseBegin),
+                        _read(read), 
+                        _write(write) { }
+                    IODevice(const IODevice& other) : _begin(other._begin), _end(other._end), _read(other._read), _write(other._write) { }
+                    ~IODevice() = default;
+                    bool respondsTo(Address addr) const noexcept;
+                    Address read(Address addr);
+                    void write(Address addr, Address value);
+                private:
+                    Address _begin;
+                    Address _end;
+                    IOReader _read;
+                    IOWriter _write;
+            };
+            void installIODevice(IODevice device);
 		public:
 
 			// the different containers for instruction forms are defined here
@@ -253,6 +276,7 @@ namespace iris {
 			// on!
 			RegisterFile _registers;
 			bool _keepExecuting = true;
+            std::list<IODevice> _io;
 
 	};
 }
