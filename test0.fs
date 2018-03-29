@@ -4,17 +4,8 @@
     even be parsed so it is like a giant comment block there
 )
 : .data16 ( value -- ) dup variable? if @ then mask-immediate16 asm<< ;
-deflabel ShutdownProcessor
-deflabel OperationAdd
-deflabel OperationSubtract
 deflabel JumpTableStart
 deflabel JumpTableLocation
-deflabel OperationMultiply
-deflabel TableCall
-deflabel OperationPopParameter
-deflabel OperationPushParameter
-deflabel OperationDrop
-deflabel OperationDuplicate
 : increment-variable ( var -- ) 
   dup ( var var )
   @ ( var value ) 
@@ -27,14 +18,20 @@ deflabel OperationDuplicate
   .data16 
   JumpTableLocation increment-variable ;
 
-: {func ( l -- ) dup label-here jump-table-entry ;
-: func} ( -- ) !return ;
+: func: ( l -- ) dup label-here jump-table-entry ;
+: func; ( -- ) !return ;
+: !pop2 ( dlower dtop -- ) 
+  \ pop the top two items from the stack
+  !top ( dlower )
+  !top ;
 {asm 
 .data 
 0000# .org
 JumpTableStart label-here
 JumpTableLocation label-here
 7FFF# sp register!
+7FFF# sp-bottom register!
+0 sp2-bottom register!
 0 zero register!
 0 sp2 register!
 .code
@@ -42,45 +39,116 @@ JumpTableLocation label-here
 jump-table-start t0 !ld
 lr t0 !brl
 0100# .org
-TableCall {func 
-    lr sp2 !push \ save the link register to the subroutine stack
-    jump-table-start arg0 t0 !add \ first we need to combine the jump-table-start with arg0
-    t0 t1 !ld \ load the actual stored address
-    lr t1 !brl \ perform the indirect call
-    sp2 lr !pop \ restore before returning
-    func}
-OperationPopParameter {func 
-    sp ret0 !pop \ get the top of the stack
-    func}
-OperationPushParameter {func
-    arg0 sp !push \ push onto the top of the stack
-    func}
-OperationDrop {func
-    lr sp2 !push \ save the link register to the subroutine stack
-    OperationPopParameter @ lr !bl \ call pop parameter
-    zero ret0 !move \ delete the contents
-    sp2 lr !pop 
-    func}
-OperationDuplicate {func 
-    lr sp2 !push \ save link register
-    OperationPopParameter @ lr !bl 
-    ret0 arg0 !move
-    OperationPushParameter @ lr !bl
-    OperationPushParameter @ lr !bl
-    sp2 lr !pop
-    func}
-OperationAdd {func 
-    args3 !add
-    func}
-OperationSubtract {func
-   args3 !sub
-   func}
-OperationMultiply {func
-   args3 !mul
-   func}
-ShutdownProcessor {func 
+deflabel TableCall
+TableCall func: 
+    jump-table-start arg0 t4 !add \ first we need to combine the jump-table-start with arg0
+                                  \ load the actual stored address
+    t4 indirect-register !br      \ perform the indirect jump
+    func;
+deflabel OperationDuplicate
+OperationDuplicate func: 
+    arg0 !top
+    arg0 !save-param
+    arg0 !save-param
+    func;
+deflabel OperationOver
+OperationOver func:
+    ( a b -- a b a )
+    arg1 arg0 !pop2 
+    arg1 !save-param
+    arg0 !save-param
+    arg1 !save-param
+    func;
+deflabel OperationRotate
+OperationRotate func:
+   ( a b c -- b c a )
+   arg1 arg0 !pop2
+   arg2 !top \ a
+   arg1 !save-param \ b
+   arg0 !save-param \ c
+   arg2 !save-param \ a
+   func;
+deflabel OperationSwap
+OperationSwap func: 
+   ( a b -- b a )
+   arg1 arg0 !pop2
+   arg0 !save-param
+   arg1 !save-param 
+   func;
+deflabel ClearParameterStack
+ClearParameterStack func: 
+   sp-bottom sp !move 
+func;
+deflabel ClearSubroutineStack
+ClearSubroutineStack func:
+    sp2-bottom sp2 !move
+func;
+
+deflabel ClearStacks
+ClearStacks func:
+    ClearParameterStack @ !call 
+    ClearSubroutineStack @ !call 
+func;
+
+deflabel OperationReverseRotate
+OperationReverseRotate func:
+    OperationRotate @ !call
+    OperationRotate @ !call
+    func;
+
+deflabel OperationLoad
+OperationLoad func:
+    ( addr - value )
+    arg0 !top
+    arg0 ret0 !ld
+    ret0 !save-param
+    func;
+
+deflabel OperationStore
+OperationStore func:
+    ( src dest -- )
+    arg0 !top \ dest
+    arg1 !top \ src
+    arg1 arg0 !st \ perform the store
+    func;
+
+deflabel OperationLoadCode
+OperationLoadCode func:
+    ( address -- upper lower )
+    arg0 !top \ address
+    arg0 ret1 ret0 !ldc
+    ret1 !save-param
+    ret0 !save-param
+    func;
+
+deflabel OperationStoreCode
+OperationStoreCode func:
+    ( upper lower dest -- )
+    arg0 !top \ dest
+    arg1 !top \ lower
+    arg2 |top \ upper
+    arg2 arg1 arg0 !stc 
+    func;
+deflabel BitwiseAnd 
+BitwiseAnd func:
+    ( a b -- c )
+    arg0 !top \ b
+    arg1 !top \ a
+    arg0 arg1 ret0 !and 
+    ret0 !save-param
+    func;
+deflabel BitwiseOr
+BitwiseOr func:
+    arg0 !top \ b
+    arg1 !top \ a
+    arg1 arg0 ret0 !or
+    ret0 !save-param
+    func;
+
+deflabel ShutdownProcessor
+ShutdownProcessor func: 
     args1 !terminateExecution 
-    func}
+    func;
 .code 0000# .org
 
 JumpTableStart @ jump-table-start register!
