@@ -319,8 +319,8 @@ enum}
 : io-device ( -- n ) literal ;
 enum}
 : !set-iodev ( imm -- reg ) io-device !set io-device ;
-: !set-iodev-and-store ( src devid -- ) !set-iodev !stc ;
-: !set-iodev-and-load ( dest devid -- ) !set-iodev swap !ldc ;
+: !set-iodev-and-store ( src devid -- ) !set-iodev !stio ;
+: !set-iodev-and-load ( dest devid -- ) !set-iodev swap !ldio ;
 ( io devices )
 {enum
 : /dev/null ( -- n ) literal ; enum,
