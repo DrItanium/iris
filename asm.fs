@@ -293,12 +293,68 @@ enum}
 : sp2 ( -- n ) r8 ;  : arg0 ( -- n ) r9 ; : arg1 ( -- n ) r10 ; : arg2 ( -- n ) r11 ;
 : arg3 ( -- n ) r12 ; : ret0 ( -- n ) r13 ; : ret1 ( -- n ) r14 ; 
 : jump-table-start ( -- n ) r15 ; : jump-table-end ( -- n ) r16 ;
-: system-register-end ( -- n ) r63 ;
+: sp-bottom ( -- n ) r17 ; : sp2-bottom ( -- n ) r18 ; : cond ( -- n ) r19 ;
+( save the four parts of a given instruction for the purpose of manipulation )
+: lowest-byte ( -- n ) r20 ; : lower-byte ( -- n ) r21 ; 
+: higher-byte ( -- n ) r22 ; : highest-byte ( -- n ) r23 ;
+
+: lower-word ( -- n ) r24 ; : upper-word ( -- n ) r25 ;
 
 
-: user-variable-start ( -- n ) r64 ;
-: user-variable-end ( -- n ) r255 ;
 : !return ( -- ) lr !br ;
+: !imm16 ( imm16 src dest -- t0 src dest ) 
+  rot ( src dest imm16 )
+  t0  ( src dest imm16 t0 )
+  !set ( src dest )
+  t0
+  -rot ( t0 src dest ) ;
+
+: indirect-register ( register -- t0 )
+  \ equivalent of doing [register] in the operands
+  t0 !ld \ load from memory before performing the operation
+  t0 \ then put t0 onto the stack in place of the original register 
+  ;
+
+: !addi16 ( imm16 src dest -- ) !imm16 !add ;
+: !subi16 ( imm16 src dest -- ) !imm16 !sub ;
+: !muli16 ( imm16 src dest -- ) !imm16 !mul ;
+: !divi16 ( imm16 src dest -- ) !imm16 !div ;
+: !remi16 ( imm16 src dest -- ) !imm16 !rem ;
+: !*ld    ( src dest -- )
+  \ indirect load
+  swap indirect-register swap !ld \ put t0 back as destination 
+  ;
+: !*st ( src dest -- ) \ indirect store
+  indirect-register !st \ then store at the loaded address 
+  ;
+
+: !top ( dest -- ) \ load the top of the stack into the target register
+  sp swap !pop ;
+: !drop ( -- ) \ remove the top of the stack
+  zero !top \ writes to zero are disabled so this will drop the top parameter
+  ; 
+: !save-param ( reg -- ) \ save to the parameter stack
+  sp !push ;
+: !save-subr ( reg -- ) \ save to the subroutine stack
+  sp2 !push ;
+: !restore-subr ( reg -- ) \ restore from the subroutine stack
+  sp2 swap !pop ;
+: !restore-param ( reg -- ) !top ;
+: !1+ ( reg dest -- ) 1 -rot !addi ;
+: !1- ( reg dest -- ) 1 -rot !subi ;
+: rot-!eq ( dest src2 src -- ) rot !eq ;
+: !empty-param? ( dest -- ) sp sp-bottom rot-!eq ;
+: !empty-subr?  ( dest -- ) sp2 sp2-bottom rot-!eq ;
+: !save-lr ( -- ) lr !save-subr ;
+: !restore-lr ( -- ) lr !restore-subr;
+: !call ( imm16 -- ) 
+  !save-lr
+  !bl
+  !restore-lr ;
+: !callr ( dest -- )
+  !save-lr
+  !brl
+  !restore-lr ;
 
 
 : args1 ( -- r0 ) ret0 ;
