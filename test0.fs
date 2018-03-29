@@ -162,6 +162,23 @@ SpaceChar func:
     20# arg0 !set
     arg0 !putc
     func;
+deflabel OperationLoop
+OperationLoop func:
+    !save-lr
+    terminate-loop !save-subr
+    loop-body !save-subr
+    arg0 loop-body !move
+    zero terminate-loop !move
+    deflabel OperationLoopStart
+    OperationLoopStart label-here
+    lr loop-body !brl
+    terminate-loop zero t0 !neq
+    OperationLoopStart @ t0 !bc
+    loop-body !restore-subr
+    terminate-loop !restore-subr
+    !restore-lr
+    func;
+
 deflabel ShutdownProcessor
 ShutdownProcessor func: 
     args1 !terminateExecution 
