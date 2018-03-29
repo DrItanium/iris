@@ -55,7 +55,7 @@ enum}
 : section:code? ( a -- flag ) section:code = ;
 : section:data? ( a -- flag ) section:data = ;
 : section:stack? ( a -- flag ) section:stack = ;
-: deflabel ( -- ) variable ;
+: deflabel ( -- ) " defining label" . CR variable ;
 : get-current-address ( -- value ) currentsection @ @ ;
 : label-here ( variable -- ) get-current-address swap ! ;
 : current-section-var ( -- value ) currentsection @ ; 
@@ -346,7 +346,7 @@ enum}
 : !empty-param? ( dest -- ) sp sp-bottom rot-!eq ;
 : !empty-subr?  ( dest -- ) sp2 sp2-bottom rot-!eq ;
 : !save-lr ( -- ) lr !save-subr ;
-: !restore-lr ( -- ) lr !restore-subr;
+: !restore-lr ( -- ) lr !restore-subr ;
 : !call ( imm16 -- ) 
   !save-lr
   !bl

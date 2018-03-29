@@ -126,7 +126,7 @@ OperationStoreCode func:
     ( upper lower dest -- )
     arg0 !top \ dest
     arg1 !top \ lower
-    arg2 |top \ upper
+    arg2 !top \ upper
     arg2 arg1 arg0 !stc 
     func;
 deflabel BitwiseAnd 
