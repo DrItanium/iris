@@ -18,7 +18,10 @@ deflabel JumpTableLocation
   .data16 
   JumpTableLocation increment-variable ;
 
-: func: ( l -- ) dup label-here jump-table-entry ;
+: func: ( l -- ) 
+  dup 
+  label-here 
+  jump-table-entry ;
 : func; ( -- ) !return ;
 : !pop2 ( dlower dtop -- ) 
   \ pop the top two items from the stack
@@ -144,7 +147,21 @@ BitwiseOr func:
     arg1 arg0 ret0 !or
     ret0 !save-param
     func;
-
+deflabel EmitCharacter
+EmitCharacter func:
+    arg0 !top
+    arg0 !putc
+    func;
+deflabel NewlineChar
+NewlineChar func:
+    A# arg0 !set
+    arg0 !putc 
+    func;
+deflabel SpaceChar
+SpaceChar func:
+    20# arg0 !set
+    arg0 !putc
+    func;
 deflabel ShutdownProcessor
 ShutdownProcessor func: 
     args1 !terminateExecution 

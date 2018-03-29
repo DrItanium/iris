@@ -15,4 +15,4 @@ SOURCE="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT=$SOURCE
 INPUT_FILE=$1
 OUTPUT_FILE=$2
-echo " \" $INPUT_FILE\" \" $OUTPUT_FILE\" assemble bye " | $ROOT/misc/forth_interpreter/forth $ROOT/asmiris.fs 
+echo " enable-debug \" $INPUT_FILE\" \" $OUTPUT_FILE\" assemble bye " | $ROOT/misc/forth_interpreter/forth $ROOT/asmiris.fs 

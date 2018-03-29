@@ -55,7 +55,7 @@ enum}
 : section:code? ( a -- flag ) section:code = ;
 : section:data? ( a -- flag ) section:data = ;
 : section:stack? ( a -- flag ) section:stack = ;
-: deflabel ( -- ) " defining label" . CR variable ;
+: deflabel ( -- ) variable ;
 : get-current-address ( -- value ) currentsection @ @ ;
 : label-here ( variable -- ) get-current-address swap ! ;
 : current-section-var ( -- value ) currentsection @ ; 
@@ -153,7 +153,7 @@ enum}
 : AsmBranchConditionalIndirectLink ( -- n ) literal ; enum, 
 : AsmTerminateExecution ( -- n ) literal ; enum,
 : AsmLoadIO ( -- n ) literal ; enum,
-: AsmStoreIO ( -- n ) literal ; enum,
+: AsmStoreIO ( -- n ) literal ; 
 enum}
 
 : code<< ( a b -- ) .code asm<< ;
@@ -287,19 +287,55 @@ enum}
 : r248 ( -- 248 ) 248 ; : r249 ( -- 249 ) 249 ; : r250 ( -- 250 ) 250 ; : r251 ( -- 251 ) 251 ;
 : r252 ( -- 252 ) 252 ; : r253 ( -- 253 ) 253 ; : r254 ( -- 254 ) 254 ; : r255 ( -- 255 ) 255 ;
 ( aliases )
-: system-register-start ( -- n ) r0 ;
-: zero ( -- n ) r0 ; : sp ( -- n ) r1 ; : lr ( -- n ) r2 ; : t0 ( -- n ) r3 ;
-: t1 ( -- n ) r4 ;   : t2 ( -- n ) r5 ; : t3 ( -- n ) r6 ; : t4 ( -- n ) r7 ;
-: sp2 ( -- n ) r8 ;  : arg0 ( -- n ) r9 ; : arg1 ( -- n ) r10 ; : arg2 ( -- n ) r11 ;
-: arg3 ( -- n ) r12 ; : ret0 ( -- n ) r13 ; : ret1 ( -- n ) r14 ; 
-: jump-table-start ( -- n ) r15 ; : jump-table-end ( -- n ) r16 ;
-: sp-bottom ( -- n ) r17 ; : sp2-bottom ( -- n ) r18 ; : cond ( -- n ) r19 ;
-( save the four parts of a given instruction for the purpose of manipulation )
-: lowest-byte ( -- n ) r20 ; : lower-byte ( -- n ) r21 ; 
-: higher-byte ( -- n ) r22 ; : highest-byte ( -- n ) r23 ;
+{enum 
+: zero ( -- n ) literal ; enum,
+: sp ( -- n ) literal ; enum,
+: lr ( -- n ) literal ; enum,
+: t0 ( -- n ) literal ; enum,
+: t1 ( -- n ) literal ; enum,
+: t2 ( -- n ) literal ; enum,
+: t3 ( -- n ) literal ; enum,
+: t4 ( -- n ) literal ; enum,
+: sp2 ( -- n ) literal ; enum,
+: arg0 ( -- n ) literal ; enum,
+: arg1 ( -- n ) literal ; enum,
+: arg2 ( -- n ) literal ; enum,
+: arg3 ( -- n ) literal ; enum,
+: ret0 ( -- n ) literal ; enum,
+: ret1 ( -- n ) literal ; enum,
+: jump-table-start ( -- n ) literal ; enum,
+: jump-table-end ( -- n ) literal ; enum,
+: sp-bottom ( -- n ) literal ; enum,
+: sp2-bottom ( -- n ) literal ; enum,
+: cond ( -- n ) literal ; enum,
+: lowest-byte ( -- n ) literal ; enum,
+: lower-byte ( -- n ) literal ; enum,
+: higher-byte ( -- n ) literal ; enum,
+: highest-byte ( -- n ) literal ; enum,
+: lower-word ( -- n ) literal ; enum,
+: upper-word ( -- n ) literal ; enum,
+: loop-body ( -- n ) literal ; enum,
+: terminate-loop ( -- n ) literal ; enum,
+: io-device ( -- n ) literal ;
+enum}
+: !set-iodev ( imm -- reg ) io-device !set io-device ;
+: !set-iodev-and-store ( src devid -- ) !set-iodev !stc ;
+: !set-iodev-and-load ( dest devid -- ) !set-iodev swap !ldc ;
+( io devices )
+{enum
+: /dev/null ( -- n ) literal ; enum,
+: /dev/console0 ( -- n ) literal ; enum,
+: /dev/console1 ( -- n ) literal ; enum,
+: /dev/rng ( -- n ) literal ; 
+enum}
 
-: lower-word ( -- n ) r24 ; : upper-word ( -- n ) r25 ;
+: !putc ( src -- ) /dev/console0 !set-iodev-and-store ;
+: !getc ( dest -- ) /dev/console0 !set-iodev-and-load ;
+: !flush-cout ( -- ) zero /dev/console1 !set-iodev-and-store ;
 
+: !seed-rng ( src -- ) /dev/rng !set-iodev-and-store ;
+: !get-rng-value ( dest -- ) /dev/rng !set-iodev-and-load ;
+: !skip-rng-value ( -- ) zero !get-rng-value ;
 
 : !return ( -- ) lr !br ;
 : !imm16 ( imm16 src dest -- t0 src dest ) 
@@ -349,11 +385,11 @@ enum}
 : !restore-lr ( -- ) lr !restore-subr ;
 : !call ( imm16 -- ) 
   !save-lr
-  !bl
+  lr !bl
   !restore-lr ;
 : !callr ( dest -- )
   !save-lr
-  !brl
+  lr !brl
   !restore-lr ;
 
 
