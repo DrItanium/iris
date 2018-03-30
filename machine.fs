@@ -1,6 +1,6 @@
 ( machine related words )
 : *register-count* ( -- 256 ) 256 ;
-: *space-size* ( -- 0x10000 ) 10000# ;
+: *space-size* ( -- 0x10000 ) 0x10000 ;
 : *max-address* ( -- 0xFFFF ) *space-size* 1- ;
 : *word-size* ( -- 2 ) 2 ;
 : *double-word-size* ( -- n ) *word-size* *word-size* + ;
@@ -10,8 +10,8 @@
 : *data16-space-byte-count* ( -- n ) *word-size* number-of-bytes-for-space ;
 : *data32-space-byte-count* ( -- n ) *double-word-size* number-of-bytes-for-space ;
 
-: get-lower8 ( i -- n ) FF# bitwise-andu ;
-: get-lower16 ( i -- n ) FFFF# bitwise-andu ;
+: get-lower8 ( i -- n ) 0xFF bitwise-andu ;
+: get-lower16 ( i -- n ) 0xFFFF bitwise-andu ;
 : decode-byte ( i pos -- reg ) 8 * >>u get-lower8 ;
 : decode-word ( i pos -- immediate ) 16 * >>u get-lower16 ;
 

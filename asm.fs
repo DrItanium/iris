@@ -1,6 +1,6 @@
 ( assembler words )
-: mask-immediate16 ( value -- imm16 ) FFFF# bitwise-andu ;
-: mask-imm8 ( reg -- masked-reg ) FF# bitwise-andu ;
+: mask-immediate16 ( value -- imm16 ) 0xFFFF bitwise-andu ;
+: mask-imm8 ( reg -- masked-reg ) 0xFF bitwise-andu ;
 : position-byte ( reg shift -- reg<<shift ) 
   swap mask-imm8 swap ( reg shift -- masked-reg shift )
   <<u ( reg shift -- reg<<shift ) ;

@@ -29,11 +29,11 @@ deflabel JumpTableLocation
   !top ;
 {asm 
 .data 
-0000# .org
+0x0000 .org
 JumpTableStart label-here
 JumpTableLocation label-here
-7FFF# sp register!
-7FFF# sp-bottom register!
+0x7FFF sp register!
+0x7FFF sp-bottom register!
 0 sp2-bottom register!
 0 zero register!
 0 sp2 register!
@@ -41,7 +41,7 @@ JumpTableLocation label-here
 1 jump-table-end arg0 !subi
 jump-table-start t0 !ld
 lr t0 !brl
-0100# .org
+0x0100 .org
 deflabel TableCall
 TableCall func: 
     jump-table-start arg0 t4 !add \ first we need to combine the jump-table-start with arg0
@@ -154,12 +154,12 @@ EmitCharacter func:
     func;
 deflabel NewlineChar
 NewlineChar func:
-    A# arg0 !set
+    0xA arg0 !set
     arg0 !putc 
     func;
 deflabel SpaceChar
 SpaceChar func:
-    20# arg0 !set
+    0x20 arg0 !set
     arg0 !putc
     func;
 deflabel OperationLoop
@@ -179,11 +179,16 @@ OperationLoop func:
     !restore-lr
     func;
 
+deflabel GreaterThanZero
+OperationGreaterThanZero func:
+    
+func;
+
 deflabel ShutdownProcessor
 ShutdownProcessor func: 
     args1 !terminateExecution 
     func;
-.code 0000# .org
+.code 0x0000 .org
 
 JumpTableStart @ jump-table-start register!
 JumpTableLocation @ jump-table-end register!

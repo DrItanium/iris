@@ -1,8 +1,10 @@
 ( linker words )
-: *linker-section:register* ( -- 0 ) 0 ;
-: *linker-section:code* ( -- 1 ) 1 ;
-: *linker-section:data* ( -- 2 ) 2 ;
-: *linker-section:stack* ( -- 3 ) 3 ;
+{enum
+: *linker-section:register* ( -- 0 ) literal ; enum,
+: *linker-section:code* ( -- 1 ) literal ; enum,
+: *linker-section:data* ( -- 2 ) literal ; enum,
+: *linker-section:stack* ( -- 3 ) literal ; 
+enum}
 
 : core-memory-capacity *memory-size* ;
 
