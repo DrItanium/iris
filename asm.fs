@@ -396,7 +396,20 @@ enum}
 : args1 ( -- r0 ) ret0 ;
 : args2 ( -- a0 r0 ) arg0 args1 ;
 : args3 ( -- a1 a0 r0 ) arg1 args2 ;
-
+: zero-src2 ( src dest -- zero src dest ) zero -rot ;
+: zero-src ( dest -- zero dest ) zero swap ;
+: !gtz ( src dest -- ) zero-src2 !gt ;
+: !ltz ( src dest -- ) zero-src2 !lt ;
+: !gez ( src dest -- ) zero-src2 !ge ;
+: !lez ( src dest -- ) zero-src2 !le ;
+: !eqz ( src dest -- ) zero-src2 !eq ;
+: !neqz ( src dest -- ) zero-src2 !neq ;
+: !clr-reg ( dest -- ) zero-src !move ;
+: !t0-eq ( a b -- t0 ) t0 !eq t0 ;
+: !t0-neq ( a b -- t0 ) t0 !neq t0 ;
+: !t0-lt ( a b -- t0 ) t0 !lt t0 ;
+: !t0-gt ( a b -- t0 ) t0 !gt t0 ;
+: !bneqz ( dest a -- ) t0 !neqz t0 !bc ;
 
 .stack 0 .org 
 .data 0 .org

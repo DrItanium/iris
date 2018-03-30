@@ -168,21 +168,16 @@ OperationLoop func:
     terminate-loop !save-subr
     loop-body !save-subr
     arg0 loop-body !move
-    zero terminate-loop !move
+    terminate-loop !clr-reg
     deflabel OperationLoopStart
     OperationLoopStart label-here
     lr loop-body !brl
-    terminate-loop zero t0 !neq
-    OperationLoopStart @ t0 !bc
+    OperationLoopStart @ terminate-loop !bneqz
     loop-body !restore-subr
     terminate-loop !restore-subr
     !restore-lr
     func;
 
-deflabel GreaterThanZero
-OperationGreaterThanZero func:
-    
-func;
 
 deflabel ShutdownProcessor
 ShutdownProcessor func: 
