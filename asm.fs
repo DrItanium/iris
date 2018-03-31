@@ -398,23 +398,86 @@ enum}
 : args3 ( -- a1 a0 r0 ) arg1 args2 ;
 : zero-src2 ( src dest -- zero src dest ) zero -rot ;
 : zero-src ( dest -- zero dest ) zero swap ;
-: !gtz ( src dest -- ) zero-src2 !gt ;
-: !ltz ( src dest -- ) zero-src2 !lt ;
-: !gez ( src dest -- ) zero-src2 !ge ;
-: !lez ( src dest -- ) zero-src2 !le ;
-: !eqz ( src dest -- ) zero-src2 !eq ;
-: !neqz ( src dest -- ) zero-src2 !neq ;
 : !clr-reg ( dest -- ) zero-src !move ;
-: !bneq ( dest a b -- ) cond !neq cond !bc ;
-: !bneqr ( dest a b -- ) cond !neq cond !bcr ;
-: !bneqz ( dest a -- ) cond !neqz cond !bc ;
-: !bneqrz ( dest a -- ) cond !neqz cond !bcr ;
-: !beq ( dest a b -- ) cond !eq cond !bc ;
-: !beqr ( dest a b -- ) cond !eq cond !bcr ;
-: !beqz ( dest a -- ) cond !eqz cond !bc ;
-: !beqrz ( dest a -- ) cond !eqz cond !bcr ;
-
 : !save-ret0 ( -- ) ret0 !save-param ;
+: !bcl ( link imm16 cond -- n ) 
+  \ make a new instruction to store the immediate value
+  swap t0 !set \ stash our immediate to t0
+  t0 swap !bcrl \ put out the !bcrl command
+  ;
+: !neqz ( src dest -- ) zero-src2 !neq ;
+: !neqc ( a b -- cond ) cond !neq cond ;
+: !neqzc ( a -- cond ) cond !neqz cond ;
+: !bneq ( dest a b -- ) !neqc !bc ;
+: !bneql ( link dest a b -- ) !neqc !bcl ;
+: !bneqz ( dest a -- ) !neqzc !bc ;
+: !bneqzl ( link dest a -- ) !neqzc !bcl ;
+: !bneqr ( dest a b -- ) !neqc !bcr ;
+: !bneqrl ( link dest a b -- ) !neqc !bcrl ;
+: !bneqrz ( dest a -- ) !neqzc !bcr ;
+: !bneqrzl ( link dest a b -- ) !neqzc !bcrl ;
+
+: !eqz ( src dest -- ) zero-src2 !eq ;
+: !eqc ( a b -- cond ) cond !eq cond ;
+: !eqzc ( a -- cond ) cond !eqz cond ;
+: !beq ( dest a b -- ) !eqc !bc ;
+: !beql ( link dest a b -- ) !eqc !bcl ;
+: !beqz ( dest a -- ) !eqzc !bc ;
+: !beqzl ( link dest a -- ) !eqzc !bcl ;
+: !beqr ( dest a b -- ) !eqc !bcr ;
+: !beqrl ( link dest a b -- ) !eqc !bcrl ;
+: !beqrz ( dest a -- ) !eqzc !bcr ;
+: !beqrzl ( link dest a b -- ) !eqzc !bcrl ;
+
+: !gtz ( src dest -- ) zero-src2 !gt ;
+: !gtc ( a b -- cond ) cond !gt cond ;
+: !gtzc ( a -- cond ) cond !gtz cond ;
+: !bgt ( dest a b -- ) !gtc !bc ;
+: !bgtl ( link dest a b -- ) !gtc !bcl ;
+: !bgtz ( dest a -- ) !gtzc !bc ;
+: !bgtzl ( link dest a -- ) !gtzc !bcl ;
+: !bgtr ( dest a b -- ) !gtc !bcr ;
+: !bgtrl ( link dest a b -- ) !gtc !bcrl ;
+: !bgtrz ( dest a -- ) !gtzc !bcr ;
+: !bgtrzl ( link dest a b -- ) !gtzc !bcrl ;
+
+: !ltz ( src dest -- ) zero-src2 !lt ;
+: !ltc ( a b -- cond ) cond !lt cond ;
+: !ltzc ( a -- cond ) cond !ltz cond ;
+: !blt ( dest a b -- ) !ltc !bc ;
+: !bltl ( link dest a b -- ) !ltc !bcl ;
+: !bltz ( dest a -- ) !ltzc !bc ;
+: !bltzl ( link dest a -- ) !ltzc !bcl ;
+: !bltr ( dest a b -- ) !ltc !bcr ;
+: !bltrl ( link dest a b -- ) !ltc !bcrl ;
+: !bltrz ( dest a -- ) !ltzc !bcr ;
+: !bltrzl ( link dest a b -- ) !ltzc !bcrl ;
+
+: !gez ( src dest -- ) zero-src2 !ge ;
+: !gec ( a b -- cond ) cond !ge cond ;
+: !gezc ( a -- cond ) cond !gez cond ;
+: !bge ( dest a b -- ) !gec !bc ;
+: !bgel ( link dest a b -- ) !gec !bcl ;
+: !bgez ( dest a -- ) !gezc !bc ;
+: !bgezl ( link dest a -- ) !gezc !bcl ;
+: !bger ( dest a b -- ) !gec !bcr ;
+: !bgerl ( link dest a b -- ) !gec !bcrl ;
+: !bgerz ( dest a -- ) !gezc !bcr ;
+: !bgerzl ( link dest a b -- ) !gezc !bcrl ;
+
+: !lez ( src dest -- ) zero-src2 !le ;
+: !lec ( a b -- cond ) cond !le cond ;
+: !lezc ( a -- cond ) cond !lez cond ;
+: !ble ( dest a b -- ) !lec !bc ;
+: !blel ( link dest a b -- ) !lec !bcl ;
+: !blez ( dest a -- ) !lezc !bc ;
+: !blezl ( link dest a -- ) !lezc !bcl ;
+: !bler ( dest a b -- ) !lec !bcr ;
+: !blerl ( link dest a b -- ) !lec !bcrl ;
+: !blerz ( dest a -- ) !lezc !bcr ;
+: !blerzl ( link dest a b -- ) !lezc !bcrl ;
+
+
 
 .stack 0 .org 
 .data 0 .org
