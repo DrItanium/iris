@@ -1,4 +1,3 @@
-enable-debug
 ( 
     A test of the assembler system
     close-input-file must be the last word in the file, anything after it will not
