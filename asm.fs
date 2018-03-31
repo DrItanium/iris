@@ -308,15 +308,12 @@ enum}
 : sp-bottom ( -- n ) literal ; enum,
 : sp2-bottom ( -- n ) literal ; enum,
 : cond ( -- n ) literal ; enum,
-: lowest-byte ( -- n ) literal ; enum,
-: lower-byte ( -- n ) literal ; enum,
-: higher-byte ( -- n ) literal ; enum,
-: highest-byte ( -- n ) literal ; enum,
-: lower-word ( -- n ) literal ; enum,
-: upper-word ( -- n ) literal ; enum,
 : loop-body ( -- n ) literal ; enum,
 : terminate-loop ( -- n ) literal ; enum,
-: io-device ( -- n ) literal ;
+: io-device ( -- n ) literal ; enum,
+: lower-word ( -- n ) literal ; enum,
+: upper-word ( -- n ) literal ; enum,
+: code-address ( -- n ) literal ; 
 enum}
 : !set-iodev ( imm -- reg ) io-device !set io-device ;
 : !set-iodev-and-store ( src devid -- ) !set-iodev !stio ;
@@ -381,15 +378,8 @@ enum}
 : !empty-subr?  ( dest -- ) sp2 sp2-bottom rot-!eq ;
 : !save-lr ( -- ) lr !save-subr ;
 : !restore-lr ( -- ) lr !restore-subr ;
-: !call ( imm16 -- ) 
-  !save-lr
-  lr !bl
-  !restore-lr ;
-: !callr ( dest -- )
-  !save-lr
-  lr !brl
-  !restore-lr ;
-
+: !call ( imm16 -- ) lr !bl ;
+: !callr ( dest -- ) lr !brl ;
 
 : args1 ( -- r0 ) ret0 ;
 : args2 ( -- a0 r0 ) arg0 args1 ;
@@ -491,7 +481,6 @@ enum}
 : !iflez ( onFalse onTrue a b -- ) !lezc !if ;
 : !ifge ( onFalse onTrue a b -- ) !gec !if ;
 : !ifgez ( onFalse onTrue a b -- ) !gezc !if ;
-
 
 .stack 0 .org 
 .data 0 .org
