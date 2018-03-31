@@ -41,16 +41,18 @@ JumpTableLocation label-here
 0 sp2-bottom register!
 0 zero register!
 0 sp2 register!
+1 one register!
+2 two register!
 .code
-1 jump-table-end arg0 !subi
+jump-table-end arg0 !1-
 jump-table-start t0 !ld
 lr t0 !brl
 0x0100 .org
 deflabel TableCall
 TableCall func: 
-    jump-table-start arg0 t4 !add \ first we need to combine the jump-table-start with arg0
+    jump-table-start arg0 t1 !add \ first we need to combine the jump-table-start with arg0
                                   \ load the actual stored address
-    t4 t0 indirect-register !br      \ perform the indirect jump
+    t1 t0 indirect-register !br      \ perform the indirect jump
     func;
 deflabel OperationDuplicate
 OperationDuplicate func: 
@@ -158,13 +160,13 @@ EmitCharacter func:
     func;
 deflabel NewlineChar
 NewlineChar func:
-    0xA arg0 !set
-    arg0 !putc 
+    0xA !save-parami
+    EmitCharacter @ !call
     func;
 deflabel SpaceChar
 SpaceChar func:
-    0x20 arg0 !set
-    arg0 !putc
+    0x20 !save-parami
+    EmitCharacter @ !call
     func;
 deflabel OperationLoop
 OperationLoop func:
@@ -204,6 +206,26 @@ EncodeBits func:
     arg1 arg0 ret0 !or
     func;
 
+deflabel GetUpperHalf
+GetUpperHalf func:
+    \ arg0 - value
+    0xFF00 arg1 !set
+    8 arg2 !set
+    DecodeBits @ !call
+    func;
+deflabel GetLowerHalf
+GetLowerHalf func:
+    \ arg0 -value
+    0x00FF arg1 !set
+    arg2 !clr-reg
+    DecodeBits @ !call
+    func;
+deflabel GetUpperLowerHalves
+    \ arg0 - value
+    GetUpperHalf @ !call 
+    ret0 ret1 !move
+    GetLowerHalf @ !call
+    func;
 deflabel OperationWriteOutCode
 OperationWriteOutCode func:
     \ save lower and upper word to memory at code-address
