@@ -18,11 +18,15 @@ deflabel JumpTableLocation
   .data16 
   JumpTableLocation increment-variable ;
 
+\ always save and restore the link register
 : func: ( l -- ) 
   dup 
   label-here 
-  jump-table-entry ;
-: func; ( -- ) !return ;
+  jump-table-entry 
+  !save-lr ;
+: func; ( -- ) 
+  !restore-lr 
+  !return ;
 : !pop2 ( dlower dtop -- ) 
   \ pop the top two items from the stack
   !top ( dlower )
@@ -164,7 +168,6 @@ SpaceChar func:
     func;
 deflabel OperationLoop
 OperationLoop func:
-    !save-lr
     terminate-loop !save-subr
     loop-body !save-subr
     arg0 loop-body !move
@@ -175,10 +178,37 @@ OperationLoop func:
     OperationLoopStart @ terminate-loop !bneqz
     loop-body !restore-subr
     terminate-loop !restore-subr
-    !restore-lr
+    func;
+deflabel DecodeBits 
+DecodeBits func:
+    \ result = (value & mask) >> shift;
+    \ arg0 - value
+    \ arg1 - mask
+    \ arg2 - shift
+    \ ret0 - result
+    arg0 arg1 ret0 !and
+    arg2 ret0 ret0 !shr
+    func;
+deflabel EncodeBits
+EncodeBits func:
+    \ result = (value & ~mask) | (mask & (data << shift))
+    \ ret0 - result
+    \ arg0 - value
+    \ arg1 - data
+    \ arg2 - mask
+    \ arg3 - shift
+    arg3 arg1 arg1 !shl
+    arg1 arg2 arg1 !and
+    arg2 arg2 !not
+    arg2 arg0 arg0 !and
+    arg1 arg0 ret0 !or
     func;
 
-
+deflabel OperationWriteOutCode
+OperationWriteOutCode func:
+    \ save lower and upper word to memory at code-address
+    upper-word lower-word code-address !stc 
+    func;
 deflabel ShutdownProcessor
 ShutdownProcessor func: 
     args1 !terminateExecution 
