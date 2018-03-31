@@ -104,7 +104,7 @@ OperationLoad func:
     ( addr - value )
     arg0 !top
     arg0 ret0 !ld
-    ret0 !save-param
+    !save-ret0
     func;
 
 deflabel OperationStore
@@ -138,14 +138,14 @@ BitwiseAnd func:
     arg0 !top \ b
     arg1 !top \ a
     arg0 arg1 ret0 !and 
-    ret0 !save-param
+    !save-ret0
     func;
 deflabel BitwiseOr
 BitwiseOr func:
     arg0 !top \ b
     arg1 !top \ a
     arg1 arg0 ret0 !or
-    ret0 !save-param
+    !save-ret0
     func;
 deflabel EmitCharacter
 EmitCharacter func:
