@@ -405,11 +405,16 @@ enum}
 : !eqz ( src dest -- ) zero-src2 !eq ;
 : !neqz ( src dest -- ) zero-src2 !neq ;
 : !clr-reg ( dest -- ) zero-src !move ;
-: !t0-eq ( a b -- t0 ) t0 !eq t0 ;
-: !t0-neq ( a b -- t0 ) t0 !neq t0 ;
-: !t0-lt ( a b -- t0 ) t0 !lt t0 ;
-: !t0-gt ( a b -- t0 ) t0 !gt t0 ;
-: !bneqz ( dest a -- ) t0 !neqz t0 !bc ;
+: !bneq ( dest a b -- ) cond !neq cond !bc ;
+: !bneqr ( dest a b -- ) cond !neq cond !bcr ;
+: !bneqz ( dest a -- ) cond !neqz cond !bc ;
+: !bneqrz ( dest a -- ) cond !neqz cond !bcr ;
+: !beq ( dest a b -- ) cond !eq cond !bc ;
+: !beqr ( dest a b -- ) cond !eq cond !bcr ;
+: !beqz ( dest a -- ) cond !eqz cond !bc ;
+: !beqrz ( dest a -- ) cond !eqz cond !bcr ;
+
+: !save-ret0 ( -- ) ret0 !save-param ;
 
 .stack 0 .org 
 .data 0 .org
