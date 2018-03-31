@@ -344,11 +344,9 @@ enum}
   !set ( src dest )
   t0
   -rot ( t0 src dest ) ;
-
-: indirect-register ( register -- t0 )
+: indirect-register ( register dest -- dest ) 
   \ equivalent of doing [register] in the operands
-  t0 !ld \ load from memory before performing the operation
-  t0 \ then put t0 onto the stack in place of the original register 
+  dup -rot !ld \ load from memory before performing the operation
   ;
 
 : !addi16 ( imm16 src dest -- ) !imm16 !add ;
@@ -358,10 +356,10 @@ enum}
 : !remi16 ( imm16 src dest -- ) !imm16 !rem ;
 : !*ld    ( src dest -- )
   \ indirect load
-  swap indirect-register swap !ld \ put t0 back as destination 
+  swap t0 indirect-register swap !ld \ put t0 back as destination 
   ;
 : !*st ( src dest -- ) \ indirect store
-  indirect-register !st \ then store at the loaded address 
+  t0 indirect-register !st \ then store at the loaded address 
   ;
 
 : !top ( dest -- ) \ load the top of the stack into the target register
@@ -477,6 +475,22 @@ enum}
 : !blerz ( dest a -- ) !lezc !bcr ;
 : !blerzl ( link dest a b -- ) !lezc !bcrl ;
 
+: !if ( onFalse onTrue a -- ) 
+  !bc ( onFalse onTrue a -- onFalse) 
+  !b ( onFalse -- ) ;
+: !ifc ( onFalse onTrue -- ) cond !if ;
+: !ifeq ( onFalse onTrue a b -- ) !eqc !if ;
+: !ifeqz ( onFalse onTrue a b -- ) !eqzc !if ;
+: !ifneq ( onFalse onTrue a b -- ) !neqc !if ;
+: !ifneqz ( onFalse onTrue a b -- ) !neqzc !if ;
+: !iflt ( onFalse onTrue a b -- ) !ltc !if ;
+: !ifltz ( onFalse onTrue a b -- ) !ltzc !if ;
+: !ifgt ( onFalse onTrue a b -- ) !gtc !if ;
+: !ifgtz ( onFalse onTrue a b -- ) !gtzc !if ;
+: !ifle ( onFalse onTrue a b -- ) !lec !if ;
+: !iflez ( onFalse onTrue a b -- ) !lezc !if ;
+: !ifge ( onFalse onTrue a b -- ) !gec !if ;
+: !ifgez ( onFalse onTrue a b -- ) !gezc !if ;
 
 
 .stack 0 .org 

@@ -1,3 +1,4 @@
+enable-debug
 ( 
     A test of the assembler system
     close-input-file must be the last word in the file, anything after it will not
@@ -46,7 +47,7 @@ deflabel TableCall
 TableCall func: 
     jump-table-start arg0 t4 !add \ first we need to combine the jump-table-start with arg0
                                   \ load the actual stored address
-    t4 indirect-register !br      \ perform the indirect jump
+    t4 t0 indirect-register !br      \ perform the indirect jump
     func;
 deflabel OperationDuplicate
 OperationDuplicate func: 
