@@ -289,6 +289,8 @@ enum}
 ( aliases )
 {enum 
 : zero ( -- n ) literal ; enum,
+: one ( -- n ) literal ; enum,
+: two ( -- n ) literal ; enum,
 : sp ( -- n ) literal ; enum,
 : lr ( -- n ) literal ; enum,
 : t0 ( -- n ) literal ; enum,
@@ -481,6 +483,27 @@ enum}
 : !iflez ( onFalse onTrue a b -- ) !lezc !if ;
 : !ifge ( onFalse onTrue a b -- ) !gec !if ;
 : !ifgez ( onFalse onTrue a b -- ) !gezc !if ;
+
+: !save-parami ( constant -- ) sp !pushi ;
+
+: 1-as-src2 ( a b -- 1 a b ) 1 -rot ;
+: !1+ ( src dest -- ) 1-as-src2 !addi ;
+: !1- ( src dest -- ) 1-as-src2 !subi ;
+: !++ ( reg -- ) dup !1+ ;
+: !-- ( reg -- ) dup !1- ;
+: !2* ( src dest -- ) 1-as-src2 !shli ;
+: !2/ ( src dest -- ) 1-as-src2 !shri ;
+: save-cond ( reg cond -- cond reg cond ) dup -rot ;
+: and-with-one ( reg cond -- ) one -rot !and ;
+: !even? ( reg cond -- ) 
+    save-cond
+    and-with-one 
+    dup !eqz ; 
+: !odd? ( reg cond -- )
+    save-cond
+    and-with-one
+    dup !neqz ;
+
 
 .stack 0 .org 
 .data 0 .org
