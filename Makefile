@@ -29,7 +29,7 @@ ALL_OBJECTS = ${ARCH_OBJECTS} \
 			  ${ALL_BINARIES}
 
 
-all: options  ${ALL_BINARIES}
+all: options forth ${ALL_BINARIES}
 
 docs: 
 	@echo "running doxygen"
@@ -56,11 +56,19 @@ options:
 	@echo CXX $<
 	@${CXX} ${CXXFLAGS} -c $< -o $@
 
+forth:
+	@cd misc/forth_interpreter/ && ${MAKE} 
+	@cp misc/forth_interpreter/forth .
+
+nuke: clean
+	@echo Nuking...
+	@rm -f forth
+	@cd misc/forth_interpreter/ && ${MAKE} clean
 
 clean:
 	@echo Cleaning...
 	@rm -f ${ALL_OBJECTS} 
 
-.PHONY: all options clean docs
+.PHONY: all options clean docs forth
 
 include deps.make
