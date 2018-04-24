@@ -333,6 +333,9 @@ namespace iris {
         // shift by three to get the correct offset
         auto base = (op._args.imm & 0b11111) << 3;
         auto mask = (op._args.imm & 0b1111111100000000) >> 8;
+        if (mask == 0) {
+            return;
+        }
         for (auto index = base; index < (base + 8); ++index) {
             // start at the smallest value and work your way up
             if ((mask & 0b1) != 0) {
@@ -352,6 +355,9 @@ namespace iris {
         tmp._args.src = op._args.dest; // the destination becomes the source
         auto base = ((op._args.imm & 0b11111) << 3); // go over by one
         auto mask = (op._args.imm & 0b1111111100000000);
+        if (mask == 0) {
+            return;
+        }
         static constexpr decltype(mask) upperMostMask = 0b1000'0000'0000'0000;
         for (auto index = base + 7; index >= base; --index) {
             // we shift to the left instead of right and use the mask to determine
