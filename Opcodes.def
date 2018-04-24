@@ -61,6 +61,23 @@ X(BranchConditionalIndirectLink, ThreeRegister, bcrl)
 X(TerminateExecution, OneRegister, terminateExecution)
 X(LoadIO, TwoRegister, ldio)
 X(StoreIO, TwoRegister, stio)
-
+// Push eight registers onto the stack at a time given the provided bit pattern
+// uses the 16-bit constant like so:
+// 0bRRRRRRRR000GGGGG 
+// where:
+//   G is the bit pattern denoting which group of eight registers to push/pop
+//   R is the bit pattern denoting which of the eight registers in the group
+//     to push/pop onto/off the stack
+//
+// The group bits define which register to start with, it is shifted by three
+// internally to determine the base offset
+// The registers are pushed onto the stack of lowest to highest within the 
+// group. If a given bit pattern does not allow a for a given register to be pushed
+// then it is skipped
+//
+// Registers are popped off the stack from higest to lowest to compliment the 
+// the behavior of push-group
+X(SaveGroupOfRegisters, OneRegisterWithImmediate, pushg)
+X(RestoreGroupOfRegisters, OneRegisterWithImmediate, popg)
 //X(SaveAllRegisters, OneRegister, save)
 //X(RestoreAllRegisters, OneRegister, restore)
