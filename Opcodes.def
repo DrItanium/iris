@@ -81,5 +81,10 @@ X(StoreIO, TwoRegister, stio)
 // If the pattern zero is found in RRRRRRRRR then nothing happens
 X(SaveGroupOfRegisters, OneRegisterWithImmediate, pushg)
 X(RestoreGroupOfRegisters, OneRegisterWithImmediate, popg)
+X(GetUpperByte, TwoRegister, upperb)
+X(GetLowerByte, TwoRegister, lowerb)
+// dest is the lower half
+// src1 is the upper half
+X(UnpackHalves, ThreeRegister, unpackh)
 //X(SaveAllRegisters, OneRegister, save)
 //X(RestoreAllRegisters, OneRegister, restore)

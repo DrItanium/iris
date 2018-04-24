@@ -363,6 +363,22 @@ namespace iris {
             mask = mask << 1;
         }
     }
+    DefExec(GetUpperByte) {
+        setDestination(op, decodeBits<Address, Address, 0xFF00, 8>(getSource(op).address));
+    }
+    DefExec(GetLowerByte) {
+        setDestination(op, decodeBits<Address, Address, 0x00FF, 0>(getSource(op).address));
+    }
+    DefExec(UnpackHalves) {
+        Core::GetLowerByte lower;
+        lower._args.dest = op._args.dest;
+        lower._args.src = op._args.src2;
+        Core::GetUpperByte upper;
+        upper._args.dest = op._args.src;
+        upper._args.src = op._args.src2;
+        perform(lower);
+        perform(upper);
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
