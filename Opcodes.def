@@ -77,6 +77,8 @@ X(StoreIO, TwoRegister, stio)
 //
 // Registers are popped off the stack from higest to lowest to compliment the 
 // the behavior of push-group
+//
+// If the pattern zero is found in RRRRRRRRR then nothing happens
 X(SaveGroupOfRegisters, OneRegisterWithImmediate, pushg)
 X(RestoreGroupOfRegisters, OneRegisterWithImmediate, popg)
 //X(SaveAllRegisters, OneRegister, save)
