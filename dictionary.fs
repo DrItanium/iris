@@ -231,6 +231,8 @@ variable location
 12 constant third \ third element of the stack
 13 constant io \ io device number or address
 14 constant ci \ core index number
+15 constant ci1 \ second core index number
+16 constant cond \ condition variable
 ( io devices )
 {enum
 enum: /dev/null 
@@ -302,16 +304,18 @@ enum}
   t2 !lw
   t2 swap ( t2 dest )
   get-string-length ;
-  
 
 
 0x0000 .org
     0x8000 sp !set
     0xFFFF rs !set
-    zero ci !move
-    1 zero t0 !addi
-    sp zero !st
-    rs t0 !st
+    zero t0 !move
+    2 t1 !set
+.label PopulateLoop
+    t1 t0 !st
+    1 t0 t0 !addi
+    t1 t0 cond !neq
+    PopulateLoop addr16 cond !bc
     /dev/core-dump $->io 
     ci io-write
 \ inner-interpreter words
