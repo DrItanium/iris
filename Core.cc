@@ -219,18 +219,18 @@ namespace iris {
 	}
 	DefExec(LogicalNand) { setDestination(op, binaryNand<bool>(getSource(op).getTruth(), getSource2(op).getTruth())); }
 	DefExec(LogicalNor) { setDestination(op, binaryNor<bool>(getSource(op).getTruth(), getSource2(op).getTruth())); }
-	DefExec(Eq) { setDestination(op, getSource(op).getTruth() == getSource2(op).getTruth()); }
-	DefExec(EqImmediate) { setDestination(op, getSource(op).getTruth() == getSource2(op).getTruth()); }
-	DefExec(Neq) { setDestination(op, getSource(op).getTruth() != getSource2(op).getTruth()); }
-	DefExec(NeqImmediate) { setDestination(op, getSource(op).getTruth() != getSource2(op).getTruth()); }
-	DefExec(LessThan) { setDestination(op, getSource(op).getTruth() < getSource2(op).getTruth()); }
-	DefExec(LessThanImmediate) { setDestination(op, getSource(op).getTruth() < getSource2(op).getTruth()); }
-	DefExec(LessThanOrEqualTo) { setDestination(op, getSource(op).getTruth() <= getSource2(op).getTruth()); }
-	DefExec(LessThanOrEqualToImmediate) { setDestination(op, getSource(op).getTruth() <= getSource2(op).getTruth()); }
-	DefExec(GreaterThan) { setDestination(op, getSource(op).getTruth() > getSource2(op).getTruth()); }
-	DefExec(GreaterThanImmediate) { setDestination(op, getSource(op).getTruth() > getSource2(op).getTruth()); }
-	DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).getTruth() >= getSource2(op).getTruth()); }
-	DefExec(GreaterThanOrEqualToImmediate) { setDestination(op, getSource(op).getTruth() >= getSource2(op).getTruth()); }
+	DefExec(Eq) { setDestination(op, getSource(op).integer == getSource2(op).integer); }
+	DefExec(EqImmediate) { setDestination(op, getSource(op).integer == getSource2(op).integer); }
+	DefExec(Neq) { setDestination(op, getSource(op).integer != getSource2(op).integer); }
+	DefExec(NeqImmediate) { setDestination(op, getSource(op).integer != getSource2(op).integer); }
+	DefExec(LessThan) { setDestination(op, getSource(op).integer < getSource2(op).integer); }
+	DefExec(LessThanImmediate) { setDestination(op, getSource(op).integer < getSource2(op).integer); }
+	DefExec(LessThanOrEqualTo) { setDestination(op, getSource(op).integer <= getSource2(op).integer); }
+	DefExec(LessThanOrEqualToImmediate) { setDestination(op, getSource(op).integer <= getSource2(op).integer); }
+	DefExec(GreaterThan) { setDestination(op, getSource(op).integer > getSource2(op).integer); }
+	DefExec(GreaterThanImmediate) { setDestination(op, getSource(op).integer > getSource2(op).integer); }
+	DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
+	DefExec(GreaterThanOrEqualToImmediate) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
 	DefExec(Move) { setDestination(op, getSource(op)); }
 	DefExec(Swap) {
 		if (op._args.dest != op._args.src) {
@@ -386,6 +386,24 @@ namespace iris {
         perform(lower);
         perform(upper);
     }
+	DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
+	DefExec(UnsignedEqImmediate) { setDestination(op, getSource(op).address == getSource2(op).address); }
+	DefExec(UnsignedNeq) { setDestination(op, getSource(op).address != getSource2(op).address); }
+	DefExec(UnsignedNeqImmediate) { setDestination(op, getSource(op).address != getSource2(op).address); }
+	DefExec(UnsignedLessThan) { setDestination(op, getSource(op).address < getSource2(op).address); }
+	DefExec(UnsignedLessThanImmediate) { setDestination(op, getSource(op).address < getSource2(op).address); }
+	DefExec(UnsignedLessThanOrEqualTo) { setDestination(op, getSource(op).address <= getSource2(op).address); }
+	DefExec(UnsignedLessThanOrEqualToImmediate) { setDestination(op, getSource(op).address <= getSource2(op).address); }
+	DefExec(UnsignedGreaterThan) { setDestination(op, getSource(op).address > getSource2(op).address); }
+	DefExec(UnsignedGreaterThanImmediate) { setDestination(op, getSource(op).address > getSource2(op).address); }
+	DefExec(UnsignedGreaterThanOrEqualTo) { setDestination(op, getSource(op).address >= getSource2(op).address); }
+	DefExec(UnsignedGreaterThanOrEqualToImmediate) { setDestination(op, getSource(op).address >= getSource2(op).address); }
+	DefExec(UnsignedAnd) { setDestination(op, getSource(op).address & getSource2(op).address); }
+	DefExec(UnsignedOr) { setDestination(op, getSource(op).address | getSource2(op).address); }
+	DefExec(UnsignedNot) { setDestination(op, ~getSource(op).address); }
+	DefExec(UnsignedXor) { setDestination(op, getSource(op).address ^ getSource2(op).address); }
+	DefExec(UnsignedNand) { setDestination(op, binaryNand(getSource(op).address, getSource2(op).address)); }
+	DefExec(UnsignedNor) { setDestination(op, binaryNor(getSource(op).address, getSource2(op).address)); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
