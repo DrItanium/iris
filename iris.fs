@@ -242,6 +242,7 @@ variable location
 {enum
 enum: zero
 enum: cond \ condition variable
+enum: lr \ link register
 enum: at0 \ assembler temporary
 enum: fixed-registers-stop
 enum}
@@ -249,6 +250,21 @@ enum}
 : !nop ( -- ) zero zero zero !add ;
 : !1+ ( reg -- ) 1 swap dup !add ;
 : !zero ( reg -- ) zero swap !move ;
+: !bccond ( dest -- )
+  \ use the cond register
+  cond !bc ;
+: !eqz ( reg -- )
+  zero cond !eq ;
+: !beqz ( dest reg -- )
+  !eqz
+  !bccond ;
+: !neqz ( reg -- ) 
+  \ this will emit ?reg zero cond !neq
+  zero cond !neq ;
+: !bneqz ( dest reg -- )
+  \ first emit the neqz call
+  !neqz ( dest )
+  !bccond ;
 \ basic registers
 \ io devices
 {enum

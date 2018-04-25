@@ -82,14 +82,6 @@ enum}
   io-write ;
 : dump-core ( -- ) ci dump-core-id-in-register ;
 : load-core ( -- ) ci load-core-id-in-register ;
-: !neqz ( reg -- ) 
-  \ this will emit ?reg zero cond !neq
-  zero cond !neq ;
-: !bneqz ( dest reg -- )
-  \ first emit the neqz call
-  !neqz ( dest )
-  cond ( dest cond )
-  !bc ;
 
 
 
