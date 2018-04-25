@@ -1,5 +1,4 @@
-FirstX(Nop, NoArguments, nop)
-X(Add, ThreeRegister, add)
+FirstX(Add, ThreeRegister, add)
 X(Sub, ThreeRegister, sub)
 X(Mul, ThreeRegister, mul)
 X(Div, ThreeRegister, div)

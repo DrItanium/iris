@@ -308,7 +308,6 @@ namespace iris {
 		_keepExecuting = getRegisterValue(op._args.dest).getTruth();
 	}
 
-	DefExec(Nop) { }
     DefExec(LoadIO) {
         auto addr = getSource(op).address;
         for (auto& a : _io) {
@@ -563,7 +562,7 @@ namespace iris {
             }
         };
         IODevice coreManipulator(3, 2, nullptr, selectCore);
-                
+
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
