@@ -508,8 +508,24 @@ namespace iris {
         // setup the basic IO device for console input output
         IODevice sink(0);
         IODevice console(1, 2, readFromStandardIn, writeToStandardOut);
+        auto selectCore = [this](auto index, auto value) {
+            // we use the index to determine what action to perform
+            std::stringstream fileName;
+            fileName << value; // the number becomes the filename to dump to disk
+            std::string tmp = fileName.str();
+            if (index == 0) {
+                // perform a dump to disk
+            } else if (index == 1) {
+                // load core from disk
+            } else {
+                throw Problem("Unimplemented address!");
+            }
+        };
+        IODevice coreManipulator(3, 2, nullptr, selectCore);
+                
         installIODevice(sink);
         installIODevice(console);
+        installIODevice(coreManipulator);
 	}
 	void Core::shutdown() {
 
