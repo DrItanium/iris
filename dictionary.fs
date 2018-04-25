@@ -238,11 +238,17 @@ enum: /dev/console
 \ enum: /dev/rng 
 enum}
 
+: !lw ( src dest -- ) 
+  \ since this is inside the code section we have to get creative
+  \ put the upper half into 
+  zero swap !ldc ;
+: !sw ( value addr -- )
+  zero -rot !stc ;
 \ generic computer instructions from threaded interpretive languages book
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A
   \ are loaded into register B ( a 16-bit indirect fetch from A to B )
-  !ld ;
+  !lw ;
 
 : =+n ( n a -- ) 
   \ The contents of register A are incremented by constant n
@@ -279,7 +285,22 @@ enum}
 : io-read  ( dest -- ) io swap !ldio ;
 : printc ( char -- ) \ assume that console is already set
   t0 !set t0 io-write ;
+: *printc ( addr -- ) 
+  t0 !set
+  t0 t1 !lw
+  t1 io-write ;
 
+: get-string-length ( src dest -- )
+  swap ( dest src )
+  t0 !lowerb ( dest )
+  0x7F t1 !set
+  t0 t1 rot !and ;
+: *get-string-length ( addr dest -- )
+  swap ( dest addr )
+  t2 !lw
+  t2 swap ( t2 dest )
+  get-string-length ;
+  
 
 
 0x0000 .org
