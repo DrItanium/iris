@@ -28,6 +28,7 @@
 #include <functional>
 #include <sstream>
 #include <vector>
+#include <fstream>
 
 
 namespace iris {
@@ -512,11 +513,33 @@ namespace iris {
             // we use the index to determine what action to perform
             std::stringstream fileName;
             fileName << value; // the number becomes the filename to dump to disk
-            std::string tmp = fileName.str();
+            std::string path = fileName.str();
             if (index == 0) {
                 // perform a dump to disk
+                std::ofstream outputFile(path);
+                // dump as plain text instead of binary encoding to prevent 
+                // encoding shenanigans and increase portability. 
+                //
+                // Also make git not view the file as a binary file
+                if (outputFile.is_open()) {
+                    for (int i = 0; i < 0x10000 ; ++i) {
+                        outputFile << std::hex << _data[i].address << std::endl;
+                    }
+                }
+                outputFile.close();
             } else if (index == 1) {
                 // load core from disk
+                std::ifstream inputFile(path);
+                if (inputFile.is_open()) {
+                    for (int i = 0; i < 0x10000; ++i) {
+                        inputFile >> std::hex >> _data[i].address;
+                    }
+                } else {
+                    for (int i = 0; i < 0x10000; ++i) {
+                        _data[i].address = 0;
+                    }
+                }
+                inputFile.close();
             } else {
                 throw Problem("Unimplemented address!");
             }

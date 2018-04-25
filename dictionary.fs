@@ -230,12 +230,14 @@ variable location
 11 constant lower \ lower element of the stack
 12 constant third \ third element of the stack
 13 constant io \ io device number or address
+14 constant ci \ core index number
 ( io devices )
 {enum
 enum: /dev/null 
-enum: /dev/console
-\ enum: /dev/console1
-\ enum: /dev/rng 
+enum: /dev/console0
+enum: /dev/console1
+enum: /dev/core-dump
+enum: /dev/core-load
 enum}
 
 : !lw ( src dest -- ) 
@@ -306,6 +308,12 @@ enum}
 0x0000 .org
     0x8000 sp !set
     0xFFFF rs !set
+    zero ci !move
+    1 zero t0 !addi
+    sp zero !st
+    rs t0 !st
+    /dev/core-dump $->io 
+    ci io-write
 \ inner-interpreter words
     zero top ->
 .label fnTERMINATE
@@ -338,7 +346,7 @@ enum}
     sp top pop->
     fnTERMINATE jmp
 .label fnOK
-  /dev/console $->io
+  /dev/console0 $->io
   0x4F printc
   0x4B printc 
   0xA printc 
