@@ -403,6 +403,16 @@ namespace iris {
 	DefExec(UnsignedXor) { setDestination(op, getSource(op).address ^ getSource2(op).address); }
 	DefExec(UnsignedNand) { setDestination(op, binaryNand(getSource(op).address, getSource2(op).address)); }
 	DefExec(UnsignedNor) { setDestination(op, binaryNor(getSource(op).address, getSource2(op).address)); }
+	DefExec(UnsignedMin) {
+		auto a = getSource(op).address;
+		auto b = getSource2(op).address;
+		setDestination(op, a < b ? a : b);
+	}
+	DefExec(UnsignedMax) {
+		auto a = getSource(op).address;
+		auto b = getSource2(op).address;
+		setDestination(op, a > b ? a : b);
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
@@ -561,11 +571,33 @@ namespace iris {
                 throw Problem("Unimplemented address!");
             }
         };
+        auto dumpVM = [this](auto index, auto value) {
+            if (index == 0) {
+                std::stringstream fileName;
+                fileName << "iris_" << std::hex << value << ".core";
+                auto path = fileName.str();
+                std::ofstream file(path, std::ofstream::trunc);
+                if (file.is_open()) {
+                    dump(file);
+                    file.close();
+                } else {
+                    file.close();
+                    std::stringstream msg;
+                    msg << "Could not dump memory to " << path;
+                    auto errmsg = msg.str();
+                    throw Problem(errmsg);
+                }
+            } else {
+                throw Problem("Unimplemented address!");
+            }
+        };
         IODevice coreManipulator(3, 2, nullptr, selectCore);
+        IODevice vmDumper(5, 1, nullptr, dumpVM);
 
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
+        installIODevice(vmDumper);
 	}
 	void Core::shutdown() {
 
