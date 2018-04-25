@@ -7,27 +7,26 @@
 \ have to become creative. Having 64kb for code and dictionary is plenty
 " iris.fs" open-input-file
 " forth.iris" {bin
-0 constant zero
-1 constant ir \ instruction register
+fixed-registers-stop ={enum
+enum: ir \ instruction register
               \ contains the address of the next instruction in the threaded
               \ list of the current secondary
-2 constant wa \ word address register
+enum: wa \ word address register
               \ contains the word address of the current keyword or the address
               \ of the first code body location of the current keyword
-3 constant ca \ code address register
-4 constant rs \ return stack register
-5 constant sp \ stack pointer
-6 constant pc \ processor program counter register
-7 constant t0 \ temporary 0
-8 constant t1 \ temporary 1
-9 constant t2 \ temporary 2
-10 constant top \ top of the stack
-11 constant lower \ lower element of the stack
-12 constant third \ third element of the stack
-13 constant io \ io device number or address
-14 constant ci \ core index number
-15 constant ci1 \ second core index number
-16 constant cond \ condition variable
+enum: ca \ code address register
+enum: rs \ return stack register
+enum: sp \ stack pointer
+enum: pc \ processor program counter register
+enum: t0 \ temporary 0
+enum: t1 \ temporary 1
+enum: t2 \ temporary 2
+enum: top \ top of the stack
+enum: lower \ lower element of the stack
+enum: third \ third element of the stack
+enum: io \ io device number or address
+enum: ci \ core index number
+enum}
 
 : !lw ( src dest -- ) 
   \ since this is inside the code section we have to get creative
@@ -74,23 +73,25 @@
 : $->io ( value -- ) io $-> ;
 : io-write ( src -- ) io !stio ;
 : io-read  ( dest -- ) io swap !ldio ;
-: printc ( char -- ) \ assume that console is already set
-  t0 !set t0 io-write ;
-: *printc ( addr -- ) 
-  t0 !set
-  t0 t1 !lw
-  t1 io-write ;
 
-: get-string-length ( src dest -- )
-  swap ( dest src )
-  t0 !lowerb ( dest )
-  0x7F t1 !set
-  t0 t1 rot !and ;
-: *get-string-length ( addr dest -- )
-  swap ( dest addr )
-  t2 !lw
-  t2 swap ( t2 dest )
-  get-string-length ;
+: dump-core-id-in-register ( n -- )
+  /dev/core-dump $->io
+  io-write ;
+: load-core-id-in-register ( n -- )
+  /dev/core-load $->io
+  io-write ;
+: dump-core ( -- ) ci dump-core-id-in-register ;
+: load-core ( -- ) ci load-core-id-in-register ;
+: !neqz ( reg -- ) 
+  \ this will emit ?reg zero cond !neq
+  zero cond !neq ;
+: !bneqz ( dest reg -- )
+  \ first emit the neqz call
+  !neqz ( dest )
+  cond ( dest cond )
+  !bc ;
+
+
 
 
 0x0000 .org
@@ -100,23 +101,17 @@
     1 zero t0 !addi
 .label PopulateLoop
     t0 t0 !st
-    1 t0 t0 !addi
-    zero t0 cond !neq
-    PopulateLoop addr16 cond !bc
-    /dev/core-dump $->io 
-    ci io-write
-    /dev/core-load $->io 
-    1 ci ci !addi
-    ci io-write
-    /dev/core-dump $->io 
-    ci io-write
-    /dev/core-load $->io 
-    1 ci ci !addi
-    zero io-write
-    /dev/core-dump $->io 
-    ci io-write
+    t0 !1+
+    PopulateLoop t0 !bneqz 
+    dump-core
+    ci !1+ \ goto the next one
+    load-core \ it will zero out memory since it doesn't exist
+    dump-core \ immediately dump it to disk and thus create it
+    ci !1+ \ goto the next one
+    zero load-core-id-in-register
+    dump-core 
 \ inner-interpreter words
-    zero top ->
+    top !zero
 .label fnTERMINATE
     top !terminateExecution
 0x0100 .org 
@@ -125,10 +120,10 @@
     rs ir pop->
 .label fnNEXT
     ir wa @->
-    2 ir =+n 
+    1 ir =+n 
 .label fnRUN
     wa ca @->
-    2 wa =+n 
+    1 wa =+n 
     ca ->pc
 0x0050 .org
     \ embed execute
@@ -146,11 +141,6 @@
 .label fnBYE
     sp top pop->
     fnTERMINATE jmp
-.label fnOK
-  /dev/console0 $->io
-  0x4F printc
-  0x4B printc 
-  0xA printc 
 
 0x2000 .org
     \ dup dictionary entry

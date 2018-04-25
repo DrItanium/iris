@@ -42,7 +42,6 @@
   imm8 
   or ;
 {enum
-enum: AsmNop
 enum: AsmAdd
 enum: AsmSub
 enum: AsmMul
@@ -149,7 +148,6 @@ variable location
 
 
 
-: !nop ( args* -- n ) NoArguments AsmNop asm<< ;
 : !add ( args* -- n ) ThreeRegister AsmAdd asm<< ;
 : !sub ( args* -- n ) ThreeRegister AsmSub asm<< ;
 : !mul ( args* -- n ) ThreeRegister AsmMul asm<< ;
@@ -241,6 +239,17 @@ variable location
 : dictionary-header ( n -- ) .data32 ;
 : link-address ( addr -- ) .data16 ;
 : execution-address ( addr -- ) .data16 ;
+{enum
+enum: zero
+enum: cond \ condition variable
+enum: at0 \ assembler temporary
+enum: fixed-registers-stop
+enum}
+
+: !nop ( -- ) zero zero zero !add ;
+: !1+ ( reg -- ) 1 swap dup !add ;
+: !zero ( reg -- ) zero swap !move ;
+\ basic registers
 \ io devices
 {enum
 enum: /dev/null 
