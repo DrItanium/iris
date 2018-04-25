@@ -1,6 +1,6 @@
 \ this iris program stores everything in the code section, this includes the
 \ dictionary
-
+" misc/forth_interpreter/basics.fs" open-input-file
 \ the data section now acts as "core"
 \ the stack section is the stack section...
 \ the io section is still the io section
@@ -11,12 +11,12 @@
 : mask-imm8 ( reg -- masked-reg ) 0xFF bitwise-andu ;
 : position-byte ( reg shift -- reg<<shift ) 
   swap mask-imm8 swap ( reg shift -- masked-reg shift )
-  <<u ( reg shift -- reg<<shift ) ;
+  u<< ( reg shift -- reg<<shift ) ;
 : destination-register ( reg -- shifted-reg ) 8 position-byte ;
 : source-register ( reg -- shifted-reg ) 16 position-byte ;
 : source2-register ( reg -- shifted-reg ) 24 position-byte ;
 : imm8 ( imm8 -- shifted-imm8 ) source2-register ;
-: imm16 ( imm16 -- shifted-imm16 ) mask-immediate16 16 <<u ;
+: imm16 ( imm16 -- shifted-imm16 ) mask-immediate16 16 u<< ;
 : NoArguments ( -- 0 ) 0 ;
 : OneRegister ( dest -- value ) destination-register ;
 
@@ -317,3 +317,5 @@ variable location
 \    fnCOLON execution-address
 
 bin}
+
+;s
