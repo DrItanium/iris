@@ -416,7 +416,7 @@ namespace iris {
 
 	void Core::cycle() {
 		// load the current instruction and go to the next address
-		auto inst = extractInstruction();
+		auto inst = extractInstruction(); // automatically increment PC
 		auto op = decodeInstruction(inst);
 		dispatchInstruction(op);
 	}

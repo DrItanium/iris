@@ -245,6 +245,7 @@ enum: cv \ condition variable
 enum: lr \ link register
 enum: ctr \ count register
 enum: at0 \ assembler temporary 0
+enum: at1 \ assembler temporary 1
 enum: fixed-registers-stop
 enum}
 
@@ -285,6 +286,18 @@ enum}
   tuck ( at0 code at0 )
   !set 
   !terminateExecution ;
+
+: !memswap ( addr0 addr1 -- )
+  \ swap the contents of two memory cells in core
+  2over ( addr0 addr1 addr0 addr1 )
+  at0 swap at1 ( addr0 addr1 addr0 at0 addr1 at1 )
+  !ld ( addr0 addr1 addr0 at0 )
+  !ld \ we've loaded memory as needed at this point
+      \ however, we now need to store at1 into addr0 and at0 into addr1
+  ( addr0 addr1 )
+  at0 !st ( addr0 )
+  at1 !st ;
+
 
 
 \ basic registers
