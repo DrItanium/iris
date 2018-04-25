@@ -7,16 +7,18 @@
 \ having a harvard architecture is absolutely insane, to get around this we 
 \ have to become creative. Having 64kb for code and dictionary is plenty
 ( assembler words )
-: mask-immediate16 ( value -- imm16 ) 0xFFFF bitwise-andu ;
-: mask-imm8 ( reg -- masked-reg ) 0xFF bitwise-andu ;
+: addr16 ( n -- n ) 0xFFFF and ;
+: addr32 ( n -- n ) 0xFFFFFFFF and ;
+: addr8 ( n -- n ) 0xFF and ;
 : position-byte ( reg shift -- reg<<shift ) 
-  swap mask-imm8 swap ( reg shift -- masked-reg shift )
+  swap addr8 
+  swap ( reg shift -- masked-reg shift )
   u<< ( reg shift -- reg<<shift ) ;
 : destination-register ( reg -- shifted-reg ) 8 position-byte ;
 : source-register ( reg -- shifted-reg ) 16 position-byte ;
 : source2-register ( reg -- shifted-reg ) 24 position-byte ;
 : imm8 ( imm8 -- shifted-imm8 ) source2-register ;
-: imm16 ( imm16 -- shifted-imm16 ) mask-immediate16 16 u<< ;
+: imm16 ( imm16 -- shifted-imm16 ) addr16 16 u<< ;
 : NoArguments ( -- 0 ) 0 ;
 : OneRegister ( dest -- value ) destination-register ;
 
@@ -24,27 +26,28 @@
   OneRegister
   swap
   source-register
-  bitwise-oru ;
+  or ;
 
 
 : ThreeRegister ( src2 src dest -- value )
   TwoRegister ( src2 src dest -- src2 value )
   swap
   source2-register
-  bitwise-oru  ;
+  or ;
+
 : Immediate16 ( imm16 -- value ) imm16 ;
 
 : OneRegisterWithImmediate ( imm16 dest -- value ) 
   OneRegister
   swap
   Immediate16
-  bitwise-oru ;
+  or ;
 
 : TwoRegisterWithImmediate ( imm8 src dest -- value ) 
   TwoRegister ( imm8 src dest -- imm8 value )
   swap
   imm8 
-  bitwise-oru ;
+  or ;
 
 {enum
 enum: AsmNop
@@ -118,91 +121,93 @@ enum: AsmUnpackHalves
 enum}
 
 
-
-: !nop ( args* -- n ) NoArguments AsmNop or ;
-: !add ( args* -- n ) ThreeRegister AsmAdd or ;
-: !sub ( args* -- n ) ThreeRegister AsmSub or ;
-: !mul ( args* -- n ) ThreeRegister AsmMul or ;
-: !div ( args* -- n ) ThreeRegister AsmDiv or ;
-: !rem ( args* -- n ) ThreeRegister AsmRem or ;
-: !shl ( args* -- n ) ThreeRegister AsmShiftLeft or ;
-: !shr ( args* -- n ) ThreeRegister AsmShiftRight or ;
-: !and ( args* -- n ) ThreeRegister AsmAnd or ;
-: !or ( args* -- n ) ThreeRegister AsmOr or ;
-: !not ( args* -- n ) TwoRegister AsmNot or ;
-: !xor ( args* -- n ) ThreeRegister AsmXor or ;
-: !nand ( args* -- n ) ThreeRegister AsmNand or ;
-: !nor ( args* -- n ) ThreeRegister AsmNor or ;
-: !addi ( args* -- n ) TwoRegisterWithImmediate AsmAddImmediate or ;
-: !subi ( args* -- n ) TwoRegisterWithImmediate AsmSubImmediate or ;
-: !muli ( args* -- n ) TwoRegisterWithImmediate AsmMulImmediate or ;
-: !divi ( args* -- n ) TwoRegisterWithImmediate AsmDivImmediate or ;
-: !remi ( args* -- n ) TwoRegisterWithImmediate AsmRemImmediate or ;
-: !shli ( args* -- n ) TwoRegisterWithImmediate AsmShiftLeftImmediate or ;
-: !shri ( args* -- n ) TwoRegisterWithImmediate AsmShiftRightImmediate or ;
-: !min ( args* -- n ) ThreeRegister AsmMin or ;
-: !max ( args* -- n ) ThreeRegister AsmMax or ;
-: !lxor ( args* -- n ) ThreeRegister AsmLogicalXor or ;
-: !lnot ( args* -- n ) TwoRegister AsmLogicalNot or ;
-: !land ( args* -- n ) ThreeRegister AsmLogicalAnd or ;
-: !lor ( args* -- n ) ThreeRegister AsmLogicalOr or ;
-: !lnand ( args* -- n ) ThreeRegister AsmLogicalNand or ;
-: !lnor ( args* -- n ) ThreeRegister AsmLogicalNor or ;
-: !eq ( args* -- n ) ThreeRegister AsmEq or ;
-: !eqi ( args* -- n ) TwoRegisterWithImmediate AsmEqImmediate or ;
-: !neq ( args* -- n ) ThreeRegister AsmNeq or ;
-: !neqi ( args* -- n ) TwoRegisterWithImmediate AsmNeqImmediate or ;
-: !lt ( args* -- n ) ThreeRegister AsmLessThan or ;
-: !lti ( args* -- n ) TwoRegisterWithImmediate AsmLessThanImmediate or ;
-: !gt ( args* -- n ) ThreeRegister AsmGreaterThan or ;
-: !gti ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanImmediate or ;
-: !le ( args* -- n ) ThreeRegister AsmLessThanOrEqualTo or ;
-: !lei ( args* -- n ) TwoRegisterWithImmediate AsmLessThanOrEqualToImmediate or ;
-: !ge ( args* -- n ) ThreeRegister AsmGreaterThanOrEqualTo or ;
-: !gei ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanOrEqualToImmediate or ;
-: !move ( args* -- n ) TwoRegister AsmMove or ;
-: !set ( args* -- n ) OneRegisterWithImmediate AsmSet or ;
-: !swap ( args* -- n ) TwoRegister AsmSwap or ;
-: !ld ( args* -- n ) TwoRegister AsmLoad or ;
-: !ldi ( args* -- n ) OneRegisterWithImmediate AsmLoadImmediate or ;
-: !st ( args* -- n ) TwoRegister AsmStore or ;
-: !sti ( args* -- n ) OneRegisterWithImmediate AsmStoreImmediate or ;
-: !push ( args* -- n ) TwoRegister AsmPush or ;
-: !pushi ( args* -- n ) OneRegisterWithImmediate AsmPushImmediate or ;
-: !pop ( args* -- n ) TwoRegister AsmPop or ;
-: !ldc ( args* -- n ) ThreeRegister AsmLoadCode or ;
-: !stc ( args* -- n ) ThreeRegister AsmStoreCode or ;
-: !b ( args* -- n ) Immediate16 AsmBranch or ;
-: !bl ( args* -- n ) OneRegisterWithImmediate AsmBranchAndLink or ;
-: !br ( args* -- n ) OneRegister AsmBranchIndirect or ;
-: !brl ( args* -- n ) TwoRegister AsmBranchIndirectLink or ;
-: !bc ( args* -- n ) OneRegisterWithImmediate AsmBranchConditional or ;
-: !bcr ( args* -- n ) TwoRegister AsmBranchConditionalIndirect or ;
-: !bcrl ( args* -- n ) ThreeRegister AsmBranchConditionalIndirectLink or ;
-: !terminateExecution ( args* -- n ) OneRegister AsmTerminateExecution or ;
-: !ldio ( args* -- n ) TwoRegister AsmLoadIO or ;
-: !stio ( args* -- n ) TwoRegister AsmStoreIO or ;
-: !pushg ( args* -- n ) OneRegisterWithImmediate AsmSaveGroupOfRegisters or ;
-: !popg ( args* -- n ) OneRegisterWithImmediate AsmRestoreGroupOfRegisters or ;
-: !upperb ( args* -- n ) TwoRegister AsmGetUpperByte or ;
-: !lowerb ( args* -- n ) TwoRegister AsmGetLowerByte or ;
-: !unpackh ( args* -- n ) ThreeRegister AsmUnpackHalves or ;
-
+: section-entry ( value address section -- ) bin<<q bin<<q bin<<h ;
+1 constant code-section-id
 variable location
 : .org ( value -- ) location ! ;
 0 .org
 : current-location ( -- n ) location @ ;
 : .label ( -- n ) current-location constant ; 
 : next-location ( -- n ) current-location 1+ ;
-: addr16 ( n -- n ) 0xFFFF and ;
-: addr32 ( n -- n ) 0xFFFFFFFF and ;
 : increment-location ( -- ) next-location location ! ;
 : next-addr ( -- n ) next-location addr16 ;
-: code<< ( value -- ) 
-  drop \ right now just drop the top of the stack
+: code<< ( value address -- ) 
+  code-section-id bin<<q
+  bin<<q
+  bin<<h 
   increment-location ;
-: .data16 ( n -- ) addr16 code<< ;
-: .data32 ( n -- ) addr32 code<< ;
+: asm<< ( a b -- ) or current-location code<< ;
+: !nop ( args* -- n ) NoArguments AsmNop asm<< ;
+: !add ( args* -- n ) ThreeRegister AsmAdd asm<< ;
+: !sub ( args* -- n ) ThreeRegister AsmSub asm<< ;
+: !mul ( args* -- n ) ThreeRegister AsmMul asm<< ;
+: !div ( args* -- n ) ThreeRegister AsmDiv asm<< ;
+: !rem ( args* -- n ) ThreeRegister AsmRem asm<< ;
+: !shl ( args* -- n ) ThreeRegister AsmShiftLeft asm<< ;
+: !shr ( args* -- n ) ThreeRegister AsmShiftRight asm<< ;
+: !and ( args* -- n ) ThreeRegister AsmAnd asm<< ;
+: !or ( args* -- n ) ThreeRegister AsmOr asm<< ;
+: !not ( args* -- n ) TwoRegister AsmNot asm<< ;
+: !xor ( args* -- n ) ThreeRegister AsmXor asm<< ;
+: !nand ( args* -- n ) ThreeRegister AsmNand asm<< ;
+: !nor ( args* -- n ) ThreeRegister AsmNor asm<< ;
+: !addi ( args* -- n ) TwoRegisterWithImmediate AsmAddImmediate asm<< ;
+: !subi ( args* -- n ) TwoRegisterWithImmediate AsmSubImmediate asm<< ;
+: !muli ( args* -- n ) TwoRegisterWithImmediate AsmMulImmediate asm<< ;
+: !divi ( args* -- n ) TwoRegisterWithImmediate AsmDivImmediate asm<< ;
+: !remi ( args* -- n ) TwoRegisterWithImmediate AsmRemImmediate asm<< ;
+: !shli ( args* -- n ) TwoRegisterWithImmediate AsmShiftLeftImmediate asm<< ;
+: !shri ( args* -- n ) TwoRegisterWithImmediate AsmShiftRightImmediate asm<< ;
+: !min ( args* -- n ) ThreeRegister AsmMin asm<< ;
+: !max ( args* -- n ) ThreeRegister AsmMax asm<< ;
+: !lxor ( args* -- n ) ThreeRegister AsmLogicalXor asm<< ;
+: !lnot ( args* -- n ) TwoRegister AsmLogicalNot asm<< ;
+: !land ( args* -- n ) ThreeRegister AsmLogicalAnd asm<< ;
+: !lor ( args* -- n ) ThreeRegister AsmLogicalOr asm<< ;
+: !lnand ( args* -- n ) ThreeRegister AsmLogicalNand asm<< ;
+: !lnor ( args* -- n ) ThreeRegister AsmLogicalNor asm<< ;
+: !eq ( args* -- n ) ThreeRegister AsmEq asm<< ;
+: !eqi ( args* -- n ) TwoRegisterWithImmediate AsmEqImmediate asm<< ;
+: !neq ( args* -- n ) ThreeRegister AsmNeq asm<< ;
+: !neqi ( args* -- n ) TwoRegisterWithImmediate AsmNeqImmediate asm<< ;
+: !lt ( args* -- n ) ThreeRegister AsmLessThan asm<< ;
+: !lti ( args* -- n ) TwoRegisterWithImmediate AsmLessThanImmediate asm<< ;
+: !gt ( args* -- n ) ThreeRegister AsmGreaterThan asm<< ;
+: !gti ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanImmediate asm<< ;
+: !le ( args* -- n ) ThreeRegister AsmLessThanOrEqualTo asm<< ;
+: !lei ( args* -- n ) TwoRegisterWithImmediate AsmLessThanOrEqualToImmediate asm<< ;
+: !ge ( args* -- n ) ThreeRegister AsmGreaterThanOrEqualTo asm<< ;
+: !gei ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanOrEqualToImmediate asm<< ;
+: !move ( args* -- n ) TwoRegister AsmMove asm<< ;
+: !set ( args* -- n ) OneRegisterWithImmediate AsmSet asm<< ;
+: !swap ( args* -- n ) TwoRegister AsmSwap asm<< ;
+: !ld ( args* -- n ) TwoRegister AsmLoad asm<< ;
+: !ldi ( args* -- n ) OneRegisterWithImmediate AsmLoadImmediate asm<< ;
+: !st ( args* -- n ) TwoRegister AsmStore asm<< ;
+: !sti ( args* -- n ) OneRegisterWithImmediate AsmStoreImmediate asm<< ;
+: !push ( args* -- n ) TwoRegister AsmPush asm<< ;
+: !pushi ( args* -- n ) OneRegisterWithImmediate AsmPushImmediate asm<< ;
+: !pop ( args* -- n ) TwoRegister AsmPop asm<< ;
+: !ldc ( args* -- n ) ThreeRegister AsmLoadCode asm<< ;
+: !stc ( args* -- n ) ThreeRegister AsmStoreCode asm<< ;
+: !b ( args* -- n ) Immediate16 AsmBranch asm<< ;
+: !bl ( args* -- n ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
+: !br ( args* -- n ) OneRegister AsmBranchIndirect asm<< ;
+: !brl ( args* -- n ) TwoRegister AsmBranchIndirectLink asm<< ;
+: !bc ( args* -- n ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
+: !bcr ( args* -- n ) TwoRegister AsmBranchConditionalIndirect asm<< ;
+: !bcrl ( args* -- n ) ThreeRegister AsmBranchConditionalIndirectLink asm<< ;
+: !terminateExecution ( args* -- n ) OneRegister AsmTerminateExecution asm<< ;
+: !ldio ( args* -- n ) TwoRegister AsmLoadIO asm<< ;
+: !stio ( args* -- n ) TwoRegister AsmStoreIO asm<< ;
+: !pushg ( args* -- n ) OneRegisterWithImmediate AsmSaveGroupOfRegisters asm<< ;
+: !popg ( args* -- n ) OneRegisterWithImmediate AsmRestoreGroupOfRegisters asm<< ;
+: !upperb ( args* -- n ) TwoRegister AsmGetUpperByte asm<< ;
+: !lowerb ( args* -- n ) TwoRegister AsmGetLowerByte asm<< ;
+: !unpackh ( args* -- n ) ThreeRegister AsmUnpackHalves asm<< ;
+
+: .data16 ( n -- ) addr16 current-location code<< ;
+: .data32 ( n -- ) addr32 current-location code<< ;
 : dictionary-header ( n -- ) .data32 ;
 : link-address ( addr -- ) .data16 ;
 : execution-address ( addr -- ) .data16 ;
@@ -221,25 +226,17 @@ variable location
 7 constant t0 \ temporary 0
 8 constant t1 \ temporary 1
 9 constant t2 \ temporary 2
-
-: !ld ( src dest -- ) 
-  drop \ do this for now
-  code<< ;
-: !addi ( n src dest -- )
-  2drop
-  code<< ;
-
-: !pop ( src dest -- )
-  drop
-  code<< ;
-: !push ( src dest -- )
-  drop
-  code<< ;
-: !move ( src dest -- )
-  drop
-  code<< ;
-: !b ( dest -- )
-  code<< ;
+10 constant top \ top of the stack
+11 constant lower \ lower element of the stack
+12 constant third \ third element of the stack
+13 constant io \ io device number or address
+( io devices )
+{enum
+enum: /dev/null 
+enum: /dev/console
+\ enum: /dev/console1
+\ enum: /dev/rng 
+enum}
 
 \ generic computer instructions from threaded interpretive languages book
 : @-> ( a b -- ) 
@@ -273,11 +270,28 @@ variable location
   \ unconditional jump to the address encoded into the instruction
   !b ;
 
+: ->io ( reg -- ) io -> ;
 
+: $-> ( value reg -- ) !set ;
+: $->pc ( value -- ) pc $-> ;
+: $->io ( value -- ) io $-> ;
+: io-write ( src -- ) io !stio ;
+: io-read  ( dest -- ) io swap !ldio ;
+: printc ( char -- ) \ assume that console is already set
+  t0 !set t0 io-write ;
+
+
+
+0x0000 .org
+    0x8000 sp !set
+    0xFFFF rs !set
 \ inner-interpreter words
+    zero top ->
+.label fnTERMINATE
+    top !terminateExecution
 0x0100 .org 
 .label fnSEMI
-    next-addr code<<
+    next-addr .data16 
     rs ir pop->
 .label fnNEXT
     ir wa @->
@@ -299,6 +313,14 @@ variable location
     ir rs psh->
     wa ir ->
     fnNEXT jmp
+.label fnBYE
+    sp top pop->
+    fnTERMINATE jmp
+.label fnOK
+  /dev/console $->io
+  0x4F printc
+  0x4B printc 
+  0xA printc 
 
 0x2000 .org
     \ dup dictionary entry
@@ -317,5 +339,4 @@ variable location
 \    fnCOLON execution-address
 
 bin}
-
 ;s
