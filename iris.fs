@@ -256,7 +256,7 @@ enum: fixed-registers-stop
 enum}
 
 : !nop ( -- ) zero zero zero !add ;
-: !1+ ( reg -- ) 1 swap dup !add ;
+: !1+ ( reg -- ) 1 swap dup !addi ;
 : !zero ( reg -- ) zero swap !move ;
 : !bccv ( dest -- )
   \ use the cv register
