@@ -314,6 +314,7 @@ enum: /dev/console0
 enum: /dev/console1
 enum: /dev/core-dump
 enum: /dev/core-load
+enum: /dev/dump-vm
 enum}
 
 ;s

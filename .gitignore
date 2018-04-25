@@ -8,6 +8,7 @@ v.img
 
 *.padd
 *.pail
+forth
 syn_sim
 syn_asm
 syn_link
