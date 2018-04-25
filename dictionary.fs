@@ -6,6 +6,188 @@
 \ the io section is still the io section
 \ having a harvard architecture is absolutely insane, to get around this we 
 \ have to become creative. Having 64kb for code and dictionary is plenty
+( assembler words )
+: mask-immediate16 ( value -- imm16 ) 0xFFFF bitwise-andu ;
+: mask-imm8 ( reg -- masked-reg ) 0xFF bitwise-andu ;
+: position-byte ( reg shift -- reg<<shift ) 
+  swap mask-imm8 swap ( reg shift -- masked-reg shift )
+  <<u ( reg shift -- reg<<shift ) ;
+: destination-register ( reg -- shifted-reg ) 8 position-byte ;
+: source-register ( reg -- shifted-reg ) 16 position-byte ;
+: source2-register ( reg -- shifted-reg ) 24 position-byte ;
+: imm8 ( imm8 -- shifted-imm8 ) source2-register ;
+: imm16 ( imm16 -- shifted-imm16 ) mask-immediate16 16 <<u ;
+: NoArguments ( -- 0 ) 0 ;
+: OneRegister ( dest -- value ) destination-register ;
+
+: TwoRegister ( src dest -- value ) 
+  OneRegister
+  swap
+  source-register
+  bitwise-oru ;
+
+
+: ThreeRegister ( src2 src dest -- value )
+  TwoRegister ( src2 src dest -- src2 value )
+  swap
+  source2-register
+  bitwise-oru  ;
+: Immediate16 ( imm16 -- value ) imm16 ;
+
+: OneRegisterWithImmediate ( imm16 dest -- value ) 
+  OneRegister
+  swap
+  Immediate16
+  bitwise-oru ;
+
+: TwoRegisterWithImmediate ( imm8 src dest -- value ) 
+  TwoRegister ( imm8 src dest -- imm8 value )
+  swap
+  imm8 
+  bitwise-oru ;
+
+{enum
+enum: AsmNop
+enum: AsmAdd
+enum: AsmSub
+enum: AsmMul
+enum: AsmDiv
+enum: AsmRem
+enum: AsmShiftLeft
+enum: AsmShiftRight
+enum: AsmAnd
+enum: AsmOr
+enum: AsmNot
+enum: AsmXor
+enum: AsmNand
+enum: AsmNor
+enum: AsmAddImmediate
+enum: AsmSubImmediate
+enum: AsmMulImmediate
+enum: AsmDivImmediate
+enum: AsmRemImmediate
+enum: AsmShiftLeftImmediate
+enum: AsmShiftRightImmediate
+enum: AsmMin
+enum: AsmMax
+enum: AsmLogicalXor
+enum: AsmLogicalNot
+enum: AsmLogicalAnd
+enum: AsmLogicalOr
+enum: AsmLogicalNand
+enum: AsmLogicalNor
+enum: AsmEq
+enum: AsmEqImmediate
+enum: AsmNeq
+enum: AsmNeqImmediate
+enum: AsmLessThan
+enum: AsmLessThanImmediate
+enum: AsmGreaterThan
+enum: AsmGreaterThanImmediate
+enum: AsmLessThanOrEqualTo
+enum: AsmLessThanOrEqualToImmediate
+enum: AsmGreaterThanOrEqualTo
+enum: AsmGreaterThanOrEqualToImmediate
+enum: AsmMove
+enum: AsmSet
+enum: AsmSwap
+enum: AsmLoad
+enum: AsmLoadImmediate
+enum: AsmStore
+enum: AsmStoreImmediate
+enum: AsmPush
+enum: AsmPushImmediate
+enum: AsmPop
+enum: AsmLoadCode
+enum: AsmStoreCode
+enum: AsmBranch
+enum: AsmBranchAndLink
+enum: AsmBranchIndirect
+enum: AsmBranchIndirectLink
+enum: AsmBranchConditional
+enum: AsmBranchConditionalIndirect
+enum: AsmBranchConditionalIndirectLink
+enum: AsmTerminateExecution
+enum: AsmLoadIO
+enum: AsmStoreIO
+enum: AsmSaveGroupOfRegisters
+enum: AsmRestoreGroupOfRegisters
+enum: AsmGetUpperByte
+enum: AsmGetLowerByte
+enum: AsmUnpackHalves
+enum}
+
+
+
+: !nop ( args* -- n ) NoArguments AsmNop or ;
+: !add ( args* -- n ) ThreeRegister AsmAdd or ;
+: !sub ( args* -- n ) ThreeRegister AsmSub or ;
+: !mul ( args* -- n ) ThreeRegister AsmMul or ;
+: !div ( args* -- n ) ThreeRegister AsmDiv or ;
+: !rem ( args* -- n ) ThreeRegister AsmRem or ;
+: !shl ( args* -- n ) ThreeRegister AsmShiftLeft or ;
+: !shr ( args* -- n ) ThreeRegister AsmShiftRight or ;
+: !and ( args* -- n ) ThreeRegister AsmAnd or ;
+: !or ( args* -- n ) ThreeRegister AsmOr or ;
+: !not ( args* -- n ) TwoRegister AsmNot or ;
+: !xor ( args* -- n ) ThreeRegister AsmXor or ;
+: !nand ( args* -- n ) ThreeRegister AsmNand or ;
+: !nor ( args* -- n ) ThreeRegister AsmNor or ;
+: !addi ( args* -- n ) TwoRegisterWithImmediate AsmAddImmediate or ;
+: !subi ( args* -- n ) TwoRegisterWithImmediate AsmSubImmediate or ;
+: !muli ( args* -- n ) TwoRegisterWithImmediate AsmMulImmediate or ;
+: !divi ( args* -- n ) TwoRegisterWithImmediate AsmDivImmediate or ;
+: !remi ( args* -- n ) TwoRegisterWithImmediate AsmRemImmediate or ;
+: !shli ( args* -- n ) TwoRegisterWithImmediate AsmShiftLeftImmediate or ;
+: !shri ( args* -- n ) TwoRegisterWithImmediate AsmShiftRightImmediate or ;
+: !min ( args* -- n ) ThreeRegister AsmMin or ;
+: !max ( args* -- n ) ThreeRegister AsmMax or ;
+: !lxor ( args* -- n ) ThreeRegister AsmLogicalXor or ;
+: !lnot ( args* -- n ) TwoRegister AsmLogicalNot or ;
+: !land ( args* -- n ) ThreeRegister AsmLogicalAnd or ;
+: !lor ( args* -- n ) ThreeRegister AsmLogicalOr or ;
+: !lnand ( args* -- n ) ThreeRegister AsmLogicalNand or ;
+: !lnor ( args* -- n ) ThreeRegister AsmLogicalNor or ;
+: !eq ( args* -- n ) ThreeRegister AsmEq or ;
+: !eqi ( args* -- n ) TwoRegisterWithImmediate AsmEqImmediate or ;
+: !neq ( args* -- n ) ThreeRegister AsmNeq or ;
+: !neqi ( args* -- n ) TwoRegisterWithImmediate AsmNeqImmediate or ;
+: !lt ( args* -- n ) ThreeRegister AsmLessThan or ;
+: !lti ( args* -- n ) TwoRegisterWithImmediate AsmLessThanImmediate or ;
+: !gt ( args* -- n ) ThreeRegister AsmGreaterThan or ;
+: !gti ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanImmediate or ;
+: !le ( args* -- n ) ThreeRegister AsmLessThanOrEqualTo or ;
+: !lei ( args* -- n ) TwoRegisterWithImmediate AsmLessThanOrEqualToImmediate or ;
+: !ge ( args* -- n ) ThreeRegister AsmGreaterThanOrEqualTo or ;
+: !gei ( args* -- n ) TwoRegisterWithImmediate AsmGreaterThanOrEqualToImmediate or ;
+: !move ( args* -- n ) TwoRegister AsmMove or ;
+: !set ( args* -- n ) OneRegisterWithImmediate AsmSet or ;
+: !swap ( args* -- n ) TwoRegister AsmSwap or ;
+: !ld ( args* -- n ) TwoRegister AsmLoad or ;
+: !ldi ( args* -- n ) OneRegisterWithImmediate AsmLoadImmediate or ;
+: !st ( args* -- n ) TwoRegister AsmStore or ;
+: !sti ( args* -- n ) OneRegisterWithImmediate AsmStoreImmediate or ;
+: !push ( args* -- n ) TwoRegister AsmPush or ;
+: !pushi ( args* -- n ) OneRegisterWithImmediate AsmPushImmediate or ;
+: !pop ( args* -- n ) TwoRegister AsmPop or ;
+: !ldc ( args* -- n ) ThreeRegister AsmLoadCode or ;
+: !stc ( args* -- n ) ThreeRegister AsmStoreCode or ;
+: !b ( args* -- n ) Immediate16 AsmBranch or ;
+: !bl ( args* -- n ) OneRegisterWithImmediate AsmBranchAndLink or ;
+: !br ( args* -- n ) OneRegister AsmBranchIndirect or ;
+: !brl ( args* -- n ) TwoRegister AsmBranchIndirectLink or ;
+: !bc ( args* -- n ) OneRegisterWithImmediate AsmBranchConditional or ;
+: !bcr ( args* -- n ) TwoRegister AsmBranchConditionalIndirect or ;
+: !bcrl ( args* -- n ) ThreeRegister AsmBranchConditionalIndirectLink or ;
+: !terminateExecution ( args* -- n ) OneRegister AsmTerminateExecution or ;
+: !ldio ( args* -- n ) TwoRegister AsmLoadIO or ;
+: !stio ( args* -- n ) TwoRegister AsmStoreIO or ;
+: !pushg ( args* -- n ) OneRegisterWithImmediate AsmSaveGroupOfRegisters or ;
+: !popg ( args* -- n ) OneRegisterWithImmediate AsmRestoreGroupOfRegisters or ;
+: !upperb ( args* -- n ) TwoRegister AsmGetUpperByte or ;
+: !lowerb ( args* -- n ) TwoRegister AsmGetLowerByte or ;
+: !unpackh ( args* -- n ) ThreeRegister AsmUnpackHalves or ;
+
 variable location
 : .org ( value -- ) location ! ;
 0 .org
