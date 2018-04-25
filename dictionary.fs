@@ -1,3 +1,30 @@
+\ this iris program stores everything in the code section, this includes the
+\ dictionary
+
+\ the data section now acts as "core"
+\ the stack section is the stack section...
+\ the io section is still the io section
+\ having a harvard architecture is absolutely insane, to get around this we 
+\ have to become creative. Having 64kb for code and dictionary is plenty
+variable location
+: .org ( value -- ) location ! ;
+0 .org
+: current-location ( -- n ) location @ ;
+: .label ( -- n ) current-location constant ; 
+: next-location ( -- n ) current-location 1+ ;
+: addr16 ( n -- n ) 0xFFFF and ;
+: addr32 ( n -- n ) 0xFFFFFFFF and ;
+: increment-location ( -- ) next-location location ! ;
+: next-addr ( -- n ) next-location addr16 ;
+: code<< ( value -- ) 
+  drop \ right now just drop the top of the stack
+  increment-location ;
+: .data16 ( n -- ) addr16 code<< ;
+: .data32 ( n -- ) addr32 code<< ;
+: dictionary-header ( n -- ) .data32 ;
+: link-address ( addr -- ) .data16 ;
+: execution-address ( addr -- ) .data16 ;
+" forth.iris" {bin
 0 constant zero
 1 constant ir \ instruction register
               \ contains the address of the next instruction in the threaded
@@ -12,14 +39,25 @@
 7 constant t0 \ temporary 0
 8 constant t1 \ temporary 1
 9 constant t2 \ temporary 2
-64 constant w0
-65 constant w1
-66 constant bName
-67 constant bChar0
-68 constant bChar1
-69 constant bChar2
-70 constant wMask
-71 constant flag
+
+: !ld ( src dest -- ) 
+  drop \ do this for now
+  code<< ;
+: !addi ( n src dest -- )
+  2drop
+  code<< ;
+
+: !pop ( src dest -- )
+  drop
+  code<< ;
+: !push ( src dest -- )
+  drop
+  code<< ;
+: !move ( src dest -- )
+  drop
+  code<< ;
+: !b ( dest -- )
+  code<< ;
 
 \ generic computer instructions from threaded interpretive languages book
 : @-> ( a b -- ) 
@@ -53,14 +91,11 @@
   \ unconditional jump to the address encoded into the instruction
   !b ;
 
+
 \ inner-interpreter words
-variable code-location
-0 code-location !
-: .label ( -- n ) code-location @ constant ; 
-: .org ( value -- ) code-location ! ;
 0x0100 .org 
 .label fnSEMI
-    code-location @ 1+ 0x0000FFFF and code<<
+    next-addr code<<
     rs ir pop->
 .label fnNEXT
     ir wa @->
@@ -71,11 +106,10 @@ variable code-location
     ca ->pc
 0x0050 .org
     \ embed execute
-    0x4507 code<< \ dictionary header
-    0x4558 code<< \ dictionary header
-    0x0000 code<< \ link address
+    0x45584507 dictionary-header \ dictionary header
+    0 link-address
 .label fnEXECUTE
-    code-location @ 1+ 0x0000FFFF and code<< \ code address for execute
+    next-addr execution-address \ code address for execute
     sp wa pop->
     fnRUN jmp
 0x0140 .org
@@ -84,44 +118,20 @@ variable code-location
     wa ir ->
     fnNEXT jmp
 
+0x2000 .org
+    \ dup dictionary entry
+.label dictionaryDUP
+    0x50554403 dictionary-header
+    fnEXECUTE link-address
+    next-addr execution-address
+    sp ca pop->
+    ca sp psh->
+    ca sp psh->
+    fnNEXT jmp
+\ 0x2100 .org
+    \ secondary defining keyword constant
+\    0x4E4F4308 dictionary-header 
+\    dictionaryDUP link-address
+\    fnCOLON execution-address
 
-
-\ ------------------------------------------
-: group-mask ( mask group -- n ) 
-  0x1F and ( mask group:5 )
-  swap ( group:5 mask ) 
-  8 u<< ( group:5 mask<<8 )
-  or ;
-
-0xFF 8 group-mask constant r64-r71
-1 constant stdout
-1 constant stdin
-2 constant term-control
-
-: write-io ( value addr -- ) !stio ;
-: read-io ( addr dest -- ) !ldio ;
-: print-character ( register -- ) 
-  stdout t0 !set
-  t0 write-io ;
-
-: print-ichar ( char -- )
-  t1 dup ( char t1 t1 ) 
-  -rot ( t1 char t1 )
-  !set
-  print-character ;
-: print-space ( -- ) 0x20 print-ichar ;
-: print-newline ( -- ) 0xA print-ichar ;
-
-.label LoadAddresses
-    r64-r71 sp !pushg
-    arg0 w0 !ld \ first word
-    arg0 arg0 !1+
-    arg0 w1 !ld \ second word
-    w0 bChar0 bName !unpackh \ name and first character
-    w1 bChar2 bChar1 !unpackh \ second and third character
-    0x80 wMask !set \ get the flag bit
-    bName wMask flag !and \ load the flag in r71
-    1 wMask wMask !subi \ subtract one
-    bName wMask bName !and \ get the length
-    r64-r71 sp !popg
-    !ret
+bin}
