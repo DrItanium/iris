@@ -241,30 +241,31 @@ variable location
 : execution-address ( addr -- ) .data16 ;
 {enum
 enum: zero
-enum: cond \ condition variable
+enum: cv \ condition variable
 enum: lr \ link register
-enum: at0 \ assembler temporary
+enum: ctr \ count register
+enum: at0 \ assembler temporary 0
 enum: fixed-registers-stop
 enum}
 
 : !nop ( -- ) zero zero zero !add ;
 : !1+ ( reg -- ) 1 swap dup !add ;
 : !zero ( reg -- ) zero swap !move ;
-: !bccond ( dest -- )
-  \ use the cond register
-  cond !bc ;
+: !bccv ( dest -- )
+  \ use the cv register
+  cv !bc ;
 : !eqz ( reg -- )
-  zero cond !eq ;
+  zero cv !eq ;
 : !beqz ( dest reg -- )
   !eqz
-  !bccond ;
+  !bccv ;
 : !neqz ( reg -- ) 
   \ this will emit ?reg zero cond !neq
-  zero cond !neq ;
+  zero cv !neq ;
 : !bneqz ( dest reg -- )
   \ first emit the neqz call
   !neqz ( dest )
-  !bccond ;
+  !bccv ;
 : !if ( on-false on-true f -- ) 
   \ a two way branch
   !bcr  ( of )
@@ -279,6 +280,12 @@ enum}
   !bcrl ( of l )
   swap ( l of )
   !brl ;
+: !exit ( code -- ) 
+  at0 ( code at0 ) 
+  tuck ( at0 code at0 )
+  !set 
+  !terminateExecution ;
+
 
 \ basic registers
 \ io devices
