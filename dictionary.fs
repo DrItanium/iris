@@ -310,9 +310,9 @@ enum}
     0x8000 sp !set
     0xFFFF rs !set
     zero t0 !move
-    2 t1 !set
+    0x0FFF t1 !set
 .label PopulateLoop
-    t1 t0 !st
+    t0 t0 !st
     1 t0 t0 !addi
     t1 t0 cond !neq
     PopulateLoop addr16 cond !bc
