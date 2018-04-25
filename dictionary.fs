@@ -28,14 +28,6 @@
 14 constant ci \ core index number
 15 constant ci1 \ second core index number
 16 constant cond \ condition variable
-( io devices )
-{enum
-enum: /dev/null 
-enum: /dev/console0
-enum: /dev/console1
-enum: /dev/core-dump
-enum: /dev/core-load
-enum}
 
 : !lw ( src dest -- ) 
   \ since this is inside the code section we have to get creative
@@ -104,13 +96,23 @@ enum}
 0x0000 .org
     0x8000 sp !set
     0xFFFF rs !set
-    zero t0 !move
-    0xFFFF t1 !set
+    zero zero !st
+    1 zero t0 !addi
 .label PopulateLoop
     t0 t0 !st
     1 t0 t0 !addi
-    t1 t0 cond !neq
+    zero t0 cond !neq
     PopulateLoop addr16 cond !bc
+    /dev/core-dump $->io 
+    ci io-write
+    /dev/core-load $->io 
+    1 ci ci !addi
+    ci io-write
+    /dev/core-dump $->io 
+    ci io-write
+    /dev/core-load $->io 
+    1 ci ci !addi
+    zero io-write
     /dev/core-dump $->io 
     ci io-write
 \ inner-interpreter words

@@ -241,5 +241,13 @@ variable location
 : dictionary-header ( n -- ) .data32 ;
 : link-address ( addr -- ) .data16 ;
 : execution-address ( addr -- ) .data16 ;
+\ io devices
+{enum
+enum: /dev/null 
+enum: /dev/console0
+enum: /dev/console1
+enum: /dev/core-dump
+enum: /dev/core-load
+enum}
 
 ;s
