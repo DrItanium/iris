@@ -26,6 +26,8 @@ enum: lower \ lower element of the stack
 enum: third \ third element of the stack
 enum: io \ io device number or address
 enum: ci \ core index number
+enum: ibcurr \ input buffer current position
+enum: ibend \ input buffer end
 enum}
 
 : !lw ( src dest -- ) 
@@ -85,10 +87,11 @@ enum}
 
 
 
-
+0xF100 constant input-buffer-start
+0xF300 constant inpub-buffer-end
 0x0000 .org
-    0x8000 sp !set
-    0xFFFF rs !set
+    0x8000 sp $-> 
+    0xFFFF rs $->
     zero zero !st
     1 zero t0 !addi
 .label PopulateLoop
@@ -103,8 +106,24 @@ enum}
     zero load-core-id-in-register
     dump-core
 \ inner-interpreter words
+    3 ci $->
+    load-core
+    /dev/console0 $->io
+    0xA t1 $->
+    input-buffer-start ibcurr $-> 
+    ibcurr ibend ->
+.label readline_test
+    t0 io-read
+    t0 io-write
+    t0 ibend !st
+    ibend !1+
+    t1 t0 cv !neq
+    readline_test cv !bc
+    dump-core
+    \ always last thing to do
     top !zero
-    0xF000 jmp
+.label fnTERMINATE
+    top !terminateExecution
 0x0100 .org 
 .label fnSEMI
     next-addr .data16 
@@ -131,7 +150,7 @@ enum}
     fnNEXT jmp
 .label fnBYE
     sp top pop->
-    0xF000 jmp
+    fnTERMINATE jmp
 
 0x2000 .org
     \ dup dictionary entry
@@ -149,17 +168,5 @@ enum}
 \    dictionaryDUP link-address
 \    fnCOLON execution-address
 
-0xF000 .org
-.label fnTERMINATE
-    top !terminateExecution
-.label fnDumpCore
-    dump-core
-    fnNEXT jmp
-.label fnLoadCore
-    load-core
-    fnNEXT jmp
-.label fnLoadTopIntoCI
-    sp ci pop->
-    fnNEXT jmp
 bin}
 ;s
