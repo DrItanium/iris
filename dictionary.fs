@@ -115,7 +115,7 @@ enum}
 .label readline_test
     t0 io-read
     t0 io-write
-    t0 ibend !st
+    t0 ibend !sw
     ibend !1+
     t1 t0 cv !neq
     readline_test cv !bc

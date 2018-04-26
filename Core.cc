@@ -25,6 +25,7 @@
 
 
 #include "Core.h"
+#include <iostream>
 #include <functional>
 #include <sstream>
 #include <vector>

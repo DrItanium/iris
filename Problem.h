@@ -28,7 +28,6 @@
 #ifndef IRIS_PROBLEM_H
 #define IRIS_PROBLEM_H
 #include <string>
-#include <iostream>
 namespace iris {
 
 	class Problem {
