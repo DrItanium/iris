@@ -101,11 +101,10 @@ enum}
     dump-core \ immediately dump it to disk and thus create it
     ci !1+ \ goto the next one
     zero load-core-id-in-register
-    dump-core 
+    dump-core
 \ inner-interpreter words
     top !zero
-.label fnTERMINATE
-    top !terminateExecution
+    0xF000 jmp
 0x0100 .org 
 .label fnSEMI
     next-addr .data16 
@@ -132,7 +131,7 @@ enum}
     fnNEXT jmp
 .label fnBYE
     sp top pop->
-    fnTERMINATE jmp
+    0xF000 jmp
 
 0x2000 .org
     \ dup dictionary entry
@@ -150,5 +149,17 @@ enum}
 \    dictionaryDUP link-address
 \    fnCOLON execution-address
 
+0xF000 .org
+.label fnTERMINATE
+    top !terminateExecution
+.label fnDumpCore
+    dump-core
+    fnNEXT jmp
+.label fnLoadCore
+    load-core
+    fnNEXT jmp
+.label fnLoadTopIntoCI
+    sp ci pop->
+    fnNEXT jmp
 bin}
 ;s
