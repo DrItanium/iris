@@ -1,13 +1,6 @@
-\ this iris program stores everything in the code section, this includes the
-\ dictionary
-\ the data section now acts as "core"
-\ the stack section is the stack section...
-\ the io section is still the io section
-\ having a harvard architecture is absolutely insane, to get around this we 
-\ have to become creative. Having 64kb for code and dictionary is plenty
 " iris.fs" open-input-file
 " registers.fs" open-input-file
-" forth.iris" {bin
+" boot.rom" {bin
 
 \ generic computer instructions from threaded interpretive languages book
 : @-> ( a b -- ) 

@@ -252,6 +252,7 @@ enum: lr \ link register
 enum: ctr \ count register
 enum: at0 \ assembler temporary 0
 enum: at1 \ assembler temporary 1
+enum: at2 \ assembler temporary 2
 enum: fixed-registers-stop
 enum}
 
@@ -316,5 +317,41 @@ enum: /dev/core-dump
 enum: /dev/core-load
 enum: /dev/dump-vm
 enum}
+\ concepts and other macro routines for doing crazy things
+: !lw ( src dest -- ) 
+  \ since this is inside the code section we have to get creative
+  \ put the upper half into 
+  zero swap !ldc ;
+: !sw ( value addr -- )
+  zero -rot !stc ;
+
+\ load a value from stack memory and discard the pointer update
+: !lw.s ( sp dest -- )
+  swap ( dest sp )
+  at0 tuck ( dest at0 sp at0 )
+  !move \ stash the contents of src into at0
+  swap ( at0 dest )
+  !pop ;
+\ store a word into stack memory
+: !sw.s ( dest sp -- ) 
+  at0 tuck ( dest at0 sp at0 )
+  !move ( dest at0 )
+  !push ;
+
+: !core->inst ( src dest -- ) 
+  swap ( dest src )
+  at0 !move \ stash src into at0 
+  at0 at1 !ld \ load the lower half into at1
+  at0 !incr \ increment at0 by one
+  at0 at2 !ld \ load the upper half into at2
+  at2 at1 rot ( at2 at1 dest )
+  !stc ;
+: !inst->core ( src dest -- )
+  swap ( dest src )
+  at1 at0 !ldc \ load the upper and lower halves
+  at2 !move \ copy to at2 as we need to do some changes
+  at0 at2 !st \ store the lower half at the starting position
+  at2 !incr \ next cell
+  at1 at2 !st ;
 
 ;s
