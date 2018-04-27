@@ -1,5 +1,27 @@
 " iris.fs" open-input-file
-" registers.fs" open-input-file
+fixed-registers-stop ={enum
+enum: sp \ stack pointer
+enum: csp \ call stack pointer
+enum: t0 \ temporary 0
+enum: t1 \ temporary 1
+enum: t2 \ temporary 2
+enum: t3 \ temporary 3
+enum: io \ io device number or address
+enum: ci \ core index number
+enum: ibcurr \ input buffer current position
+enum: ibend \ input buffer end
+enum: iblen
+enum: token-start \ where to start on a given token
+enum: token-stop \ where the token of magic is meant to stop (this includes the space)
+enum: keep-executing \ variable for determine whether to keep executing or not
+enum: arg0 \ first argument
+enum: arg1 \ second argument
+enum: arg2 \ third argument
+enum: arg3 \ fourth argument
+enum: ret0
+enum: ret1
+enum}
+
 " boot.rom" {bin
 
 \ generic computer instructions from threaded interpretive languages book
@@ -25,10 +47,6 @@
 
 : -> ( a b -- ) 
   !move ;
-: ->pc ( a -- ) 
-  \ the contents of the A register are loaded into the PC. The processor will
-  \ fetch its next instruction from this location
-  pc -> ;
 
 : jmp ( addr -- ) 
   \ unconditional jump to the address encoded into the instruction
@@ -37,7 +55,6 @@
 : ->io ( reg -- ) io -> ;
 
 : $-> ( value reg -- ) !set ;
-: $->pc ( value -- ) pc $-> ;
 : $->io ( value -- ) io $-> ;
 : io-write ( src -- ) io !stio ;
 : io-read  ( dest -- ) io swap !ldio ;
@@ -50,90 +67,56 @@
   io-write ;
 : dump-core ( -- ) ci dump-core-id-in-register ;
 : load-core ( -- ) ci load-core-id-in-register ;
+: (defun ( -- ) .label lr sp psh-> ;
+: defun)  ( -- ) 
+    csp lr pop-> 
+    lr !ret ;
+: !call ( dest -- ) lr !bl ;
+
+0xF000 constant input-buffer-start
+0xF100 constant input-buffer-end
+0x0100 constant boot-rom-start
+0xC000 constant routines-start
+
+\ code start
+0x0000 .org boot-rom-start jmp 
+
+routines-start .org
+     .label terminate-execution
+        zero !terminateExecution
+     (defun readline
+        /dev/console0 $->io
+        0xA t0 $->
+        .label readline-loop
+        t1 io-read \ load a character from input
+        t1 io-write \ print it out to be visible
+        t1 ibend !sw \ save to memory
+        ibend !1+
+        t1 t0 cv !neq
+        readline-loop cv !bc
+        ibcurr ibend iblen !sub
+        defun)
+      (defun print-for-length
+       /dev/console0 $->io
+       \ start at arg0 and go for arg1 number of elements
+       t0 sp psh-> \ save t0 to the stack
+       .label printline-loop
+
+        sp t0 pop-> \ restore t0 when finished
+       defun)
 
 
 
-0xF100 constant input-buffer-start
-0xF300 constant inpub-buffer-end
-0x0000 .org
-    0x8000 sp $-> 
-    0xFFFF rs $->
-    \ need a simple machine code monitor to build up things
-    ( zero zero !st
-    1 zero t0 !addi
-.label PopulateLoop
-    t0 t0 !st
-    t0 !1+
-    PopulateLoop t0 !bneqz 
-    dump-core
-    ci !1+ \ goto the next one
-    load-core \ it will zero out memory since it doesn't exist
-    dump-core \ immediately dump it to disk and thus create it
-    ci !1+ \ goto the next one
-    zero load-core-id-in-register
-    dump-core
-\ inner-interpreter words
-    3 ci $->
-    load-core
-    /dev/console0 $->io )
+boot-rom-start .org
+    0x7FFF sp $->
+    0xFFFF csp $->
+    0xFFFF keep-executing $->
+.label InputRoutine
+    \ this code will read a line and save it to 0xF100
     0xA t1 $->
     input-buffer-start ibcurr $-> 
     ibcurr ibend ->
-.label readline
-    t0 io-read
-    t0 io-write
-    t0 ibend !sw
-    ibend !1+
-    t1 t0 cv !neq
-    readline_test cv !bc
-    dump-core
-    \ always last thing to do
-    top !zero
-.label fnTERMINATE
-    top !terminateExecution
-0x0100 .org 
-.label fnSEMI
-    next-addr .data16 
-    rs ir pop->
-.label fnNEXT
-    ir wa @->
-    1 ir =+n 
-.label fnRUN
-    wa ca @->
-    1 wa =+n 
-    ca ->pc
-0x0050 .org
-    \ embed execute
-    0x45584507 dictionary-header \ dictionary header
-    0 link-address
-.label fnEXECUTE
-    next-addr execution-address \ code address for execute
-    sp wa pop->
-    fnRUN jmp
-0x0140 .org
-.label fnCOLON
-    ir rs psh->
-    wa ir ->
-    fnNEXT jmp
-.label fnBYE
-    sp top pop->
-    fnTERMINATE jmp
-
-0x2000 .org
-    \ dup dictionary entry
-.label dictionaryDUP
-    0x50554403 dictionary-header
-    fnEXECUTE link-address
-    next-addr execution-address
-    sp ca pop->
-    ca sp psh->
-    ca sp psh->
-    fnNEXT jmp
-\ 0x2100 .org
-    \ secondary defining keyword constant
-\    0x4E4F4308 dictionary-header 
-\    dictionaryDUP link-address
-\    fnCOLON execution-address
-
+    readline !call
+    terminate-execution InputRoutine keep-executing !if 
 bin}
 ;s

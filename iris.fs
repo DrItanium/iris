@@ -259,7 +259,7 @@ enum}
 : !nop ( -- ) zero zero zero !add ;
 : !1+ ( reg -- ) 1 swap dup !addi ;
 : !zero ( reg -- ) zero swap !move ;
-: !bccv ( dest -- )
+: !bccv ( imm -- )
   \ use the cv register
   cv !bc ;
 : !eqz ( reg -- )
@@ -342,7 +342,7 @@ enum}
   swap ( dest src )
   at0 !move \ stash src into at0 
   at0 at1 !ld \ load the lower half into at1
-  at0 !incr \ increment at0 by one
+  at0 !1+ \ increment at0 by one
   at0 at2 !ld \ load the upper half into at2
   at2 at1 rot ( at2 at1 dest )
   !stc ;
@@ -351,7 +351,10 @@ enum}
   at1 at0 !ldc \ load the upper and lower halves
   at2 !move \ copy to at2 as we need to do some changes
   at0 at2 !st \ store the lower half at the starting position
-  at2 !incr \ next cell
+  at2 !1+ \ next cell
   at1 at2 !st ;
+: !ret ( register -- )
+  !br ;
+
 
 ;s
