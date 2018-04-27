@@ -67,10 +67,7 @@ enum}
   io-write ;
 : dump-core ( -- ) ci dump-core-id-in-register ;
 : load-core ( -- ) ci load-core-id-in-register ;
-: (defun ( -- ) .label lr sp psh-> ;
-: defun)  ( -- ) 
-    csp lr pop-> 
-    lr !ret ;
+
 : !call ( dest -- ) lr !bl ;
 
 0xF000 constant input-buffer-start
@@ -84,25 +81,35 @@ enum}
 routines-start .org
      .label terminate-execution
         zero !terminateExecution
+     .label return
+        \ all functions go through here to make sure that we do the right thing
+        csp lr pop-> 
+        lr !ret 
+: (defun ( -- ) .label lr csp psh-> ;
+: defun)  ( -- ) return jmp ;
      (defun readline
         /dev/console0 $->io
         0xA t0 $->
         .label readline-loop
         t1 io-read \ load a character from input
-        t1 io-write \ print it out to be visible
         t1 ibend !sw \ save to memory
         ibend !1+
         t1 t0 cv !neq
         readline-loop cv !bc
         ibcurr ibend iblen !sub
         defun)
-      (defun print-for-length
-       /dev/console0 $->io
+      (defun print-characters
        \ start at arg0 and go for arg1 number of elements
-       t0 sp psh-> \ save t0 to the stack
-       .label printline-loop
-
-        sp t0 pop-> \ restore t0 when finished
+       arg1 zero cv !eq
+       return cv !bc \ leave early if length is zero
+       /dev/console0 $->io
+       arg0 arg1 t0 !add \ compute the last address to print
+       .label printcharacters-loop 
+       arg0 t1 !lw
+       t1 io-write \ print it out
+       arg0 !1+
+       arg0 t0 cv !neq
+       printcharacters-loop cv !bc
        defun)
 
 
@@ -117,6 +124,9 @@ boot-rom-start .org
     input-buffer-start ibcurr $-> 
     ibcurr ibend ->
     readline !call
+    ibcurr arg0 !move
+    iblen arg1 !move
+    print-characters !call
     terminate-execution InputRoutine keep-executing !if 
 bin}
 ;s
