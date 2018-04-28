@@ -13,10 +13,12 @@ enum: ibend \ input buffer end
 enum: iblen
 enum: token-start \ where to start on a given token
 enum: token-stop \ where the token of magic is meant to stop (this includes the space)
+enum: token-length 
 enum: keep-executing \ variable for determine whether to keep executing or not
 enum: &terminate-execution \ location of terminate-execution
 enum: &InputRoutine \ location for input-routine
 enum: &Restart \ location for Restart
+enum: error-code 
 enum: arg0 \ first argument
 enum: arg1 \ second argument
 enum: arg2 \ third argument
@@ -93,11 +95,8 @@ routines-start .org
        
       (defun fix-case
             \ lower case becomes upper case
-            97 t1 cv !lti
-            return-on-true
-            122 t1 cv !gti
-            return-on-true
-            \ we are looking at a value greater than z
+            97 t1 cv !lti return-on-true
+            122 t1 cv !gti return-on-true \ we are looking at a value in between a and z in the ascii table
             32 t1 t1 !subi \ subtract 32 to get the upper case version
             defun)
      (defun readline
@@ -110,12 +109,13 @@ routines-start .org
         ibend !1+
         t1 t0 cv !neq
         readline-loop cv !bc
+        0x20 t1 !set \ make sure that we put a space in instead
+        t1 ibend !sw
         ibcurr ibend iblen !sub
         defun)
       (defun print-characters
        \ start at arg0 and go for arg1 number of elements
-       arg1 zero cv !eq
-       return-on-true \ leave early if length is zero
+       arg1 !eqz return-on-true \ leave early if length is zero
        /dev/console0 $->io
        arg0 arg1 t0 !add \ compute the last address to print
        .label printcharacters-loop 
@@ -133,23 +133,32 @@ routines-start .org
      (defun check-for-quit
             \ arg0 contains starting point for checking 
             \ arg1 contains the length
-            arg1 zero cv !eq
-            return-on-true \ leave early if length is zero
-            5 arg1 cv !neqi \ is the length incorrect?
-            return-on-true
-            /dev/console0 $->io
+            arg1 !eqz return-on-true \ leave early if length is zero
+            5 arg1 cv !neqi return-on-true \ is the length incorrect?
             81 terminate-if-not-char \ Q
             85 terminate-if-not-char \ U
             73 terminate-if-not-char \ I
             84 terminate-if-not-char \ T
-            0xA terminate-if-not-char \ newline 
+            0x20 terminate-if-not-char \ space
             zero keep-executing !move
             defun)
+.label continue-routines-here0
+     (defun read-hex-number
+            \ arg0 contains starting point for checking
+            \ arg1 contains the length 
+
+            0xFFFF error-code !set
+            arg1 !eqz return-on-true \ if we have no characters then no way bro either
+            5 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
+            zero error-code !move
+            defun)
+
 
 
 
 boot-rom-start .org
 .label Restart
+    zero error-code !move
     0x7FFF sp $->
     0xFFFF csp $->
     0xFFFF keep-executing $->
@@ -165,9 +174,15 @@ boot-rom-start .org
     ibcurr arg0 !move
     iblen arg1 !move
     check-for-quit !call
-    zero keep-executing cv !eq
+    keep-executing !eqz
     cv &terminate-execution !bcr
-    &InputRoutine !br
+    error-code !eqz
+    cv &InputRoutine !bcr
+    \ printout the error message and then restart execution!
+    token-start arg0 !move
+    token-stop arg1 !move
+    \ perform the call to printout the unknown token
+
 0x0000 .org 
 \ setup variables that will not be known until now
 InputRoutine &InputRoutine !set
