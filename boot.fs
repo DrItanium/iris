@@ -125,6 +125,11 @@ routines-start .org
        arg0 t0 cv !neq
        printcharacters-loop cv !bc
        defun)
+     : terminate-if-not-char ( index -- )
+       arg0 t0 !lw
+       t0 cv !neqi 
+       return-on-true
+       arg0 !1+ ;
      (defun check-for-quit
             \ arg0 contains starting point for checking 
             \ arg1 contains the length
@@ -133,25 +138,11 @@ routines-start .org
             5 arg1 cv !neqi \ is the length incorrect?
             return-on-true
             /dev/console0 $->io
-            arg0 t0 !lw
-            81 t0 cv !neqi \ Q
-            return-on-true
-            arg0 !1+
-            arg0 t0 !lw
-            85 t0 cv !neqi \ U
-            return-on-true
-            arg0 !1+
-            arg0 t0 !lw
-            73 t0 cv !neqi \ I
-            return-on-true
-            arg0 !1+
-            arg0 t0 !lw
-            84 t0 cv !neqi \ T
-            return-on-true
-            arg0 !1+
-            arg0 t0 !lw
-            0xA t0 cv !neqi \ newline
-            return-on-true
+            81 terminate-if-not-char \ Q
+            85 terminate-if-not-char \ U
+            73 terminate-if-not-char \ I
+            84 terminate-if-not-char \ T
+            0xA terminate-if-not-char \ newline 
             zero keep-executing !move
             defun)
 
