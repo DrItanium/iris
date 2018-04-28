@@ -93,11 +93,9 @@ routines-start .org
        
       (defun fix-case
             \ lower case becomes upper case
-            97 t2 !set
-            t2 t1 cv !lt
+            97 t1 cv !lti
             return-on-true
-            122 t2 !set
-            t2 t1 cv !gt
+            122 t1 cv !gti
             return-on-true
             \ we are looking at a value greater than z
             32 t1 t1 !subi \ subtract 32 to get the upper case version
@@ -132,11 +130,28 @@ routines-start .org
             \ arg1 contains the length
             arg1 zero cv !eq
             return-on-true \ leave early if length is zero
-            5 t0 !set \ length I'm expecting
-            arg1 t0 cv !neq \ is the length incorrect?
+            5 arg1 cv !neqi \ is the length incorrect?
             return-on-true
             /dev/console0 $->io
-            arg0 arg1 t0 !add \ compute the last address to check for
+            arg0 t0 !lw
+            81 t0 cv !neqi \ Q
+            return-on-true
+            arg0 !1+
+            arg0 t0 !lw
+            85 t0 cv !neqi \ U
+            return-on-true
+            arg0 !1+
+            arg0 t0 !lw
+            73 t0 cv !neqi \ I
+            return-on-true
+            arg0 !1+
+            arg0 t0 !lw
+            84 t0 cv !neqi \ T
+            return-on-true
+            arg0 !1+
+            arg0 t0 !lw
+            0xA t0 cv !neqi \ newline
+            return-on-true
             zero keep-executing !move
             defun)
 
