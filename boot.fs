@@ -90,11 +90,24 @@ routines-start .org
 : (defun ( -- ) .label lr csp psh-> ;
 : defun)  ( -- ) return jmp ;
 : return-on-true ( -- ) return cv !bc ;
+       
+      (defun fix-case
+            \ lower case becomes upper case
+            97 t2 !set
+            t2 t1 cv !lt
+            return-on-true
+            122 t2 !set
+            t2 t1 cv !gt
+            return-on-true
+            \ we are looking at a value greater than z
+            32 t1 t1 !subi \ subtract 32 to get the upper case version
+            defun)
      (defun readline
         /dev/console0 $->io
         0xA t0 $->
         .label readline-loop
         t1 io-read \ load a character from input
+        fix-case !call
         t1 ibend !sw \ save to memory
         ibend !1+
         t1 t0 cv !neq
