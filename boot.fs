@@ -14,6 +14,9 @@ enum: iblen
 enum: token-start \ where to start on a given token
 enum: token-stop \ where the token of magic is meant to stop (this includes the space)
 enum: keep-executing \ variable for determine whether to keep executing or not
+enum: &terminate-execution \ location of terminate-execution
+enum: &InputRoutine \ location for input-routine
+enum: &Restart \ location for Restart
 enum: arg0 \ first argument
 enum: arg1 \ second argument
 enum: arg2 \ third argument
@@ -76,7 +79,6 @@ enum}
 0xC000 constant routines-start
 
 \ code start
-0x0000 .org boot-rom-start jmp 
 
 routines-start .org
      .label terminate-execution
@@ -87,6 +89,7 @@ routines-start .org
         lr !ret 
 : (defun ( -- ) .label lr csp psh-> ;
 : defun)  ( -- ) return jmp ;
+: return-on-true ( -- ) return cv !bc ;
      (defun readline
         /dev/console0 $->io
         0xA t0 $->
@@ -101,7 +104,7 @@ routines-start .org
       (defun print-characters
        \ start at arg0 and go for arg1 number of elements
        arg1 zero cv !eq
-       return cv !bc \ leave early if length is zero
+       return-on-true \ leave early if length is zero
        /dev/console0 $->io
        arg0 arg1 t0 !add \ compute the last address to print
        .label printcharacters-loop 
@@ -111,10 +114,23 @@ routines-start .org
        arg0 t0 cv !neq
        printcharacters-loop cv !bc
        defun)
+     (defun check-for-quit
+            \ arg0 contains starting point for checking 
+            \ arg1 contains the length
+            arg1 zero cv !eq
+            return-on-true \ leave early if length is zero
+            5 t0 !set \ length I'm expecting
+            arg1 t0 cv !neq \ is the length incorrect?
+            return-on-true
+            /dev/console0 $->io
+            arg0 arg1 t0 !add \ compute the last address to check for
+            zero keep-executing !move
+            defun)
 
 
 
 boot-rom-start .org
+.label Restart
     0x7FFF sp $->
     0xFFFF csp $->
     0xFFFF keep-executing $->
@@ -127,6 +143,17 @@ boot-rom-start .org
     ibcurr arg0 !move
     iblen arg1 !move
     print-characters !call
-    terminate-execution InputRoutine keep-executing !if 
+    ibcurr arg0 !move
+    iblen arg1 !move
+    check-for-quit !call
+    zero keep-executing cv !eq
+    cv &terminate-execution !bcr
+    &InputRoutine !br
+0x0000 .org 
+\ setup variables that will not be known until now
+InputRoutine &InputRoutine !set
+terminate-execution &terminate-execution !set
+Restart &Restart !set
+boot-rom-start jmp 
 bin}
 ;s

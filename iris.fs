@@ -274,20 +274,6 @@ enum}
   \ first emit the neqz call
   !neqz ( dest )
   !bccv ;
-: !if ( on-false on-true f -- ) 
-  \ a two way branch
-  !bcr  ( of )
-  \ otherwise, always goto the false condition
-  !br ;
-: !ifl ( link on-false on-true f )
-  >r \ push the flag onto the return stack
-  rot ( of ot l )
-  dup ( of ot l l )
-  rot ( of l l ot )
-  r> ( of l l ot f )
-  !bcrl ( of l )
-  swap ( l of )
-  !brl ;
 : !exit ( code -- ) 
   at0 ( code at0 ) 
   tuck ( at0 code at0 )
