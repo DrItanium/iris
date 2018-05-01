@@ -25,6 +25,7 @@ enum: arg2 \ third argument
 enum: arg3 \ fourth argument
 enum: ret0
 enum: ret1
+enum: digit-current
 enum}
 
 " boot.rom" {bin
@@ -89,31 +90,36 @@ routines-start .org
         \ all functions go through here to make sure that we do the right thing
         csp lr pop-> 
         lr !ret 
-: (defun ( -- ) .label lr csp psh-> ;
-: defun)  ( -- ) return jmp ;
+: defun: ( -- ) .label lr csp psh-> ;
+: defun;  ( -- ) return jmp ;
 : return-on-true ( -- ) return cv !bc ;
-       
-      (defun fix-case
-            \ lower case becomes upper case
-            97 t1 cv !lti return-on-true
-            122 t1 cv !gti return-on-true \ we are looking at a value in between a and z in the ascii table
-            32 t1 t1 !subi \ subtract 32 to get the upper case version
-            defun)
-     (defun readline
-        /dev/console0 $->io
-        0xA t0 $->
-        .label readline-loop
-        t1 io-read \ load a character from input
-        fix-case !call
-        t1 ibend !sw \ save to memory
-        ibend !1+
-        t1 t0 cv !neq
-        readline-loop cv !bc
-        0x20 t1 !set \ make sure that we put a space in instead
-        t1 ibend !sw
-        ibcurr ibend iblen !sub
-        defun)
-      (defun print-characters
+: terminate-if-not-char ( index -- )
+       arg0 t0 !lw
+       t0 cv !neqi 
+       return-on-true
+       arg0 !1+ ;
+
+defun: fix-case
+      \ lower case becomes upper case
+      97 t1 cv !lti return-on-true
+      122 t1 cv !gti return-on-true \ we are looking at a value in between a and z in the ascii table
+      32 t1 t1 !subi \ subtract 32 to get the upper case version
+      defun;
+defun: readline
+       /dev/console0 $->io
+       0xA t0 $->
+       .label readline-loop
+       t1 io-read \ load a character from input
+       fix-case !call
+       t1 ibend !sw \ save to memory
+       ibend !1+
+       t1 t0 cv !neq
+       readline-loop cv !bc
+       0x20 t1 !set \ make sure that we put a space in instead
+       t1 ibend !sw
+       ibcurr ibend iblen !sub
+       defun;
+defun: print-characters
        \ start at arg0 and go for arg1 number of elements
        arg1 !eqz return-on-true \ leave early if length is zero
        /dev/console0 $->io
@@ -124,34 +130,85 @@ routines-start .org
        arg0 !1+
        arg0 t0 cv !neq
        printcharacters-loop cv !bc
-       defun)
-     : terminate-if-not-char ( index -- )
-       arg0 t0 !lw
-       t0 cv !neqi 
-       return-on-true
-       arg0 !1+ ;
-     (defun check-for-quit
-            \ arg0 contains starting point for checking 
-            \ arg1 contains the length
-            arg1 !eqz return-on-true \ leave early if length is zero
-            5 arg1 cv !neqi return-on-true \ is the length incorrect?
-            81 terminate-if-not-char \ Q
-            85 terminate-if-not-char \ U
-            73 terminate-if-not-char \ I
-            84 terminate-if-not-char \ T
-            0x20 terminate-if-not-char \ space
-            zero keep-executing !move
-            defun)
-.label continue-routines-here0
-     (defun read-hex-number
-            \ arg0 contains starting point for checking
-            \ arg1 contains the length 
+       defun;
+defun: check-for-quit
+       \ arg0 contains starting point for checking 
+       \ arg1 contains the length
+       arg1 !eqz return-on-true \ leave early if length is zero
+       5 arg1 cv !neqi return-on-true \ is the length incorrect?
+       81 terminate-if-not-char \ Q
+       85 terminate-if-not-char \ U
+       73 terminate-if-not-char \ I
+       84 terminate-if-not-char \ T
+       0x20 terminate-if-not-char \ space
+       zero keep-executing !move
+       defun;
+.label read-hex-digit-done
+       zero error-code !move
+       at1 ret0 !move
+       defun;
+: emit-value-if-matches ( input output -- ) 
+    at1 !set
+    at0 !set
+    arg0 at0 cv !eq
+    read-hex-digit-done cv !bc ;
+defun: read-hex-digit
+       \ arg0 contains the current position
+       48 0x0 emit-value-if-matches
+       49 0x1 emit-value-if-matches
+       50 0x2 emit-value-if-matches
+       51 0x3 emit-value-if-matches
+       52 0x4 emit-value-if-matches
+       53 0x5 emit-value-if-matches
+       54 0x6 emit-value-if-matches
+       55 0x7 emit-value-if-matches
+       56 0x8 emit-value-if-matches
+       57 0x9 emit-value-if-matches
+       65 0xA emit-value-if-matches
+       66 0xB emit-value-if-matches
+       67 0xC emit-value-if-matches
+       68 0xD emit-value-if-matches
+       69 0xE emit-value-if-matches
+       70 0xF emit-value-if-matches
+       0xFFFF error-code !move
+       defun;
+: load-shifted-hex-digit ( -- ) .label 
+    read-hex-digit !call
+    arg0 !1+
+    ret0 digit-current digit-current !add
+    4 digit-current digit-current !shli
+    0xFFFF at0 !set
+    at0 error-code cv !eq
+    return-on-true ;
+load-shifted-hex-digit rhd4
+load-shifted-hex-digit rhd3
+load-shifted-hex-digit rhd2
+.label rhd1
+    read-hex-digit !call
+    arg0 !1+
+    ret0 digit-current digit-current !add
+    0xFFFF at0 !set
+    at0 error-code cv !eq
+    return-on-true
+    \ probably want to push this onto the stack at some point
+    defun;
 
-            0xFFFF error-code !set
-            arg1 !eqz return-on-true \ if we have no characters then no way bro either
-            5 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
-            zero error-code !move
-            defun)
+
+defun: read-hex-number
+       \ arg0 contains starting point for checking
+       \ arg1 contains the length 
+       0xFFFF error-code !set
+       arg1 !eqz return-on-true \ if we have no characters then no way bro either
+       5 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
+       5 arg1 cv !eqi
+       rhd4 cv !bc
+       4 arg1 cv !eqi
+       rhd3 cv !bc
+       3 arg1 cv !eqi
+       rhd2 cv !bc
+       2 arg1 cv !eqi
+       rhd1 cv !bc
+       defun;
 
 
 
