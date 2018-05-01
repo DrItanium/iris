@@ -115,8 +115,10 @@ defun: readline
        ibend !1+
        t1 t0 cv !neq
        readline-loop cv !bc
+       ibend t2 !move
+       1 t2 t2 !subi
        0x20 t1 !set \ make sure that we put a space in instead
-       t1 ibend !sw
+       t1 t2 !sw
        ibcurr ibend iblen !sub
        defun;
 defun: print-characters
@@ -143,6 +145,7 @@ defun: check-for-quit
        0x20 terminate-if-not-char \ space
        zero keep-executing !move
        defun;
+
 .label read-hex-digit-done
        zero error-code !move
        at1 ret0 !move
