@@ -11,7 +11,8 @@ enum: ci \ core index number
 enum: ibcurr \ input buffer current position
 enum: ibend \ input buffer end
 enum: iblen
-enum: tokend \ token end, used inside the 
+enum: tokstart \ token start
+enum: tokend \ token end
 enum: keep-executing \ variable for determine whether to keep executing or not
 enum: &terminate-execution \ location of terminate-execution
 enum: &InputRoutine \ location for input-routine
@@ -108,6 +109,7 @@ defun: skip-whitespace-in-input
        \ TODO migrate this to microcode?
        defun;
 defun: readline
+       ibcurr ibend cv !neq return-on-true
        /dev/console0 $->io
        0xA t0 $->
        .label readline-loop
@@ -200,7 +202,6 @@ load-shifted-hex-digit rhd2
     \ probably want to push this onto the stack at some point
     defun;
 
-
 defun: read-hex-number
        \ arg0 contains starting point for checking
        \ arg1 contains the length 
@@ -228,23 +229,24 @@ boot-rom-start .org
     0xFFFF keep-executing $->
 .label InputRoutine
     \ this code will read a line and save it to 0xF100
-    0xA t1 $->
     input-buffer-start ibcurr $-> 
     ibcurr ibend ->
     readline !call
     ibcurr arg0 !move
     iblen arg1 !move
     print-characters !call
-    ibcurr arg0 !move
-    iblen arg1 !move
+    ibcurr tokend tokstart !readtok
+    1 tokend ibcurr !addi
+    tokstart arg0 !move
+    tokstart tokend arg1 !sub
     check-for-quit !call
     keep-executing !eqz
     cv &terminate-execution !bcr
     error-code !eqz
     cv &InputRoutine !bcr
     \ printout the error message and then restart execution!
-    token-start arg0 !move
-    token-stop arg1 !move
+    \ token-start arg0 !move
+    \ token-stop arg1 !move
     \ perform the call to printout the unknown token
 
 0x0000 .org 
