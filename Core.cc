@@ -420,9 +420,9 @@ namespace iris {
         // source is the ending position
         // read at most 80 characters
         auto starting = getSource2(op).address;
-        for (;_data[starting].address == 0x20; ++starting) { } // skip whitespace
+        for (;_code[starting] == 0x20; ++starting) { } // skip whitespace
         setDestination(op, starting); // okay we have a starting position
-        for (auto count = 0; _data[starting].address != 0x20 && count < 80; ++starting, ++count) { }
+        for (auto count = 0; _code[starting] != 0x20 && count < 80; ++starting, ++count) { }
         setRegister(op._args.src, starting);
     }
 #undef DefExec
