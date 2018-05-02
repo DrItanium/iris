@@ -110,3 +110,5 @@ X(UnsignedMax, ThreeRegister, maxu)
 // Read input form a starting address in code memory and populate the
 // start and end positions into the other registers
 X(ReadToken, ThreeRegister, readtok)
+// extract lower 16-bits from code address and store it into an io address
+X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)

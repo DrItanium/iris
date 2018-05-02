@@ -425,6 +425,29 @@ namespace iris {
         for (auto count = 0; _code[starting] != 0x20 && count < 80; ++starting, ++count) { }
         setRegister(op._args.src, starting);
     }
+    DefExec(WriteRangeToIOAddress) {
+        // destination is io address
+        // src the starting point in the code space
+        // src2 the length
+        // only the lower half of each number is used
+        auto starting = getSource(op).address;
+        auto ioStorage = getRegister(op._args.dest).get<Address>();
+        auto end = starting + getSource2(op).address;
+        if (end < starting) {
+            throw Problem("Memory wrap around");
+        } else {
+            for (auto& a : _io) {
+                if (a.respondsTo(ioStorage)) {
+                    for (auto loc = starting; loc < end; ++loc) {
+                        // load the lower half of it and store it
+                        a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[loc]));
+                    }
+                    break;
+                }
+            }
+        }
+
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
