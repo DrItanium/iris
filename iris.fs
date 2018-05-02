@@ -147,6 +147,7 @@ enum: AsmUnsignedNand
 enum: AsmUnsignedNor
 enum: AsmUnsignedMin
 enum: AsmUnsignedMax
+enum: AsmReadToken
 enum}
 
 
@@ -239,6 +240,8 @@ enum}
 : !noru ( args* -- ) ThreeRegister AsmUnsignedNor asm<< ;
 : !minu ( src2 src dest -- ) ThreeRegister AsmUnsignedMin asm<< ;
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
+: !readtok ( src2 src dest -- ) ThreeRegister AsmReadToken asm<< ;
+
 
 : .data16 ( n -- ) addr16 current-location code<< ;
 : .data32 ( n -- ) addr32 current-location code<< ;
