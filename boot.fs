@@ -11,9 +11,7 @@ enum: ci \ core index number
 enum: ibcurr \ input buffer current position
 enum: ibend \ input buffer end
 enum: iblen
-enum: token-start \ where to start on a given token
-enum: token-stop \ where the token of magic is meant to stop (this includes the space)
-enum: token-length 
+enum: tokend \ token end, used inside the 
 enum: keep-executing \ variable for determine whether to keep executing or not
 enum: &terminate-execution \ location of terminate-execution
 enum: &InputRoutine \ location for input-routine
@@ -105,6 +103,10 @@ defun: fix-case
       122 t1 cv !gti return-on-true \ we are looking at a value in between a and z in the ascii table
       32 t1 t1 !subi \ subtract 32 to get the upper case version
       defun;
+defun: skip-whitespace-in-input
+       \ TODO implement logic for whitespace skipping
+       \ TODO migrate this to microcode?
+       defun;
 defun: readline
        /dev/console0 $->io
        0xA t0 $->
@@ -116,10 +118,11 @@ defun: readline
        t1 t0 cv !neq
        readline-loop cv !bc
        ibend t2 !move
-       1 t2 t2 !subi
+       1 t2 t2 !subi \ walk back a character as well
        0x20 t1 !set \ make sure that we put a space in instead
        t1 t2 !sw
-       ibcurr ibend iblen !sub
+       skip-whitespace-in-input !call
+       ibcurr ibend iblen !sub 
        defun;
 defun: print-characters
        \ start at arg0 and go for arg1 number of elements
@@ -133,6 +136,7 @@ defun: print-characters
        arg0 t0 cv !neq
        printcharacters-loop cv !bc
        defun;
+
 defun: check-for-quit
        \ arg0 contains starting point for checking 
        \ arg1 contains the length
