@@ -143,7 +143,7 @@ defun: check-for-quit
        \ arg0 contains starting point for checking 
        \ arg1 contains the length
        arg1 !eqz return-on-true \ leave early if length is zero
-       \ 5 arg1 cv !neqi return-on-true \ is the length incorrect?
+       5 arg1 cv !neqi return-on-true \ is the length incorrect?
        81 terminate-if-not-char \ Q
        85 terminate-if-not-char \ U
        73 terminate-if-not-char \ I
@@ -234,7 +234,7 @@ boot-rom-start .org
     readline !call
     ibcurr arg0 !move
     iblen arg1 !move
-    print-characters !call
+    \ print-characters !call
 .label read-token-routine
     ibcurr tokend tokstart !readtok
     1 tokend ibcurr !addi
@@ -244,9 +244,10 @@ boot-rom-start .org
     keep-executing !eqz
     cv &terminate-execution !bcr
     error-code !eqz
+    cv &InputRoutine !bcr
     ibcurr ibend cv !neq
     read-token-routine cv !bc
-    cv &InputRoutine !bcr
+    &InputRoutine !br
     \ printout the error message and then restart execution!
     \ token-start arg0 !move
     \ token-stop arg1 !move
