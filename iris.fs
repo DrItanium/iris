@@ -148,6 +148,7 @@ enum: AsmUnsignedNor
 enum: AsmUnsignedMin
 enum: AsmUnsignedMax
 enum: AsmReadToken
+enum: AsmWriteCodeRangeToIO
 enum}
 
 
@@ -241,6 +242,7 @@ enum}
 : !minu ( src2 src dest -- ) ThreeRegister AsmUnsignedMin asm<< ;
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
 : !readtok ( src2 src dest -- ) ThreeRegister AsmReadToken asm<< ;
+: !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;

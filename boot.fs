@@ -127,16 +127,8 @@ defun: readline
        ibcurr ibend iblen !sub 
        defun;
 defun: print-characters
-       \ start at arg0 and go for arg1 number of elements
-       arg1 !eqz return-on-true \ leave early if length is zero
        /dev/console0 $->io
-       arg0 arg1 t0 !add \ compute the last address to print
-       .label printcharacters-loop 
-       arg0 t1 !lw
-       t1 io-write \ print it out
-       arg0 !1+
-       arg0 t0 cv !neq
-       printcharacters-loop cv !bc
+       arg1 arg0 io !write-code-range-to-io
        defun;
 
 
@@ -217,9 +209,19 @@ defun: check-for-quit
        \ 0x20 terminate-if-not-char \ space
        zero keep-executing !move
        defun;
-
-
-
+.label unknown-word
+       \ use the token start and end to print it out
+       tokstart arg0 !move
+       tokstart tokend arg1 !sub
+       2 arg1 arg1 !addi 
+       1 tokend at0 !addi
+       63 at1 !set \ save a question mark there
+       at1 at0 !sw
+       at0 !1+
+       0xA at1 !set \ put a newline here
+       at1 at0 !sw
+       print-characters !call
+       boot-rom-start jmp
 
 boot-rom-start .org
 .label Restart
@@ -243,15 +245,12 @@ boot-rom-start .org
     check-for-quit !call
     keep-executing !eqz
     cv &terminate-execution !bcr
-    ibcurr ibend cv !neq
-    read-token-routine cv !bc
-    error-code !eqz
-    cv &InputRoutine !bcr
+    read-hex-number !call
+    zero error-code cv !neq
+    unknown-word cv !bc \ if we hit an error code then restart the loop
+    ibcurr ibend cv !neq 
+    read-token-routine cv !bc \ keep reading if we got this far
     &InputRoutine !br
-    \ printout the error message and then restart execution!
-    \ token-start arg0 !move
-    \ token-stop arg1 !move
-    \ perform the call to printout the unknown token
 
 0x0000 .org 
 \ setup variables that will not be known until now
