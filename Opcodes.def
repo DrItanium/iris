@@ -105,3 +105,8 @@ X(UnsignedNand, ThreeRegister, nandu)
 X(UnsignedNor, ThreeRegister, noru)
 X(UnsignedMin, ThreeRegister, minu)
 X(UnsignedMax, ThreeRegister, maxu)
+// "microcode" routines for making the forth interpreter implementation
+// faster
+// Read input form a starting address in code memory and populate the
+// start and end positions into the other registers
+X(ReadToken, ThreeRegister, readtok)
