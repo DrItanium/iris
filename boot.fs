@@ -159,7 +159,7 @@ defun: read-hex-digit
        68 0xD emit-value-if-matches
        69 0xE emit-value-if-matches
        70 0xF emit-value-if-matches
-       0xFFFF error-code !move
+       0xFFFF error-code !set
        defun;
 : load-shifted-hex-digit ( -- ) .label 
     read-hex-digit !call
@@ -187,14 +187,14 @@ defun: read-hex-number
        \ arg1 contains the length 
        0xFFFF error-code !set
        arg1 !eqz return-on-true \ if we have no characters then no way bro either
-       5 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
-       5 arg1 cv !eqi
-       rhd4 cv !bc
+       4 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
        4 arg1 cv !eqi
-       rhd3 cv !bc
+       rhd4 cv !bc
        3 arg1 cv !eqi
-       rhd2 cv !bc
+       rhd3 cv !bc
        2 arg1 cv !eqi
+       rhd2 cv !bc
+       1 arg1 cv !eqi
        rhd1 cv !bc
        defun;
 
@@ -214,7 +214,7 @@ defun: check-for-quit
        tokstart arg0 !move
        tokstart tokend arg1 !sub
        2 arg1 arg1 !addi 
-       1 tokend at0 !addi
+       tokend at0 !move
        63 at1 !set \ save a question mark there
        at1 at0 !sw
        at0 !1+
