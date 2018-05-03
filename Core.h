@@ -58,6 +58,8 @@ namespace iris {
                 return static_cast<signed char>(0xFF & integer);
             } else if constexpr (std::is_same_v<K, unsigned char>) {
                 return static_cast<unsigned char>(0xFF & address);
+            } else if constexpr (std::is_same_v<K, char>) {
+                return static_cast<char>(0xFF & address);
 			} else {
 				static_assert(AlwaysFalse<T>::value, "Number type does not store this kind of value!");
 			}
