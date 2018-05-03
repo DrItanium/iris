@@ -115,3 +115,4 @@ X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
 // fast way to parse digits
 X(ParseHexDigit, TwoRegister, parse-hex-digit)
 X(IsHexDigit, TwoRegister, is-hex-digit)
+//X(ParseHex, ThreeRegister, parse-hex-number)

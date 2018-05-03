@@ -542,6 +542,36 @@ namespace iris {
         }
         setDestination(op, Number(result));
     }
+    // DefExec(ParseHex) {
+    //     // parse hexadecimal number from code space
+    //     auto address = getSource(op).address;
+    //     auto length = getSource2(op).address;
+    //     auto end = address + length;
+    //     iris::Core::IsHexDigit hx;
+    //     hx._args.dest = op._args.src2;
+    //     hx._args.src = op._args.src;
+    //     iris::Core::ParseHexDigit phx;
+    //     hx._args.dest = op._args.dest;
+    //     hx._args.src = op._args.src;
+    //     decltype(end) result = 0u;
+    //     setDestination(op, Number(0));
+    //     std::stringstream ss;
+    //     for (auto loc = address; loc < end; ++loc) {
+    //         setRegister(op._args.src, char(_code[loc]));
+    //         perform(hx);
+    //         if (getRegister(hx._args.dest).getTruth()) {
+    //             
+    //         } else {
+    //             // do nothing and return
+    //             setRegister(op._args.src, address);
+    //             setRegister(op._args.src2, length);
+    //             return;
+    //         }
+    //     }
+    //     setDestination(op, Number(result));
+    //     setRegister(op._args.src, address);
+    //     setRegister(op._args.src2, length);
+    // }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
