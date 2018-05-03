@@ -447,131 +447,65 @@ namespace iris {
             }
         }
     }
-    DefExec(IsHexDigit) {
-        // dumb but simple implementation
-        switch (getSource(op).get<char>()) {
-            case '0': 
-            case '1': 
-            case '2': 
-            case '3': 
-            case '4': 
-            case '5': 
-            case '6': 
-            case '7': 
-            case '8': 
-            case '9': 
-            case 'a':
-            case 'A':
-            case 'b':
-            case 'B':
-            case 'c':
-            case 'C':
-            case 'd':
-            case 'D':
-            case 'e':
-            case 'E':
-            case 'f':
-            case 'F':
-                setDestination(op, true);
-                break;
-            default:
-                setDestination(op, false);
-        }
+    DefExec(SetBase) {
+        // only update if it is in range
+        if (auto value = getRegister(op._args.dest).get<byte>(); value >= 2 && value < 37) {
+            _base = value;
+        } 
     }
-    DefExec(ParseHexDigit) {
-        auto character = getSource(op).get<char>();
+    DefExec(GetBase) {
+        setDestination(op, Number(_base));
+    }
+    DefExec(NumberRoutine) {
+        // src2 is the base address
+        // src is the resultant number
+        // dest is the success code
+        auto flag = false;
+        auto baseAddress = getSource2(op).address;
+        auto p1 = Integer(_code[baseAddress] & 0xFFFF);
+        auto count = _code[p1];
+        ++p1;
+        auto sgn = _code[p1] == '-';
+        if (sgn) {
+            ++p1;
+        }
         auto result = 0;
-        // dumb but simple implementation
-        switch (character) {
-            case '0': 
-                result = 0;
+        auto terminatedEarly = false;
+        while (count != 0) {
+            auto num = Integer(_code[p1] & 0xFF) - 0x30;
+            if (num < 0) {
+                flag = false;
+                terminatedEarly = true;
                 break;
-            case '1': 
-                result = 1;
+            }
+            if (num > 9) {
+                if (num > 0x11) {
+                    num = num - 7;
+                } else {
+                    flag = false;
+                    terminatedEarly = true;
+                    break;
+                }
+            }
+            if (num < (_base - 1)) {
+                result = (result * _base) + num;
+                --count;
+                ++p1;
+            } else {
+                flag = false;
+                terminatedEarly = true;
                 break;
-            case '2': 
-                result = 2;
-                break;
-            case '3': 
-                result = 3;
-                break;
-            case '4': 
-                result = 4;
-                break;
-            case '5': 
-                result = 5;
-                break;
-            case '6': 
-                result = 6;
-                break;
-            case '7': 
-                result = 7;
-                break;
-            case '8': 
-                result = 8;
-                break;
-            case '9': 
-                result = 9;
-                break;
-            case 'a':
-            case 'A':
-                result = 10;
-                break;
-            case 'b':
-            case 'B':
-                result = 11;
-                break;
-            case 'c':
-            case 'C':
-                result = 12;
-                break;
-            case 'd':
-            case 'D':
-                result = 13;
-                break;
-            case 'e':
-            case 'E':
-                result = 14;
-                break;
-            case 'f':
-            case 'F':
-                result = 15;
-                break;
-            default:
-                throw Problem("Illegal digit provided!");
+            }
         }
-        setDestination(op, Number(result));
+        if (!terminatedEarly) {
+            if (sgn) {
+                result = -result;
+            }
+            flag = true;
+            setRegister(op._args.src, result);
+        }
+        setRegister(op._args.dest, flag);
     }
-    // DefExec(ParseHex) {
-    //     // parse hexadecimal number from code space
-    //     auto address = getSource(op).address;
-    //     auto length = getSource2(op).address;
-    //     auto end = address + length;
-    //     iris::Core::IsHexDigit hx;
-    //     hx._args.dest = op._args.src2;
-    //     hx._args.src = op._args.src;
-    //     iris::Core::ParseHexDigit phx;
-    //     hx._args.dest = op._args.dest;
-    //     hx._args.src = op._args.src;
-    //     decltype(end) result = 0u;
-    //     setDestination(op, Number(0));
-    //     std::stringstream ss;
-    //     for (auto loc = address; loc < end; ++loc) {
-    //         setRegister(op._args.src, char(_code[loc]));
-    //         perform(hx);
-    //         if (getRegister(hx._args.dest).getTruth()) {
-    //             
-    //         } else {
-    //             // do nothing and return
-    //             setRegister(op._args.src, address);
-    //             setRegister(op._args.src2, length);
-    //             return;
-    //         }
-    //     }
-    //     setDestination(op, Number(result));
-    //     setRegister(op._args.src, address);
-    //     setRegister(op._args.src2, length);
-    // }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

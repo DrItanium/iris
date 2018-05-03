@@ -113,6 +113,6 @@ X(ReadToken, ThreeRegister, readtok)
 // extract lower 16-bits from code address and store it into an io address
 X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
 // fast way to parse digits
-X(ParseHexDigit, TwoRegister, parse-hex-digit)
-X(IsHexDigit, TwoRegister, is-hex-digit)
-//X(ParseHex, ThreeRegister, parse-hex-number)
+X(SetBase, OneRegister, set-num-base)
+X(GetBase, OneRegister, get-num-base)
+X(NumberRoutine, ThreeRegister, number-routine)

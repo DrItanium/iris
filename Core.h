@@ -283,6 +283,7 @@ namespace iris {
 			RegisterFile _registers;
 			bool _keepExecuting = true;
             std::list<IODevice> _io;
+            byte _base = 16;
 
 	};
 }
