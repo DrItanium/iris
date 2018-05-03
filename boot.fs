@@ -134,31 +134,12 @@ defun: print-characters
 
 .label read-hex-digit-done
        zero error-code !move
-       at1 ret0 !move
+       arg0 ret0 !parse-hex-digit
        defun;
-: emit-value-if-matches ( input output -- ) 
-    at1 !set
-    at0 !set
-    arg0 at0 cv !eq
-    read-hex-digit-done cv !bc ;
 defun: read-hex-digit
        \ arg0 contains the current position
-       48 0x0 emit-value-if-matches
-       49 0x1 emit-value-if-matches
-       50 0x2 emit-value-if-matches
-       51 0x3 emit-value-if-matches
-       52 0x4 emit-value-if-matches
-       53 0x5 emit-value-if-matches
-       54 0x6 emit-value-if-matches
-       55 0x7 emit-value-if-matches
-       56 0x8 emit-value-if-matches
-       57 0x9 emit-value-if-matches
-       65 0xA emit-value-if-matches
-       66 0xB emit-value-if-matches
-       67 0xC emit-value-if-matches
-       68 0xD emit-value-if-matches
-       69 0xE emit-value-if-matches
-       70 0xF emit-value-if-matches
+       arg0 cv !is-hex-digit
+       read-hex-digit-done cv !bc
        0xFFFF error-code !set
        defun;
 : load-shifted-hex-digit ( -- ) .label 

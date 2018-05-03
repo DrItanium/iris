@@ -150,6 +150,7 @@ enum: AsmUnsignedMax
 enum: AsmReadToken
 enum: AsmWriteCodeRangeToIO
 enum: AsmParseHexDigit
+enum: AsmIsHexDigit
 enum}
 
 
@@ -245,6 +246,7 @@ enum}
 : !readtok ( src2 src dest -- ) ThreeRegister AsmReadToken asm<< ;
 : !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 : !parse-hex-digit ( dig dest -- ) TwoRegister AsmParseHexDigit asm<< ;
+: !is-hex-digit ( dig result -- ) TwoRegister AsmIsHexDigit asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
