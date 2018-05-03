@@ -168,7 +168,7 @@ defun: read-hex-number
        \ arg1 contains the length 
        0xFFFF error-code !set
        arg1 !eqz return-on-true \ if we have no characters then no way bro either
-       4 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
+       \ 4 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
        4 arg1 cv !eqi
        rhd4 cv !bc
        3 arg1 cv !eqi
@@ -215,9 +215,9 @@ boot-rom-start .org
     input-buffer-start ibcurr $-> 
     ibcurr ibend ->
     readline !call
-    ibcurr arg0 !move
-    iblen arg1 !move
-    print-characters !call
+    \ ibcurr arg0 !move
+    \ iblen arg1 !move
+    \ print-characters !call
 .label read-token-routine
     ibcurr tokend tokstart !readtok
     1 tokend ibcurr !addi
@@ -226,9 +226,12 @@ boot-rom-start .org
     check-for-quit !call
     keep-executing !eqz
     cv &terminate-execution !bcr
+    tokstart arg0 !move
+    tokstart tokend arg1 !sub
     read-hex-number !call
     zero error-code cv !neq
     unknown-word cv !bc \ if we hit an error code then restart the loop
+    ret0 sp psh->
     ibcurr ibend cv !neq 
     read-token-routine cv !bc \ keep reading if we got this far
     &InputRoutine !br
