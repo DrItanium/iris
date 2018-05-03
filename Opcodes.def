@@ -112,3 +112,5 @@ X(UnsignedMax, ThreeRegister, maxu)
 X(ReadToken, ThreeRegister, readtok)
 // extract lower 16-bits from code address and store it into an io address
 X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
+// fast way to parse digits
+X(ParseHexDigit, TwoRegister, parse-hex-digit)
