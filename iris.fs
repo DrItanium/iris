@@ -151,6 +151,9 @@ enum: AsmReadToken
 enum: AsmWriteCodeRangeToIO
 enum: AsmParseHexDigit
 enum: AsmIsHexDigit
+enum: AsmSetBase
+enum: AsmGetBase
+enum: AsmNumberRoutine
 enum}
 
 
@@ -247,6 +250,9 @@ enum}
 : !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 : !parse-hex-digit ( dig dest -- ) TwoRegister AsmParseHexDigit asm<< ;
 : !is-hex-digit ( dig result -- ) TwoRegister AsmIsHexDigit asm<< ;
+: !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
+: !mtbase ( reg -- ) OneRegister AsmSetBase asm<< ;
+: !mfbase ( reg -- ) OneRegister AsmGetBase asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;

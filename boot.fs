@@ -132,52 +132,8 @@ defun: print-characters
        defun;
 
 
-.label read-hex-digit-done
-       zero error-code !move
-       arg0 ret0 !parse-hex-digit
-       defun;
-defun: read-hex-digit
-       \ arg0 contains the current position
-       arg0 cv !is-hex-digit
-       read-hex-digit-done cv !bc
-       0xFFFF error-code !set
-       defun;
-: load-shifted-hex-digit ( -- ) .label 
-    read-hex-digit !call
-    arg0 !1+
-    ret0 digit-current digit-current !add
-    4 digit-current digit-current !shli
-    0xFFFF at0 !set
-    at0 error-code cv !eq
-    return-on-true ;
-load-shifted-hex-digit rhd4
-load-shifted-hex-digit rhd3
-load-shifted-hex-digit rhd2
-.label rhd1
-    read-hex-digit !call
-    arg0 !1+
-    ret0 digit-current digit-current !add
-    0xFFFF at0 !set
-    at0 error-code cv !eq
-    return-on-true
-    \ probably want to push this onto the stack at some point
-    defun;
-
-defun: read-hex-number
-       \ arg0 contains starting point for checking
-       \ arg1 contains the length 
-       0xFFFF error-code !set
-       arg1 !eqz return-on-true \ if we have no characters then no way bro either
-       \ 4 arg1 cv !gti return-on-true \ if we have more than five characters then no way bro!
-       4 arg1 cv !eqi
-       rhd4 cv !bc
-       3 arg1 cv !eqi
-       rhd3 cv !bc
-       2 arg1 cv !eqi
-       rhd2 cv !bc
-       1 arg1 cv !eqi
-       rhd1 cv !bc
-       defun;
+defun: set-base arg0 !mtbase defun;
+defun: get-base ret0 !mfbase defun;
 
 defun: check-for-quit
        \ arg0 contains starting point for checking 
@@ -203,9 +159,19 @@ defun: check-for-quit
        at1 at0 !sw
        print-characters !call
        boot-rom-start jmp
+: mk-mtbase-fun ( base-num -- )
+    defun: 
+    at0 !set
+    at0 !mtbase 
+    defun; ;
+16 mk-mtbase-fun 16base
+10 mk-mtbase-fun 10base
+8 mk-mtbase-fun 8base
+2 mk-mtbase-fun 2base
 
 boot-rom-start .org
 .label Restart
+    16base !call
     zero error-code !move
     0x7FFF sp $->
     0xFFFF csp $->
