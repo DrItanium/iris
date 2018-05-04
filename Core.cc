@@ -598,10 +598,6 @@ namespace iris {
             out.put(decodeBits<Address, char, 0x00FF, 0>(v));
             out.put(decodeBits<Address, char, 0xFF00, 8>(v));
         };
-        auto putDoubleAddress = [putAddress](RawInstruction v) {
-            putAddress(decodeBits<RawInstruction, Address, 0x0000'FFFF, 0>(v));
-            putAddress(decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(v));
-        };
         auto putRegister = [putAddress](const Register& reg) { putAddress(reg.getValue().address); };
         auto walkThroughSection = [](auto fn) {
             for (int i = 0; i < Core::maxAddress; ++i) {
@@ -611,9 +607,8 @@ namespace iris {
         for (int i = 0; i < Core::registerCount; ++i) {
             putRegister(_registers[i]);
         }
-        walkThroughSection([this, putDoubleAddress](int i) { putDoubleAddress(_code[i]); });
-        walkThroughSection([this, putAddress](int i) { putAddress(_data[i].get<Address>()); });
-        walkThroughSection([this, putAddress](int i) { putAddress(_stack[i].get<Address>()); });
+        walkThroughSection([this, putAddress](int i) { putAddress(_memory[i].get<Address>()); });
+        walkThroughSection([this, putAddress](int i) { putAddress(_core[i].get<Address>()); });
     }
     void Core::install(std::istream& in) {
         auto getByte = [&in]() {
@@ -629,11 +624,6 @@ namespace iris {
             auto upper = Address(getByte()) << 8;
             return lower | upper;
         };
-        auto getDoubleAddress = [getAddress]() {
-            auto lower = RawInstruction(getAddress());
-            auto upper = RawInstruction(getAddress()) << 16;
-            return lower | upper;
-        };
         for (int i = 0; i < Core::registerCount; ++i) {
             _registers[i].setValue(Number(getAddress()));
         }
@@ -642,9 +632,8 @@ namespace iris {
                 fn(i);
             }
         };
-        walkThroughSection([this, getDoubleAddress](int i) { _code[i] = getDoubleAddress(); });
-        walkThroughSection([this, getAddress](int i) { _data[i].address = getAddress(); });
-        walkThroughSection([this, getAddress](int i) { _stack[i].address = getAddress(); });
+        walkThroughSection([this, getAddress](int i) { _memory[i].address = getAddress(); });
+        walkThroughSection([this, getAddress](int i) { _core[i].address = getAddress(); });
     }
     Address Core::IODevice::read(Address addr) {
         if (_read) {
