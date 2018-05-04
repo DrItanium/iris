@@ -107,12 +107,13 @@ X(UnsignedMin, ThreeRegister, minu)
 X(UnsignedMax, ThreeRegister, maxu)
 // "microcode" routines for making the forth interpreter implementation
 // faster
+// routines from Threaded Interpretive Languages as well
+
 // Read input form a starting address in code memory and populate the
 // start and end positions into the other registers
-X(ReadToken, ThreeRegister, readtok)
+X(ReadToken, TwoRegister, readtok)
 // extract lower 16-bits from code address and store it into an io address
 X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
-// fast way to parse digits
 X(SetBase, OneRegister, set-num-base)
 X(GetBase, OneRegister, get-num-base)
 X(NumberRoutine, ThreeRegister, number-routine)

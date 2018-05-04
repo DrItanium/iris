@@ -415,15 +415,57 @@ namespace iris {
         setDestination(op, a > b ? a : b);
     }
     DefExec(ReadToken) {
-        // source2 is the address to start at in code
-        // destination is the starting position
-        // source is the ending position
-        // read at most 80 characters
-        auto starting = getSource2(op).address;
-        for (;_code[starting] == 0x20; ++starting) { } // skip whitespace
-        setDestination(op, starting); // okay we have a starting position
-        for (auto count = 0; _code[starting] != 0x20 && count < 80; ++starting, ++count) { }
-        setRegister(op._args.src, starting);
+        if (op._args.dest == op._args.src) {
+            throw Problem("Destination and source must be different!");
+        }
+        // taken from the flow graph on pg 90 of threaded interpretive languages
+        //
+        // three register
+        // src - line buffer
+        // dest - dictionary pointer / destination
+        auto dp = getRegister(op._args.dest).get<Address>();
+        auto lbp = getSource(op).address;
+        //auto separator = getSource2(op).get<byte>();
+        static constexpr char separator = 0x20;
+        // ignore any whitespace before token itself
+        for (auto front = (signed char)(_code[lbp]); front == separator; ++lbp, front = (signed char)(_code[lbp]));
+        auto start = lbp; // save the start of the token
+        auto count = 0;
+        while (true) {
+            ++lbp;
+            ++count;
+            auto curr = (signed char)(_code[lbp]);
+            if (curr == separator) {
+                break;
+            }
+            // the terminator is specially encoded to have the upper most bit 
+            // set to one
+            if (curr < 0) {
+                // line terminator is one bit too far
+                --lbp;
+                break;
+            }
+        }
+        // stash the start of the next token into the lbp (src) register
+        ++lbp;
+        setRegister(op._args.src, lbp);
+        // go back to the starting token position
+        lbp = start;
+        // stash the length into the destination
+        _code[dp] = count;
+        // go to the next cell
+        ++dp;
+        do {
+            // start copying the token contents over
+          _code[dp] = _code[lbp];
+          // advance both
+          ++lbp;
+          ++dp;
+          --count;
+          // keep doing this until we get back to the place we stopped
+        } while (count > 0);
+        // update the dictionary pointer as well
+        setRegister(op._args.dest, dp);
     }
     DefExec(WriteRangeToIOAddress) {
         // destination is io address

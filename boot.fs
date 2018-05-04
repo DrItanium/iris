@@ -10,7 +10,6 @@ enum: io \ io device number or address
 enum: ci \ core index number
 enum: ibcurr \ input buffer current position
 enum: ibend \ input buffer end
-enum: iblen
 enum: tokstart \ token start
 enum: tokend \ token end
 enum: keep-executing \ variable for determine whether to keep executing or not
@@ -25,6 +24,7 @@ enum: arg3 \ fourth argument
 enum: ret0
 enum: ret1
 enum: digit-current
+enum: dp \ dictionary pointer
 enum}
 
 " boot.rom" {bin
@@ -79,6 +79,7 @@ enum}
 0xF100 constant input-buffer-end
 0x0100 constant boot-rom-start
 0xC000 constant routines-start
+0xD000 constant dictionary-start
 
 \ code start
 
@@ -124,7 +125,10 @@ defun: readline
        0x20 t1 !set \ make sure that we put a space in instead
        t1 t2 !sw
        skip-whitespace-in-input !call
-       ibcurr ibend iblen !sub 
+       ibcurr ibend at0 !sub 
+       1 ibcurr at1 !subi
+       at0 at1 !sw
+       at1 ibcurr !move \ now make ibcurr the start with the length as well
        defun;
 defun: print-characters
        /dev/console0 $->io
@@ -132,20 +136,17 @@ defun: print-characters
        defun;
 
 
-defun: set-base arg0 !mtbase defun;
-defun: get-base ret0 !mfbase defun;
-
-defun: check-for-quit
-       \ arg0 contains starting point for checking 
-       \ arg1 contains the length
-       4 arg1 cv !neqi return-on-true \ is the length incorrect?
-       81 terminate-if-not-char \ Q
-       85 terminate-if-not-char \ U
-       73 terminate-if-not-char \ I
-       \ 84 terminate-if-not-char \ T
-       \ 0x20 terminate-if-not-char \ space
-       zero keep-executing !move
-       defun;
+\ defun: check-for-quit
+\        \ arg0 contains starting point for checking 
+\        \ arg1 contains the length
+\        4 arg1 cv !neqi return-on-true \ is the length incorrect?
+\        81 terminate-if-not-char \ Q
+\        85 terminate-if-not-char \ U
+\        73 terminate-if-not-char \ I
+\        \ 84 terminate-if-not-char \ T
+\        \ 0x20 terminate-if-not-char \ space
+\        zero keep-executing !move
+\        defun;
 .label unknown-word
        \ use the token start and end to print it out
        tokstart arg0 !move
@@ -165,12 +166,16 @@ defun: check-for-quit
     at0 !mtbase 
     defun; ;
 16 mk-mtbase-fun 16base
-10 mk-mtbase-fun 10base
-8 mk-mtbase-fun 8base
-2 mk-mtbase-fun 2base
+\ 10 mk-mtbase-fun 10base
+\ 8 mk-mtbase-fun 8base
+\ 2 mk-mtbase-fun 2base
 
+dictionary-start .org
+\ all builtins should go here
+.label core-dictionary-start
 boot-rom-start .org
 .label Restart
+    core-dictionary-start dp !set
     16base !call
     zero error-code !move
     0x7FFF sp $->
@@ -179,29 +184,22 @@ boot-rom-start .org
 .label InputRoutine
     \ this code will read a line and save it to 0xF100
     input-buffer-start ibcurr $-> 
+    ibcurr !1+
     ibcurr ibend ->
     readline !call
-    \ ibcurr arg0 !move
-    \ iblen arg1 !move
-    \ print-characters !call
 .label read-token-routine
-    ibcurr tokend tokstart !readtok
-    1 tokend ibcurr !addi
-    tokstart arg0 !move
-    tokstart tokend arg1 !sub
-    check-for-quit !call
+    ibcurr dp !readtok
     keep-executing !eqz
     cv &terminate-execution !bcr
-    tokstart arg0 !move
-    tokstart tokend arg1 !sub
-    read-hex-number !call
+    \ tokstart arg0 !move
+    \ tokstart tokend arg1 !sub
+    \ read-hex-number !call
     zero error-code cv !neq
     unknown-word cv !bc \ if we hit an error code then restart the loop
     ret0 sp psh->
     ibcurr ibend cv !neq 
     read-token-routine cv !bc \ keep reading if we got this far
     &InputRoutine !br
-
 0x0000 .org 
 \ setup variables that will not be known until now
 InputRoutine &InputRoutine !set
