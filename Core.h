@@ -272,6 +272,8 @@ namespace iris {
 					return getRegister(value._args.src2).getValue();
 				}
 			}
+            using IODeviceOp = std::function<void(IODevice&)>;
+            void onIODeviceFound(Address addr, IODeviceOp fn);
 		private:
 			void cycle();
 		private:

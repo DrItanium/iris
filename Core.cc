@@ -308,23 +308,21 @@ namespace iris {
     DefExec(TerminateExecution) {
         _keepExecuting = getRegisterValue(op._args.dest).getTruth();
     }
-
-    DefExec(LoadIO) {
-        auto addr = getSource(op).address;
+    void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
         for (auto& a : _io) {
             if (a.respondsTo(addr)) {
-                setDestination(op, a.read(addr));
+                fn(a);
             }
         }
+    }
+    DefExec(LoadIO) {
+        auto addr = getSource(op).address;
+        onIODeviceFound(addr, [this, &op, addr](auto& a) { setDestination(op, a.read(addr)); });
     }
     DefExec(StoreIO) {
         auto addr = getRegisterValue(op._args.dest).address;
         auto value = getSource(op).address;
-        for (auto& a : _io) {
-            if (a.respondsTo(addr)) {
-                a.write(addr, value);
-            }
-        }
+        onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value); });
     }
     DefExec(SaveGroupOfRegisters) {
         // extract the bits from the immediate and use it when calling the 
@@ -478,15 +476,11 @@ namespace iris {
         if (end < starting) {
             throw Problem("Memory wrap around");
         } else {
-            for (auto& a : _io) {
-                if (a.respondsTo(ioStorage)) {
-                    for (auto loc = starting; loc < end; ++loc) {
-                        // load the lower half of it and store it
-                        a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[loc]));
-                    }
-                    break;
-                }
-            }
+            onIODeviceFound(ioStorage, [this, ioStorage, starting, end](auto& a) {
+                        for (auto loc = starting; loc < end; ++loc) {
+                            a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[loc]));
+                        }
+                    });
         }
     }
     DefExec(SetBase) {
