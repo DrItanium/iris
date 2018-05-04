@@ -134,8 +134,6 @@ enum: AsmBranchConditionalIndirectLink
 enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
-enum: AsmSaveGroupOfRegisters
-enum: AsmRestoreGroupOfRegisters
 enum: AsmGetUpperByte
 enum: AsmGetLowerByte
 enum: AsmUnpackHalves
@@ -230,8 +228,6 @@ enum}
 : !terminateExecution ( args* -- ) OneRegister AsmTerminateExecution asm<< ;
 : !ldio ( args* -- ) TwoRegister AsmLoadIO asm<< ;
 : !stio ( args* -- ) TwoRegister AsmStoreIO asm<< ;
-: !pushg ( args* -- ) OneRegisterWithImmediate AsmSaveGroupOfRegisters asm<< ;
-: !popg ( args* -- ) OneRegisterWithImmediate AsmRestoreGroupOfRegisters asm<< ;
 : !upperb ( args* -- ) TwoRegister AsmGetUpperByte asm<< ;
 : !lowerb ( args* -- ) TwoRegister AsmGetLowerByte asm<< ;
 : !unpackh ( args* -- ) ThreeRegister AsmUnpackHalves asm<< ;

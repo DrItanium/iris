@@ -78,8 +78,6 @@ X(StoreIO, TwoRegister, stio)
 // the behavior of push-group
 //
 // If the pattern zero is found in RRRRRRRRR then nothing happens
-X(SaveGroupOfRegisters, OneRegisterWithImmediate, pushg)
-X(RestoreGroupOfRegisters, OneRegisterWithImmediate, popg)
 X(GetUpperByte, TwoRegister, upperb)
 X(GetLowerByte, TwoRegister, lowerb)
 // dest is the lower half
