@@ -201,6 +201,14 @@ namespace iris {
 				SourceRegister src;
 				SourceRegister src2;
 			};
+            struct FourRegister final {
+				FourRegister() = default;
+				~FourRegister() = default;
+				DestinationRegister dest;
+				SourceRegister src;
+				SourceRegister src2;
+                SourceRegister src3;
+            };
 			struct Immediate16 final {
 				Immediate16() = default;
 				~Immediate16() = default;
@@ -219,6 +227,14 @@ namespace iris {
 				SourceRegister src;
 				byte src2;
 			};
+            struct ThreeRegisterWithImmediate final {
+                ThreeRegisterWithImmediate() = default;
+                ~ThreeRegisterWithImmediate() = default;
+				DestinationRegister dest;
+				SourceRegister src;
+				SourceRegister src2;
+				byte src3;
+            };
 #define X(title, style, z) \
 			struct title final { \
 				title ( ) { } \
@@ -250,17 +266,21 @@ namespace iris {
 			void decodeArguments(RawInstruction, OneRegister&) noexcept;
 			void decodeArguments(RawInstruction, TwoRegister&) noexcept;
 			void decodeArguments(RawInstruction, ThreeRegister&) noexcept;
+			void decodeArguments(RawInstruction, FourRegister&) noexcept;
 			void decodeArguments(RawInstruction, Immediate16&) noexcept;
 			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
 			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
+			void decodeArguments(RawInstruction, ThreeRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction(RawInstruction val);
 			RawInstruction encodeArguments(const NoArguments&) noexcept;
 			RawInstruction encodeArguments(const OneRegister&) noexcept;
 			RawInstruction encodeArguments(const TwoRegister&) noexcept;
 			RawInstruction encodeArguments(const ThreeRegister&) noexcept;
+			RawInstruction encodeArguments(const FourRegister&) noexcept;
 			RawInstruction encodeArguments(const Immediate16&) noexcept;
 			RawInstruction encodeArguments(const OneRegisterWithImmediate&) noexcept;
 			RawInstruction encodeArguments(const TwoRegisterWithImmediate&) noexcept;
+			RawInstruction encodeArguments(const ThreeRegisterWithImmediate&) noexcept;
 			RawInstruction encodeInstruction(const DecodedInstruction& inst) noexcept;
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
@@ -291,8 +311,6 @@ namespace iris {
 			Address _pc;
             MemoryBlock16 _memory;
             MemoryBlock16 _core;
-			//MemoryBlock16 _data, _stack;
-			//MemoryBlock32 _code;
 			// IO space is special and is really a mapping to native goings
 			// on!
 			RegisterFile _registers;

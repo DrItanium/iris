@@ -34,42 +34,51 @@
 
 
 namespace iris {
+    constexpr Opcode getOpcode(RawInstruction i) noexcept {
+        return decodeBits<decltype(i), Opcode, 0x000000FF, 0>(i);
+    }
     constexpr RegisterIndex getDestinationIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x0000'FF00, 8>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0x1F << 8, 8>(i);
     }
     constexpr RegisterIndex getSourceIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x00FF'0000, 16>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0x1F << 14, 14>(i);
     }
     constexpr RegisterIndex getSource2Index(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0xFF00'0000, 24>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0x1F << 20, 20>(i);
+    }
+    constexpr RegisterIndex getSource3Index(RawInstruction i) noexcept {
+        return decodeBits<decltype(i), RegisterIndex, 0x1F << 26, 26>(i);
     }
     constexpr Address getImmediate16(RawInstruction i) noexcept {
         return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
     }
-    constexpr byte getImmediate8(RawInstruction i) noexcept {
+    constexpr byte getImmediate6(RawInstruction i) noexcept {
         if constexpr (std::is_same_v<byte, RegisterIndex>) {
-            return getSource2Index(i);
+            return getSource3Index(i);
         } else {
-            return decodeBits<decltype(i), byte, 0xFF00'0000, 24>(i);
+            return decodeBits<decltype(i), byte, 0x1F << 26, 26>(i);
         }
     }
     constexpr RawInstruction setDestinationIndex(RegisterIndex dest, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(dest), 0x0000'FF00, 8>(i, dest);
+        return encodeBits<decltype(i), decltype(dest), 0x1F << 8, 8>(i, dest);
     }
     constexpr RawInstruction setSourceIndex(RegisterIndex src, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(src), 0x00FF'0000, 16>(i, src);
+        return encodeBits<decltype(i), decltype(src), 0x1F << 14, 14>(i, src);
     }
     constexpr RawInstruction setSource2Index(RegisterIndex src2, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(src2), 0xFF00'0000, 24>(i, src2);
+        return encodeBits<decltype(i), decltype(src2), 0x1F << 20, 20>(i, src2);
+    }
+    constexpr RawInstruction setSource3Index(RegisterIndex src3, RawInstruction i = 0) noexcept {
+        return encodeBits<decltype(i), decltype(src3), 0x1F << 26, 26>(i, src3);
     }
     constexpr RawInstruction setImmediate16(Address imm16, RawInstruction i = 0) noexcept {
         return encodeBits<decltype(i), decltype(imm16), 0xFFFF'0000, 16>(i, imm16);
     }
-    constexpr RawInstruction setImmediate8(byte imm8, RawInstruction i = 0) noexcept {
-        if constexpr (std::is_same_v<decltype(imm8), RegisterIndex>) {
-            return setSource2Index(imm8, i);
+    constexpr RawInstruction setImmediate6(byte imm6, RawInstruction i = 0) noexcept {
+        if constexpr (std::is_same_v<decltype(imm6), RegisterIndex>) {
+            return setSource3Index(imm6, i);
         } else {
-            return encodeBits<decltype(i), decltype(imm8), 0xFF00'0000, 24>(i, imm8);
+            return encodeBits<decltype(i), decltype(imm6), 0x1F << 26, 26>(i, imm6);
         }
     }
     constexpr RawInstruction setRegisterPair(RegisterIndex dest, RegisterIndex src, RawInstruction i = 0) noexcept {
@@ -87,9 +96,8 @@ namespace iris {
     }
 
     Core::Core() : _pc(0) { 
-        _code = std::make_unique<RawInstruction[]>(addressSize);
-        _data = std::make_unique<Number[]>(addressSize);
-        _stack = std::make_unique<Number[]>(addressSize);
+        _memory = std::make_unique<Number[]>(addressSize);
+        _core = std::make_unique<Number[]>(addressSize);
         _registers = std::make_unique<Register[]>(registerCount);
     }
     void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
@@ -105,6 +113,12 @@ namespace iris {
         a.src = getSourceIndex(i);
         a.src2 = getSource2Index(i);
     }
+    void Core::decodeArguments(RawInstruction i, Core::FourRegister& a) noexcept {
+        a.dest = getDestinationIndex(i);
+        a.src = getSourceIndex(i);
+        a.src2 = getSource2Index(i);
+        a.src3 = getSource3Index(i);
+    }
     void Core::decodeArguments(RawInstruction i, Core::Immediate16& a) noexcept {
         a.imm = getImmediate16(i);
     }
@@ -115,11 +129,17 @@ namespace iris {
     void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
         a.dest = getDestinationIndex(i);
         a.src = getSourceIndex(i);
-        a.src2 = getImmediate8(i);
+        a.src2 = getImmediate6(i);
+    }
+    void Core::decodeArguments(RawInstruction i, Core::ThreeRegisterWithImmediate& a) noexcept {
+        a.dest = getDestinationIndex(i);
+        a.src = getSourceIndex(i);
+        a.src2 = getSource2Index(i);
+        a.src3 = getImmediate6(i);
     }
     Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
         Core::DecodedInstruction tmp;
-        switch (decodeBits<RawInstruction, Opcode, 0x0000'00FF, 0>(i)) {
+        switch (getOpcode(i)) {
 #define X(title, style, z) \
             case Opcode :: title : \
                                    tmp = Core::title () ; \
@@ -554,9 +574,10 @@ namespace iris {
     }
     RawInstruction Core::extractInstruction() noexcept {
         // extract the current instruction and then go next
-        auto result = _code[_pc];
-        ++_pc;
-        return result;
+        auto lower = static_cast<RawInstruction>(_memory[_pc]);
+        auto upper = static_cast<RawInstruction>(_memory[_pc + 1]) << 16;
+        _pc += 2;
+        return lower | upper;
     }
 
     void Core::cycle() {

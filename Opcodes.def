@@ -48,8 +48,8 @@ X(StoreImmediate, OneRegisterWithImmediate, sti)
 X(Push, TwoRegister, push)
 X(PushImmediate, OneRegisterWithImmediate, pushi)
 X(Pop, TwoRegister, pop)
-X(LoadCode, ThreeRegister, ldc)
-X(StoreCode, ThreeRegister, stc)
+X(LoadCore, TwoRegister, ldc)
+X(StoreCore, TwoRegister, stc)
 X(Branch, Immediate16, b)
 X(BranchAndLink, OneRegisterWithImmediate, bl)
 X(BranchIndirect, OneRegister, br)
@@ -108,9 +108,6 @@ X(UnsignedMax, ThreeRegister, maxu)
 // "microcode" routines for making the forth interpreter implementation
 // faster
 // routines from Threaded Interpretive Languages as well
-
-// Read input form a starting address in code memory and populate the
-// start and end positions into the other registers
 X(ReadToken, TwoRegister, readtok)
 // extract lower 16-bits from code address and store it into an io address
 X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
