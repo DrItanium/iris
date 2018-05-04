@@ -108,13 +108,15 @@ namespace iris {
 	 */
 	class Core {
 		public: 
-			static constexpr Address registerCount = 256;
+			static constexpr Address registerCount = 64;
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address32 addressSize = 0x10000;
             static constexpr RegisterIndex registerZero = 0;
             static constexpr RegisterIndex registerErrorCode = 1;
             static constexpr RegisterIndex registerTerminator = 2;
             static constexpr RegisterIndex registerNumericBase = 3;
+            static constexpr RegisterIndex registerStackPointer0 = 4;
+            static constexpr RegisterIndex registerStackPointer1 = 5;
             // the error codes that the processor will raise as part of an
             // error happening
             enum class ErrorCodes : Address {
@@ -127,10 +129,9 @@ namespace iris {
 			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
 			using RegisterFile = std::unique_ptr<Register[]>;
 			struct InstallToRegister final { };
-			struct InstallToCode final { };
-			struct InstallToData final { };
-			struct InstallToStack final { };
-			using SectionInstallationTarget = std::variant<InstallToRegister, InstallToCode, InstallToData, InstallToStack>;
+            struct InstallToMemory final { };
+            struct InstallToCore final { };
+			using SectionInstallationTarget = std::variant<InstallToRegister, InstallToMemory, InstallToCore>;
 		public:
 			Core();
 			void init();
@@ -140,7 +141,7 @@ namespace iris {
 			void install(std::istream& in);
 			template<typename T>
 			void install(Address address, T value, SectionInstallationTarget target) {
-				std::visit([this,address, value](auto&& kind) {
+				std::visit([this, address, value](auto&& kind) {
 							using K = std::decay_t<decltype(kind)>;
 							if constexpr (std::is_same_v<K, InstallToRegister>) {
 								if (address >= registerCount) {
@@ -148,12 +149,10 @@ namespace iris {
 								} else {
 									_registers[address].setValue(value);
 								}
-							} else if constexpr (std::is_same_v<K, InstallToCode>) {
-								_code[address] = value;
-							} else if constexpr (std::is_same_v<K, InstallToData>) {
-								_data[address] = Number(value);
-							} else if constexpr (std::is_same_v<K, InstallToStack>) {
-								_stack[address] = Number(value);
+                            } else if constexpr (std::is_same_v<K, InstallToMemory>) {
+                                _memory[address].address = value;
+                            } else if constexpr (std::is_same_v<K, InstallToCore>) {
+                                _core[address].address = value;
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 							}
@@ -290,8 +289,10 @@ namespace iris {
 			void cycle();
 		private:
 			Address _pc;
-			MemoryBlock16 _data, _stack;
-			MemoryBlock32 _code;
+            MemoryBlock16 _memory;
+            MemoryBlock16 _core;
+			//MemoryBlock16 _data, _stack;
+			//MemoryBlock32 _code;
 			// IO space is special and is really a mapping to native goings
 			// on!
 			RegisterFile _registers;
