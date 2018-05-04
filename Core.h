@@ -272,16 +272,6 @@ namespace iris {
 			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
 			void decodeArguments(RawInstruction, ThreeRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction(RawInstruction val);
-			RawInstruction encodeArguments(const NoArguments&) noexcept;
-			RawInstruction encodeArguments(const OneRegister&) noexcept;
-			RawInstruction encodeArguments(const TwoRegister&) noexcept;
-			RawInstruction encodeArguments(const ThreeRegister&) noexcept;
-			RawInstruction encodeArguments(const FourRegister&) noexcept;
-			RawInstruction encodeArguments(const Immediate16&) noexcept;
-			RawInstruction encodeArguments(const OneRegisterWithImmediate&) noexcept;
-			RawInstruction encodeArguments(const TwoRegisterWithImmediate&) noexcept;
-			RawInstruction encodeArguments(const ThreeRegisterWithImmediate&) noexcept;
-			RawInstruction encodeInstruction(const DecodedInstruction& inst) noexcept;
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
 			inline Number getRegisterValue(RegisterIndex reg) const noexcept { return getRegister(reg).getValue(); }

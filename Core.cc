@@ -59,31 +59,6 @@ namespace iris {
             return decodeBits<decltype(i), byte, 0x1F << 26, 26>(i);
         }
     }
-    constexpr RawInstruction setDestinationIndex(RegisterIndex dest, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(dest), 0x1F << 8, 8>(i, dest);
-    }
-    constexpr RawInstruction setSourceIndex(RegisterIndex src, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(src), 0x1F << 14, 14>(i, src);
-    }
-    constexpr RawInstruction setSource2Index(RegisterIndex src2, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(src2), 0x1F << 20, 20>(i, src2);
-    }
-    constexpr RawInstruction setSource3Index(RegisterIndex src3, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(src3), 0x1F << 26, 26>(i, src3);
-    }
-    constexpr RawInstruction setImmediate16(Address imm16, RawInstruction i = 0) noexcept {
-        return encodeBits<decltype(i), decltype(imm16), 0xFFFF'0000, 16>(i, imm16);
-    }
-    constexpr RawInstruction setImmediate6(byte imm6, RawInstruction i = 0) noexcept {
-        if constexpr (std::is_same_v<decltype(imm6), RegisterIndex>) {
-            return setSource3Index(imm6, i);
-        } else {
-            return encodeBits<decltype(i), decltype(imm6), 0x1F << 26, 26>(i, imm6);
-        }
-    }
-    constexpr RawInstruction setRegisterPair(RegisterIndex dest, RegisterIndex src, RawInstruction i = 0) noexcept {
-        return setDestinationIndex(dest, setSourceIndex(src, i));
-    }
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
     Register::~Register() {
@@ -155,28 +130,6 @@ namespace iris {
         return tmp;
     }
 
-    RawInstruction Core::encodeArguments(const Core::NoArguments&) noexcept { return 0; }
-    RawInstruction Core::encodeArguments(const Core::OneRegister& reg) noexcept { 
-        return setDestinationIndex(reg.dest);
-    }
-    RawInstruction Core::encodeArguments(const Core::TwoRegister& reg) noexcept {
-        return setRegisterPair(reg.dest, reg.src);
-    }
-    RawInstruction Core::encodeArguments(const Core::ThreeRegister& reg) noexcept {
-        return setRegisterPair(reg.dest, reg.src, setSource2Index(reg.src2));
-    }
-    RawInstruction Core::encodeArguments(const Core::Immediate16& a) noexcept {
-        return setImmediate16(a.imm);
-    }
-    RawInstruction Core::encodeArguments(const Core::OneRegisterWithImmediate& a) noexcept {
-        return setImmediate16(a.imm, setDestinationIndex(a.dest));
-    }
-    RawInstruction Core::encodeArguments(const Core::TwoRegisterWithImmediate& a) noexcept {
-        return setRegisterPair(a.dest, a.src, setImmediate8(a.src2));
-    }
-    RawInstruction Core::encodeInstruction(const Core::DecodedInstruction& i) noexcept {
-        return std::visit([this](auto&& v) { return encodeBits<RawInstruction, byte, 0x0000'00FF, 0>(encodeArguments(v._args), byte(v.opcode())); }, i);
-    }
     void Core::dispatchInstruction(const Core::DecodedInstruction& di) {
         std::visit([this](auto&& v) { perform(v); }, di);
     }
@@ -264,38 +217,37 @@ namespace iris {
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
         auto addr = getRegisterValue(op._args.src).address;
-        auto value = _data[addr];
+        auto value = _memory[addr];
         setDestination(op, value);
     }
-    DefExec(LoadImmediate) { setDestination(op, _data[op._args.imm]); }
-    DefExec(Store) { _data[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
-    DefExec(StoreImmediate) { _data[getRegisterValue(op._args.dest).address] = op._args.imm; }
+    DefExec(LoadImmediate) { setDestination(op, _memory[op._args.imm]); }
+    DefExec(Store) { _memory[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
+    DefExec(StoreImmediate) { _memory[getRegisterValue(op._args.dest).address] = op._args.imm; }
     DefExec(Push) {
         Address stackAddress = getRegisterValue(op._args.dest).address - 1;
         Address value = getSource(op).address;
-        _stack[stackAddress] = value;
+        _memory[stackAddress] = value;
         setRegister(op._args.dest, stackAddress);
     }
     DefExec(PushImmediate) {
         Address stackAddress = getRegisterValue(op._args.dest).address - 1;
         Address value = op._args.imm;
-        _stack[stackAddress] = value;
+        _memory[stackAddress] = value;
         setRegister(op._args.dest, stackAddress);
     }
     DefExec(Pop) {
-        setDestination(op, _stack[getRegisterValue(op._args.src).address]);
+        setDestination(op, _memory[getRegisterValue(op._args.src).address]);
         setRegister(op._args.src, getRegisterValue(op._args.src).address + 1);
     }
-    DefExec(LoadCode) {
-        auto inst = _code[getSource2(op).address];
-        setRegister(op._args.dest, decodeBits<RawInstruction, Address, 0x0000'FFFF, 0>(inst));
-        setRegister(op._args.src, decodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(inst));
+    DefExec(LoadCore) {
+        auto inst = _core[getSource(op).address];
+        setDestination(op, inst);
     }
 
-    DefExec(StoreCode) {
-        auto lower = getSource(op).address;
-        auto upper = getSource2(op).address;
-        _code[getRegisterValue(op._args.dest).address] = encodeBits<RawInstruction, Address, 0xFFFF'0000, 16>(encodeBits<RawInstruction, Address, 0x0000'FFFF, 0>(0, lower), upper);
+    DefExec(StoreCore) {
+        auto lower = getSource(op);
+        auto addr = getRegisterValue(op._args.dest).address;
+        _core[addr] = lower;
     }
     DefExec(Branch) { _pc = op._args.imm; }
     DefExec(BranchAndLink) {
@@ -337,10 +289,12 @@ namespace iris {
         }
     }
     DefExec(LoadIO) {
-        onIODeviceFound(addr, [this, &op](auto& a) { setDestination(op, a.read(getSource(op).address)); });
+        auto addr = getSource(op).address;
+        onIODeviceFound(addr, [this, &op, addr](auto& a) { setDestination(op, a.read(addr));});
     }
     DefExec(StoreIO) {
-        onIODeviceFound(addr, [this, &op](auto& a) { a.write(getRegisterValue(op._args.dest).address, getSource(op).address); });
+        auto addr = getRegisterValue(op._args.dest).address;
+        onIODeviceFound(addr, [this, &op, addr](auto& a) { a.write(addr, getSource(op).address); });
     }
     DefExec(GetUpperByte) {
         setDestination(op, decodeBits<Address, Address, 0xFF00, 8>(getSource(op).address));
@@ -400,13 +354,13 @@ namespace iris {
         //auto separator = getSource2(op).get<byte>();
         static constexpr char separator = 0x20;
         // ignore any whitespace before token itself
-        for (auto front = (signed char)(_code[lbp]); front == separator; ++lbp, front = (signed char)(_code[lbp]));
+        for (auto front = _memory[lbp].get<signed char>(); front == separator; ++lbp, front = _memory[lbp].get<signed char>()) { }
         auto start = lbp; // save the start of the token
         auto count = 0;
         while (true) {
             ++lbp;
             ++count;
-            auto curr = (signed char)(_code[lbp]);
+            auto curr = _memory[lbp].get<signed char>();
             if (curr == separator) {
                 break;
             }
@@ -424,12 +378,12 @@ namespace iris {
         // go back to the starting token position
         lbp = start;
         // stash the length into the destination
-        _code[dp] = count;
+        _memory[dp] = count;
         // go to the next cell
         ++dp;
         do {
             // start copying the token contents over
-          _code[dp] = _code[lbp];
+          _memory[dp] = _memory[lbp];
           // advance both
           ++lbp;
           ++dp;
@@ -449,7 +403,7 @@ namespace iris {
                     auto start = getSource(op).address;
                     auto end = getSource2(op).address;
                     for (auto loc = 0; loc < end; ++loc) {
-                        a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[start + loc]));
+                        a.write(ioStorage, _memory[start + loc].get<Address>());
                     }
                 });
     }
@@ -459,10 +413,10 @@ namespace iris {
         // dest is the success code
         auto flag = false;
         auto baseAddress = getSource2(op).address;
-        auto p1 = Integer(_code[baseAddress] & 0xFFFF);
-        auto count = _code[p1];
+        auto p1 = _memory[baseAddress].get<Integer>();
+        auto count = _memory[p1].get<Address>();
         ++p1;
-        auto sgn = _code[p1] == '-';
+        auto sgn = _memory[p1].get<char>() == '-';
         if (sgn) {
             ++p1;
         }
@@ -470,7 +424,7 @@ namespace iris {
         auto terminatedEarly = false;
         auto _base = _registers[registerNumericBase].get<Integer>();
         while (count != 0) {
-            auto num = Integer(_code[p1] & 0xFF) - 0x30;
+            auto num = Integer(_memory[p1].get<signed char>()) - 0x30;
             if (num < 0) {
                 flag = false;
                 terminatedEarly = true;
@@ -512,13 +466,15 @@ namespace iris {
         auto count = getSource2(op).get<Address>();
         auto ioAddr = getSource(op).address;
         auto dest = getRegister(op._args.dest).get<Address>();
-        onIODeviceFound(ioAddr, [this, term, ioAddr, dest](auto& dev) {
+        onIODeviceFound(ioAddr, [this, count, ioAddr, dest](auto& dev) {
                     // keep reading from address until we get the term value or count is exhausted
                     auto pos = 0;
-                    for (; pos < count; ++pos, ++dest) {
+                    auto loc = dest;
+                    auto terminator = _registers[registerTerminator].get<Address>();
+                    for (; pos < count; ++pos, ++loc) {
                         auto value = dev.read(ioAddr);
-                        _code[dest] = value;
-                        if (value == _registers[registerTerminator].get<decltype(value)>()) {
+                        _memory[loc] = value;
+                        if (value == terminator) {
                             break;
                         }
                     }
@@ -530,8 +486,8 @@ namespace iris {
     }
     RawInstruction Core::extractInstruction() noexcept {
         // extract the current instruction and then go next
-        auto lower = static_cast<RawInstruction>(_memory[_pc]);
-        auto upper = static_cast<RawInstruction>(_memory[_pc + 1]) << 16;
+        auto lower = static_cast<RawInstruction>(_memory[_pc].address);
+        auto upper = static_cast<RawInstruction>(_memory[_pc + 1].address) << 16;
         _pc += 2;
         return lower | upper;
     }
@@ -654,7 +610,7 @@ namespace iris {
                 // Also make git not view the file as a binary file
                 if (outputFile.is_open()) {
                     for (int i = 0; i < 0x10000 ; ++i) {
-                        outputFile << std::hex << _data[i].address << std::endl;
+                        outputFile << std::hex << _memory[i].address << std::endl;
                     }
                 }
                 outputFile.close();
@@ -663,11 +619,11 @@ namespace iris {
                 std::ifstream inputFile(path);
                 if (inputFile.is_open()) {
                     for (int i = 0; i < 0x10000; ++i) {
-                        inputFile >> std::hex >> _data[i].address;
+                        inputFile >> std::hex >> _memory[i].address;
                     }
                 } else {
                     for (int i = 0; i < 0x10000; ++i) {
-                        _data[i].address = 0;
+                        _memory[i].address = 0;
                     }
                 }
                 inputFile.close();
