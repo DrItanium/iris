@@ -30,6 +30,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <cctype>
 
 
 namespace iris {
@@ -316,13 +317,10 @@ namespace iris {
         }
     }
     DefExec(LoadIO) {
-        auto addr = getSource(op).address;
-        onIODeviceFound(addr, [this, &op, addr](auto& a) { setDestination(op, a.read(addr)); });
+        onIODeviceFound(addr, [this, &op](auto& a) { setDestination(op, a.read(getSource(op).address)); });
     }
     DefExec(StoreIO) {
-        auto addr = getRegisterValue(op._args.dest).address;
-        auto value = getSource(op).address;
-        onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value); });
+        onIODeviceFound(addr, [this, &op](auto& a) { a.write(getRegisterValue(op._args.dest).address, getSource(op).address); });
     }
     DefExec(SaveGroupOfRegisters) {
         // extract the bits from the immediate and use it when calling the 
@@ -470,27 +468,14 @@ namespace iris {
         // src the starting point in the code space
         // src2 the length
         // only the lower half of each number is used
-        auto starting = getSource(op).address;
         auto ioStorage = getRegister(op._args.dest).get<Address>();
-        auto end = starting + getSource2(op).address;
-        if (end < starting) {
-            throw Problem("Memory wrap around");
-        } else {
-            onIODeviceFound(ioStorage, [this, ioStorage, starting, end](auto& a) {
-                        for (auto loc = starting; loc < end; ++loc) {
-                            a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[loc]));
-                        }
-                    });
-        }
-    }
-    DefExec(SetBase) {
-        // only update if it is in range
-        if (auto value = getRegister(op._args.dest).get<byte>(); value >= 2 && value < 37) {
-            _base = value;
-        } 
-    }
-    DefExec(GetBase) {
-        setDestination(op, Number(_base));
+        onIODeviceFound(ioStorage, [this, ioStorage, &op](auto& a) {
+                    auto start = getSource(op).address;
+                    auto end = getSource2(op).address;
+                    for (auto loc = 0; loc < end; ++loc) {
+                        a.write(ioStorage, static_cast<Address>(0x0000FFFF & _code[start + loc]));
+                    }
+                });
     }
     DefExec(NumberRoutine) {
         // src2 is the base address
@@ -507,6 +492,7 @@ namespace iris {
         }
         auto result = 0;
         auto terminatedEarly = false;
+        auto _base = _registers[registerNumericBase].get<Integer>();
         while (count != 0) {
             auto num = Integer(_code[p1] & 0xFF) - 0x30;
             if (num < 0) {
@@ -541,6 +527,26 @@ namespace iris {
             setRegister(op._args.src, result);
         }
         setRegister(op._args.dest, flag);
+    }
+    DefExec(ReadRangeFromIOAddress) {
+        // destination is the place to write the length followed by
+        // the string itself
+        // src is the io address to read from
+        // src2 is the number of elements
+        auto count = getSource2(op).get<Address>();
+        auto ioAddr = getSource(op).address;
+        auto dest = getRegister(op._args.dest).get<Address>();
+        onIODeviceFound(ioAddr, [this, term, ioAddr, dest](auto& dev) {
+                    // keep reading from address until we get the term value or count is exhausted
+                    auto pos = 0;
+                    for (; pos < count; ++pos, ++dest) {
+                        auto value = dev.read(ioAddr);
+                        _code[dest] = value;
+                        if (value == _registers[registerTerminator].get<decltype(value)>()) {
+                            break;
+                        }
+                    }
+                });
     }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
@@ -660,8 +666,11 @@ namespace iris {
     }
     void Core::init() {
         // disable writing to register 0
-        _registers[0].setValue(0);
-        _registers[0].disableWrites();
+        _registers[registerZero].setValue(0);
+        _registers[registerZero].disableWrites();
+        _registers[registerErrorCode].setValue(0);
+        _registers[registerTerminator].setValue(0);
+        _registers[registerNumericBase].setValue(16);
         // setup the basic IO device for console input output
         IODevice sink(0);
         IODevice console(1, 2, readFromStandardIn, writeToStandardOut);

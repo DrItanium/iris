@@ -105,10 +105,6 @@ defun: fix-case
       122 t1 cv !gti return-on-true \ we are looking at a value in between a and z in the ascii table
       32 t1 t1 !subi \ subtract 32 to get the upper case version
       defun;
-defun: skip-whitespace-in-input
-       \ TODO implement logic for whitespace skipping
-       \ TODO migrate this to microcode?
-       defun;
 defun: readline
        ibcurr ibend cv !neq return-on-true
        /dev/console0 $->io
@@ -166,9 +162,6 @@ defun: print-characters
     at0 !mtbase 
     defun; ;
 16 mk-mtbase-fun 16base
-\ 10 mk-mtbase-fun 10base
-\ 8 mk-mtbase-fun 8base
-\ 2 mk-mtbase-fun 2base
 
 dictionary-start .org
 \ all builtins should go here
@@ -191,9 +184,6 @@ boot-rom-start .org
     ibcurr dp !readtok
     keep-executing !eqz
     cv &terminate-execution !bcr
-    \ tokstart arg0 !move
-    \ tokstart tokend arg1 !sub
-    \ read-hex-number !call
     zero error-code cv !neq
     unknown-word cv !bc \ if we hit an error code then restart the loop
     ret0 sp psh->

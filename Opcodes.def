@@ -114,6 +114,5 @@ X(UnsignedMax, ThreeRegister, maxu)
 X(ReadToken, TwoRegister, readtok)
 // extract lower 16-bits from code address and store it into an io address
 X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
-X(SetBase, OneRegister, set-num-base)
-X(GetBase, OneRegister, get-num-base)
 X(NumberRoutine, ThreeRegister, number-routine)
+X(ReadRangeFromIOAddress, ThreeRegister, readrangefromio)

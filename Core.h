@@ -111,6 +111,18 @@ namespace iris {
 			static constexpr Address registerCount = 256;
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address32 addressSize = 0x10000;
+            static constexpr RegisterIndex registerZero = 0;
+            static constexpr RegisterIndex registerErrorCode = 1;
+            static constexpr RegisterIndex registerTerminator = 2;
+            static constexpr RegisterIndex registerNumericBase = 3;
+            // the error codes that the processor will raise as part of an
+            // error happening
+            enum class ErrorCodes : Address {
+                None, // always first and means that all is good :D
+                IllegalOpcode,
+                // TODO: add more opcodes and put in system handlers for it
+                Count,
+            };
 			using MemoryBlock16 = std::unique_ptr<Number[]>;
 			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
 			using RegisterFile = std::unique_ptr<Register[]>;
@@ -285,8 +297,6 @@ namespace iris {
 			RegisterFile _registers;
 			bool _keepExecuting = true;
             std::list<IODevice> _io;
-            byte _base = 16;
-
 	};
 }
 #endif

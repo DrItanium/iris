@@ -149,11 +149,8 @@ enum: AsmUnsignedMin
 enum: AsmUnsignedMax
 enum: AsmReadToken
 enum: AsmWriteCodeRangeToIO
-enum: AsmParseHexDigit
-enum: AsmIsHexDigit
-enum: AsmSetBase
-enum: AsmGetBase
 enum: AsmNumberRoutine
+enum: AsmReadRangeFromIOIntoCode
 enum}
 
 
@@ -248,11 +245,8 @@ enum}
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
 : !readtok ( src2 src dest -- ) ThreeRegister AsmReadToken asm<< ;
 : !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
-: !parse-hex-digit ( dig dest -- ) TwoRegister AsmParseHexDigit asm<< ;
-: !is-hex-digit ( dig result -- ) TwoRegister AsmIsHexDigit asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
-: !mtbase ( reg -- ) OneRegister AsmSetBase asm<< ;
-: !mfbase ( reg -- ) OneRegister AsmGetBase asm<< ;
+: !read-io-to-code-range ( count terminator dest -- ) ThreeRegister AsmReadRangeFromIOIntoCode asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
@@ -261,10 +255,14 @@ enum}
 : link-address ( addr -- ) .data16 ;
 : execution-address ( addr -- ) .data16 ;
 {enum
+\ registers that are used by the core internally
 enum: zero
+enum: error-code
+enum: terminator \ terminator character
+enum: nbase \ numeric base
+\ custom registers start
 enum: cv \ condition variable
 enum: lr \ link register
-enum: ctr \ count register
 enum: at0 \ assembler temporary 0
 enum: at1 \ assembler temporary 1
 enum: at2 \ assembler temporary 2
