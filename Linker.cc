@@ -33,7 +33,7 @@
 
 
 void usage(const std::string& name) {
-	std::cerr << name << ": <path-to-object> [more objects, -o fileName]" << std::endl;
+	std::cerr << name << ": <path-to-object> [more objects, -o fileName, --help]" << std::endl;
 }
 int main(int argc, char** argv) {
 	if (argc == 1) {
@@ -50,6 +50,9 @@ int main(int argc, char** argv) {
 			findOutput = false;
 		} else if (value == "-o") {
 			findOutput = true;
+        } else if (value == "--help") {
+            usage(argv[0]);
+            return 1;
 		} else {
 			files.emplace_back(value);
 		}
@@ -72,11 +75,6 @@ int main(int argc, char** argv) {
 			auto upper = iris::Address(getByte()) << 8;
 			return lower | upper;
 		};
-		auto getDoubleAddress = [getAddress]() {
-			auto lower = iris::RawInstruction(getAddress());
-			auto upper = iris::RawInstruction(getAddress()) << 16;
-			return lower | upper;
-		};
 		while (in) {
 			// read each entry to see what to do with it
 			auto section = getAddress();
@@ -84,20 +82,16 @@ int main(int argc, char** argv) {
                 break;
             }
 			auto address = getAddress();
-			auto value = getDoubleAddress();
-			auto lowerHalf = iris::decodeBits<decltype(value), iris::Address, 0x0000'FFFF, 0>(value);
+			auto value = getAddress();
 			switch (section) {
 				case 0: // register
-					core.install( address, lowerHalf, iris::Core::InstallToRegister());
+					core.install( address, value, iris::Core::InstallToRegister());
 					break;
-				case 1: // code
-					core.install( address, value, iris::Core::InstallToCode());
+				case 1: // memory
+					core.install( address, value, iris::Core::InstallToMemory());
 					break;
-				case 2:
-					core.install( address, lowerHalf, iris::Core::InstallToData());
-					break;
-				case 3:
-					core.install( address, lowerHalf, iris::Core::InstallToStack());
+				case 2: // core
+					core.install( address, value, iris::Core::InstallToCore());
 					break;
 				default:
 					std::cerr << "Got an illegal section, terminating..." << std::endl;

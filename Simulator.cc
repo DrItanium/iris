@@ -35,10 +35,6 @@ int main(int argc, char** argv) {
 	int exitCode = 0;
 	std::string in, out;
 	switch (argc) {
-		case 0:
-		case 1:
-			usage(argv[0]);
-			return 1;
 		case 3:
 			out = argv[2];
 		case 2:

@@ -1,16 +1,18 @@
 " misc/forth_interpreter/basics.fs" open-input-file
 ( assembler words )
 : addr16 ( n -- n ) 0xFFFF and ;
-: addr32 ( n -- n ) 0xFFFFFFFF and ;
 : addr8 ( n -- n ) 0xFF and ;
+: addr6 ( n -- n ) 0x1F and ;
 : position-byte ( reg shift -- reg<<shift ) 
   swap addr8 
   swap ( reg shift -- masked-reg shift )
   u<< ( reg shift -- reg<<shift ) ;
-: destination-register ( reg -- shifted-reg ) 8 position-byte ;
-: source-register ( reg -- shifted-reg ) 16 position-byte ;
-: source2-register ( reg -- shifted-reg ) 24 position-byte ;
-: imm8 ( imm8 -- shifted-imm8 ) source2-register ;
+: position-reg ( reg shift -- reg<<shift ) swap addr6 swap u<< ;
+: destination-register ( reg -- shifted-reg ) 8 position-reg ;
+: source-register ( reg -- shifted-reg ) 14 position-reg ;
+: source2-register ( reg -- shifted-reg ) 20 position-reg ;
+: source3-register ( reg -- shifted-reg ) 26 position-reg ;
+: imm6 ( imm6 -- shifted-imm6 ) source3-register ;
 : imm16 ( imm16 -- shifted-imm16 ) addr16 16 u<< ;
 : NoArguments ( -- 0 ) 0 ;
 : OneRegister ( dest -- value ) destination-register ;
@@ -43,7 +45,9 @@
   or ;
 
 : section-entry ( value address section -- ) bin<<q bin<<q bin<<h ;
+0 constant register-section-id
 1 constant code-section-id
+2 constant core-section-id
 variable location
 : .org ( value -- ) location ! ;
 0 .org
@@ -55,9 +59,17 @@ variable location
 : code<< ( value address -- ) 
   code-section-id bin<<q
   bin<<q
-  bin<<h 
+  bin<<q 
   increment-location ;
-: asm<< ( a b -- ) or current-location code<< ;
+: d16<< ( v -- ) 
+  addr16 current-location code<< ;
+: asm<< ( a b -- ) 
+  or
+  dup ( n n )
+  \ output the lower half
+  d16<< 
+  \ output the upper half
+  16 >>u d16<< ;
 
 {enum
 enum: AsmAdd
@@ -110,8 +122,8 @@ enum: AsmStoreImmediate
 enum: AsmPush
 enum: AsmPushImmediate
 enum: AsmPop
-enum: AsmLoadCode
-enum: AsmStoreCode
+enum: AsmLoadCore
+enum: AsmStoreCore
 enum: AsmBranch
 enum: AsmBranchAndLink
 enum: AsmBranchIndirect
@@ -206,8 +218,8 @@ enum}
 : !push ( args* -- ) TwoRegister AsmPush asm<< ;
 : !pushi ( args* -- ) OneRegisterWithImmediate AsmPushImmediate asm<< ;
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
-: !ldc ( args* -- ) ThreeRegister AsmLoadCode asm<< ;
-: !stc ( args* -- ) ThreeRegister AsmStoreCode asm<< ;
+: !ld.c ( args* -- ) TwoRegister AsmLoadCore asm<< ;
+: !st.c ( args* -- ) TwoRegister AsmStoreCore asm<< ;
 : !b ( args* -- ) Immediate16 AsmBranch asm<< ;
 : !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
 : !br ( args* -- ) OneRegister AsmBranchIndirect asm<< ;
@@ -250,16 +262,14 @@ enum}
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
-: .data32 ( n -- ) addr32 current-location code<< ;
-: dictionary-header ( n -- ) .data32 ;
-: link-address ( addr -- ) .data16 ;
-: execution-address ( addr -- ) .data16 ;
 {enum
 \ registers that are used by the core internally
 enum: zero
 enum: error-code
 enum: terminator \ terminator character
 enum: nbase \ numeric base
+enum: sp0 \ stack pointer 0
+enum: sp1 \ stack pointer 1
 \ custom registers start
 enum: cv \ condition variable
 enum: lr \ link register
@@ -317,41 +327,9 @@ enum: /dev/core-load
 enum: /dev/dump-vm
 enum}
 \ concepts and other macro routines for doing crazy things
-: !lw ( src dest -- ) 
-  \ since this is inside the code section we have to get creative
-  \ put the upper half into 
-  zero swap !ldc ;
-: !sw ( value addr -- )
-  zero -rot !stc ;
+: !lw ( src dest -- ) !ld ;
+: !sw ( value addr -- ) !st ;
 
-\ load a value from stack memory and discard the pointer update
-: !lw.s ( sp dest -- )
-  swap ( dest sp )
-  at0 tuck ( dest at0 sp at0 )
-  !move \ stash the contents of src into at0
-  swap ( at0 dest )
-  !pop ;
-\ store a word into stack memory
-: !sw.s ( dest sp -- ) 
-  at0 tuck ( dest at0 sp at0 )
-  !move ( dest at0 )
-  !push ;
-
-: !core->inst ( src dest -- ) 
-  swap ( dest src )
-  at0 !move \ stash src into at0 
-  at0 at1 !ld \ load the lower half into at1
-  at0 !1+ \ increment at0 by one
-  at0 at2 !ld \ load the upper half into at2
-  at2 at1 rot ( at2 at1 dest )
-  !stc ;
-: !inst->core ( src dest -- )
-  swap ( dest src )
-  at1 at0 !ldc \ load the upper and lower halves
-  at2 !move \ copy to at2 as we need to do some changes
-  at0 at2 !st \ store the lower half at the starting position
-  at2 !1+ \ next cell
-  at1 at2 !st ;
 : !ret ( register -- )
   !br ;
 
