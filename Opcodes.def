@@ -95,4 +95,3 @@ X(ChooseSigned, FourRegister, choose-signed)
 // routines from Threaded Interpretive Languages as well
 X(ReadToken, TwoRegister, readtok)
 X(NumberRoutine, ThreeRegister, number-routine)
-X(ReadRangeFromIOAddress, ThreeRegister, readrangefromio)

@@ -150,9 +150,7 @@ enum: AsmUnsignedShiftRight
 enum: AsmChoose
 enum: AsmChooseSigned
 enum: AsmReadToken
-enum: AsmWriteCodeRangeToIO
 enum: AsmNumberRoutine
-enum: AsmReadRangeFromIOIntoCode
 enum}
 
 
@@ -215,9 +213,7 @@ enum}
 : !minu ( src2 src dest -- ) ThreeRegister AsmUnsignedMin asm<< ;
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
 : !readtok ( src2 src dest -- ) TwoRegister AsmReadToken asm<< ;
-: !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
-: !read-io-to-code-range ( count terminator dest -- ) ThreeRegister AsmReadRangeFromIOIntoCode asm<< ;
 : !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
 : !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
 : !addu ( args* -- ) ThreeRegister AsmUnsignedAdd asm<< ;

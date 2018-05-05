@@ -396,28 +396,6 @@ namespace iris {
         }
         setRegister(op._args.dest, flag);
     }
-    DefExec(ReadRangeFromIOAddress) {
-        // destination is the place to write the length followed by
-        // the string itself
-        // src is the io address to read from
-        // src2 is the number of elements
-        auto count = getSource2(op).get<Address>();
-        auto ioAddr = getSource(op).address;
-        auto dest = getRegister(op._args.dest).get<Address>();
-        onIODeviceFound(ioAddr, [this, count, ioAddr, dest](auto& dev) {
-                    // keep reading from address until we get the term value or count is exhausted
-                    auto pos = 0;
-                    auto loc = dest;
-                    auto terminator = _registers[registerTerminator].get<Address>();
-                    for (; pos < count; ++pos, ++loc) {
-                        auto value = dev.read(ioAddr);
-                        _memory[loc] = value;
-                        if (value == terminator) {
-                            break;
-                        }
-                    }
-                });
-    }
 	DefExec(BranchIf) {
 		// two way branch statement
 		// dest contains the conditional
