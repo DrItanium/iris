@@ -5,7 +5,7 @@
 " routines.bin" {bin
 routines-start .org
 .label terminate-execution
-        zero !terminateExecution
+       arg0 !exit
 .label return
         \ all functions go through here to make sure that we do the right thing
         csp lr pop-> 

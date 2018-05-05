@@ -252,9 +252,6 @@ namespace iris {
         }
     }
 
-    DefExec(TerminateExecution) {
-        _keepExecuting = getRegisterValue(op._args.dest).getTruth();
-    }
     void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
         for (auto& a : _io) {
             if (a.respondsTo(addr)) {
@@ -579,13 +576,21 @@ namespace iris {
                 throw Problem("Unimplemented address!");
             }
         };
+		auto terminateVM = [this](auto index, auto value) {
+			if (index == 0) {
+				_keepExecuting = value != 0;
+			} else {
+				throw Problem("Unimplemented address!");
+			}
+		};
         IODevice coreManipulator(3, 2, nullptr, selectCore);
         IODevice vmDumper(5, 1, nullptr, dumpVM);
-
+		IODevice vmTerminator(6,1, nullptr, terminateVM);
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
         installIODevice(vmDumper);
+		installIODevice(vmTerminator);
     }
     void Core::shutdown() {
 

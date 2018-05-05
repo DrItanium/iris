@@ -41,7 +41,6 @@ X(BranchConditional, OneRegisterWithImmediate, bc)
 X(BranchConditionalIndirect, TwoRegister, bcr)
 X(BranchConditionalIndirectLink, ThreeRegister, bcrl)
 // misc
-X(TerminateExecution, OneRegister, terminateExecution)
 X(LoadIO, TwoRegister, ldio)
 X(StoreIO, TwoRegister, stio)
 // Push eight registers onto the stack at a time given the provided bit pattern

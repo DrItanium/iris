@@ -121,7 +121,6 @@ enum: AsmBranchIndirectLink
 enum: AsmBranchConditional
 enum: AsmBranchConditionalIndirect
 enum: AsmBranchConditionalIndirectLink
-enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
 enum: AsmUnsignedEq
@@ -191,7 +190,6 @@ enum}
 : !bc ( args* -- ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
 : !bcr ( args* -- ) TwoRegister AsmBranchConditionalIndirect asm<< ;
 : !bcrl ( args* -- ) ThreeRegister AsmBranchConditionalIndirectLink asm<< ;
-: !terminateExecution ( args* -- ) OneRegister AsmTerminateExecution asm<< ;
 : !ldio ( args* -- ) TwoRegister AsmLoadIO asm<< ;
 : !stio ( args* -- ) TwoRegister AsmStoreIO asm<< ;
 : !equ ( args* -- ) ThreeRegister AsmUnsignedEq asm<< ;
@@ -260,6 +258,7 @@ enum: /dev/console1
 enum: /dev/core-dump
 enum: /dev/core-load
 enum: /dev/dump-vm
+enum: /dev/terminate-vm
 enum}
 \ concepts and other macro routines for doing crazy things
 : $-> ( value reg -- ) !set ;
@@ -452,7 +451,9 @@ enum}
 
 : !nop ( -- ) zero zero zero !add ;
 : !zero ( reg -- ) zero-arg2 !move ;
-: !exit ( code -- ) $->at0,at0 !terminateExecution ;
+: !exit ( reg -- ) 
+  /dev/terminate-vm $->io
+  !io-store ;
 
 : !swi ( imm addr -- ) !sti ;
 : !drop ( sp -- ) zero !pop ;
