@@ -116,9 +116,6 @@ enum: AsmBranchConditionalIndirectLink
 enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
-enum: AsmGetUpperByte
-enum: AsmGetLowerByte
-enum: AsmUnpackHalves
 enum: AsmUnsignedEq
 enum: AsmUnsignedNeq
 enum: AsmUnsignedLessThan
@@ -138,8 +135,6 @@ enum: AsmWriteCodeRangeToIO
 enum: AsmNumberRoutine
 enum: AsmReadRangeFromIOIntoCode
 enum}
-
-
 
 
 : !add ( args* -- ) ThreeRegister AsmAdd asm<< ;
@@ -164,7 +159,6 @@ enum}
 : !lnand ( args* -- ) ThreeRegister AsmLogicalNand asm<< ;
 : !lnor ( args* -- ) ThreeRegister AsmLogicalNor asm<< ;
 : !eq ( args* -- ) ThreeRegister AsmEq asm<< ;
-
 : !neq ( args* -- ) ThreeRegister AsmNeq asm<< ;
 : !lt ( args* -- ) ThreeRegister AsmLessThan asm<< ;
 : !gt ( args* -- ) ThreeRegister AsmGreaterThan asm<< ;
@@ -175,8 +169,8 @@ enum}
 : !st ( args* -- ) TwoRegister AsmStore asm<< ;
 : !push ( args* -- ) TwoRegister AsmPush asm<< ;
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
-: !ld.c ( args* -- ) TwoRegister AsmLoadCore asm<< ;
-: !st.c ( args* -- ) TwoRegister AsmStoreCore asm<< ;
+: !ldc ( args* -- ) TwoRegister AsmLoadCore asm<< ;
+: !stc ( args* -- ) TwoRegister AsmStoreCore asm<< ;
 : !b ( args* -- ) Immediate16 AsmBranch asm<< ;
 : !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
 : !br ( args* -- ) OneRegister AsmBranchIndirect asm<< ;
@@ -187,9 +181,6 @@ enum}
 : !terminateExecution ( args* -- ) OneRegister AsmTerminateExecution asm<< ;
 : !ldio ( args* -- ) TwoRegister AsmLoadIO asm<< ;
 : !stio ( args* -- ) TwoRegister AsmStoreIO asm<< ;
-: !upperb ( args* -- ) TwoRegister AsmGetUpperByte asm<< ;
-: !lowerb ( args* -- ) TwoRegister AsmGetLowerByte asm<< ;
-: !unpackh ( args* -- ) ThreeRegister AsmUnpackHalves asm<< ;
 : !equ ( args* -- ) ThreeRegister AsmUnsignedEq asm<< ;
 : !nequ ( args* -- ) ThreeRegister AsmUnsignedNeq asm<< ;
 : !ltu ( args* -- ) ThreeRegister AsmUnsignedLessThan asm<< ;

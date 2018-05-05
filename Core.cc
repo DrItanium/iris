@@ -267,22 +267,6 @@ namespace iris {
         auto addr = getRegisterValue(op._args.dest).address;
         onIODeviceFound(addr, [this, &op, addr](auto& a) { a.write(addr, getSource(op).address); });
     }
-    DefExec(GetUpperByte) {
-        setDestination(op, decodeBits<Address, Address, 0xFF00, 8>(getSource(op).address));
-    }
-    DefExec(GetLowerByte) {
-        setDestination(op, decodeBits<Address, Address, 0x00FF, 0>(getSource(op).address));
-    }
-    DefExec(UnpackHalves) {
-        Core::GetLowerByte lower;
-        lower._args.dest = op._args.dest;
-        lower._args.src = op._args.src2;
-        Core::GetUpperByte upper;
-        upper._args.dest = op._args.src;
-        upper._args.src = op._args.src2;
-        perform(lower);
-        perform(upper);
-    }
     DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
     DefExec(UnsignedNeq) { setDestination(op, getSource(op).address != getSource2(op).address); }
     DefExec(UnsignedLessThan) { setDestination(op, getSource(op).address < getSource2(op).address); }
