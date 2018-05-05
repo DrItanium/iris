@@ -14,6 +14,13 @@ routines-start .org
 : defun;  ( -- ) return jmp ;
 : return-on-true ( -- ) return !bccv ;
 : return-on-zero-len ( reg -- ) cv !eqz return-on-true ;
+.label restore-t2
+	   t2 !restore-vmsp
+.label restore-t1
+	   t1 !restore-vmsp
+.label restore-t0
+	   t0 !restore-vmsp
+	   defun;
 defun: write-range-to-io-address
 	   \ arg0 - starting point in memory
 	   \ arg1 - length
@@ -30,16 +37,51 @@ defun: write-range-to-io-address
 	   t0 !1+
 	   t0 arg1 cv !neq
 	   write-range-to-io-address-loop !bccv
-	   t1 !restore-vmsp
-	   t0 !restore-vmsp
-	   defun;
+	   restore-t1 jmp
 defun: read-range-from-io-address
 	   \ arg0 is the destination address to write into within memory
 	   \ arg1 is the count to read, it will keep reading until we get to this
 	   \      point. This can become an issue when reading from standard input
+	   \ io contains the io address to read from
 	   arg1 return-on-zero-len
+	   t0 !save-vmsp
+	   t1 !save-vmsp
+	   t2 !save-vmsp
+	   t0 !zero
+.label read-range-from-io-address-loop
+	   arg0 t0 t1 !add
+	   t2 !io-read
+	   t2 t1 !sw
+	   t0 !1+
+	   t0 arg1 cv !neq 
+	   read-range-from-io-address-loop !bccv
+	   restore-t2 jmp
 
-	   defun;
+.label done:read-range-from-io-address-with-terminator
+	   t0 ret0 -> \ return the number of characters read
+	   restore-t2 jmp
+defun: read-range-from-io-address-with-terminator
+	   \ arg0 is the destination address to write into within memory
+	   \ arg1 is the count to read, it will keep reading until we get to this
+	   \      point. This can become an issue when reading from standard input
+	   \ io contains the io address to read from
+	   arg1 return-on-zero-len
+	   t0 !save-vmsp
+	   t1 !save-vmsp
+	   t2 !save-vmsp
+	   t0 !zero
+.label read-range-from-io-address-with-terminator-loop
+	   arg0 t0 t1 !add
+	   t2 !io-read
+	   t2 t1 !sw
+	   t0 !1+
+	   \ make sure that we actually set things up correctly
+	   t2 terminator cv !eq 
+	   done:read-range-from-io-address-with-terminator !bccv
+	   t0 arg1 cv !neq 
+	   read-range-from-io-address-with-terminator-loop !bccv
+	   done:read-range-from-io-address-with-terminator jmp
+
 defun: fix-case
       \ lower case becomes upper case
       97 t1 cv !lti return-on-true
