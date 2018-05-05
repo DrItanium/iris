@@ -345,20 +345,6 @@ namespace iris {
         // update the dictionary pointer as well
         setRegister(op._args.dest, dp);
     }
-    DefExec(WriteRangeToIOAddress) {
-        // destination is io address
-        // src the starting point in the code space
-        // src2 the length
-        // only the lower half of each number is used
-        auto ioStorage = getRegister(op._args.dest).get<Address>();
-        onIODeviceFound(ioStorage, [this, ioStorage, &op](auto& a) {
-                    auto start = getSource(op).address;
-                    auto end = getSource2(op).address;
-                    for (auto loc = 0; loc < end; ++loc) {
-                        a.write(ioStorage, _memory[start + loc].get<Address>());
-                    }
-                });
-    }
     DefExec(NumberRoutine) {
         // src2 is the base address
         // src is the resultant number

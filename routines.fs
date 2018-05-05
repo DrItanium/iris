@@ -13,6 +13,26 @@ routines-start .org
 : defun: ( -- ) .label lr csp psh-> ;
 : defun;  ( -- ) return jmp ;
 : return-on-true ( -- ) return !bccv ;
+defun: read-range-from-io-address
+defun: write-range-to-io-address
+	   \ arg0 - starting point in memory
+	   \ arg1 - length
+	   \ whatever is stored in io is used
+	   arg1 cv !eqz return-on-true
+	   t0 !save-vmsp
+	   t1 !save-vmsp
+	   t0 !zero
+	   \ setup the loop to perform io writes
+.label write-range-to-io-address-loop
+	   arg0 t0 t1 !addu
+	   t1 t1 !lw 
+	   t1 io-write
+	   t0 !1+
+	   t0 arg1 cv !neq
+	   write-write-to-io-address-loop !bccv
+	   t1 !restore-vmsp
+	   t0 !restore-vmsp
+	   defun;
 defun: fix-case
       \ lower case becomes upper case
       97 t1 cv !lti return-on-true
@@ -45,9 +65,10 @@ defun: readline
        t4 ret0 -> \ now make ibcurr the start with the length as well
 	   t2 ret1 ->
        defun;
+
 defun: print-characters
        /dev/console0 $->io
-       arg1 arg0 io !write-code-range-to-io
+	   write-range-to-io-address !call
        defun;
 defun: func-2drop
 	   sp !2drop
@@ -63,6 +84,15 @@ defun: func-2drop
        0xA t0 !swi \ save newline here
        print-characters !call
        boot-rom-start jmp
+defun: println
+	   \ arg0 - start
+	   \ arg1 - length
+	   print-characters !call
+	   /dev/console0 $->io
+	   0xA $->at0
+	   at0 io-write
+	   defun;
+defun: 
 : mk-mtbase-fun ( base-num -- )
     defun: 
     nbase $->

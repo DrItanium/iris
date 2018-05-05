@@ -2,7 +2,6 @@
 " iris.fs" open-input-file
 sp0 constant sp \ stack pointer
 sp1 constant csp \ call stack pointer
-
 fixed-registers-stop ={enum
 enum: dp \ dictionary pointer
 enum: t0 \ temporary 0

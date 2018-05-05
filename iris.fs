@@ -240,6 +240,8 @@ enum: terminator \ terminator character
 enum: nbase \ numeric base
 enum: sp0 \ stack pointer 0
 enum: sp1 \ stack pointer 1
+enum: vmsp \ stack pointer 2 ( generally the vm stack )
+
 \ custom registers start
 enum: cv \ condition variable
 enum: lr \ link register
@@ -481,5 +483,8 @@ enum}
   pop-> ( sp sp ) \ lower - at1
   at0 swap ( sp at0 sp ) psh->
   at1 swap ( at1 sp ) psh-> ;
+
+: !save-vmsp ( reg -- ) vmsp psh-> ;
+: !restore-vmsp ( reg -- ) vmsp swap pop-> ;
   
 ;s

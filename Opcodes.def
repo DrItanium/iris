@@ -94,7 +94,5 @@ X(ChooseSigned, FourRegister, choose-signed)
 // faster
 // routines from Threaded Interpretive Languages as well
 X(ReadToken, TwoRegister, readtok)
-// extract lower 16-bits from code address and store it into an io address
-X(WriteRangeToIOAddress, ThreeRegister, writerangetoio)
 X(NumberRoutine, ThreeRegister, number-routine)
 X(ReadRangeFromIOAddress, ThreeRegister, readrangefromio)
