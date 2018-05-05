@@ -253,26 +253,6 @@ enum: ci \ core index number
 enum: fixed-registers-stop
 enum}
 
-: !nop ( -- ) zero zero zero !add ;
-: !zero ( reg -- ) zero swap !move ;
-: !exit ( code -- ) 
-  at0 ( code at0 ) 
-  tuck ( at0 code at0 )
-  !set 
-  !terminateExecution ;
-
-: !memswap ( addr0 addr1 -- )
-  \ swap the contents of two memory cells in core
-  2over ( addr0 addr1 addr0 addr1 )
-  at0 swap at1 ( addr0 addr1 addr0 at0 addr1 at1 )
-  !ld ( addr0 addr1 addr0 at0 )
-  !ld \ we've loaded memory as needed at this point
-      \ however, we now need to store at1 into addr0 and at0 into addr1
-  ( addr0 addr1 )
-  at0 !st ( addr0 )
-  at1 !st ;
-
-
 
 \ basic registers
 \ io devices
@@ -289,7 +269,6 @@ enum}
 : $->io ( value -- ) io $-> ;
 : !lw ( src dest -- ) !ld ;
 : !sw ( value addr -- ) !st ;
-: !swi ( imm addr -- ) !sti ;
 
 : !ret ( register -- )
   !br ;
@@ -334,14 +313,14 @@ enum}
 : ->io ( reg -- ) io -> ;
 
 : $->at0 ( imm -- ) at0 $-> ;
+\ perform checks at this point to see if we shouldn't emit an instruction
+: $->at0,at0 ( imm -- at0 ) dup 0= if zero else $->at0 at0 then ;
 
-: $->at0,at0-arg3
-: replace-imm-with-at0 ( imm a b -- at0 a b )
+: $->at0,at0-arg3 ( imm a b -- at0 a b )
   rot ( a b imm )
-  $->at0
-  at0 -rot ( at0 a b ) ;
+  $->at0,at0 -rot ( at0 a b ) ;
 : $->at0,at-arg2 ( imm a -- at0 a )
-  swap $->at0 at0 swap ;
+  swap $->at0,at0 swap ;
 
 : !addi ( imm src dest -- ) $->at0,at0-arg3 !add ;
 : !subi ( imm src dest -- ) $->at0,at0-arg3 !sub ;
@@ -366,9 +345,11 @@ enum}
 : !nandui ( imm a b -- ) replace-imm-with-at0 !nandu ;
 
 : =+n ( n a -- ) 
+  \ if immediate is zero then do nothing!
+  over 0= if 2drop else
   \ The contents of register A are incremented by constant n
   dup  ( n a a ) 
-  !addi ;
+  !addi then ;
 : =-n ( n a -- )
   dup
   !subi ;
@@ -451,8 +432,8 @@ enum}
 : !leiz ( imm dest -- ) zero-arg3 !lei ;
 : !leuiz ( imm dest -- ) zero-arg3 !leui ;
 : !bccv ( imm -- ) cv !bc ;
-: !swap ( r0 r1 -- ) 
-  over over = if
+: !swap.r ( r0 r1 -- ) 
+  2over = if
   dup ( r0 r1 r1 )
   at0 -> ( r0 r1 )
   over swap ( r0 r0 r1 )
@@ -471,4 +452,27 @@ enum}
 : !remui ( imm src dest -- ) $->at0,at0-arg3 !remu ;
 : !shlui ( imm src dest -- ) $->at0,at0-arg3 !shlu ;
 : !shrui ( imm src dest -- ) $->at0,at0-arg3 !shru ;
+
+: !nop ( -- ) zero zero zero !add ;
+: !zero ( reg -- ) zero-arg2 !move ;
+: !exit ( code -- ) $->at0,at0 !terminateExecution ;
+
+: !swi ( imm addr -- ) !sti ;
+: !drop ( sp -- ) zero !pop ;
+: !dup ( sp -- ) 
+   at0 2over  ( sp at0 sp at0 )
+   pop->
+   swap 2over ( at0 sp at0 sp )
+   psh->
+   psh-> ;
+: !2drop ( sp -- ) dup !drop !drop ;
+: !swap.st ( sp -- ) 
+  2dup ( sp sp sp )
+  at1 over ( sp sp sp at1 sp )
+  at0 ( sp sp sp at1 sp at0 )
+  pop-> ( sp sp sp at1 ) \ top - at0
+  pop-> ( sp sp ) \ lower - at1
+  at0 swap ( sp at0 sp ) psh->
+  at1 swap ( at1 sp ) psh-> ;
+
 ;s
