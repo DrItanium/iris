@@ -311,23 +311,24 @@ enum}
 
 : $->at0 ( imm -- ) at0 $-> ;
 
+: $->at0,at0-arg3
 : replace-imm-with-at0 ( imm a b -- at0 a b )
   rot ( a b imm )
   $->at0
   at0 -rot ( at0 a b ) ;
-: arg2-is-at0-from-imm ( imm a -- at0 a )
+: $->at0,at-arg2 ( imm a -- at0 a )
   swap $->at0 at0 swap ;
 
-: !addi ( imm src dest -- ) replace-imm-with-at0 !add ;
-: !subi ( imm src dest -- ) replace-imm-with-at0 !sub ;
-: !muli ( imm src dest -- ) replace-imm-with-at0 !mul ;
-: !divi ( imm src dest -- ) replace-imm-with-at0 !div ;
-: !remi ( imm src dest -- ) replace-imm-with-at0 !rem ;
-: !shli ( imm src dest -- ) replace-imm-with-at0 !shl ;
-: !shri ( imm src dest -- ) replace-imm-with-at0 !shr ;
-: !ldi ( imm dest -- ) arg2-is-at0-from-imm !ld ;
-: !sti ( imm dest -- ) arg2-is-at0-from-imm !st ;
-: !pushi ( imm sp -- ) arg2-is-at0-from-imm !push ;
+: !addi ( imm src dest -- ) $->at0,at0-arg3 !add ;
+: !subi ( imm src dest -- ) $->at0,at0-arg3 !sub ;
+: !muli ( imm src dest -- ) $->at0,at0-arg3 !mul ;
+: !divi ( imm src dest -- ) $->at0,at0-arg3 !div ;
+: !remi ( imm src dest -- ) $->at0,at0-arg3 !rem ;
+: !shli ( imm src dest -- ) $->at0,at0-arg3 !shl ;
+: !shri ( imm src dest -- ) $->at0,at0-arg3 !shr ;
+: !ldi ( imm dest -- ) $->at0,at0-arg2 !ld ;
+: !sti ( imm dest -- ) $->at0,at0-arg2 !st ;
+: !pushi ( imm sp -- ) $->at0,at0-arg2 !push ;
 
 : !andi ( imm a b -- ) replace-imm-with-at0 !and ;
 : !ori ( imm a b -- ) replace-imm-with-at0 !or ;
@@ -348,91 +349,97 @@ enum}
   dup
   !subi ;
     
+
 : !1+ ( reg -- ) 1 swap =+n ;
 : !1- ( reg -- ) 1 swap =-n ;
 
 : !eqi ( imm a b -- ) 
-  replace-imm-with-at0 ( at0 a b ) 
+  $->at0,at0-arg3 ( at0 a b ) 
   !eq ;
 
 : !neqi ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !neq ;
 
 : !gti ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !gt ;
 
 : !lti ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !lt ;
 
 : !gei ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !ge ;
 : !lei ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !le ;
 
 : !equi ( imm a b -- ) 
-  replace-imm-with-at0 ( at0 a b ) 
+  $->at0,at0-arg3 ( at0 a b ) 
   !equ ;
 
 : !nequi ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !nequ ;
 
 : !gtui ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !gtu ;
 
 : !ltui ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !ltu ;
 
 : !geui ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !geu ;
 : !leui ( imm a b -- )
-  replace-imm-with-at0 ( at0 a b )
+  $->at0,at0-arg3 ( at0 a b )
   !leu ;
 
-
+: zero-arg2 ( a -- zero a ) zero swap ;
+: zero-arg3 ( a b -- zero a b ) zero -rot ;
 : !push.sp0 ( reg -- ) sp0 psh-> ;
 : !push.sp1 ( reg -- ) sp1 psh-> ;
 : !pop.sp0 ( reg -- ) sp0 swap pop-> ;
 : !pop.sp1 ( reg -- ) sp1 swap pop-> ;
-: !eqz ( reg dest -- ) zero swap !eq ;
-: !equz ( reg dest -- ) zero swap !equ ;
-: !neqz ( reg dest -- ) zero swap !neq ;
-: !nequz ( reg dest -- ) zero swap !nequ ;
-: !gtz ( src dest -- ) zero -rot !gt ;
-: !gtuz ( src dest -- ) zero -rot !gtu ;
-: !ltz ( src dest -- ) zero -rot !lt ;
-: !ltuz ( src dest -- ) zero -rot !ltu ;
-: !gez ( src dest -- ) zero -rot !ge ;
-: !geuz ( src dest -- ) zero -rot !geu ;
-: !lez ( src dest -- ) zero -rot !le ;
-: !leuz ( src dest -- ) zero -rot !leu ;
+: !eqz ( reg dest -- ) zero-arg2 !eq ;
+: !equz ( reg dest -- ) zero-arg2 !equ ;
+: !neqz ( reg dest -- ) zero-arg2 !neq ;
+: !nequz ( reg dest -- ) zero-arg2 !nequ ;
+: !gtz ( src dest -- ) zero-arg3 !gt ;
+: !gtuz ( src dest -- ) zero-arg3 !gtu ;
+: !ltz ( src dest -- ) zero-arg3 !lt ;
+: !ltuz ( src dest -- ) zero-arg3 !ltu ;
+: !gez ( src dest -- ) zero-arg3 !ge ;
+: !geuz ( src dest -- ) zero-arg3 !geu ;
+: !lez ( src dest -- ) zero-arg3 !le ;
+: !leuz ( src dest -- ) zero-arg3 !leu ;
 
-: !eqiz ( imm dest -- ) zero swap !eqi ;
-: !equiz ( imm dest -- ) zero swap !equi ;
-: !neqz ( imm dest -- ) zero swap !neqi ;
-: !nequiz ( imm dest -- ) zero swap !nequi ;
-: !gtiz ( imm dest -- ) zero -rot !gti ;
-: !gtuiz ( imm dest -- ) zero -rot !gtui ;
-: !ltiz ( imm dest -- ) zero -rot !lti ;
-: !ltuiz ( imm dest -- ) zero -rot !ltui ;
-: !geiz ( imm dest -- ) zero -rot !gei ;
-: !geuiz ( imm dest -- ) zero -rot !geui ;
-: !leiz ( imm dest -- ) zero -rot !lei ;
-: !leuiz ( imm dest -- ) zero -rot !leui ;
+: !eqiz ( imm dest -- ) zero-arg2 !eqi ;
+: !equiz ( imm dest -- ) zero-arg2 !equi ;
+: !neqz ( imm dest -- ) zero-arg2 !neqi ;
+: !nequiz ( imm dest -- ) zero-arg2 !nequi ;
+: !gtiz ( imm dest -- ) zero-arg3 !gti ;
+: !gtuiz ( imm dest -- ) zero-arg3 !gtui ;
+: !ltiz ( imm dest -- ) zero-arg3 !lti ;
+: !ltuiz ( imm dest -- ) zero-arg3 !ltui ;
+: !geiz ( imm dest -- ) zero-arg3 !gei ;
+: !geuiz ( imm dest -- ) zero-arg3 !geui ;
+: !leiz ( imm dest -- ) zero-arg3 !lei ;
+: !leuiz ( imm dest -- ) zero-arg3 !leui ;
 : !bccv ( imm -- ) cv !bc ;
 : !swap ( r0 r1 -- ) 
+  over over = if
   dup ( r0 r1 r1 )
   at0 -> ( r0 r1 )
   over swap ( r0 r0 r1 )
   -> \ move r1 <- r0
   at0 swap ( at0 r0 )
-  -> ;
+  -> 
+  else
+  2drop 
+  then ;
 ;s
