@@ -104,7 +104,6 @@ enum: AsmSet
 enum: AsmLoad
 enum: AsmStore
 enum: AsmPush
-enum: AsmPushImmediate
 enum: AsmPop
 enum: AsmLoadCore
 enum: AsmStoreCore
@@ -177,7 +176,6 @@ enum}
 : !ld ( args* -- ) TwoRegister AsmLoad asm<< ;
 : !st ( args* -- ) TwoRegister AsmStore asm<< ;
 : !push ( args* -- ) TwoRegister AsmPush asm<< ;
-: !pushi ( args* -- ) OneRegisterWithImmediate AsmPushImmediate asm<< ;
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
 : !ld.c ( args* -- ) TwoRegister AsmLoadCore asm<< ;
 : !st.c ( args* -- ) TwoRegister AsmStoreCore asm<< ;
@@ -322,6 +320,7 @@ enum}
 : ->io ( reg -- ) io -> ;
 
 : $->at0 ( imm -- ) at0 $-> ;
+
 : replace-imm-with-at0 ( imm a b -- at0 a b )
   rot ( a b imm )
   $->at0
@@ -392,10 +391,10 @@ enum}
 
 : !geui ( imm a b -- )
   replace-imm-with-at0 ( at0 a b )
-  !ge ;
+  !geu ;
 : !leui ( imm a b -- )
   replace-imm-with-at0 ( at0 a b )
-  !le ;
+  !leu ;
 
 
 : !push.sp0 ( reg -- ) sp0 psh-> ;
