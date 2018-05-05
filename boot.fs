@@ -19,7 +19,7 @@ enum: &terminate-execution \ location of terminate-execution
 enum: &InputRoutine \ location for input-routine
 enum: &Restart \ location for Restart
 enum}
-
+" routines.rom" open-input-file
 " boot.rom" {bin
 
 \ generic computer instructions from threaded interpretive languages book
