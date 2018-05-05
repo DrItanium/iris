@@ -13,12 +13,12 @@ routines-start .org
 : defun: ( -- ) .label lr csp psh-> ;
 : defun;  ( -- ) return jmp ;
 : return-on-true ( -- ) return !bccv ;
-defun: read-range-from-io-address
+: return-on-zero-len ( reg -- ) cv !eqz return-on-true ;
 defun: write-range-to-io-address
 	   \ arg0 - starting point in memory
 	   \ arg1 - length
 	   \ whatever is stored in io is used
-	   arg1 cv !eqz return-on-true
+	   arg1 return-on-zero-len
 	   t0 !save-vmsp
 	   t1 !save-vmsp
 	   t0 !zero
@@ -29,9 +29,16 @@ defun: write-range-to-io-address
 	   t1 io-write
 	   t0 !1+
 	   t0 arg1 cv !neq
-	   write-write-to-io-address-loop !bccv
+	   write-range-to-io-address-loop !bccv
 	   t1 !restore-vmsp
 	   t0 !restore-vmsp
+	   defun;
+defun: read-range-from-io-address
+	   \ arg0 is the destination address to write into within memory
+	   \ arg1 is the count to read, it will keep reading until we get to this
+	   \      point. This can become an issue when reading from standard input
+	   arg1 return-on-zero-len
+
 	   defun;
 defun: fix-case
       \ lower case becomes upper case
