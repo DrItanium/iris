@@ -99,7 +99,6 @@ enum: AsmLessThan
 enum: AsmGreaterThan
 enum: AsmLessThanOrEqualTo
 enum: AsmGreaterThanOrEqualTo
-enum: AsmMove
 enum: AsmSet
 enum: AsmLoad
 enum: AsmStore
@@ -171,7 +170,6 @@ enum}
 : !gt ( args* -- ) ThreeRegister AsmGreaterThan asm<< ;
 : !le ( args* -- ) ThreeRegister AsmLessThanOrEqualTo asm<< ;
 : !ge ( args* -- ) ThreeRegister AsmGreaterThanOrEqualTo asm<< ;
-: !move ( args* -- ) TwoRegister AsmMove asm<< ;
 : !set ( args* -- ) OneRegisterWithImmediate AsmSet asm<< ;
 : !ld ( args* -- ) TwoRegister AsmLoad asm<< ;
 : !st ( args* -- ) TwoRegister AsmStore asm<< ;
@@ -210,6 +208,7 @@ enum}
 : !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
 : !read-io-to-code-range ( count terminator dest -- ) ThreeRegister AsmReadRangeFromIOIntoCode asm<< ;
+: !move ( a b -- ) zero swap !oru ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
@@ -338,6 +337,17 @@ enum}
 : !ldi ( imm dest -- ) arg2-is-at0-from-imm !ld ;
 : !sti ( imm dest -- ) arg2-is-at0-from-imm !st ;
 : !pushi ( imm sp -- ) arg2-is-at0-from-imm !push ;
+
+: !andi ( imm a b -- ) replace-imm-with-at0 !and ;
+: !ori ( imm a b -- ) replace-imm-with-at0 !or ;
+: !xori ( imm a b -- ) replace-imm-with-at0 !xor ;
+: !nori ( imm a b -- ) replace-imm-with-at0 !nor ;
+: !nandi ( imm a b -- ) replace-imm-with-at0 !nand ;
+: !andui ( imm a b -- ) replace-imm-with-at0 !andu ;
+: !orui ( imm a b -- ) replace-imm-with-at0 !oru ;
+: !xorui ( imm a b -- ) replace-imm-with-at0 !xoru ;
+: !norui ( imm a b -- ) replace-imm-with-at0 !noru ;
+: !nandui ( imm a b -- ) replace-imm-with-at0 !nandu ;
 
 : =+n ( n a -- ) 
   \ The contents of register A are incremented by constant n
