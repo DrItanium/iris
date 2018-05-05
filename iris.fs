@@ -85,13 +85,6 @@ enum: AsmNot
 enum: AsmXor
 enum: AsmNand
 enum: AsmNor
-enum: AsmAddImmediate
-enum: AsmSubImmediate
-enum: AsmMulImmediate
-enum: AsmDivImmediate
-enum: AsmRemImmediate
-enum: AsmShiftLeftImmediate
-enum: AsmShiftRightImmediate
 enum: AsmMin
 enum: AsmMax
 enum: AsmLogicalXor
@@ -101,23 +94,15 @@ enum: AsmLogicalOr
 enum: AsmLogicalNand
 enum: AsmLogicalNor
 enum: AsmEq
-enum: AsmEqImmediate
 enum: AsmNeq
-enum: AsmNeqImmediate
 enum: AsmLessThan
-enum: AsmLessThanImmediate
 enum: AsmGreaterThan
-enum: AsmGreaterThanImmediate
 enum: AsmLessThanOrEqualTo
-enum: AsmLessThanOrEqualToImmediate
 enum: AsmGreaterThanOrEqualTo
-enum: AsmGreaterThanOrEqualToImmediate
 enum: AsmMove
 enum: AsmSet
 enum: AsmLoad
-enum: AsmLoadImmediate
 enum: AsmStore
-enum: AsmStoreImmediate
 enum: AsmPush
 enum: AsmPushImmediate
 enum: AsmPop
@@ -137,17 +122,11 @@ enum: AsmGetUpperByte
 enum: AsmGetLowerByte
 enum: AsmUnpackHalves
 enum: AsmUnsignedEq
-enum: AsmUnsignedEqImmediate
 enum: AsmUnsignedNeq
-enum: AsmUnsignedNeqImmediate
 enum: AsmUnsignedLessThan
-enum: AsmUnsignedLessThanImmediate
 enum: AsmUnsignedGreaterThan
-enum: AsmUnsignedGreaterThanImmediate
 enum: AsmUnsignedLessThanOrEqualTo
-enum: AsmUnsignedLessThanOrEqualToImmediate
 enum: AsmUnsignedGreaterThanOrEqualTo
-enum: AsmUnsignedGreaterThanOrEqualToImmediate
 enum: AsmUnsignedAnd
 enum: AsmUnsignedOr
 enum: AsmUnsignedNot
@@ -178,13 +157,6 @@ enum}
 : !xor ( args* -- ) ThreeRegister AsmXor asm<< ;
 : !nand ( args* -- ) ThreeRegister AsmNand asm<< ;
 : !nor ( args* -- ) ThreeRegister AsmNor asm<< ;
-: !addi ( args* -- ) TwoRegisterWithImmediate AsmAddImmediate asm<< ;
-: !subi ( args* -- ) TwoRegisterWithImmediate AsmSubImmediate asm<< ;
-: !muli ( args* -- ) TwoRegisterWithImmediate AsmMulImmediate asm<< ;
-: !divi ( args* -- ) TwoRegisterWithImmediate AsmDivImmediate asm<< ;
-: !remi ( args* -- ) TwoRegisterWithImmediate AsmRemImmediate asm<< ;
-: !shli ( args* -- ) TwoRegisterWithImmediate AsmShiftLeftImmediate asm<< ;
-: !shri ( args* -- ) TwoRegisterWithImmediate AsmShiftRightImmediate asm<< ;
 : !min ( args* -- ) ThreeRegister AsmMin asm<< ;
 : !max ( args* -- ) ThreeRegister AsmMax asm<< ;
 : !lxor ( args* -- ) ThreeRegister AsmLogicalXor asm<< ;
@@ -194,23 +166,16 @@ enum}
 : !lnand ( args* -- ) ThreeRegister AsmLogicalNand asm<< ;
 : !lnor ( args* -- ) ThreeRegister AsmLogicalNor asm<< ;
 : !eq ( args* -- ) ThreeRegister AsmEq asm<< ;
-: !eqi ( args* -- ) TwoRegisterWithImmediate AsmEqImmediate asm<< ;
+
 : !neq ( args* -- ) ThreeRegister AsmNeq asm<< ;
-: !neqi ( args* -- ) TwoRegisterWithImmediate AsmNeqImmediate asm<< ;
 : !lt ( args* -- ) ThreeRegister AsmLessThan asm<< ;
-: !lti ( args* -- ) TwoRegisterWithImmediate AsmLessThanImmediate asm<< ;
 : !gt ( args* -- ) ThreeRegister AsmGreaterThan asm<< ;
-: !gti ( args* -- ) TwoRegisterWithImmediate AsmGreaterThanImmediate asm<< ;
 : !le ( args* -- ) ThreeRegister AsmLessThanOrEqualTo asm<< ;
-: !lei ( args* -- ) TwoRegisterWithImmediate AsmLessThanOrEqualToImmediate asm<< ;
 : !ge ( args* -- ) ThreeRegister AsmGreaterThanOrEqualTo asm<< ;
-: !gei ( args* -- ) TwoRegisterWithImmediate AsmGreaterThanOrEqualToImmediate asm<< ;
 : !move ( args* -- ) TwoRegister AsmMove asm<< ;
 : !set ( args* -- ) OneRegisterWithImmediate AsmSet asm<< ;
 : !ld ( args* -- ) TwoRegister AsmLoad asm<< ;
-: !ldi ( args* -- ) OneRegisterWithImmediate AsmLoadImmediate asm<< ;
 : !st ( args* -- ) TwoRegister AsmStore asm<< ;
-: !sti ( args* -- ) OneRegisterWithImmediate AsmStoreImmediate asm<< ;
 : !push ( args* -- ) TwoRegister AsmPush asm<< ;
 : !pushi ( args* -- ) OneRegisterWithImmediate AsmPushImmediate asm<< ;
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
@@ -230,17 +195,11 @@ enum}
 : !lowerb ( args* -- ) TwoRegister AsmGetLowerByte asm<< ;
 : !unpackh ( args* -- ) ThreeRegister AsmUnpackHalves asm<< ;
 : !equ ( args* -- ) ThreeRegister AsmUnsignedEq asm<< ;
-: !equi ( args* -- ) TwoRegisterWithImmediate AsmUnsignedEqImmediate asm<< ;
 : !nequ ( args* -- ) ThreeRegister AsmUnsignedNeq asm<< ;
-: !nequi ( args* -- ) TwoRegisterWithImmediate AsmUnsignedNeqImmediate asm<< ;
 : !ltu ( args* -- ) ThreeRegister AsmUnsignedLessThan asm<< ;
-: !ltui ( args* -- ) TwoRegisterWithImmediate AsmUnsignedLessThanImmediate asm<< ;
 : !gtu ( args* -- ) ThreeRegister AsmUnsignedGreaterThan asm<< ;
-: !gtui ( args* -- ) TwoRegisterWithImmediate AsmUnsignedGreaterThanImmediate asm<< ;
 : !leu ( args* -- ) ThreeRegister AsmUnsignedLessThanOrEqualTo asm<< ;
-: !leui ( args* -- ) TwoRegisterWithImmediate AsmUnsignedLessThanOrEqualToImmediate asm<< ;
 : !geu ( args* -- ) ThreeRegister AsmUnsignedGreaterThanOrEqualTo asm<< ;
-: !geui ( args* -- ) TwoRegisterWithImmediate AsmUnsignedGreaterThanOrEqualToImmediate asm<< ;
 : !andu ( args* -- ) ThreeRegister AsmUnsignedAnd asm<< ;
 : !oru ( args* -- ) ThreeRegister AsmUnsignedOr asm<< ;
 : !notu ( args* -- ) TwoRegister AsmUnsignedNot asm<< ;
@@ -283,8 +242,6 @@ enum: fixed-registers-stop
 enum}
 
 : !nop ( -- ) zero zero zero !add ;
-: !1+ ( reg -- ) 1 swap dup !addi ;
-: !1- ( reg -- ) 1 swap dup !subi ;
 : !zero ( reg -- ) zero swap !move ;
 : !exit ( code -- ) 
   at0 ( code at0 ) 
@@ -344,10 +301,6 @@ enum}
   \ are loaded into register B ( a 16-bit indirect fetch from A to B )
   !lw ;
 
-: =+n ( n a -- ) 
-  \ The contents of register A are incremented by constant n
-  dup  ( n a a ) 
-  !addi ;
 
 : pop-> ( s a -- ) 
   \ the S pushdown stack top entry is loaded to register A and the stack pointer
@@ -368,11 +321,87 @@ enum}
 
 : ->io ( reg -- ) io -> ;
 
-: !push.sp0 ( reg -- ) sp0 !push ;
-: !push.sp1 ( reg -- ) sp1 !push ;
-: !pop.sp0 ( reg -- ) sp0 swap !pop ;
-: !pop.sp1 ( reg -- ) sp1 swap !pop ;
+: $->at0 ( imm -- ) at0 $-> ;
+: replace-imm-with-at0 ( imm a b -- at0 a b )
+  rot ( a b imm )
+  $->at0
+  at0 -rot ( at0 a b ) ;
+: arg2-is-at0-from-imm ( imm a -- at0 a )
+  swap $->at0 at0 swap ;
 
+: !addi ( imm src dest -- ) replace-imm-with-at0 !add ;
+: !subi ( imm src dest -- ) replace-imm-with-at0 !sub ;
+: !muli ( imm src dest -- ) replace-imm-with-at0 !mul ;
+: !divi ( imm src dest -- ) replace-imm-with-at0 !div ;
+: !remi ( imm src dest -- ) replace-imm-with-at0 !rem ;
+: !shli ( imm src dest -- ) replace-imm-with-at0 !shl ;
+: !shri ( imm src dest -- ) replace-imm-with-at0 !shr ;
+: !ldi ( imm dest -- ) arg2-is-at0-from-imm !ld ;
+: !sti ( imm dest -- ) arg2-is-at0-from-imm !st ;
+: !pushi ( imm sp -- ) arg2-is-at0-from-imm !push ;
+
+: =+n ( n a -- ) 
+  \ The contents of register A are incremented by constant n
+  dup  ( n a a ) 
+  !addi ;
+: =-n ( n a -- )
+  dup
+  !subi ;
+    
+: !1+ ( reg -- ) 1 swap =+n ;
+: !1- ( reg -- ) 1 swap =-n ;
+
+: !eqi ( imm a b -- ) 
+  replace-imm-with-at0 ( at0 a b ) 
+  !eq ;
+
+: !neqi ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !neq ;
+
+: !gti ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !gt ;
+
+: !lti ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !lt ;
+
+: !gei ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !ge ;
+: !lei ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !le ;
+
+: !equi ( imm a b -- ) 
+  replace-imm-with-at0 ( at0 a b ) 
+  !equ ;
+
+: !nequi ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !nequ ;
+
+: !gtui ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !gtu ;
+
+: !ltui ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !ltu ;
+
+: !geui ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !ge ;
+: !leui ( imm a b -- )
+  replace-imm-with-at0 ( at0 a b )
+  !le ;
+
+
+: !push.sp0 ( reg -- ) sp0 psh-> ;
+: !push.sp1 ( reg -- ) sp1 psh-> ;
+: !pop.sp0 ( reg -- ) sp0 swap pop-> ;
+: !pop.sp1 ( reg -- ) sp1 swap pop-> ;
 : !eqz ( reg dest -- ) zero swap !eq ;
 : !equz ( reg dest -- ) zero swap !equ ;
 : !neqz ( reg dest -- ) zero swap !neq ;
@@ -386,18 +415,18 @@ enum}
 : !lez ( src dest -- ) zero -rot !le ;
 : !leuz ( src dest -- ) zero -rot !leu ;
 
-: !eqiz ( imm6 dest -- ) zero swap !eqi ;
-: !equiz ( imm6 dest -- ) zero swap !equi ;
-: !neqz ( imm6 dest -- ) zero swap !neqi ;
-: !nequiz ( imm6 dest -- ) zero swap !nequi ;
-: !gtiz ( imm6 dest -- ) zero -rot !gti ;
-: !gtuiz ( imm6 dest -- ) zero -rot !gtui ;
-: !ltiz ( imm6 dest -- ) zero -rot !lti ;
-: !ltuiz ( imm6 dest -- ) zero -rot !ltui ;
-: !geiz ( imm6 dest -- ) zero -rot !gei ;
-: !geuiz ( imm6 dest -- ) zero -rot !geui ;
-: !leiz ( imm6 dest -- ) zero -rot !lei ;
-: !leuiz ( imm6 dest -- ) zero -rot !leui ;
+: !eqiz ( imm dest -- ) zero swap !eqi ;
+: !equiz ( imm dest -- ) zero swap !equi ;
+: !neqz ( imm dest -- ) zero swap !neqi ;
+: !nequiz ( imm dest -- ) zero swap !nequi ;
+: !gtiz ( imm dest -- ) zero -rot !gti ;
+: !gtuiz ( imm dest -- ) zero -rot !gtui ;
+: !ltiz ( imm dest -- ) zero -rot !lti ;
+: !ltuiz ( imm dest -- ) zero -rot !ltui ;
+: !geiz ( imm dest -- ) zero -rot !gei ;
+: !geuiz ( imm dest -- ) zero -rot !geui ;
+: !leiz ( imm dest -- ) zero -rot !lei ;
+: !leuiz ( imm dest -- ) zero -rot !leui ;
 : !bccv ( imm -- ) cv !bc ;
 : !swap ( r0 r1 -- ) 
   dup ( r0 r1 r1 )
@@ -406,5 +435,4 @@ enum}
   -> \ move r1 <- r0
   at0 swap ( at0 r0 )
   -> ;
-
 ;s

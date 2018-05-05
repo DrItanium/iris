@@ -80,10 +80,10 @@ defun: print-characters
 
 .label unknown-word
        \ use the token start and end to print it out
-       tokstart arg0 !move
+       tokstart arg0 ->
        tokstart tokend arg1 !sub
        2 arg1 =+n
-       tokend t0 !move
+       tokend t0 ->
        63 t0 !swi 
        t0 !1+
        0xA t0 !swi \ save newline here
@@ -91,7 +91,7 @@ defun: print-characters
        boot-rom-start jmp
 : mk-mtbase-fun ( base-num -- )
     defun: 
-    nbase !set
+    nbase $->
     defun; ;
 16 mk-mtbase-fun 16base
 
