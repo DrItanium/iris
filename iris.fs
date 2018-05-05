@@ -30,6 +30,12 @@
   source2-register
   or ;
 
+: FourRegister ( src3 src2 src dest -- value )
+  ThreeRegister ( src3 src2 src dest -- src3 value )
+  swap
+  source3-register
+  or ;
+
 : Immediate16 ( imm16 -- value ) imm16 ;
 
 : OneRegisterWithImmediate ( imm16 dest -- value ) 
@@ -113,6 +119,8 @@ enum: AsmBranchIndirectLink
 enum: AsmBranchConditional
 enum: AsmBranchConditionalIndirect
 enum: AsmBranchConditionalIndirectLink
+enum: AsmBranchIf
+enum: AsmBranchIfLink
 enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
@@ -200,6 +208,8 @@ enum}
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
 : !read-io-to-code-range ( count terminator dest -- ) ThreeRegister AsmReadRangeFromIOIntoCode asm<< ;
 : !move ( a b -- ) zero swap !oru ;
+: !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
+: !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
