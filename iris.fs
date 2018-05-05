@@ -1,7 +1,7 @@
 " misc/forth_interpreter/basics.fs" open-input-file
 ( assembler words )
 : addr16 ( n -- n ) 0xFFFF and ;
-: addr8 ( n -- n ) 0xFF and ;
+: addr12 ( n -- n ) 0xFFF and ;
 : addr6 ( n -- n ) 0x1F and ;
 : position-byte ( reg shift -- reg<<shift ) 
   swap addr8 
@@ -138,6 +138,13 @@ enum: AsmUnsignedNand
 enum: AsmUnsignedNor
 enum: AsmUnsignedMin
 enum: AsmUnsignedMax
+enum: AsmUnsignedAdd
+enum: AsmUnsignedSub
+enum: AsmUnsignedMul
+enum: AsmUnsignedDiv
+enum: AsmUnsignedRem
+enum: AsmUnsignedShiftLeft
+enum: AsmUnsignedShiftRight
 enum: AsmReadToken
 enum: AsmWriteCodeRangeToIO
 enum: AsmNumberRoutine
@@ -210,6 +217,13 @@ enum}
 : !move ( a b -- ) zero swap !oru ;
 : !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
 : !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
+: !addu ( args* -- ) ThreeRegister AsmUnsignedAdd asm<< ;
+: !subu ( args* -- ) ThreeRegister AsmUnsignedSub asm<< ;
+: !mulu ( args* -- ) ThreeRegister AsmUnsignedMul asm<< ;
+: !divu ( args* -- ) ThreeRegister AsmUnsignedDiv asm<< ;
+: !remu ( args* -- ) ThreeRegister AsmUnsignedRem asm<< ;
+: !shlu ( args* -- ) ThreeRegister AsmUnsignedShiftLeft asm<< ;
+: !shru ( args* -- ) ThreeRegister AsmUnsignedShiftRight asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
@@ -411,10 +425,6 @@ enum}
 
 : zero-arg2 ( a -- zero a ) zero swap ;
 : zero-arg3 ( a b -- zero a b ) zero -rot ;
-: !push.sp0 ( reg -- ) sp0 psh-> ;
-: !push.sp1 ( reg -- ) sp1 psh-> ;
-: !pop.sp0 ( reg -- ) sp0 swap pop-> ;
-: !pop.sp1 ( reg -- ) sp1 swap pop-> ;
 : !eqz ( reg dest -- ) zero-arg2 !eq ;
 : !equz ( reg dest -- ) zero-arg2 !equ ;
 : !neqz ( reg dest -- ) zero-arg2 !neq ;
@@ -452,4 +462,13 @@ enum}
   else
   2drop 
   then ;
+
+
+: !addui ( imm src dest -- ) $->at0,at0-arg3 !addu ;
+: !subui ( imm src dest -- ) $->at0,at0-arg3 !subu ;
+: !mului ( imm src dest -- ) $->at0,at0-arg3 !mulu ;
+: !divui ( imm src dest -- ) $->at0,at0-arg3 !divu ;
+: !remui ( imm src dest -- ) $->at0,at0-arg3 !remu ;
+: !shlui ( imm src dest -- ) $->at0,at0-arg3 !shlu ;
+: !shrui ( imm src dest -- ) $->at0,at0-arg3 !shru ;
 ;s

@@ -225,7 +225,7 @@ namespace iris {
 				~TwoRegisterWithImmediate() = default;
 				DestinationRegister dest;
 				SourceRegister src;
-				byte src2;
+				Address src2; // 12-bits
 			};
             struct ThreeRegisterWithImmediate final {
                 ThreeRegisterWithImmediate() = default;

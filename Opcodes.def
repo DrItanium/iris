@@ -78,6 +78,13 @@ X(UnsignedNand, ThreeRegister, nandu)
 X(UnsignedNor, ThreeRegister, noru)
 X(UnsignedMin, ThreeRegister, minu)
 X(UnsignedMax, ThreeRegister, maxu)
+X(UnsignedAdd, ThreeRegister, addu)
+X(UnsignedSub, ThreeRegister, subu)
+X(UnsignedMul, ThreeRegister, mulu)
+X(UnsignedDiv, ThreeRegister, divu)
+X(UnsignedRem, ThreeRegister, remu)
+X(UnsignedShiftLeft, ThreeRegister, shlu)
+X(UnsignedShiftRight, ThreeRegister, shru)
 // "microcode" routines for making the forth interpreter implementation
 // faster
 // routines from Threaded Interpretive Languages as well

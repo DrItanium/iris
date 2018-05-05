@@ -59,6 +59,9 @@ namespace iris {
             return decodeBits<decltype(i), byte, 0x1F << 26, 26>(i);
         }
     }
+    constexpr Address getImmediate12(RawInstruction i) noexcept {
+		return decodeBits<decltype(i), Address, 0xFFF0'0000, 20>(i);
+    }
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
     Register::~Register() {
@@ -104,7 +107,7 @@ namespace iris {
     void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
         a.dest = getDestinationIndex(i);
         a.src = getSourceIndex(i);
-        a.src2 = getImmediate6(i);
+        a.src2 = getImmediate12(i);
     }
     void Core::decodeArguments(RawInstruction i, Core::ThreeRegisterWithImmediate& a) noexcept {
         a.dest = getDestinationIndex(i);
@@ -449,6 +452,18 @@ namespace iris {
 		setRegister(op._args.src, _pc);
 		_pc = getRegister(op._args.dest).getTruth() ? onTrue : onFalse;
 	}
+    DefExec(UnsignedAdd) { setDestination(op, getSource(op).address + getSource2(op).address); }
+    DefExec(UnsignedSub) { 
+        auto a = getSource(op).address;
+        auto b = getSource2(op).address;
+        auto c = a - b;
+        setDestination(op, c);
+    }
+    DefExec(UnsignedMul) { setDestination(op, getSource(op).address * getSource2(op).address); }
+    DefExec(UnsignedDiv) { setDestination(op, getSource(op).address / getSource2(op).address); }
+    DefExec(UnsignedRem) { setDestination(op, getSource(op).address % getSource2(op).address); }
+    DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
+    DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
