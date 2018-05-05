@@ -67,7 +67,7 @@ defun: readline
        t2 !1- \ walk back a character as well
        0x20 t1 $-> \ make sure that we put a space in instead
        t1 t2 !sw
-       skip-whitespace-in-input !call
+       \ skip-whitespace-in-input !call
        ibcurr ibend t3 !sub 
        1 ibcurr t4 !subi
        t3 t4 !sw

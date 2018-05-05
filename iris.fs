@@ -3,16 +3,13 @@
 : addr16 ( n -- n ) 0xFFFF and ;
 : addr12 ( n -- n ) 0xFFF and ;
 : addr6 ( n -- n ) 0x1F and ;
-: position-byte ( reg shift -- reg<<shift ) 
-  swap addr8 
-  swap ( reg shift -- masked-reg shift )
-  u<< ( reg shift -- reg<<shift ) ;
 : position-reg ( reg shift -- reg<<shift ) swap addr6 swap u<< ;
 : destination-register ( reg -- shifted-reg ) 8 position-reg ;
 : source-register ( reg -- shifted-reg ) 14 position-reg ;
 : source2-register ( reg -- shifted-reg ) 20 position-reg ;
 : source3-register ( reg -- shifted-reg ) 26 position-reg ;
 : imm6 ( imm6 -- shifted-imm6 ) source3-register ;
+: imm12 ( imm12 -- shifted-imm12 ) addr12 20 u<< ;
 : imm16 ( imm16 -- shifted-imm16 ) addr16 16 u<< ;
 : NoArguments ( -- 0 ) 0 ;
 : OneRegister ( dest -- value ) destination-register ;
@@ -44,10 +41,15 @@
   Immediate16
   or ;
 
-: TwoRegisterWithImmediate ( imm8 src dest -- value ) 
-  TwoRegister ( imm8 src dest -- imm8 value )
+: TwoRegisterWithImmediate ( imm12 src dest -- value ) 
+  TwoRegister ( imm12 value )
   swap
-  imm8 
+  imm12
+  or ;
+: ThreeRegisterWithImmediate ( imm6 src2 src dest -- value )
+  ThreeRegister ( imm6 value )
+  swap 
+  imm6
   or ;
 
 : section-entry ( value address section -- ) bin<<q bin<<q bin<<h ;
@@ -75,7 +77,7 @@ variable location
   \ output the lower half
   d16<< 
   \ output the upper half
-  16 >>u d16<< ;
+  16 u>> d16<< ;
 
 {enum
 enum: AsmAdd
@@ -145,6 +147,8 @@ enum: AsmUnsignedDiv
 enum: AsmUnsignedRem
 enum: AsmUnsignedShiftLeft
 enum: AsmUnsignedShiftRight
+enum: AsmChoose
+enum: AsmChooseSigned
 enum: AsmReadToken
 enum: AsmWriteCodeRangeToIO
 enum: AsmNumberRoutine
@@ -210,11 +214,10 @@ enum}
 : !noru ( args* -- ) ThreeRegister AsmUnsignedNor asm<< ;
 : !minu ( src2 src dest -- ) ThreeRegister AsmUnsignedMin asm<< ;
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
-: !readtok ( src2 src dest -- ) ThreeRegister AsmReadToken asm<< ;
+: !readtok ( src2 src dest -- ) TwoRegister AsmReadToken asm<< ;
 : !write-code-range-to-io ( rlen rstart rioaddr -- ) ThreeRegister AsmWriteCodeRangeToIO asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
 : !read-io-to-code-range ( count terminator dest -- ) ThreeRegister AsmReadRangeFromIOIntoCode asm<< ;
-: !move ( a b -- ) zero swap !oru ;
 : !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
 : !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
 : !addu ( args* -- ) ThreeRegister AsmUnsignedAdd asm<< ;
@@ -224,6 +227,8 @@ enum}
 : !remu ( args* -- ) ThreeRegister AsmUnsignedRem asm<< ;
 : !shlu ( args* -- ) ThreeRegister AsmUnsignedShiftLeft asm<< ;
 : !shru ( args* -- ) ThreeRegister AsmUnsignedShiftRight asm<< ;
+: !choose ( onFalse onTrue condition dest -- ) FourRegister AsmChoose asm<< ;
+: !choose.signed ( onFalse onTrue condition dest -- ) FourRegister AsmChooseSigned asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
@@ -252,6 +257,8 @@ enum: io
 enum: ci \ core index number
 enum: fixed-registers-stop
 enum}
+
+: !move ( a b -- ) zero swap !oru ;
 
 
 \ basic registers
@@ -319,7 +326,7 @@ enum}
 : $->at0,at0-arg3 ( imm a b -- at0 a b )
   rot ( a b imm )
   $->at0,at0 -rot ( at0 a b ) ;
-: $->at0,at-arg2 ( imm a -- at0 a )
+: $->at0,at0-arg2 ( imm a -- at0 a )
   swap $->at0,at0 swap ;
 
 : !addi ( imm src dest -- ) $->at0,at0-arg3 !add ;
@@ -333,16 +340,16 @@ enum}
 : !sti ( imm dest -- ) $->at0,at0-arg2 !st ;
 : !pushi ( imm sp -- ) $->at0,at0-arg2 !push ;
 
-: !andi ( imm a b -- ) replace-imm-with-at0 !and ;
-: !ori ( imm a b -- ) replace-imm-with-at0 !or ;
-: !xori ( imm a b -- ) replace-imm-with-at0 !xor ;
-: !nori ( imm a b -- ) replace-imm-with-at0 !nor ;
-: !nandi ( imm a b -- ) replace-imm-with-at0 !nand ;
-: !andui ( imm a b -- ) replace-imm-with-at0 !andu ;
-: !orui ( imm a b -- ) replace-imm-with-at0 !oru ;
-: !xorui ( imm a b -- ) replace-imm-with-at0 !xoru ;
-: !norui ( imm a b -- ) replace-imm-with-at0 !noru ;
-: !nandui ( imm a b -- ) replace-imm-with-at0 !nandu ;
+: !andi ( imm a b -- ) $->at0,at0-arg3 !and ;
+: !ori ( imm a b -- ) $->at0,at0-arg3 !or ;
+: !xori ( imm a b -- ) $->at0,at0-arg3 !xor ;
+: !nori ( imm a b -- ) $->at0,at0-arg3 !nor ;
+: !nandi ( imm a b -- ) $->at0,at0-arg3 !nand ;
+: !andui ( imm a b -- ) $->at0,at0-arg3 !andu ;
+: !orui ( imm a b -- ) $->at0,at0-arg3 !oru ;
+: !xorui ( imm a b -- ) $->at0,at0-arg3 !xoru ;
+: !norui ( imm a b -- ) $->at0,at0-arg3 !noru ;
+: !nandui ( imm a b -- ) $->at0,at0-arg3 !nandu ;
 
 : =+n ( n a -- ) 
   \ if immediate is zero then do nothing!
@@ -474,5 +481,5 @@ enum}
   pop-> ( sp sp ) \ lower - at1
   at0 swap ( sp at0 sp ) psh->
   at1 swap ( at1 sp ) psh-> ;
-
+  
 ;s
