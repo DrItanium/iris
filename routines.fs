@@ -89,30 +89,15 @@ defun: fix-case
       32 t1 t1 !subi \ subtract 32 to get the upper case version
       defun;
 defun: readline
-	   \ arg0 - start (ibcurr)
-	   \ arg1 - end  (ibend)
-	   \ ret0 - updated arg0
-	   \ ret1 - updated arg1
-	   arg0 arg1 cv !neq return-on-true
+	   \ arg0 - start
+	   \ arg1 - length 
+	   \ ret0 - start address
+	   \ ret1 - end address
 	   /dev/console0 $->io
-	   0xA t0 $->
-       .label readline-loop
-       t1 io-read \ load a character from input
-       fix-case !call
-       t1 arg1 !sw \ save to memory
-       arg1 !1+
-       t1 t0 cv !neq
-       readline-loop cv !bc
-       arg1 t2 -> 
-       t2 !1- \ walk back a character as well
-       0x20 t1 $-> \ make sure that we put a space in instead
-       t1 t2 !sw
-       \ skip-whitespace-in-input !call
-       arg0 arg1 t3 !sub 
-       1 arg0 t4 !subi
-       t3 t4 !sw
-       t4 ret0 -> \ now make ibcurr the start with the length as well
-	   t2 ret1 ->
+	   0xA terminator $->
+	   read-range-from-io-address-with-terminator !call
+	   ret0 ret1 ->
+	   arg0 ret0 ->
        defun;
 
 defun: print-characters
