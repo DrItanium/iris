@@ -8,6 +8,8 @@ enum: t0 \ temporary 0
 enum: t1 \ temporary 1
 enum: t2 \ temporary 2
 enum: t3 \ temporary 3
+enum: t4 \ temporary 4
+enum: t5 \ temporary 5
 enum: ibcurr \ input buffer current position
 enum: ibend \ input buffer end
 enum: tokstart \ token start
@@ -43,11 +45,6 @@ routines-start .org
 : defun: ( -- ) .label lr csp psh-> ;
 : defun;  ( -- ) return jmp ;
 : return-on-true ( -- ) return !bccv ;
-: terminate-if-not-char ( index -- )
-       arg0 t0 !lw
-       t0 cv !neqi 
-       return-on-true
-       arg0 !1+ ;
 
 defun: fix-case
       \ lower case becomes upper case
@@ -71,10 +68,10 @@ defun: readline
        0x20 t1 $-> \ make sure that we put a space in instead
        t1 t2 !sw
        skip-whitespace-in-input !call
-       ibcurr ibend at0 !sub 
-       1 ibcurr at1 !subi
-       at0 at1 !sw
-       at1 ibcurr !move \ now make ibcurr the start with the length as well
+       ibcurr ibend t3 !sub 
+       1 ibcurr t4 !subi
+       t3 t4 !sw
+       t4 ibcurr !move \ now make ibcurr the start with the length as well
        defun;
 defun: print-characters
        /dev/console0 $->io
@@ -86,10 +83,10 @@ defun: print-characters
        tokstart arg0 !move
        tokstart tokend arg1 !sub
        2 arg1 =+n
-       tokend at0 !move
-       63 at0 !swi 
-       at0 !1+
-       0xA at0 !swi \ save newline here
+       tokend t0 !move
+       63 t0 !swi 
+       t0 !1+
+       0xA t0 !swi \ save newline here
        print-characters !call
        boot-rom-start jmp
 : mk-mtbase-fun ( base-num -- )
