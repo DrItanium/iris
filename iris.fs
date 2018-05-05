@@ -121,8 +121,6 @@ enum: AsmBranchIndirectLink
 enum: AsmBranchConditional
 enum: AsmBranchConditionalIndirect
 enum: AsmBranchConditionalIndirectLink
-enum: AsmBranchIf
-enum: AsmBranchIfLink
 enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
@@ -147,8 +145,6 @@ enum: AsmUnsignedDiv
 enum: AsmUnsignedRem
 enum: AsmUnsignedShiftLeft
 enum: AsmUnsignedShiftRight
-enum: AsmChoose
-enum: AsmChooseSigned
 enum: AsmReadToken
 enum: AsmNumberRoutine
 enum}
@@ -214,8 +210,6 @@ enum}
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
 : !readtok ( src2 src dest -- ) TwoRegister AsmReadToken asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
-: !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
-: !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
 : !addu ( args* -- ) ThreeRegister AsmUnsignedAdd asm<< ;
 : !subu ( args* -- ) ThreeRegister AsmUnsignedSub asm<< ;
 : !mulu ( args* -- ) ThreeRegister AsmUnsignedMul asm<< ;
@@ -223,8 +217,6 @@ enum}
 : !remu ( args* -- ) ThreeRegister AsmUnsignedRem asm<< ;
 : !shlu ( args* -- ) ThreeRegister AsmUnsignedShiftLeft asm<< ;
 : !shru ( args* -- ) ThreeRegister AsmUnsignedShiftRight asm<< ;
-: !choose ( onFalse onTrue condition dest -- ) FourRegister AsmChoose asm<< ;
-: !choose.signed ( onFalse onTrue condition dest -- ) FourRegister AsmChooseSigned asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;

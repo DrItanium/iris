@@ -126,7 +126,6 @@ defun: println
 	   0xA $->at0
 	   at0 io-write
 	   defun;
-defun: 
 : mk-mtbase-fun ( base-num -- )
     defun: 
     nbase $->
