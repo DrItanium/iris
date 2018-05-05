@@ -114,7 +114,6 @@ enum: AsmGreaterThanOrEqualTo
 enum: AsmGreaterThanOrEqualToImmediate
 enum: AsmMove
 enum: AsmSet
-enum: AsmSwap
 enum: AsmLoad
 enum: AsmLoadImmediate
 enum: AsmStore
@@ -208,7 +207,6 @@ enum}
 : !gei ( args* -- ) TwoRegisterWithImmediate AsmGreaterThanOrEqualToImmediate asm<< ;
 : !move ( args* -- ) TwoRegister AsmMove asm<< ;
 : !set ( args* -- ) OneRegisterWithImmediate AsmSet asm<< ;
-: !swap ( args* -- ) TwoRegister AsmSwap asm<< ;
 : !ld ( args* -- ) TwoRegister AsmLoad asm<< ;
 : !ldi ( args* -- ) OneRegisterWithImmediate AsmLoadImmediate asm<< ;
 : !st ( args* -- ) TwoRegister AsmStore asm<< ;
@@ -272,27 +270,22 @@ enum: lr \ link register
 enum: at0 \ assembler temporary 0
 enum: at1 \ assembler temporary 1
 enum: at2 \ assembler temporary 2
+enum: at3 \ assembler temporary 3
+enum: ret0
+enum: ret1
+enum: arg0
+enum: arg1
+enum: arg2
+enum: arg3
+enum: io
+enum: ci \ core index number
 enum: fixed-registers-stop
 enum}
 
 : !nop ( -- ) zero zero zero !add ;
 : !1+ ( reg -- ) 1 swap dup !addi ;
+: !1- ( reg -- ) 1 swap dup !subi ;
 : !zero ( reg -- ) zero swap !move ;
-: !bccv ( imm -- )
-  \ use the cv register
-  cv !bc ;
-: !eqz ( reg -- )
-  zero cv !eq ;
-: !beqz ( dest reg -- )
-  !eqz
-  !bccv ;
-: !neqz ( reg -- ) 
-  \ this will emit ?reg zero cond !neq
-  zero cv !neq ;
-: !bneqz ( dest reg -- )
-  \ first emit the neqz call
-  !neqz ( dest )
-  !bccv ;
 : !exit ( code -- ) 
   at0 ( code at0 ) 
   tuck ( at0 code at0 )
@@ -323,11 +316,95 @@ enum: /dev/core-load
 enum: /dev/dump-vm
 enum}
 \ concepts and other macro routines for doing crazy things
+: $-> ( value reg -- ) !set ;
+: $->io ( value -- ) io $-> ;
 : !lw ( src dest -- ) !ld ;
 : !sw ( value addr -- ) !st ;
+: !swi ( imm addr -- ) !sti ;
 
 : !ret ( register -- )
   !br ;
 
+: io-write ( src -- ) io !stio ;
+: io-read  ( dest -- ) io swap !ldio ;
+
+: dump-core-id-in-register ( n -- )
+  /dev/core-dump $->io
+  io-write ;
+: load-core-id-in-register ( n -- )
+  /dev/core-load $->io
+  io-write ;
+: dump-core ( -- ) ci dump-core-id-in-register ;
+: load-core ( -- ) ci load-core-id-in-register ;
+
+: !call ( dest -- ) lr !bl ;
+
+: @-> ( a b -- ) 
+  \ the contents of the memory location word whose address is in register A
+  \ are loaded into register B ( a 16-bit indirect fetch from A to B )
+  !lw ;
+
+: =+n ( n a -- ) 
+  \ The contents of register A are incremented by constant n
+  dup  ( n a a ) 
+  !addi ;
+
+: pop-> ( s a -- ) 
+  \ the S pushdown stack top entry is loaded to register A and the stack pointer
+  \ is adjusted
+  !pop ;
+
+: psh-> ( a s -- )
+  \ the A register contents are loaded to the S pushdown stack and the stack 
+  \ pointer is adjusted
+  !push ;
+
+: -> ( a b -- ) 
+  !move ;
+
+: jmp ( addr -- ) 
+  \ unconditional jump to the address encoded into the instruction
+  !b ;
+
+: ->io ( reg -- ) io -> ;
+
+: !push.sp0 ( reg -- ) sp0 !push ;
+: !push.sp1 ( reg -- ) sp1 !push ;
+: !pop.sp0 ( reg -- ) sp0 swap !pop ;
+: !pop.sp1 ( reg -- ) sp1 swap !pop ;
+
+: !eqz ( reg dest -- ) zero swap !eq ;
+: !equz ( reg dest -- ) zero swap !equ ;
+: !neqz ( reg dest -- ) zero swap !neq ;
+: !nequz ( reg dest -- ) zero swap !nequ ;
+: !gtz ( src dest -- ) zero -rot !gt ;
+: !gtuz ( src dest -- ) zero -rot !gtu ;
+: !ltz ( src dest -- ) zero -rot !lt ;
+: !ltuz ( src dest -- ) zero -rot !ltu ;
+: !gez ( src dest -- ) zero -rot !ge ;
+: !geuz ( src dest -- ) zero -rot !geu ;
+: !lez ( src dest -- ) zero -rot !le ;
+: !leuz ( src dest -- ) zero -rot !leu ;
+
+: !eqiz ( imm6 dest -- ) zero swap !eqi ;
+: !equiz ( imm6 dest -- ) zero swap !equi ;
+: !neqz ( imm6 dest -- ) zero swap !neqi ;
+: !nequiz ( imm6 dest -- ) zero swap !nequi ;
+: !gtiz ( imm6 dest -- ) zero -rot !gti ;
+: !gtuiz ( imm6 dest -- ) zero -rot !gtui ;
+: !ltiz ( imm6 dest -- ) zero -rot !lti ;
+: !ltuiz ( imm6 dest -- ) zero -rot !ltui ;
+: !geiz ( imm6 dest -- ) zero -rot !gei ;
+: !geuiz ( imm6 dest -- ) zero -rot !geui ;
+: !leiz ( imm6 dest -- ) zero -rot !lei ;
+: !leuiz ( imm6 dest -- ) zero -rot !leui ;
+: !bccv ( imm -- ) cv !bc ;
+: !swap ( r0 r1 -- ) 
+  dup ( r0 r1 r1 )
+  at0 -> ( r0 r1 )
+  over swap ( r0 r0 r1 )
+  -> \ move r1 <- r0
+  at0 swap ( at0 r0 )
+  -> ;
 
 ;s

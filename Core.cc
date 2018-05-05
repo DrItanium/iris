@@ -207,13 +207,6 @@ namespace iris {
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(GreaterThanOrEqualToImmediate) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(Move) { setDestination(op, getSource(op)); }
-    DefExec(Swap) {
-        if (op._args.dest != op._args.src) {
-            auto v0 = getSource(op);
-            setRegister(op._args.src, getRegisterValue(op._args.dest));
-            setRegister(op._args.dest, v0);
-        }
-    }
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
         auto addr = getRegisterValue(op._args.src).address;

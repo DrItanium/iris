@@ -1,13 +1,13 @@
 " iris.fs" open-input-file
+sp0 constant sp \ stack pointer
+sp1 constant csp \ call stack pointer
+
 fixed-registers-stop ={enum
-enum: sp \ stack pointer
-enum: csp \ call stack pointer
+enum: dp \ dictionary pointer
 enum: t0 \ temporary 0
 enum: t1 \ temporary 1
 enum: t2 \ temporary 2
 enum: t3 \ temporary 3
-enum: io \ io device number or address
-enum: ci \ core index number
 enum: ibcurr \ input buffer current position
 enum: ibend \ input buffer end
 enum: tokstart \ token start
@@ -16,70 +16,20 @@ enum: keep-executing \ variable for determine whether to keep executing or not
 enum: &terminate-execution \ location of terminate-execution
 enum: &InputRoutine \ location for input-routine
 enum: &Restart \ location for Restart
-enum: error-code 
-enum: arg0 \ first argument
-enum: arg1 \ second argument
-enum: arg2 \ third argument
-enum: arg3 \ fourth argument
-enum: ret0
-enum: ret1
-enum: digit-current
-enum: dp \ dictionary pointer
 enum}
 
 " boot.rom" {bin
 
 \ generic computer instructions from threaded interpretive languages book
-: @-> ( a b -- ) 
-  \ the contents of the memory location word whose address is in register A
-  \ are loaded into register B ( a 16-bit indirect fetch from A to B )
-  !lw ;
 
-: =+n ( n a -- ) 
-  \ The contents of register A are incremented by constant n
-  dup  ( n a a ) 
-  !addi ;
-
-: pop-> ( s a -- ) 
-  \ the S pushdown stack top entry is loaded to register A and the stack pointer
-  \ is adjusted
-  !pop ;
-
-: psh-> ( a s -- )
-  \ the A register contents are loaded to the S pushdown stack and the stack 
-  \ pointer is adjusted
-  !push ;
-
-: -> ( a b -- ) 
-  !move ;
-
-: jmp ( addr -- ) 
-  \ unconditional jump to the address encoded into the instruction
-  !b ;
-
-: ->io ( reg -- ) io -> ;
-
-: $-> ( value reg -- ) !set ;
-: $->io ( value -- ) io $-> ;
-: io-write ( src -- ) io !stio ;
-: io-read  ( dest -- ) io swap !ldio ;
-
-: dump-core-id-in-register ( n -- )
-  /dev/core-dump $->io
-  io-write ;
-: load-core-id-in-register ( n -- )
-  /dev/core-load $->io
-  io-write ;
-: dump-core ( -- ) ci dump-core-id-in-register ;
-: load-core ( -- ) ci load-core-id-in-register ;
-
-: !call ( dest -- ) lr !bl ;
 
 0xF000 constant input-buffer-start
 0xF100 constant input-buffer-end
 0x0100 constant boot-rom-start
 0xC000 constant routines-start
 0xD000 constant dictionary-start
+0xE800 constant data-stack-start
+0xF000 constant call-stack-start
 
 \ code start
 
@@ -92,7 +42,7 @@ routines-start .org
         lr !ret 
 : defun: ( -- ) .label lr csp psh-> ;
 : defun;  ( -- ) return jmp ;
-: return-on-true ( -- ) return cv !bc ;
+: return-on-true ( -- ) return !bccv ;
 : terminate-if-not-char ( index -- )
        arg0 t0 !lw
        t0 cv !neqi 
@@ -117,8 +67,8 @@ defun: readline
        t1 t0 cv !neq
        readline-loop cv !bc
        ibend t2 !move
-       1 t2 t2 !subi \ walk back a character as well
-       0x20 t1 !set \ make sure that we put a space in instead
+       t2 !1- \ walk back a character as well
+       0x20 t1 $-> \ make sure that we put a space in instead
        t1 t2 !sw
        skip-whitespace-in-input !call
        ibcurr ibend at0 !sub 
@@ -131,35 +81,20 @@ defun: print-characters
        arg1 arg0 io !write-code-range-to-io
        defun;
 
-
-\ defun: check-for-quit
-\        \ arg0 contains starting point for checking 
-\        \ arg1 contains the length
-\        4 arg1 cv !neqi return-on-true \ is the length incorrect?
-\        81 terminate-if-not-char \ Q
-\        85 terminate-if-not-char \ U
-\        73 terminate-if-not-char \ I
-\        \ 84 terminate-if-not-char \ T
-\        \ 0x20 terminate-if-not-char \ space
-\        zero keep-executing !move
-\        defun;
 .label unknown-word
        \ use the token start and end to print it out
        tokstart arg0 !move
        tokstart tokend arg1 !sub
-       2 arg1 arg1 !addi 
+       2 arg1 =+n
        tokend at0 !move
-       63 at1 !set \ save a question mark there
-       at1 at0 !sw
+       63 at0 !swi 
        at0 !1+
-       0xA at1 !set \ put a newline here
-       at1 at0 !sw
+       0xA at0 !swi \ save newline here
        print-characters !call
        boot-rom-start jmp
 : mk-mtbase-fun ( base-num -- )
     defun: 
-    at0 !set
-    at0 !mtbase 
+    nbase !set
     defun; ;
 16 mk-mtbase-fun 16base
 
@@ -168,11 +103,11 @@ dictionary-start .org
 .label core-dictionary-start
 boot-rom-start .org
 .label Restart
-    core-dictionary-start dp !set
+    core-dictionary-start dp $->
+    data-stack-start sp $-> 
+    call-stack-start csp $-> 
     16base !call
-    zero error-code !move
-    0x7FFF sp $->
-    0xFFFF csp $->
+    zero error-code ->
     0xFFFF keep-executing $->
 .label InputRoutine
     \ this code will read a line and save it to 0xF100
@@ -182,9 +117,9 @@ boot-rom-start .org
     readline !call
 .label read-token-routine
     ibcurr dp !readtok
-    keep-executing !eqz
+    keep-executing cv !eqz
     cv &terminate-execution !bcr
-    zero error-code cv !neq
+    error-code cv !neqz
     unknown-word cv !bc \ if we hit an error code then restart the loop
     ret0 sp psh->
     ibcurr ibend cv !neq 
