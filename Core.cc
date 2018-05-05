@@ -464,6 +464,20 @@ namespace iris {
     DefExec(UnsignedRem) { setDestination(op, getSource(op).address % getSource2(op).address); }
     DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
     DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
+	DefExec(Choose) { 
+		// dest -> register to store into
+		// src -> condition to choose
+		// onTrue -> value when condition is true
+		// onFalse -> value when condition is false
+		setDestination(op, getSource(op).getTruth() ? getSource2(op).address : getRegister(op._args.src3).get<Address>());
+	}
+	DefExec(ChooseSigned) {
+		// dest -> register to store into
+		// src -> condition to choose
+		// onTrue -> value when condition is true
+		// onFalse -> value when condition is false
+		setDestination(op, getSource(op).getTruth() ? getSource2(op).integer: getRegister(op._args.src3).get<Integer>());
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

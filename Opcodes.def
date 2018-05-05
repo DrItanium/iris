@@ -85,6 +85,11 @@ X(UnsignedDiv, ThreeRegister, divu)
 X(UnsignedRem, ThreeRegister, remu)
 X(UnsignedShiftLeft, ThreeRegister, shlu)
 X(UnsignedShiftRight, ThreeRegister, shru)
+
+// Use the condition value to determine which source to store into the
+// destination
+X(Choose, FourRegister, choose)
+X(ChooseSigned, FourRegister, choose-signed)
 // "microcode" routines for making the forth interpreter implementation
 // faster
 // routines from Threaded Interpretive Languages as well
