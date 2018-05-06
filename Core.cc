@@ -223,29 +223,19 @@ namespace iris {
         auto addr = getRegisterValue(op._args.dest).address;
         _core[addr] = lower;
     }
-    DefExec(Branch) { _pc = op._args.imm; }
-    DefExec(BranchAndLink) {
-        setDestination(op, _pc);
-        _pc = op._args.imm;
-    }
-    DefExec(BranchIndirect) {
+    DefExec(BranchRegister) {
         _pc = getRegisterValue(op._args.dest).address;
     }
-    DefExec(BranchIndirectLink) {
+    DefExec(BranchRegisterAndLink) {
         setRegister(op._args.src, _pc);
         _pc = getRegisterValue(op._args.dest).address;
     }
-    DefExec(BranchConditional) {
-        if (getRegisterValue(op._args.dest).getTruth()) {
-            _pc = op._args.imm;
-        }
-    }
-    DefExec(BranchConditionalIndirect) {
+    DefExec(BranchConditionalRegister) {
         if (getSource(op).getTruth()) {
             _pc = getRegisterValue(op._args.dest).address;
         }
     }
-    DefExec(BranchConditionalIndirectLink) {
+    DefExec(BranchConditionalRegisterLink) {
         if (getSource(op).getTruth()) {
             setRegister(op._args.src2, _pc);
             _pc = getRegisterValue(op._args.dest).address;
