@@ -114,15 +114,12 @@ enum: AsmPush
 enum: AsmPop
 enum: AsmLoadCore
 enum: AsmStoreCore
-enum: AsmBranch
-enum: AsmBranchAndLink
-enum: AsmBranchIndirect
-enum: AsmBranchIndirectLink
-enum: AsmBranchConditional
-enum: AsmBranchConditionalIndirect
-enum: AsmBranchConditionalIndirectLink
 enum: AsmLoadIO
 enum: AsmStoreIO
+enum: AsmBranchRegister
+enum: AsmBranchRegisterLink
+enum: AsmBranchConditionalRegister
+enum: AsmBranchConditionalRegisterLink
 enum: AsmUnsignedEq
 enum: AsmUnsignedNeq
 enum: AsmUnsignedLessThan
@@ -183,13 +180,10 @@ enum}
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
 : !ldc ( args* -- ) TwoRegister AsmLoadCore asm<< ;
 : !stc ( args* -- ) TwoRegister AsmStoreCore asm<< ;
-: !b ( args* -- ) Immediate16 AsmBranch asm<< ;
-: !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
-: !br ( args* -- ) OneRegister AsmBranchIndirect asm<< ;
-: !brl ( args* -- ) TwoRegister AsmBranchIndirectLink asm<< ;
-: !bc ( args* -- ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
-: !bcr ( args* -- ) TwoRegister AsmBranchConditionalIndirect asm<< ;
-: !bcrl ( args* -- ) ThreeRegister AsmBranchConditionalIndirectLink asm<< ;
+: !br ( args* -- ) OneRegister AsmBranchRegister asm<< ;
+: !brl ( args* -- ) TwoRegister AsmBranchRegisterLink asm<< ;
+: !bcr ( args* -- ) TwoRegister AsmBranchConditionalRegister asm<< ;
+: !bcrl ( args* -- ) ThreeRegister AsmBranchConditionalRegisterLink asm<< ;
 : !ldio ( args* -- ) TwoRegister AsmLoadIO asm<< ;
 : !stio ( args* -- ) TwoRegister AsmStoreIO asm<< ;
 : !equ ( args* -- ) ThreeRegister AsmUnsignedEq asm<< ;
@@ -476,4 +470,11 @@ enum}
 : !save-vmsp ( reg -- ) vmsp psh-> ;
 : !restore-vmsp ( reg -- ) vmsp swap pop-> ;
   
+\ : !b ( args* -- ) Immediate16 AsmBranch asm<< ;
+\ : !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
+\ : !bc ( args* -- ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
+: !b ( imm -- ) $->at0,at0 !br ;
+: !bl ( lr imm -- ) $->at0,at0 !brl ;
+: !bc ( imm cond -- ) swap $->at0,at0 !bcr ;
+: !bcl ( lr imm cond -- ) swap $->at0,at0 !bcrl ;
 ;s
