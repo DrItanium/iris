@@ -278,7 +278,7 @@ namespace iris {
 			void setRegister(RegisterIndex reg, Number value) noexcept;
             template<typename T>
             Number getDestination(const T& value) const noexcept {
-                return getRegister(value._args.src).getValue();
+                return getRegister(value._args.dest).getValue();
             }
 
 			template<typename T>

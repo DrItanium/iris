@@ -254,7 +254,7 @@ namespace iris {
     }
 
     DefExec(TerminateExecution) {
-        _keepExecuting = getRegisterValue(op._args.dest).getTruth();
+        _keepExecuting = getDestination(op).getTruth();
     }
     void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
         for (auto& a : _io) {
@@ -268,7 +268,7 @@ namespace iris {
         onIODeviceFound(addr, [this, &op, addr](auto& a) { setDestination(op, a.read(addr));});
     }
     DefExec(StoreIO) {
-        auto addr = getRegisterValue(op._args.dest).address;
+        auto addr = getDestination(op).address;
         onIODeviceFound(addr, [this, &op, addr](auto& a) { a.write(addr, getSource(op).address); });
     }
     DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
@@ -302,7 +302,7 @@ namespace iris {
         // three register
         // src - line buffer
         // dest - dictionary pointer / destination
-        auto dp = getRegister(op._args.dest).get<Address>();
+        auto dp = getDestination(op).address;
         auto lbp = getSource(op).address;
         //auto separator = getSource2(op).get<byte>();
         static constexpr char separator = 0x20;
@@ -344,7 +344,7 @@ namespace iris {
           // keep doing this until we get back to the place we stopped
         } while (count > 0);
         // update the dictionary pointer as well
-        setRegister(op._args.dest, dp);
+        setDestination(op, dp);
     }
     DefExec(NumberRoutine) {
         // src2 is the base address
@@ -395,7 +395,7 @@ namespace iris {
             flag = true;
             setRegister(op._args.src, result);
         }
-        setRegister(op._args.dest, flag);
+        setDestination(op, flag);
     }
 	DefExec(BranchIf) {
 		// two way branch statement
