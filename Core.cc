@@ -198,20 +198,21 @@ namespace iris {
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
-        auto addr = getRegisterValue(op._args.src).address;
+        auto addr = getSource(op).address;
         auto value = _memory[addr];
         setDestination(op, value);
     }
-    DefExec(Store) { _memory[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
+    DefExec(Store) { _memory[getDestination(op).address] = getSource(op); }
     DefExec(Push) {
-        Address stackAddress = getRegisterValue(op._args.dest).address - 1;
+        Address stackAddress = getDestination(op).address - 1;
         Address value = getSource(op).address;
         _memory[stackAddress] = value;
-        setRegister(op._args.dest, stackAddress);
+        setDestination(op, stackAddress);
     }
     DefExec(Pop) {
-        setDestination(op, _memory[getRegisterValue(op._args.src).address]);
-        setRegister(op._args.src, getRegisterValue(op._args.src).address + 1);
+        auto addr = getSource(op).address;
+        setDestination(op, _memory[addr]);
+        setRegister(op._args.src, addr + 1);
     }
     DefExec(LoadCore) {
         auto inst = _core[getSource(op).address];
@@ -220,7 +221,7 @@ namespace iris {
 
     DefExec(StoreCore) {
         auto lower = getSource(op);
-        auto addr = getRegisterValue(op._args.dest).address;
+        auto addr = getDestination(op).address;
         _core[addr] = lower;
     }
     DefExec(Branch) { _pc = op._args.imm; }
@@ -229,14 +230,14 @@ namespace iris {
         _pc = op._args.imm;
     }
     DefExec(BranchIndirect) {
-        _pc = getRegisterValue(op._args.dest).address;
+        _pc = getDestination(op).address;
     }
     DefExec(BranchIndirectLink) {
         setRegister(op._args.src, _pc);
-        _pc = getRegisterValue(op._args.dest).address;
+        _pc = getDestination(op).address;
     }
     DefExec(BranchConditional) {
-        if (getRegisterValue(op._args.dest).getTruth()) {
+        if (getDestination(op).getTruth()) {
             _pc = op._args.imm;
         }
     }
