@@ -78,8 +78,8 @@ void LinkerEntry::install(iris::Core& c) {
             break;
         case Kind::Instruction:
             // only 32kb worth of instructions allowed
-            c.install(_address << 1, Address(_value), iris::Core::InstallToMemory());
-            c.install((_address << 1) + 1, Address(_value >> 16), iris::Core::InstallToMemory());
+            c.install(_address, Address(_value), iris::Core::InstallToMemory());
+            c.install(_address + 1, Address(_value >> 16), iris::Core::InstallToMemory());
             break;
         default:
             throw Problem("Illegal linker entry kind defined!");
