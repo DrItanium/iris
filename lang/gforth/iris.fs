@@ -73,6 +73,7 @@ vocabulary iris also iris definitions
 : :inst-imm16 ( n -- k ) next-op inst-imm16 ;
 
 
+\ registers
 0 cconstant reg-zero
 1 cconstant reg-error-code
 2 cconstant reg-terminator
@@ -81,6 +82,7 @@ vocabulary iris also iris definitions
 5 cconstant reg-sp1
 64 cconstant reg-count
 set-current \ go back
+
 0 :inst-3reg add, 
 :inst-3reg sub, 
 :inst-3reg mul, 
