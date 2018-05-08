@@ -9,6 +9,7 @@ vocabulary iris also iris definitions
 0xFFFF addr-mask addr16
 0x0FFF addr-mask addr12
 0xFFFFFFFF addr-mask addr32
+variable labelIndex
 variable mloc \ current memory location
 : loc@ ( -- n ) mloc @ ;
 : loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
@@ -71,6 +72,7 @@ variable mloc \ current memory location
 1 constant MemorySpace
 2 constant CoreMemorySpace
 3 constant InstructionSpace 
+
 
 : linker-entry ( kind address value -- n ) 
   addr32 0x20 lshift ( k a v<<32 )
@@ -268,16 +270,15 @@ InstructionSpace def-space-entry instruction-entry
   >r
   register-entry 
   r> <<linker ; 
+: deflabel ( "name" -- ) 
+  create labelIndex @ , loc@ , labelIndex @ 1+ labelIndex ! 
+  does> 2@ ;
 
-
-
-: .label ( -- ) loc@ constant ;
+: .label ( "name" -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
 : .data16 ( n id -- ) swap addr16 swap <<mem ;
 : .data32 ( n id -- )  swap addr32 swap <<inst ;
 
-
-( linker format routines as well )
 
 
 previous
