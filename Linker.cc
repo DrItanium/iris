@@ -30,122 +30,146 @@
 #include <fstream>
 #include <list>
 #include <type_traits>
+#include <map>
 namespace iris {
-/* 
- * uses plain text for all purposes
- * one byte for the section ( up to 255 sections can be defined!)
- * one byte is ignored ( must be zero )
- * 16-bits define an address
- * 32-bits define the value ( this will be automatically truncated if the
- *   need arises)
- */
-class LinkerEntry {
-    public:
-        using RawLinkerEntry = uint64_t; // each entry is at most 64 bits wide
-        enum class Kind : iris::byte {
-            RegisterValue,
-            MemorySpace,
-            CoreMemory,
-            Instruction,
-        };
-        LinkerEntry(Kind kind, Address addr, RawInstruction val) noexcept : _kind(kind), _address(addr), _value(val) { };
-        LinkerEntry(RawLinkerEntry entry) noexcept;
-        //Kind getKind() const noexcept { return _kind; }
-        //Address getAddress() const noexcept { return _address; }
-        //RawInstruction getValue() const noexcept { return _value; }
-        void install(iris::Core& c);
-    private:
-        Kind _kind;
-        Address _address;
-        RawInstruction _value;
-};
+    /* 
+     * uses plain text for all purposes
+     * one byte for the section ( up to 255 sections can be defined!)
+     * one byte is ignored ( must be zero )
+     * 16-bits define an address
+     * 32-bits define the value ( this will be automatically truncated if the
+     *   need arises)
+     */
+    class LinkerEntry {
+        public:
+            using RawLinkerEntry = uint64_t; // each entry is at most 64 bits wide
+            enum class Kind : iris::byte {
+                RegisterValue,
+                MemorySpace,
+                CoreMemory,
+                Instruction,
+                LabelEntry,
+                IndirectInstruction,
+            };
+            LinkerEntry(Kind kind, Address addr, RawInstruction val) noexcept : _kind(kind), _address(addr), _value(val) { };
+            LinkerEntry(RawLinkerEntry entry) noexcept;
+            Kind getKind() const noexcept { return _kind; }
+            Address getAddress() const noexcept { return _address; }
+            RawInstruction getValue() const noexcept { return _value; }
+            void install(iris::Core& c);
+        private:
+            Kind _kind;
+            Address _address;
+            RawInstruction _value;
+    };
 
-LinkerEntry::LinkerEntry(LinkerEntry::RawLinkerEntry entry) noexcept 
-: _kind(LinkerEntry::Kind(entry & 0xFF)),
-  _address(decodeBits<decltype(entry), Address, 0x00000000FFFF0000, 16>(entry)),
-  _value(decodeBits<decltype(entry), RawInstruction, 0xFFFFFFFF00000000, 32>(entry)) { }
+    LinkerEntry::LinkerEntry(LinkerEntry::RawLinkerEntry entry) noexcept 
+        : _kind(LinkerEntry::Kind(entry & 0xFF)),
+        _address(decodeBits<decltype(entry), Address, 0x00000000FFFF0000, 16>(entry)),
+        _value(decodeBits<decltype(entry), RawInstruction, 0xFFFFFFFF00000000, 32>(entry)) { }
 
-void LinkerEntry::install(iris::Core& c) {
-    switch (_kind) {
-        case Kind::RegisterValue:
-            c.install(_address, Address(_value), iris::Core::InstallToRegister());
-            break;
-        case Kind::MemorySpace:
-            c.install(_address, Address(_value), iris::Core::InstallToMemory());
-            break;
-        case Kind::CoreMemory:
-            c.install(_address, Address(_value), iris::Core::InstallToCore());
-            break;
-        case Kind::Instruction:
-            // only 32kb worth of instructions allowed
-            c.install(_address, Address(_value), iris::Core::InstallToMemory());
-            c.install(_address + 1, Address(_value >> 16), iris::Core::InstallToMemory());
-            break;
-        default:
-            throw Problem("Illegal linker entry kind defined!");
-    }
-}
 
 } // end namespace iris
 
 
 void usage(const std::string& name) {
-	std::cerr << name << ": <path-to-object> [more objects, -o fileName, --help]" << std::endl;
+    std::cerr << name << ": <path-to-object> [more objects, -o fileName, --help]" << std::endl;
 }
 int main(int argc, char** argv) {
-	if (argc == 1) {
-		usage(argv[0]);
-		return 1;
-	}
-	bool findOutput = false;
-	std::string output = "iris.img";
-	std::list<std::string> files;
-	for (int i = 1; i < argc; ++i) {
-		std::string value = argv[i];
-		if (findOutput) {
-			output = value;
-			findOutput = false;
-		} else if (value == "-o") {
-			findOutput = true;
+    if (argc == 1) {
+        usage(argv[0]);
+        return 1;
+    }
+    bool findOutput = false;
+    std::string output = "iris.img";
+    std::list<std::string> files;
+    for (int i = 1; i < argc; ++i) {
+        std::string value = argv[i];
+        if (findOutput) {
+            output = value;
+            findOutput = false;
+        } else if (value == "-o") {
+            findOutput = true;
         } else if (value == "--help") {
             usage(argv[0]);
             return 1;
-		} else {
-			files.emplace_back(value);
-		}
-	}
-	// TODO: continue this and generate a system image based off of it
-	iris::Core core;
-	core.init();
+        } else {
+            files.emplace_back(value);
+        }
+    }
+    // TODO: continue this and generate a system image based off of it
+    iris::Core core;
+    core.init();
     // read in plain text instead of a binary encoding, makes things much easier
     // to parse. Especially since forth doesn't use binary encodings and the
     // design of it strongly discourages it. So let's be super simple and do it
     // using plain text instead.
-	for (auto const & path : files) {
-		std::ifstream in(path.c_str());
-		while (in) {
+    using Address = iris::Address;
+    using LabelIndex = iris::RawInstruction;
+    using Kind = iris::LinkerEntry::Kind;
+    using Problem = iris::Problem;
+    for (auto const & path : files) {
+        std::map<LabelIndex, Address> _labelMappings;
+        std::list<iris::LinkerEntry> _delayedInstructions;
+        std::ifstream in(path.c_str());
+        while (in) {
             iris::LinkerEntry::RawLinkerEntry v = 0;
             in >> std::hex >> v;
             iris::LinkerEntry entry(v);
-            entry.install(core);
-		}
-		if (in.bad()) {
-			std::cerr << "A really bad error occurred while installing section entries, terminating..." << std::endl;
-			std::cerr << "\tThe culprit file is: " << path << std::endl;
-			return 1;
-		}
-		in.close();
-	}
-	core.shutdown();
-	if (!output.empty()) {
-		std::ofstream file(output.c_str(), std::ios::binary);
-		if (!file.is_open()) {
-			std::cerr << "could not open: " << output << " for writing!" << std::endl;
-			return 1;
-		} else {
-			core.dump(file);
-		}
-		file.close();
-	}
-	return 0;
+            switch (entry.getKind()) {
+                case Kind::RegisterValue:
+                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToRegister());
+                    break;
+                case Kind::MemorySpace:
+                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
+                    break;
+                case Kind::CoreMemory:
+                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToCore());
+                    break;
+                case Kind::Instruction:
+                    // only 32kb worth of instructions allowed
+                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
+                    core.install(entry.getAddress() + 1, Address(entry.getValue() >> 16), iris::Core::InstallToMemory());
+                    break;
+                case Kind::LabelEntry:
+                     _labelMappings.emplace(entry.getValue(), entry.getAddress());
+                     break;
+                case Kind::IndirectInstruction:
+                     // resolve these later
+                     _delayedInstructions.emplace_back(entry);
+                     break;
+                default:
+                        throw Problem("Illegal linker entry kind defined!");
+            }
+        }
+        if (in.bad()) {
+            std::cerr << "A really bad error occurred while installing section entries, terminating..." << std::endl;
+            std::cerr << "\tThe culprit file is: " << path << std::endl;
+            return 1;
+        }
+        in.close();
+        for (auto& e : _delayedInstructions) {
+            auto upperHalf = (e.getValue() >> 16) & 0xFFFF;
+            if (auto r = _labelMappings.find(upperHalf); r != _labelMappings.end()) {
+                auto address = e.getAddress();
+                auto lowerHalf = Address(e.getValue());
+                core.install(address, lowerHalf, iris::Core::InstallToMemory());
+                core.install(address + 1, r->second, iris::Core::InstallToMemory());
+            } else {
+                throw Problem("Not all labels are defined for given indirect instructions!");
+            }
+        }
+    }
+    core.shutdown();
+    if (!output.empty()) {
+        std::ofstream file(output.c_str(), std::ios::binary);
+        if (!file.is_open()) {
+            std::cerr << "could not open: " << output << " for writing!" << std::endl;
+            return 1;
+        } else {
+            core.dump(file);
+        }
+        file.close();
+    }
+    return 0;
 }

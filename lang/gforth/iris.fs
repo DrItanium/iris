@@ -247,6 +247,7 @@ RegisterValueSpace def-space-entry register-entry
 MemorySpace def-space-entry memory-entry
 CoreMemorySpace def-space-entry core-entry
 InstructionSpace def-space-entry instruction-entry
+LabelSpace def-space-entry label-entry 
 : <<linker ( entry id -- ) 
   hex
   dup >r
@@ -270,15 +271,21 @@ InstructionSpace def-space-entry instruction-entry
   >r
   register-entry 
   r> <<linker ; 
-: deflabel ( "name" -- ) create labelIndex @ , loc@ , labelIndex @ 1+ labelIndex !  does> 2@ ;
+: <<label ( index id -- ) 
+  >r
+  @loc swap label-entry
+  r> <<linker ;
+\ labels must be defined ahead of time before first reference
+: deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! does> @ ;
 
-: .label ( "name" -- ) loc@ constant ;
+
+: .label ( label id -- ) <<label ; 
 : .org ( n -- ) loc! ;
 : .data16 ( n id -- ) swap addr16 swap <<mem ;
 : .data32 ( n id -- )  swap addr32 swap <<inst ;
-: .address ( index address -- index ) drop ;
+: .address ( label -- index ) 2@ swap drop ;
 
-
+  
 
 previous
 ( The idea is to write a simple interpreter and perform the memory encoding
