@@ -32,20 +32,14 @@ X(Push, TwoRegister, push)
 X(Pop, TwoRegister, pop)
 X(LoadCore, TwoRegister, ldc)
 X(StoreCore, TwoRegister, stc)
-// branch operations
-X(Branch, Immediate16, b)
-X(BranchAndLink, OneRegisterWithImmediate, bl)
-X(BranchIndirect, OneRegister, br)
-X(BranchIndirectLink, TwoRegister, brl)
-X(BranchConditional, OneRegisterWithImmediate, bc)
-X(BranchConditionalIndirect, TwoRegister, bcr)
-X(BranchConditionalIndirectLink, ThreeRegister, bcrl)
-X(BranchIf, ThreeRegister, if)
-X(BranchIfLink, FourRegister, ifl)
-// misc
-X(TerminateExecution, OneRegister, terminateExecution)
 X(LoadIO, TwoRegister, ldio)
 X(StoreIO, TwoRegister, stio)
+// branch operations
+X(BranchRegister, OneRegister, br)
+X(BranchRegisterAndLink, TwoRegister, brl)
+X(BranchConditionalRegister, TwoRegister, bcr)
+X(BranchConditionalRegisterLink, ThreeRegister, bcrl)
+// misc
 // Push eight registers onto the stack at a time given the provided bit pattern
 // uses the 16-bit constant like so:
 // 0bRRRRRRRR000GGGGG 
@@ -86,10 +80,6 @@ X(UnsignedRem, ThreeRegister, remu)
 X(UnsignedShiftLeft, ThreeRegister, shlu)
 X(UnsignedShiftRight, ThreeRegister, shru)
 
-// Use the condition value to determine which source to store into the
-// destination
-X(Choose, FourRegister, choose)
-X(ChooseSigned, FourRegister, choose-signed)
 // "microcode" routines for making the forth interpreter implementation
 // faster
 // routines from Threaded Interpretive Languages as well

@@ -114,18 +114,12 @@ enum: AsmPush
 enum: AsmPop
 enum: AsmLoadCore
 enum: AsmStoreCore
-enum: AsmBranch
-enum: AsmBranchAndLink
-enum: AsmBranchIndirect
-enum: AsmBranchIndirectLink
-enum: AsmBranchConditional
-enum: AsmBranchConditionalIndirect
-enum: AsmBranchConditionalIndirectLink
-enum: AsmBranchIf
-enum: AsmBranchIfLink
-enum: AsmTerminateExecution
 enum: AsmLoadIO
 enum: AsmStoreIO
+enum: AsmBranchRegister
+enum: AsmBranchRegisterLink
+enum: AsmBranchConditionalRegister
+enum: AsmBranchConditionalRegisterLink
 enum: AsmUnsignedEq
 enum: AsmUnsignedNeq
 enum: AsmUnsignedLessThan
@@ -147,8 +141,6 @@ enum: AsmUnsignedDiv
 enum: AsmUnsignedRem
 enum: AsmUnsignedShiftLeft
 enum: AsmUnsignedShiftRight
-enum: AsmChoose
-enum: AsmChooseSigned
 enum: AsmReadToken
 enum: AsmNumberRoutine
 enum}
@@ -188,14 +180,10 @@ enum}
 : !pop ( args* -- ) TwoRegister AsmPop asm<< ;
 : !ldc ( args* -- ) TwoRegister AsmLoadCore asm<< ;
 : !stc ( args* -- ) TwoRegister AsmStoreCore asm<< ;
-: !b ( args* -- ) Immediate16 AsmBranch asm<< ;
-: !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
-: !br ( args* -- ) OneRegister AsmBranchIndirect asm<< ;
-: !brl ( args* -- ) TwoRegister AsmBranchIndirectLink asm<< ;
-: !bc ( args* -- ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
-: !bcr ( args* -- ) TwoRegister AsmBranchConditionalIndirect asm<< ;
-: !bcrl ( args* -- ) ThreeRegister AsmBranchConditionalIndirectLink asm<< ;
-: !terminateExecution ( args* -- ) OneRegister AsmTerminateExecution asm<< ;
+: !br ( args* -- ) OneRegister AsmBranchRegister asm<< ;
+: !brl ( args* -- ) TwoRegister AsmBranchRegisterLink asm<< ;
+: !bcr ( args* -- ) TwoRegister AsmBranchConditionalRegister asm<< ;
+: !bcrl ( args* -- ) ThreeRegister AsmBranchConditionalRegisterLink asm<< ;
 : !ldio ( args* -- ) TwoRegister AsmLoadIO asm<< ;
 : !stio ( args* -- ) TwoRegister AsmStoreIO asm<< ;
 : !equ ( args* -- ) ThreeRegister AsmUnsignedEq asm<< ;
@@ -214,8 +202,6 @@ enum}
 : !maxu ( src2 src dest -- ) ThreeRegister AsmUnsignedMax asm<< ;
 : !readtok ( src2 src dest -- ) TwoRegister AsmReadToken asm<< ;
 : !number-routine ( address result flag -- ) ThreeRegister AsmNumberRoutine asm<< ;
-: !if ( onFalse onTrue cond -- ) ThreeRegister AsmBranchIf asm<< ;
-: !ifl ( onFalse onTrue link cond -- ) FourRegister AsmBranchIfLink asm<< ;
 : !addu ( args* -- ) ThreeRegister AsmUnsignedAdd asm<< ;
 : !subu ( args* -- ) ThreeRegister AsmUnsignedSub asm<< ;
 : !mulu ( args* -- ) ThreeRegister AsmUnsignedMul asm<< ;
@@ -223,8 +209,6 @@ enum}
 : !remu ( args* -- ) ThreeRegister AsmUnsignedRem asm<< ;
 : !shlu ( args* -- ) ThreeRegister AsmUnsignedShiftLeft asm<< ;
 : !shru ( args* -- ) ThreeRegister AsmUnsignedShiftRight asm<< ;
-: !choose ( onFalse onTrue condition dest -- ) FourRegister AsmChoose asm<< ;
-: !choose.signed ( onFalse onTrue condition dest -- ) FourRegister AsmChooseSigned asm<< ;
 
 
 : .data16 ( n -- ) addr16 current-location code<< ;
@@ -268,6 +252,7 @@ enum: /dev/console1
 enum: /dev/core-dump
 enum: /dev/core-load
 enum: /dev/dump-vm
+enum: /dev/terminate-vm
 enum}
 \ concepts and other macro routines for doing crazy things
 : $-> ( value reg -- ) !set ;
@@ -460,7 +445,9 @@ enum}
 
 : !nop ( -- ) zero zero zero !add ;
 : !zero ( reg -- ) zero-arg2 !move ;
-: !exit ( code -- ) $->at0,at0 !terminateExecution ;
+: !exit ( reg -- ) 
+  /dev/terminate-vm $->io
+  !io-store ;
 
 : !swi ( imm addr -- ) !sti ;
 : !drop ( sp -- ) zero !pop ;
@@ -483,4 +470,11 @@ enum}
 : !save-vmsp ( reg -- ) vmsp psh-> ;
 : !restore-vmsp ( reg -- ) vmsp swap pop-> ;
   
+\ : !b ( args* -- ) Immediate16 AsmBranch asm<< ;
+\ : !bl ( args* -- ) OneRegisterWithImmediate AsmBranchAndLink asm<< ;
+\ : !bc ( args* -- ) OneRegisterWithImmediate AsmBranchConditional asm<< ;
+: !b ( imm -- ) $->at0,at0 !br ;
+: !bl ( lr imm -- ) $->at0,at0 !brl ;
+: !bc ( imm cond -- ) swap $->at0,at0 !bcr ;
+: !bcl ( lr imm cond -- ) swap $->at0,at0 !bcrl ;
 ;s

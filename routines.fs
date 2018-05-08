@@ -5,7 +5,7 @@
 " routines.bin" {bin
 routines-start .org
 .label terminate-execution
-        zero !terminateExecution
+       arg0 !exit
 .label return
         \ all functions go through here to make sure that we do the right thing
         csp lr pop-> 
@@ -126,7 +126,6 @@ defun: println
 	   0xA $->at0
 	   at0 io-write
 	   defun;
-defun: 
 : mk-mtbase-fun ( base-num -- )
     defun: 
     nbase $->

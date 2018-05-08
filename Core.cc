@@ -223,38 +223,25 @@ namespace iris {
         auto addr = getRegisterValue(op._args.dest).address;
         _core[addr] = lower;
     }
-    DefExec(Branch) { _pc = op._args.imm; }
-    DefExec(BranchAndLink) {
-        setDestination(op, _pc);
-        _pc = op._args.imm;
-    }
-    DefExec(BranchIndirect) {
+    DefExec(BranchRegister) {
         _pc = getRegisterValue(op._args.dest).address;
     }
-    DefExec(BranchIndirectLink) {
+    DefExec(BranchRegisterAndLink) {
         setRegister(op._args.src, _pc);
         _pc = getRegisterValue(op._args.dest).address;
     }
-    DefExec(BranchConditional) {
-        if (getRegisterValue(op._args.dest).getTruth()) {
-            _pc = op._args.imm;
-        }
-    }
-    DefExec(BranchConditionalIndirect) {
+    DefExec(BranchConditionalRegister) {
         if (getSource(op).getTruth()) {
             _pc = getRegisterValue(op._args.dest).address;
         }
     }
-    DefExec(BranchConditionalIndirectLink) {
+    DefExec(BranchConditionalRegisterLink) {
         if (getSource(op).getTruth()) {
             setRegister(op._args.src2, _pc);
             _pc = getRegisterValue(op._args.dest).address;
         }
     }
 
-    DefExec(TerminateExecution) {
-        _keepExecuting = getRegisterValue(op._args.dest).getTruth();
-    }
     void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
         for (auto& a : _io) {
             if (a.respondsTo(addr)) {
@@ -396,26 +383,6 @@ namespace iris {
         }
         setRegister(op._args.dest, flag);
     }
-	DefExec(BranchIf) {
-		// two way branch statement
-		// dest contains the conditional
-		// src contains the on-true address
-		// src2 contains the on-false address
-		auto onTrue = getSource(op).address;
-		auto onFalse = getSource2(op).address;
-		_pc = getRegister(op._args.dest).getTruth() ? onTrue : onFalse;
-	}
-	DefExec(BranchIfLink) {
-		// two way branch statement with link call
-		// dest contains the conditional
-		// src contains the link register
-		// src2 contains the on true address
-		// src3 contains the on false address
-		auto onFalse = getRegister(op._args.src3).get<Address>();
-		auto onTrue = getSource2(op).address;
-		setRegister(op._args.src, _pc);
-		_pc = getRegister(op._args.dest).getTruth() ? onTrue : onFalse;
-	}
     DefExec(UnsignedAdd) { setDestination(op, getSource(op).address + getSource2(op).address); }
     DefExec(UnsignedSub) { 
         auto a = getSource(op).address;
@@ -428,20 +395,6 @@ namespace iris {
     DefExec(UnsignedRem) { setDestination(op, getSource(op).address % getSource2(op).address); }
     DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
     DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
-	DefExec(Choose) { 
-		// dest -> register to store into
-		// src -> condition to choose
-		// onTrue -> value when condition is true
-		// onFalse -> value when condition is false
-		setDestination(op, getSource(op).getTruth() ? getSource2(op).address : getRegister(op._args.src3).get<Address>());
-	}
-	DefExec(ChooseSigned) {
-		// dest -> register to store into
-		// src -> condition to choose
-		// onTrue -> value when condition is true
-		// onFalse -> value when condition is false
-		setDestination(op, getSource(op).getTruth() ? getSource2(op).integer: getRegister(op._args.src3).get<Integer>());
-	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
@@ -613,13 +566,21 @@ namespace iris {
                 throw Problem("Unimplemented address!");
             }
         };
+		auto terminateVM = [this](auto index, auto value) {
+			if (index == 0) {
+				_keepExecuting = value != 0;
+			} else {
+				throw Problem("Unimplemented address!");
+			}
+		};
         IODevice coreManipulator(3, 2, nullptr, selectCore);
         IODevice vmDumper(5, 1, nullptr, dumpVM);
-
+		IODevice vmTerminator(6,1, nullptr, terminateVM);
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
         installIODevice(vmDumper);
+		installIODevice(vmTerminator);
     }
     void Core::shutdown() {
 
