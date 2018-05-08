@@ -209,32 +209,12 @@ namespace iris {
 				SourceRegister src2;
                 SourceRegister src3;
             };
-			struct Immediate16 final {
-				Immediate16() = default;
-				~Immediate16() = default;
-				Address imm;
-			};
 			struct OneRegisterWithImmediate final {
 				OneRegisterWithImmediate() = default;
 				~OneRegisterWithImmediate() = default;
 				DestinationRegister dest;
 				Address imm;
 			};
-			struct TwoRegisterWithImmediate final {
-				TwoRegisterWithImmediate() = default;
-				~TwoRegisterWithImmediate() = default;
-				DestinationRegister dest;
-				SourceRegister src;
-				Address src2; // 12-bits
-			};
-            struct ThreeRegisterWithImmediate final {
-                ThreeRegisterWithImmediate() = default;
-                ~ThreeRegisterWithImmediate() = default;
-				DestinationRegister dest;
-				SourceRegister src;
-				SourceRegister src2;
-				byte src3;
-            };
 #define X(title, style, z) \
 			struct title final { \
 				title ( ) { } \
@@ -267,10 +247,7 @@ namespace iris {
 			void decodeArguments(RawInstruction, TwoRegister&) noexcept;
 			void decodeArguments(RawInstruction, ThreeRegister&) noexcept;
 			void decodeArguments(RawInstruction, FourRegister&) noexcept;
-			void decodeArguments(RawInstruction, Immediate16&) noexcept;
 			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
-			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
-			void decodeArguments(RawInstruction, ThreeRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction(RawInstruction val);
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
@@ -286,12 +263,7 @@ namespace iris {
 			}
 			template<typename T>
 			Number getSource2(const T& value) const noexcept {
-                using K = decltype(value._args);
-				if constexpr (std::is_same_v<K, TwoRegisterWithImmediate>) {
-					return Number(value._args.src2);
-				} else {
-					return getRegister(value._args.src2).getValue();
-				}
+                return getRegister(value._args.src2).getValue();
 			}
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);

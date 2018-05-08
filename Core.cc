@@ -52,16 +52,6 @@ namespace iris {
     constexpr Address getImmediate16(RawInstruction i) noexcept {
         return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
     }
-    constexpr byte getImmediate6(RawInstruction i) noexcept {
-        if constexpr (std::is_same_v<byte, RegisterIndex>) {
-            return getSource3Index(i);
-        } else {
-            return decodeBits<decltype(i), byte, 0x1F << 26, 26>(i);
-        }
-    }
-    constexpr Address getImmediate12(RawInstruction i) noexcept {
-		return decodeBits<decltype(i), Address, 0xFFF0'0000, 20>(i);
-    }
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
     Register::~Register() {
@@ -97,23 +87,9 @@ namespace iris {
         a.src2 = getSource2Index(i);
         a.src3 = getSource3Index(i);
     }
-    void Core::decodeArguments(RawInstruction i, Core::Immediate16& a) noexcept {
-        a.imm = getImmediate16(i);
-    }
     void Core::decodeArguments(RawInstruction i, Core::OneRegisterWithImmediate& a) noexcept {
         a.imm = getImmediate16(i);
         a.dest = getDestinationIndex(i);
-    }
-    void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
-        a.src2 = getImmediate12(i);
-    }
-    void Core::decodeArguments(RawInstruction i, Core::ThreeRegisterWithImmediate& a) noexcept {
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
-        a.src2 = getSource2Index(i);
-        a.src3 = getImmediate6(i);
     }
     Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
         Core::DecodedInstruction tmp;
