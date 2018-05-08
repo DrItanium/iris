@@ -186,4 +186,8 @@ set-current \ go back
 >r .data32 \ lower half 
 r> 32 rshift .data32 ;
 previous
-
+( The idea is to write a simple interpreter and perform the memory encoding
+  within gforth and then dump it out to disk in such a way as to make it easy
+  to load into the iris interpreter. The simplest way is to dump it out in the
+  core format as a series of 16 bit numbers with each core section being 64kb
+  in size. )
