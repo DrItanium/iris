@@ -273,8 +273,8 @@ InstructionSpace def-space-entry instruction-entry
 
 : .label ( -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
-: .data16 ( n -- v ) addr16 ;
-: .data32 ( n -- vlower vupper ) dup .data16 swap 0x10 rshift .data16 ;
+: .data16 ( n id -- ) swap addr16 swap <<mem ;
+: .data32 ( n id -- )  swap addr32 swap <<inst ;
 
 
 ( linker format routines as well )
