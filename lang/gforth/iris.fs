@@ -1,4 +1,3 @@
-include enum.fs
 get-current ( wid )
 vocabulary iris also iris definitions
 : addr-mask ( mask "name" -- )
@@ -7,6 +6,10 @@ vocabulary iris also iris definitions
 0x3f addr-mask addr6
 0xFFFF addr-mask addr16
 0x0FFF addr-mask addr12
+variable mloc \ current memory location
+: loc@ ( -- n ) mloc @ ;
+: loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
+: loc1+ ( -- ) loc@ 1+ loc! ;
 : reg-pos ( shift "name" -- ) 
   create , 
   does> swap addr6 swap @ lshift ;
@@ -176,5 +179,11 @@ set-current \ go back
   div,
   r> ;
 
+: .org ( n -- ) loc! ;
+: .data16 ( n -- v ) addr16 ;
+: .data32 ( n -- vlower vupper ) dup addr16 swap 16 rshift addr16 ;
+: .data64 ( n -- vlowest vlower vhigher vhighest ) dup 
+>r .data32 \ lower half 
+r> 32 rshift .data32 ;
 previous
 
