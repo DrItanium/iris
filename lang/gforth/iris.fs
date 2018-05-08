@@ -270,14 +270,13 @@ InstructionSpace def-space-entry instruction-entry
   >r
   register-entry 
   r> <<linker ; 
-: deflabel ( "name" -- ) 
-  create labelIndex @ , loc@ , labelIndex @ 1+ labelIndex ! 
-  does> 2@ ;
+: deflabel ( "name" -- ) create labelIndex @ , loc@ , labelIndex @ 1+ labelIndex !  does> 2@ ;
 
 : .label ( "name" -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
 : .data16 ( n id -- ) swap addr16 swap <<mem ;
 : .data32 ( n id -- )  swap addr32 swap <<inst ;
+: .address ( index address -- index ) drop ;
 
 
 
