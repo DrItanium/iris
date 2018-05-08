@@ -68,5 +68,39 @@ vocabulary z80 also z80 definitions
 0x4f 2bytes lra, \ r = a
 0x47 2bytes lia, \ i = a
 
+: mov, ( a b -- n ) 
+  over 8* over + 0x40 + c, + c< if c, then ;
+: mvi, ( d r n -- )
+  over 8* 0x06 + c, swap 0< if swap c, then c, ;
+
+: bcorde 2dup bc = swap de = or ;
+: lda, bcorde if 0x0a + c, else 0x3a c, , then ;
+: sta, bcorde if 0x02 + c, else 0x32 c, , then ;
+
+: dmi, ( rp n -- )
+  \ double move immediate
+  swap 0x01 + c, , ;
+
+: dsm, ( n rp -- )
+  \ double store to memory
+  dup hl = if 0x22 c, drop else ed c, 0x43 + c, then , ;
+
+: dlm, ( rp n -- )
+       \ double load from memory
+       swap dup hl = if 0x2a c, drop else 0xed c, 0x4b + c, then , ;
+: 1mask <builds c, does> c@ swap 8* + c, ;
+
+\ arithmetic logic group
+: 8alg <builds c, does> c@ over + c, 0< if c, then ;
+
+0x80 8alg add,
+0x88 8alg adc,
+0x90 8alg sub,
+0x98 8alg sbc, 
+0xa0 8alg and,
+0xa8 8alg xor, 
+0xb0 8alg ior,
+0xb8 8alg cmp, 
+
 set-current
 previous
