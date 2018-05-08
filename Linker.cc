@@ -30,6 +30,63 @@
 #include <fstream>
 #include <list>
 #include <type_traits>
+namespace iris {
+/* 
+ * uses plain text for all purposes
+ * one byte for the section ( up to 255 sections can be defined!)
+ * one byte is ignored ( must be zero )
+ * 16-bits define an address
+ * 32-bits define the value ( this will be automatically truncated if the
+ *   need arises)
+ */
+class LinkerEntry {
+    public:
+        using RawLinkerEntry = uint64_t; // each entry is at most 64 bits wide
+        enum class Kind : iris::byte {
+            RegisterValue,
+            MemorySpace,
+            CoreMemory,
+            Instruction,
+        };
+        LinkerEntry(Kind kind, Address addr, RawInstruction val) noexcept : _kind(kind), _address(addr), _value(val) { };
+        LinkerEntry(RawLinkerEntry entry) noexcept;
+        //Kind getKind() const noexcept { return _kind; }
+        //Address getAddress() const noexcept { return _address; }
+        //RawInstruction getValue() const noexcept { return _value; }
+        void install(iris::Core& c);
+    private:
+        Kind _kind;
+        Address _address;
+        RawInstruction _value;
+};
+
+LinkerEntry::LinkerEntry(LinkerEntry::RawLinkerEntry entry) noexcept 
+: _kind(LinkerEntry::Kind(entry & 0xFF)),
+  _address(decodeBits<decltype(entry), Address, 0x00000000FFFF0000, 16>(entry)),
+  _value(decodeBits<decltype(entry), RawInstruction, 0xFFFFFFFF00000000, 32>(entry)) { }
+
+void LinkerEntry::install(iris::Core& c) {
+    switch (_kind) {
+        case Kind::RegisterValue:
+            c.install(_address, Address(_value), iris::Core::InstallToRegister());
+            break;
+        case Kind::MemorySpace:
+            c.install(_address, Address(_value), iris::Core::InstallToMemory());
+            break;
+        case Kind::CoreMemory:
+            c.install(_address, Address(_value), iris::Core::InstallToCore());
+            break;
+        case Kind::Instruction:
+            // only 32kb worth of instructions allowed
+            c.install(_address << 1, Address(_value), iris::Core::InstallToMemory());
+            c.install((_address << 1) + 1, Address(_value >> 16), iris::Core::InstallToMemory());
+            break;
+        default:
+            throw Problem("Illegal linker entry kind defined!");
+    }
+}
+
+} // end namespace iris
 
 
 void usage(const std::string& name) {
@@ -60,44 +117,17 @@ int main(int argc, char** argv) {
 	// TODO: continue this and generate a system image based off of it
 	iris::Core core;
 	core.init();
+    // read in plain text instead of a binary encoding, makes things much easier
+    // to parse. Especially since forth doesn't use binary encodings and the
+    // design of it strongly discourages it. So let's be super simple and do it
+    // using plain text instead.
 	for (auto const & path : files) {
-		std::ifstream in(path.c_str(), std::ios::binary);
-		auto getByte = [&in]() {
-			union {
-				char c;
-				iris::byte b;
-			} tmp;
-			tmp.c = in.get();
-			return tmp.b;
-		};
-		auto getAddress = [getByte]() {
-			auto lower = iris::Address(getByte());
-			auto upper = iris::Address(getByte()) << 8;
-			return lower | upper;
-		};
+		std::ifstream in(path.c_str());
 		while (in) {
-			// read each entry to see what to do with it
-			auto section = getAddress();
-            if (in.gcount() == 0) {
-                break;
-            }
-			auto address = getAddress();
-			auto value = getAddress();
-			switch (section) {
-				case 0: // register
-					core.install( address, value, iris::Core::InstallToRegister());
-					break;
-				case 1: // memory
-					core.install( address, value, iris::Core::InstallToMemory());
-					break;
-				case 2: // core
-					core.install( address, value, iris::Core::InstallToCore());
-					break;
-				default:
-					std::cerr << "Got an illegal section, terminating..." << std::endl;
-					std::cerr << "\tThe culprint file is: " << path << std::endl;
-					return 1;
-			}
+            iris::LinkerEntry::RawLinkerEntry v = 0;
+            in >> std::hex >> v;
+            iris::LinkerEntry entry(v);
+            entry.install(core);
 		}
 		if (in.bad()) {
 			std::cerr << "A really bad error occurred while installing section entries, terminating..." << std::endl;

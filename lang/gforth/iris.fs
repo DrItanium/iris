@@ -1,14 +1,14 @@
 get-current ( wid )
 vocabulary iris also iris definitions
 
-: w0x ( id -- ) s" 0x" rot write-file throw ; 
-: nout ( num id -- ) swap s>d <<# #s #> rot write-file #>> throw ;
+: nout ( num id -- ) swap s>d <<# #s #> rot write-line #>> throw ;
 : addr-mask ( mask "name" -- )
   CREATE , 
   does> @ and ;
 0x3f addr-mask addr6
 0xFFFF addr-mask addr16
 0x0FFF addr-mask addr12
+0xFFFFFFFF addr-mask addr32
 variable mloc \ current memory location
 : loc@ ( -- n ) mloc @ ;
 : loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
@@ -113,6 +113,7 @@ set-current \ go back
 21 inst-1reg-with-imm set,
 : $-> ( imm dest -- n ) set, ;
 : $->at0 ( imm -- n ) at0 $-> ;
+: $->at1 ( imm -- n ) at1 $-> ;
 : $->at0-3arg ( imm a b -- at0 a b n ) 
   rot $->at0 >r 
   at0 ( a b at0 ) -rot ( at0 a b ) 
@@ -121,6 +122,7 @@ set-current \ go back
 : $->at0-2arg ( imm b -- at0 b n )
   swap ( b imm )
   $->at0 at0 -rot ( at0 b n ) ;
+: $->at0-1arg ( imm -- at0 ) $->at0 at0 ;
 22 inst-2reg ld,
 23 inst-2reg st,
 24 inst-2reg push,
@@ -221,21 +223,41 @@ def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
 
-
+0 constant RegisterValueSpace
+1 constant MemorySpace
+2 constant CoreMemorySpace
+3 constant InstructionSpace 
 : .label ( -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
 : .data16 ( n -- v ) addr16 ;
-: .data32 ( n -- vlower vupper ) dup addr16 swap 16 rshift addr16 ;
-: .data64 ( n -- vlowest vlower vhigher vhighest ) dup 
-   >r .data32 \ lower half 
-   r> 32 rshift .data32 ;
-
+: .data32 ( n -- vlower vupper ) dup .data16 swap 16 rshift .data16 ;
+: linker-entry ( kind address value -- n ) 
+  addr32 32 lshift ( k a v<<32 )
+  swap ( k v3 a )
+  addr16 16 lshift
+  rot ( v3 a k )
+  0xFF and ( v3 a1 k8 )
+  or ( v3 n )
+  or ( n ) ;
+: def-space-entry ( value "name" -- )
+  create c, 
+  does> ( addr value -- n )
+  @ -rot linker-entry ;
+RegisterValueSpace def-space-entry register-entry
+MemorySpace def-space-entry memory-entry
+CoreMemorySpace def-space-entry core-entry
+InstructionSpace def-space-entry instruction-entry
+: linker>> ( entry id -- ) 
+  hex
+  dup >r
+  nout
+  s" " r> write-line throw ;
 : core>> ( num id -- ) 
   hex \ make sure
-  dup dup >r w0x 
+  dup >r 
   nout 
   s" " r> write-line throw ;
-: inst->core ( inst id -- ) 
+: inst>>core ( inst id -- ) 
   \ you'll get two entries out of it
   >r \ stash the file-handler
   .data32 \ get the data out
@@ -244,6 +266,11 @@ def3argi ugei, uge,
   swap over ( vup fid vlo fid )
   core>>
   core>> ;
+: data16>>core ( value id -- ) core>> ;
+
+
+( linker format routines as well )
+
 
 previous
 ( The idea is to write a simple interpreter and perform the memory encoding
