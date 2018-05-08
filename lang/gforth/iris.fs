@@ -29,48 +29,37 @@ vocabulary iris also iris definitions
 : 3reg-with-imm ( imm6 src2 src dest -- value )
   3reg swap imm6 or ;
 : cconstant ( byte "name" -- ) create c, does> c@ ;
-: inst-0reg ( opcode-index "name" -- ) 
-  create c, \ embed opcode
-  does> c@ 0 and ;
-: >xop& ( n -- k ) r> c@ and ;
+: xop& ( n a -- k ) c@ or ;
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
         1reg
-        >xop& ;
+        r> xop& ;
 : inst-2reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r
         2reg
-        >xop& ;
+        r> xop& ;
 : inst-3reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> >r
-        3reg
-        >xop& ;
+  does> >r 
+        3reg 
+		r> xop& ;
 : inst-4reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r
         4reg
-        >xop& ;
+        r> xop& ;
 : inst-1reg-with-imm ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r
         1reg-with-imm
-        >xop& ;
+        r> xop& ;
 : inst-imm16 ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r
         imm16
-        >xop& ;
-: next-op ( n -- n+1 n ) dup 1+ swap ;
-: :inst-0reg ( n -- k ) next-op inst-0reg ;
-: :inst-1reg ( n -- k ) next-op inst-1reg ;
-: :inst-2reg ( n -- k ) next-op inst-2reg ;
-: :inst-3reg ( n -- k ) next-op inst-3reg ;
-: :inst-4reg ( n -- k ) next-op inst-4reg ;
-: :inst-1reg-with-imm ( n -- k ) next-op inst-1reg-with-imm ;
-: :inst-imm16 ( n -- k ) next-op inst-imm16 ;
+        r> xop& ;
 
 
 \ registers
@@ -79,9 +68,9 @@ set-current \ go back
 1 cconstant error-code
 2 cconstant terminator
 3 cconstant num-base
-4 cconstant sp0
-5 cconstant sp1
-6 cconstant sp2
+4 cconstant dsp
+5 cconstant rsp
+6 cconstant vmsp
 7 cconstant cv
 8 cconstant lr
 9 cconstant at0
@@ -91,71 +80,70 @@ set-current \ go back
 13 cconstant io
 14 cconstant ci \ core index number
 
-0 :inst-3reg add, 
-:inst-3reg sub, 
-:inst-3reg mul, 
-:inst-3reg div, 
-:inst-3reg rem, 
-:inst-3reg shl, 
-:inst-3reg shr, 
-:inst-3reg and, 
-:inst-3reg or, 
-:inst-2reg not, 
-:inst-3reg xor, 
-:inst-3reg nand, 
-:inst-3reg nor,
-:inst-3reg min,
-:inst-3reg max,
-:inst-3reg lxor,
-:inst-2reg lnot,
-:inst-3reg land,
-:inst-3reg lor,
-:inst-3reg lnand,
-:inst-3reg lnor,
-:inst-3reg eq,
-:inst-3reg neq,
-:inst-3reg lt,
-:inst-3reg gt,
-:inst-3reg le,
-:inst-3reg ge,
-:inst-1reg-with-imm set,
-:inst-2reg ld,
-:inst-2reg st,
-:inst-2reg push,
-:inst-2reg pop,
-:inst-2reg ldc,
-:inst-2reg stc,
-:inst-2reg ldio,
-:inst-2reg stio,
-:inst-1reg br,
-:inst-2reg brl,
-:inst-2reg bcr,
-:inst-3reg bcrl,
-:inst-3reg ueq,
-:inst-3reg uneq,
-:inst-3reg ult,
-:inst-3reg ugt,
-:inst-3reg ule,
-:inst-3reg uge,
-:inst-3reg uand,
-:inst-3reg uor,
-:inst-2reg unot,
-:inst-3reg uxor,
-:inst-3reg unand,
-:inst-3reg unor,
-:inst-3reg umin,
-:inst-3reg umax,
-:inst-3reg uadd,
-:inst-3reg usub,
-:inst-3reg umul,
-:inst-3reg udiv,
-:inst-3reg urem,
-:inst-3reg ushl,
-:inst-3reg ushr,
-:inst-2reg readtok,
-:inst-3reg number,
-drop
-: move, ( src dest -- n ) uor, ;
+0  inst-3reg add, 
+1  inst-3reg sub, 
+2  inst-3reg mul, 
+3  inst-3reg div, 
+4  inst-3reg rem, 
+5  inst-3reg shl, 
+6  inst-3reg shr, 
+7  inst-3reg and, 
+8  inst-3reg or, 
+9  inst-2reg not, 
+10 inst-3reg xor, 
+11 inst-3reg nand, 
+12 inst-3reg nor,
+13 inst-3reg min,
+14 inst-3reg max,
+15 inst-3reg lxor,
+16 inst-2reg lnot,
+17 inst-3reg land,
+18 inst-3reg lor,
+19 inst-3reg lnand,
+20 inst-3reg lnor,
+21 inst-3reg eq,
+22 inst-3reg neq,
+23 inst-3reg lt,
+24 inst-3reg gt,
+25 inst-3reg le,
+26 inst-3reg ge,
+27 inst-1reg-with-imm set,
+28 inst-2reg ld,
+29 inst-2reg st,
+30 inst-2reg push,
+31 inst-2reg pop,
+32 inst-2reg ldc,
+33 inst-2reg stc,
+34 inst-2reg ldio,
+35 inst-2reg stio,
+36 inst-1reg br,
+37 inst-2reg brl,
+38 inst-2reg bcr,
+39 inst-3reg bcrl,
+40 inst-3reg ueq,
+41 inst-3reg uneq,
+42 inst-3reg ult,
+43 inst-3reg ugt,
+44 inst-3reg ule,
+45 inst-3reg uge,
+46 inst-3reg uand,
+47 inst-3reg uor,
+48 inst-2reg unot,
+49 inst-3reg uxor,
+50 inst-3reg unand,
+51 inst-3reg unor,
+52 inst-3reg umin,
+53 inst-3reg umax,
+54 inst-3reg uadd,
+55 inst-3reg usub,
+56 inst-3reg umul,
+57 inst-3reg udiv,
+58 inst-3reg urem,
+59 inst-3reg ushl,
+60 inst-3reg ushr,
+61 inst-2reg readtok,
+62 inst-3reg number,
+: move, ( src dest -- n ) zero swap uor, ;
 : -> ( src dest -- n ) move, ;
 : $-> ( imm dest -- n ) set, ;
 : $->at0 ( imm -- n ) at0 $-> ;
