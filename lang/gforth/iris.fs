@@ -13,6 +13,7 @@ variable mloc \ current memory location
 : loc@ ( -- n ) mloc @ ;
 : loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
 : loc1+ ( -- ) loc@ 1+ loc! ;
+: loc2+ ( -- ) loc@ 2+ loc! ;
 : reg-pos ( shift "name" -- ) 
   create , 
   does> swap addr6 swap @ lshift ;
@@ -66,6 +67,23 @@ variable mloc \ current memory location
   does> >r
         imm16
         r> xop& ;
+0 constant RegisterValueSpace
+1 constant MemorySpace
+2 constant CoreMemorySpace
+3 constant InstructionSpace 
+
+: linker-entry ( kind address value -- n ) 
+  addr32 0x20 lshift ( k a v<<32 )
+  swap ( k v3 a )
+  addr16 0x10 lshift 
+  rot ( v3 a k )
+  0xFF and ( v3 a1 k8 )
+  or ( v3 n )
+  or ( n ) ;
+: def-space-entry ( value "name" -- )
+  create c, 
+  does> ( addr value -- n )
+  @ -rot linker-entry ;
 
 
 \ registers
@@ -223,50 +241,40 @@ def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
 
-0 constant RegisterValueSpace
-1 constant MemorySpace
-2 constant CoreMemorySpace
-3 constant InstructionSpace 
-: .label ( -- ) loc@ constant ;
-: .org ( n -- ) loc! ;
-: .data16 ( n -- v ) addr16 ;
-: .data32 ( n -- vlower vupper ) dup .data16 swap 16 rshift .data16 ;
-: linker-entry ( kind address value -- n ) 
-  addr32 32 lshift ( k a v<<32 )
-  swap ( k v3 a )
-  addr16 16 lshift
-  rot ( v3 a k )
-  0xFF and ( v3 a1 k8 )
-  or ( v3 n )
-  or ( n ) ;
-: def-space-entry ( value "name" -- )
-  create c, 
-  does> ( addr value -- n )
-  @ -rot linker-entry ;
 RegisterValueSpace def-space-entry register-entry
 MemorySpace def-space-entry memory-entry
 CoreMemorySpace def-space-entry core-entry
 InstructionSpace def-space-entry instruction-entry
-: linker>> ( entry id -- ) 
+: <<linker ( entry id -- ) 
   hex
   dup >r
   nout
   s" " r> write-line throw ;
-: core>> ( num id -- ) 
-  hex \ make sure
-  dup >r 
-  nout 
-  s" " r> write-line throw ;
-: inst>>core ( inst id -- ) 
-  \ you'll get two entries out of it
-  >r \ stash the file-handler
-  .data32 \ get the data out
-  swap ( vup vlo ) 
-  r> ( vup vlo fid )
-  swap over ( vup fid vlo fid )
-  core>>
-  core>> ;
-: data16>>core ( value id -- ) core>> ;
+: <<inst ( inst id -- ) 
+  >r
+  @loc swap instruction-entry
+  r> <<linker 
+  loc2+ \ each instruction is two entries
+  ;
+: <<mem ( value id -- )
+  >r
+  @loc swap memory-entry
+  r> <<linker loc1+ ;
+: <<core ( inst id -- )
+  >r 
+  @loc swap core-entry
+  r> <<linker loc1+ ;
+: <<register ( index value id -- ) 
+  >r
+  register-entry 
+  r> <<linker ; 
+
+
+
+: .label ( -- ) loc@ constant ;
+: .org ( n -- ) loc! ;
+: .data16 ( n -- v ) addr16 ;
+: .data32 ( n -- vlower vupper ) dup .data16 swap 0x10 rshift .data16 ;
 
 
 ( linker format routines as well )
