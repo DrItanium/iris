@@ -102,5 +102,22 @@ vocabulary z80 also z80 definitions
 0xb0 8alg ior,
 0xb8 8alg cmp, 
 
+\ index versions
+
+: 8im <builds c, does> c@ c, c, ;
+
+0xc6 8im adi,
+0xce 8im aci,
+0xd6 8im sui,
+0xde 8im sci,
+0xe6 8im ani,
+0xee 8im xoi,
+0xf6 8im ori,
+0xfe 8im cpi,
+
+: inc, dup 8* 0x04 + c, if c, then ;
+: dec, dup 8* 0x05 + c, if c, then ;
+
+
 set-current
 previous
