@@ -172,24 +172,6 @@ namespace iris {
         auto b = getSource2(op).integer;
         setDestination(op, a > b ? a : b);
     }
-    DefExec(LogicalXor) {
-        auto a = getSource(op).getTruth();
-        auto b = getSource2(op).getTruth();
-        setDestination(op, a != b);
-    }
-    DefExec(LogicalNot) { setDestination(op, !getSource(op).getTruth()); }
-    DefExec(LogicalAnd) {
-        auto a = getSource(op).getTruth();
-        auto b = getSource2(op).getTruth();
-        setDestination(op, a && b);
-    }
-    DefExec(LogicalOr) {
-        auto a = getSource(op).getTruth();
-        auto b = getSource2(op).getTruth();
-        setDestination(op, a || b);
-    }
-    DefExec(LogicalNand) { setDestination(op, binaryNand<bool>(getSource(op).getTruth(), getSource2(op).getTruth())); }
-    DefExec(LogicalNor) { setDestination(op, binaryNor<bool>(getSource(op).getTruth(), getSource2(op).getTruth())); }
     DefExec(Eq) { setDestination(op, getSource(op).integer == getSource2(op).integer); }
     DefExec(Neq) { setDestination(op, getSource(op).integer != getSource2(op).integer); }
     DefExec(LessThan) { setDestination(op, getSource(op).integer < getSource2(op).integer); }

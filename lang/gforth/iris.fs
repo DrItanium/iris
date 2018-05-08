@@ -87,6 +87,9 @@ set-current \ go back
 14 cconstant ci \ core index number
 
 0  inst-3reg add, 
+: move, ( src dest -- n ) zero swap add, ;
+: nop, ( -- n ) zero zero zero add, ;
+: -> ( src dest -- n ) move, ;
 1  inst-3reg sub, 
 2  inst-3reg mul, 
 3  inst-3reg div, 
@@ -101,56 +104,13 @@ set-current \ go back
 12 inst-3reg nor,
 13 inst-3reg min,
 14 inst-3reg max,
-15 inst-3reg lxor,
-16 inst-2reg lnot,
-17 inst-3reg land,
-18 inst-3reg lor,
-19 inst-3reg lnand,
-20 inst-3reg lnor,
-21 inst-3reg eq,
-22 inst-3reg neq,
-23 inst-3reg lt,
-24 inst-3reg gt,
-25 inst-3reg le,
-26 inst-3reg ge,
-27 inst-1reg-with-imm set,
-28 inst-2reg ld,
-29 inst-2reg st,
-30 inst-2reg push,
-31 inst-2reg pop,
-32 inst-2reg ldc,
-33 inst-2reg stc,
-34 inst-2reg ldio,
-35 inst-2reg stio,
-36 inst-1reg br,
-37 inst-2reg brl,
-38 inst-2reg bcr,
-39 inst-3reg bcrl,
-40 inst-3reg ueq,
-41 inst-3reg uneq,
-42 inst-3reg ult,
-43 inst-3reg ugt,
-44 inst-3reg ule,
-45 inst-3reg uge,
-46 inst-3reg uand,
-47 inst-3reg uor,
-48 inst-2reg unot,
-49 inst-3reg uxor,
-50 inst-3reg unand,
-51 inst-3reg unor,
-52 inst-3reg umin,
-53 inst-3reg umax,
-54 inst-3reg uadd,
-55 inst-3reg usub,
-56 inst-3reg umul,
-57 inst-3reg udiv,
-58 inst-3reg urem,
-59 inst-3reg ushl,
-60 inst-3reg ushr,
-61 inst-2reg readtok,
-62 inst-3reg number,
-: move, ( src dest -- n ) zero swap uor, ;
-: -> ( src dest -- n ) move, ;
+15 inst-3reg eq,
+16 inst-3reg neq,
+17 inst-3reg lt,
+18 inst-3reg gt,
+19 inst-3reg le,
+20 inst-3reg ge,
+21 inst-1reg-with-imm set,
 : $-> ( imm dest -- n ) set, ;
 : $->at0 ( imm -- n ) at0 $-> ;
 : $->at0-3arg ( imm a b -- at0 a b n ) 
@@ -158,29 +118,109 @@ set-current \ go back
   at0 ( a b at0 ) -rot ( at0 a b ) 
   r> ( at0 a b n ) ;
 
+: $->at0-2arg ( imm b -- at0 b n )
+  swap ( b imm )
+  $->at0 at0 -rot ( at0 b n ) ;
+22 inst-2reg ld,
+23 inst-2reg st,
+24 inst-2reg push,
+25 inst-2reg pop,
+26 inst-2reg ldc,
+27 inst-2reg stc,
+28 inst-2reg ldio,
+29 inst-2reg stio,
+30 inst-1reg br,
+31 inst-2reg brl,
+32 inst-2reg bcr,
+33 inst-3reg bcrl,
+34 inst-3reg ueq,
+35 inst-3reg uneq,
+36 inst-3reg ult,
+37 inst-3reg ugt,
+38 inst-3reg ule,
+39 inst-3reg uge,
+40 inst-3reg uand,
+41 inst-3reg uor,
+42 inst-2reg unot,
+43 inst-3reg uxor,
+44 inst-3reg unand,
+45 inst-3reg unor,
+46 inst-3reg umin,
+47 inst-3reg umax,
+48 inst-3reg uadd,
+49 inst-3reg usub,
+50 inst-3reg umul,
+51 inst-3reg udiv,
+52 inst-3reg urem,
+53 inst-3reg ushl,
+54 inst-3reg ushr,
+55 inst-2reg readtok,
+56 inst-3reg number,
 
-: addi, ( imm src dest -- n set-op ) 
-  $->at0-3arg ( at0 a b so )
-  >r 
-  add,
-  r> ;
+: def2argi ( "name" "op" -- )
+  create ' , 
+  does> ( imm dest -- n set-op )
+  >r \ stash the address for now
+  $->at0-2arg
+  r> \ get the top back
+  swap
+  >r \ stash the set op for now
+  @ execute \ execute the stashed operation
+  r> \ restore the top
+  ;
 
-: subi, ( imm src dest -- n set-op ) 
-  $->at0-3arg ( at0 a b so )
-  >r 
-  sub,
-  r> ;
-: muli, ( imm src dest -- n set-op ) 
-  $->at0-3arg ( at0 a b so )
-  >r 
-  mul,
-  r> ;
+: def3argi ( "name" "op" -- )
+  create ' , 
+  does> ( imm src dest -- n set-op )
+  >r \ stash the address for now
+  $->at0-3arg
+  r> \ get the top back
+  swap
+  >r \ put the new value back onto the stack
+  @ execute \ we should now have the argument correctly setup
+  r> \ get the set back as well
+  ;
 
-: divi, ( imm src dest -- n set-op ) 
-  $->at0-3arg ( at0 a b so )
-  >r 
-  div,
-  r> ;
+: b, ( imm -- n s ) $->at0 >r at0 br, r> ;
+: bl, ( imm lr -- n s ) swap $->at0 >r at0 brl, r> ;
+: bc, ( imm cond -- n s ) swap $->at0 >r at0 bcr, r> ;
+: bcl, ( imm link cond -- n s ) rot $->at0 >r at0 bcrl, r> ;
+def3argi addi, add,
+def3argi subi, sub,
+def3argi muli, mul,
+def3argi divi, div,
+def3argi remi, rem,
+def3argi andi, and,
+def3argi ori, or,
+def3argi xori, xor,
+def3argi nori, nor,
+def3argi nandi, nand,
+def2argi noti, not,
+def3argi eqi, eq,
+def3argi neqi, neq,
+def3argi gti, gt,
+def3argi lti, lt,
+def3argi gei, ge,
+def3argi lei, le,
+
+def3argi uaddi, uadd,
+def3argi usubi, usub,
+def3argi umuli, umul,
+def3argi udivi, udiv,
+def3argi uremi, urem,
+def3argi uandi, uand,
+def3argi uori, uor,
+def3argi uxori, uxor,
+def3argi unori, unor,
+def3argi unandi, unand,
+def2argi unoti, unot,
+def3argi ueqi, ueq,
+def3argi uneqi, uneq, 
+def3argi ulti, ult,
+def3argi ugti, ugt,
+def3argi ulei, ule,
+def3argi ugei, uge,
+
 
 : .label ( -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
