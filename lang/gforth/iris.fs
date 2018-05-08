@@ -1,5 +1,8 @@
 get-current ( wid )
 vocabulary iris also iris definitions
+
+: w0x ( id -- ) s" 0x" rot write-file throw ; 
+: nout ( num id -- ) swap s>d <<# #s #> rot write-file #>> throw ;
 : addr-mask ( mask "name" -- )
   CREATE , 
   does> @ and ;
@@ -183,8 +186,24 @@ set-current \ go back
 : .data16 ( n -- v ) addr16 ;
 : .data32 ( n -- vlower vupper ) dup addr16 swap 16 rshift addr16 ;
 : .data64 ( n -- vlowest vlower vhigher vhighest ) dup 
->r .data32 \ lower half 
-r> 32 rshift .data32 ;
+   >r .data32 \ lower half 
+   r> 32 rshift .data32 ;
+
+: core>> ( num id -- ) 
+  hex \ make sure
+  dup dup >r w0x 
+  nout 
+  s" " r> write-line throw ;
+: inst->core ( inst id -- ) 
+  \ you'll get two entries out of it
+  >r \ stash the file-handler
+  .data32 \ get the data out
+  swap ( vup vlo ) 
+  r> ( vup vlo fid )
+  swap over ( vup fid vlo fid )
+  core>>
+  core>> ;
+
 previous
 ( The idea is to write a simple interpreter and perform the memory encoding
   within gforth and then dump it out to disk in such a way as to make it easy
