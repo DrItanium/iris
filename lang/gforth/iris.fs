@@ -182,6 +182,7 @@ set-current \ go back
   div,
   r> ;
 
+: .label ( -- ) loc@ constant ;
 : .org ( n -- ) loc! ;
 : .data16 ( n -- v ) addr16 ;
 : .data32 ( n -- vlower vupper ) dup addr16 swap 16 rshift addr16 ;
