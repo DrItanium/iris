@@ -74,14 +74,22 @@ vocabulary iris also iris definitions
 
 
 \ registers
-0 cconstant reg-zero
-1 cconstant reg-error-code
-2 cconstant reg-terminator
-3 cconstant reg-num-base
-4 cconstant reg-sp0
-5 cconstant reg-sp1
-64 cconstant reg-count
 set-current \ go back
+0 cconstant zero
+1 cconstant error-code
+2 cconstant terminator
+3 cconstant num-base
+4 cconstant sp0
+5 cconstant sp1
+6 cconstant sp2
+7 cconstant cv
+8 cconstant lr
+9 cconstant at0
+10 cconstant at1
+11 cconstant at2
+12 cconstant at3
+13 cconstant io
+14 cconstant ci \ core index number
 
 0 :inst-3reg add, 
 :inst-3reg sub, 
@@ -115,19 +123,14 @@ set-current \ go back
 :inst-2reg st,
 :inst-2reg push,
 :inst-2reg pop,
-:inst-2reg ld.core,
-:inst-2reg st.core,
-:inst-imm16 b,
-:inst-1reg br,
-:inst-2reg brl,
-:inst-1reg-with-imm bc,
-:inst-2reg bcr,
-:inst-3reg bcrl,
-:inst-3reg if,
-:inst-4reg ifl,
-:inst-1reg terminateExecution,
+:inst-2reg ldc,
+:inst-2reg stc,
 :inst-2reg ldio,
 :inst-2reg stio,
+:inst-1reg br,
+:inst-2reg brl,
+:inst-2reg bcr,
+:inst-3reg bcrl,
 :inst-3reg ueq,
 :inst-3reg uneq,
 :inst-3reg ult,
@@ -149,11 +152,41 @@ set-current \ go back
 :inst-3reg urem,
 :inst-3reg ushl,
 :inst-3reg ushr,
-:inst-4reg choose,
-:inst-4reg schoose,
 :inst-2reg readtok,
 :inst-3reg number,
 drop
+: move, ( src dest -- n ) uor, ;
+: -> ( src dest -- n ) move, ;
+: $-> ( imm dest -- n ) set, ;
+: $->at0 ( imm -- n ) at0 $-> ;
+: $->at0-3arg ( imm a b -- at0 a b n ) 
+  rot $->at0 >r 
+  at0 ( a b at0 ) -rot ( at0 a b ) 
+  r> ( at0 a b n ) ;
+
+
+: addi, ( imm src dest -- n set-op ) 
+  $->at0-3arg ( at0 a b so )
+  >r 
+  add,
+  r> ;
+
+: subi, ( imm src dest -- n set-op ) 
+  $->at0-3arg ( at0 a b so )
+  >r 
+  sub,
+  r> ;
+: muli, ( imm src dest -- n set-op ) 
+  $->at0-3arg ( at0 a b so )
+  >r 
+  mul,
+  r> ;
+
+: divi, ( imm src dest -- n set-op ) 
+  $->at0-3arg ( at0 a b so )
+  >r 
+  div,
+  r> ;
 
 previous
 
