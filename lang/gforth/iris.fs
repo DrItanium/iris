@@ -269,17 +269,17 @@ r13 cconstant io
 r14 cconstant ci \ core index number
 : sanity-check-opcode ( op expected -- ) <> ABORT" opcode does not match expected!" ;
 : inst-1reg ( opcode-index "name" -- )
-  create dup c, 1+ \ embed opcode
+  create c, \ embed opcode
   does> >r 
         1reg
         r> xop& <<inst ;
 : inst-2reg ( opcode-index "name" -- )
-  create dup c, 1+ \ embed opcode
+  create c, \ embed opcode
   does> >r
         2reg
         r> xop& <<inst ;
 : inst-3reg ( opcode-index "name" -- )
-  create dup c, 1+ \ embed opcode
+  create c, \ embed opcode
   does> >r 
         3reg 
 		r> xop& <<inst ;
