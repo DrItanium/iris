@@ -180,7 +180,7 @@ variable CurrentAssemblyFile
 : curasm@ ( -- file ) CurrentAssemblyFile @ ;
 : curasm! ( n -- ) CurrentAssemblyFile ! ;
 : clearasm ( -- ) 0 curasm! ;
-: <<imminst ( n set -- ) curasm@ swap over <<iinst <<inst ;
+: <<iinst ( n -- ) curasm@ <<iinst ;
 : <<inst ( n -- ) curasm@ <<inst ;
 : .label ( label -- ) curasm@ <<label ;
 : .data16 ( n -- ) curasm@ swap addr16 swap <<mem ;
@@ -322,14 +322,19 @@ r14 cconstant ci \ core index number
 #ge inst-3reg ge,
 : set, ( imm imm-type dest -- )
   1reg #set
-  or ( imm it v ) rot ( it v imm ) 
-  addr16 16 lshift or
+  or ( imm it v ) 
+  rot ( it v imm )  
+  addr16 16 lshift 
+  or 
   swap ( v it )
   0= if ( constant ) <<inst else <<iinst endif ;
-: #set, ( imm dest -- ) over 0= 
+: ?imm0 ( imm v -- imm v f ) over 0= ;
+: #set, ( imm dest -- ) 
+  ?imm0
   if 
     \ emit a move zero if it turns out we are looking at a constant zero
-    swap drop zero swap move, 
+    \ zero and 0 translate to the same thing
+    move,
   else 
     #, swap set, \ otherwise emit as normal
   endif ;
@@ -456,7 +461,7 @@ ioaddr}
 \ core routines
 : dump-core ( -- ) ci /dev/core-dump #->io io-write ;
 : load-core ( -- ) ci /dev/core-load #->io io-write ;
-: call, ( dest -- ) lr !bl ;
+: call, ( dest -- ) lr bl, ;
 : lw, ( src dest -- ) ld, ;
 : sw, ( value addr -- ) st, ;
 : @-> ( a b -- ) 
@@ -477,22 +482,27 @@ push, ;
 : jmp ( addr id -- ) b, ;
 : #jmp ( addr -- ) #, jmp ;
 : !jmp ( addr -- ) !, jmp ;
-
 : ldi, ( imm id dest -- ) >r $->at0 at0 r> ld, ;
+: #ldi, ( imm dest -- ) ?imm0 if ld, else #, swap ldi, endif ;
+: !ldi, ( imm dest -- ) !, swap ldi, ;
+
 : sti, ( imm id addr -- ) >r $->at0 at0 r> st, ;
+: #sti, ( imm addr -- ) ?imm0 if st, else #, swap sti, endif ;
+: !sti, ( imm addr -- ) !, swap sti, ;
 : pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
+: #pushi, ( imm sp -- ) ?imm0 if push, else #, swap pushi, endif ;
+: !pushi, ( imm sp -- ) !, swap pushi, ;
 : swap, ( src dest -- ) 
-2dup = 
-if 
-\ ignore the operation if they are equal and don't dump anything out
-2drop 
-else
-dup ( src dest dest )
-at0 -> ( stash dest in at0 )
-over swap ( r0 r0 r1 )
--> 
-at0 swap ( at0 r0 )
--> 
-endif ;
+  2dup = if 
+  \ ignore the operation if they are equal and don't dump anything out
+    2drop 
+  else
+    dup ( src dest dest )
+    at0 -> ( stash dest in at0 )
+    over swap ( r0 r0 r1 )
+    -> 
+    at0 swap ( at0 r0 )
+    -> 
+  endif ;
 
 previous
