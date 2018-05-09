@@ -50,6 +50,7 @@ namespace iris {
                 Instruction,
                 LabelEntry,
                 IndirectInstruction,
+                IndirectMemory,
             };
             LinkerEntry(Kind kind, Address addr, RawInstruction val) noexcept : _kind(kind), _address(addr), _value(val) { };
             LinkerEntry(RawLinkerEntry entry) noexcept;
@@ -135,6 +136,7 @@ int main(int argc, char** argv) {
                      _labelMappings.emplace(entry.getValue(), entry.getAddress());
                      break;
                 case Kind::IndirectInstruction:
+                case Kind::IndirectMemory:
                      // resolve these later
                      _delayedInstructions.emplace_back(entry);
                      break;
@@ -149,14 +151,24 @@ int main(int argc, char** argv) {
         }
         in.close();
         for (auto& e : _delayedInstructions) {
-            auto upperHalf = (e.getValue() >> 16) & 0xFFFF;
-            if (auto r = _labelMappings.find(upperHalf); r != _labelMappings.end()) {
-                auto address = e.getAddress();
-                auto lowerHalf = Address(e.getValue());
-                core.install(address, lowerHalf, iris::Core::InstallToMemory());
-                core.install(address + 1, r->second, iris::Core::InstallToMemory());
+            if (auto kind = e.getKind() ; kind == Kind::IndirectInstruction) {
+                auto upperHalf = (e.getValue() >> 16) & 0xFFFF;
+                if (auto r = _labelMappings.find(upperHalf); r != _labelMappings.end()) {
+                    auto address = e.getAddress();
+                    auto lowerHalf = Address(e.getValue());
+                    core.install(address, lowerHalf, iris::Core::InstallToMemory());
+                    core.install(address + 1, r->second, iris::Core::InstallToMemory());
+                } else {
+                    throw Problem("Not all labels are defined for given indirect instructions!");
+                }
+            } else if (kind == Kind::IndirectMemory) {
+                if (auto r = _labelMappings.find(e.getValue()); r != _labelMappings.end()) {
+                    core.install(e.getAddress(), r->second, iris::Core::InstallToMemory());
+                } else {
+                    throw Problem("Not all labels are defined for the given indirect indirections!");
+                }
             } else {
-                throw Problem("Not all labels are defined for given indirect instructions!");
+                throw Problem("Unsupported linker entry kind in the delay list!");
             }
         }
     }
