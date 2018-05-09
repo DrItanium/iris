@@ -60,6 +60,9 @@ variable mloc \ current memory location
 : {opcode ( -- 0 ) {registers ;
 : opcode: dup cconstant 1+ ;
 : opcode} ( n -- ) registers} ;
+: {ioaddr ( -- 0 ) {registers ;
+: ioaddr} ( n -- ) registers} ;
+: ioaddr: ( n -- k ) dup constant 1+ ;
 
 {opcode
 opcode: #add 
@@ -323,9 +326,14 @@ r14 cconstant ci \ core index number
   addr16 16 lshift or
   swap ( v it )
   0= if ( constant ) <<inst else <<iinst endif ;
-: #set, ( imm dest -- ) #, swap set, ;
+: #set, ( imm dest -- ) over 0= 
+  if 
+    \ emit a move zero if it turns out we are looking at a constant zero
+    swap drop zero swap move, 
+  else 
+    #, swap set, \ otherwise emit as normal
+  endif ;
 : !set, ( imm dest -- ) !, swap set, ;
-
 : $-> ( imm id dest -- n ) set, ;
 : $->at0 ( imm id -- n ) at0 $-> ;
 : $->at1 ( imm id -- n ) at1 $-> ;
@@ -427,4 +435,64 @@ def3argi ulti, ult,
 def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
+{ioaddr
+ioaddr: /dev/null 
+ioaddr: /dev/console0
+ioaddr: /dev/console1
+ioaddr: /dev/core-dump
+ioaddr: /dev/core-load
+ioaddr: /dev/dump-vm
+ioaddr: /dev/terminate-vm
+ioaddr}
+
+: $->io ( imm id -- ) io $-> ;
+: #->io ( imm -- ) #, $->io ;
+: !->io ( imm -- ) !, $->io ;
+
+: ret, ( -- ) lr br, ;
+: io-write ( src -- ) io stio, ;
+: io-read ( dest -- ) io swap ldio, ;
+
+\ core routines
+: dump-core ( -- ) ci /dev/core-dump #->io io-write ;
+: load-core ( -- ) ci /dev/core-load #->io io-write ;
+: call, ( dest -- ) lr !bl ;
+: lw, ( src dest -- ) ld, ;
+: sw, ( value addr -- ) st, ;
+: @-> ( a b -- ) 
+  \ the contents of the memory location word whose address is in register A
+  \ are loaded into register B (a 16-bit indirect fetch from A to B )
+  lw, ;
+
+: pop-> ( s a -- )
+  \ the S push down stack top entry is loaded to register A and the stack pointer
+  \ is adjusted
+  pop, ;
+
+: psh-> ( a s -- )
+\ the A register contents are loaded to the S pushdown stack and the stack 
+\ pointer is adjusted
+push, ;
+
+: jmp ( addr id -- ) b, ;
+: #jmp ( addr -- ) #, jmp ;
+: !jmp ( addr -- ) !, jmp ;
+
+: ldi, ( imm id dest -- ) >r $->at0 at0 r> ld, ;
+: sti, ( imm id addr -- ) >r $->at0 at0 r> st, ;
+: pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
+: swap, ( src dest -- ) 
+2dup = 
+if 
+\ ignore the operation if they are equal and don't dump anything out
+2drop 
+else
+dup ( src dest dest )
+at0 -> ( stash dest in at0 )
+over swap ( r0 r0 r1 )
+-> 
+at0 swap ( at0 r0 )
+-> 
+endif ;
+
 previous
