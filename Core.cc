@@ -248,8 +248,7 @@ namespace iris {
         // dest - dictionary pointer / destination
         auto dp = getRegister(op._args.dest).get<Address>();
         auto lbp = getSource(op).address;
-        //auto separator = getSource2(op).get<byte>();
-        static constexpr char separator = 0x20;
+        auto separator = _registers[registerSeparator].get<signed char>();
         // ignore any whitespace before token itself
         for (auto front = _memory[lbp].get<signed char>(); front == separator; ++lbp, front = _memory[lbp].get<signed char>()) { }
         auto start = lbp; // save the start of the token
@@ -466,6 +465,7 @@ namespace iris {
         _registers[registerErrorCode].setValue(0);
         _registers[registerTerminator].setValue(0);
         _registers[registerNumericBase].setValue(16);
+        _registers[registerSeparator].setValue(' ');
         // setup the basic IO device for console input output
         IODevice sink(0);
         IODevice console(1, 2, readFromStandardIn, writeToStandardOut);
