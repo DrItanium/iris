@@ -264,16 +264,16 @@ r2 cconstant terminator
 r3 cconstant num-base
 r4 cconstant dsp
 r5 cconstant rsp
-r6 cconstant vmsp
-r7 cconstant cv
-r8 cconstant lr
-r9 cconstant at0
-r10 cconstant at1
-r11 cconstant at2
-r12 cconstant at3
-r13 cconstant io
-r14 cconstant ci \ core index number
-: sanity-check-opcode ( op expected -- ) <> ABORT" opcode does not match expected!" ;
+r6 cconstant separator
+r7 cconstant vmsp
+r8 cconstant cv
+r9 cconstant lr
+r10 cconstant at0
+r11 cconstant at1
+r12 cconstant at2
+r13 cconstant at3
+r14 cconstant io
+r15 cconstant ci \ core index number
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -504,16 +504,15 @@ push, ;
     at0 swap ( at0 r0 )
     -> 
   endif ;
-: inject#3, ( a b -- #, a b ) >r >r #, r> r> swap ;
-: !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) >r >r !, -rot r> r> @ execute ;
+: inject#3, ( a b -- #, a b ) 2>r #, 2r> ;
+
+: !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
 : #addi, ( imm src dest -- ) 
   rot dup 0= 
   if 
   drop move, ( add with zero )
   else
-  -rot >r >r 
-  #, 
-  r> r> swap addi, 
+  -rot inject3#, addi, 
   endif ;
 
 : #subi, ( imm src dest -- ) 
@@ -521,9 +520,7 @@ push, ;
   if 
   drop move, 
   else
-  -rot >r >r 
-  #, 
-  r> r> swap subi, 
+  -rot inject#3, subi,
   endif ;
 
 : #muli, ( imm src dest -- )
@@ -547,10 +544,7 @@ push, ;
 !def3i !divi, divi,
 !def3i !remi, remi, 
 
-: 1+, ( reg -- ) 1 swap dup #addi, ;
-: 1-, ( reg -- ) 1 swap dup #subi, ;
-  
-: lshifti, ( imm id src dest -- ) >r >r $->at0 at0 r> r> swap lshift, ;
+: lshifti, ( imm id src dest -- ) 2>r $->at0 at0 2r> lshift, ;
 : #lshifti, ( imm src dest -- ) 
   rot dup 0= 
   if 
@@ -560,7 +554,7 @@ push, ;
   endif ;
 
 !def3i !lshifti, lshifti,
-: rshifti, ( imm id src dest -- ) >r >r $->at0 at0 r> r> swap rshift, ;
+: rshifti, ( imm id src dest -- ) 2>r $->at0 at0 2r> rshift, ;
 : #rshifti, ( imm src dest -- ) 
   rot dup 0=
   if 
@@ -570,5 +564,48 @@ push, ;
   endif ;
 
 !def3i !rshifti, rshifti,
+: make-update-form-3arg ( constant "name" "function" -- )
+  create , ' ,
+  does> ( reg -- )
+  >r 
+  dup zero = r> swap 
+  if 
+    2drop 
+  else 
+    2@ \ load the code and function
+    >r \ stash the function
+    swap dup r> execute
+  endif ;
+: andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
+: ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
+: xori, ( imm id src dest -- ) 2>r $->at0 at0 2r> xor, ;
+: nandi, ( imm id src dest -- ) 2>r $->at0 at0 2r> nand, ;
+: nori, ( imm id src dest -- ) 2>r $->at0 at0 2r> nor, ;
 
+
+!def3i !andi, andi, 
+!def3i !ori, ori, 
+!def3i !xori, xori, 
+!def3i !nandi, nandi, 
+!def3i !nori, nori, 
+1 make-update-form-3arg 1+, #addi,
+1 make-update-form 3arg 1-, #subi, 
+2 make-update-form-3arg 2+, #addi, 
+2 make-update-form-3arg 2-, #subi, 
+1 make-update-form-3arg 2/, #rshift, 
+2 make-update-form-3arg 4*, #lshift, 
+2 make-update-form-3arg 4/, #rshift, 
+3 make-update-form-3arg 8*, #lshift, 
+3 make-update-form-3arg 8/, #rshift, 
+4 make-update-form-3arg 16*, #lshift, 
+4 make-update-form-3arg 16/, #rshift, 
+5 make-update-form-3arg 32*, #lshift, 
+5 make-update-form-3arg 32/, #rshift, 
+6 make-update-form-3arg 64*, #lshift, 
+6 make-update-form-3arg 64/, #rshift, 
+\ special form
+: 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
+
+( TODO: redefine multiply and divide to automatically use the faster formats
+        if it makes sense )
 previous
