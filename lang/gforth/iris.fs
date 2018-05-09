@@ -70,8 +70,8 @@ opcode: #sub
 opcode: #mul 
 opcode: #div 
 opcode: #rem 
-opcode: #shl 
-opcode: #shr 
+opcode: #lshift
+opcode: #rshift
 opcode: #and 
 opcode: #or 
 opcode: #not 
@@ -118,8 +118,8 @@ opcode: #usub
 opcode: #umul
 opcode: #udiv
 opcode: #urem
-opcode: #ushl
-opcode: #ushr
+opcode: #ulshift
+opcode: #urshift
 opcode: #readtok
 opcode: #number
 opcode}
@@ -304,8 +304,8 @@ r14 cconstant ci \ core index number
 #mul inst-3reg mul, 
 #div inst-3reg div, 
 #rem inst-3reg rem, 
-#shl inst-3reg shl, 
-#shr inst-3reg shr, 
+#rshift inst-3reg rshift,
+#lshift inst-3reg lshift, 
 #and inst-3reg and, 
 #or inst-3reg or, 
 #not inst-2reg not, 
@@ -378,8 +378,8 @@ r14 cconstant ci \ core index number
 #umul inst-3reg umul,
 #udiv inst-3reg udiv,
 #urem inst-3reg urem,
-#ushl inst-3reg ushl,
-#ushr inst-3reg ushr,
+#ulshift inst-3reg ulshift,
+#urshift inst-3reg urshift, 
 #readtok inst-2reg readtok,
 #number inst-3reg number,
 
@@ -504,5 +504,71 @@ push, ;
     at0 swap ( at0 r0 )
     -> 
   endif ;
+: inject#3, ( a b -- #, a b ) >r >r #, r> r> swap ;
+: !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) >r >r !, -rot r> r> @ execute ;
+: #addi, ( imm src dest -- ) 
+  rot dup 0= 
+  if 
+  drop move, ( add with zero )
+  else
+  -rot >r >r 
+  #, 
+  r> r> swap addi, 
+  endif ;
+
+: #subi, ( imm src dest -- ) 
+  rot dup 0= 
+  if 
+  drop move, 
+  else
+  -rot >r >r 
+  #, 
+  r> r> swap subi, 
+  endif ;
+
+: #muli, ( imm src dest -- )
+  rot dup 0= 
+  if 
+    drop ( src dest )\ we hit a zero
+    swap ( dest src ) \ drop this argument too!
+    drop ( dest )     \ 
+    zero swap ( zero dest ) 
+    move, \ just assign zero to the register
+  else
+    -rot inject#3, muli, 
+  endif ;
+
+: #divi, ( imm src dest -- ) >r #, swap r> divi, ;
+: #remi, ( imm src dest -- ) >r #, swap r> remi, ;
+
+!def3i !addi, addi,
+!def3i !subi, subi,
+!def3i !muli, muli,
+!def3i !divi, divi,
+!def3i !remi, remi, 
+
+: 1+, ( reg -- ) 1 swap dup #addi, ;
+: 1-, ( reg -- ) 1 swap dup #subi, ;
+  
+: lshifti, ( imm id src dest -- ) >r >r $->at0 at0 r> r> swap lshift, ;
+: #lshifti, ( imm src dest -- ) 
+  rot dup 0= 
+  if 
+    drop move, \ it becomes a move
+  else
+   -rot inject#3, lshifti, 
+  endif ;
+
+!def3i !lshifti, lshifti,
+: rshifti, ( imm id src dest -- ) >r >r $->at0 at0 r> r> swap rshift, ;
+: #rshifti, ( imm src dest -- ) 
+  rot dup 0=
+  if 
+    drop move, \ it becomes a move
+  else
+    -rot inject#3, rshifti, 
+  endif ;
+
+!def3i !rshifti, rshifti,
 
 previous
