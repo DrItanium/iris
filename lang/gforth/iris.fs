@@ -1,7 +1,10 @@
 get-current ( wid )
 vocabulary iris also iris definitions
 
-: nout ( num id -- ) swap s>d <<# #s #> rot write-line #>> throw ;
+: nout ( num id -- ) swap s>d 
+\ get rid of sign extension nonsense
+dup 0< if 0 and endif 
+<<# #s #> rot write-file #>> throw ;
 : addr-mask ( mask "name" -- )
   CREATE , 
   does> @ and ;
@@ -290,7 +293,7 @@ r14 cconstant ci \ core index number
 : -> ( src dest -- n ) move, ;
 \ constant tagging version
 \ #, is a constant version
-: #, ( -- 0 ) 0 ; 
+: #, ( imm -- imm16 0 ) addr16 0 ; 
 \ !, is an indirect instruction
 : !, ( -- 1 ) 1 ;
 
