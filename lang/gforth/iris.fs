@@ -11,6 +11,7 @@ vocabulary iris also iris definitions
 0xFFFFFFFF addr-mask addr32
 variable labelIndex
 variable mloc \ current memory location
+: 2+ ( n -- 2+n) 2 + ;
 : loc@ ( -- n ) mloc @ ;
 : loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
 : loc1+ ( -- ) loc@ 1+ loc! ;
@@ -39,39 +40,36 @@ variable mloc \ current memory location
 : cconstant ( byte "name" -- ) create c, does> c@ ;
 : xop& ( n a -- k ) c@ or ;
 : inst-1reg ( opcode-index "name" -- )
-  create c, \ embed opcode
+  create dup c, 1+ \ embed opcode
   does> >r 
         1reg
         r> xop& ;
 : inst-2reg ( opcode-index "name" -- )
-  create c, \ embed opcode
+  create dup c, 1+ \ embed opcode
   does> >r
         2reg
         r> xop& ;
 : inst-3reg ( opcode-index "name" -- )
-  create c, \ embed opcode
+  create dup c, 1+ \ embed opcode
   does> >r 
         3reg 
 		r> xop& ;
 : inst-4reg ( opcode-index "name" -- )
-  create c, \ embed opcode
+  create dup c, 1+ \ embed opcode
   does> >r
         4reg
         r> xop& ;
 : inst-1reg-with-imm ( opcode-index "name" -- )
-  create c, \ embed opcode
+  create dup c, 1+ \ embed opcode
   does> >r
         1reg-with-imm
-        r> xop& ;
-: inst-imm16 ( opcode-index "name" -- )
-  create c, \ embed opcode
-  does> >r
-        imm16
         r> xop& ;
 0 constant RegisterValueSpace
 1 constant MemorySpace
 2 constant CoreMemorySpace
 3 constant InstructionSpace 
+4 constant LabelSpace
+5 constant IndirectInstructionSpace
 
 
 : linker-entry ( kind address value -- n ) 
@@ -86,51 +84,127 @@ variable mloc \ current memory location
   create c, 
   does> ( addr value -- n )
   @ -rot linker-entry ;
-
+: {registers ( -- 0 ) 0 ;
+: registers} ( n -- ) drop ;
+: register: dup cconstant 1+ ;
+: {opcode ( -- 0 ) {registers ;
+: opcode} ( n -- ) registers} ;
 
 \ registers
 set-current \ go back
-0 cconstant zero
-1 cconstant error-code
-2 cconstant terminator
-3 cconstant num-base
-4 cconstant dsp
-5 cconstant rsp
-6 cconstant vmsp
-7 cconstant cv
-8 cconstant lr
-9 cconstant at0
-10 cconstant at1
-11 cconstant at2
-12 cconstant at3
-13 cconstant io
-14 cconstant ci \ core index number
 
-0  inst-3reg add, 
+{registers
+register: r0
+register: r1
+register: r2
+register: r3
+register: r4
+register: r5
+register: r6
+register: r7
+register: r8
+register: r9
+register: r10
+register: r11
+register: r12
+register: r13
+register: r14
+register: r15
+register: r16
+register: r17
+register: r18
+register: r19
+register: r20
+register: r21
+register: r22
+register: r23
+register: r24
+register: r25
+register: r26
+register: r27
+register: r28
+register: r29
+register: r30
+register: r31
+register: r32
+register: r33
+register: r34
+register: r35
+register: r36
+register: r37
+register: r38
+register: r39
+register: r40
+register: r41
+register: r42
+register: r43
+register: r44
+register: r45
+register: r46
+register: r47
+register: r48
+register: r49
+register: r50
+register: r51
+register: r52
+register: r53
+register: r54
+register: r55
+register: r56
+register: r57
+register: r58
+register: r59
+register: r60
+register: r61
+register: r62
+register: r63
+registers}
+r0 cconstant zero
+r1 cconstant error-code
+r2 cconstant terminator
+r3 cconstant num-base
+r4 cconstant dsp
+r5 cconstant rsp
+r6 cconstant vmsp
+r7 cconstant cv
+r8 cconstant lr
+r9 cconstant at0
+r10 cconstant at1
+r11 cconstant at2
+r12 cconstant at3
+r13 cconstant io
+r14 cconstant ci \ core index number
+
+: sanity-check-opcode ( op expected -- ) <> ABORT" opcode does not match expected!" ;
+{opcode
+inst-3reg add, 
 : move, ( src dest -- n ) zero swap add, ;
 : nop, ( -- n ) zero zero zero add, ;
 : -> ( src dest -- n ) move, ;
-1  inst-3reg sub, 
-2  inst-3reg mul, 
-3  inst-3reg div, 
-4  inst-3reg rem, 
-5  inst-3reg shl, 
-6  inst-3reg shr, 
-7  inst-3reg and, 
-8  inst-3reg or, 
-9  inst-2reg not, 
-10 inst-3reg xor, 
-11 inst-3reg nand, 
-12 inst-3reg nor,
-13 inst-3reg min,
-14 inst-3reg max,
-15 inst-3reg eq,
-16 inst-3reg neq,
-17 inst-3reg lt,
-18 inst-3reg gt,
-19 inst-3reg le,
-20 inst-3reg ge,
-21 inst-1reg-with-imm set,
+inst-3reg sub, 
+inst-3reg mul, 
+inst-3reg div, 
+inst-3reg rem, 
+inst-3reg shl, 
+inst-3reg shr, 
+inst-3reg and, 
+inst-3reg or, 
+inst-2reg not, 
+inst-3reg xor, 
+inst-3reg nand, 
+inst-3reg nor,
+inst-3reg min,
+inst-3reg max,
+inst-3reg eq,
+inst-3reg neq,
+inst-3reg lt,
+inst-3reg gt,
+inst-3reg le,
+inst-3reg ge,
+inst-1reg-with-imm set,
+\ sanity check
+
+0 zero set, 21 sanity-check-opcode 
 : $-> ( imm dest -- n ) set, ;
 : $->at0 ( imm -- n ) at0 $-> ;
 : $->at1 ( imm -- n ) at1 $-> ;
@@ -143,41 +217,42 @@ set-current \ go back
   swap ( b imm )
   $->at0 at0 -rot ( at0 b n ) ;
 : $->at0-1arg ( imm -- at0 ) $->at0 at0 ;
-22 inst-2reg ld,
-23 inst-2reg st,
-24 inst-2reg push,
-25 inst-2reg pop,
-26 inst-2reg ldc,
-27 inst-2reg stc,
-28 inst-2reg ldio,
-29 inst-2reg stio,
-30 inst-1reg br,
-31 inst-2reg brl,
-32 inst-2reg bcr,
-33 inst-3reg bcrl,
-34 inst-3reg ueq,
-35 inst-3reg uneq,
-36 inst-3reg ult,
-37 inst-3reg ugt,
-38 inst-3reg ule,
-39 inst-3reg uge,
-40 inst-3reg uand,
-41 inst-3reg uor,
-42 inst-2reg unot,
-43 inst-3reg uxor,
-44 inst-3reg unand,
-45 inst-3reg unor,
-46 inst-3reg umin,
-47 inst-3reg umax,
-48 inst-3reg uadd,
-49 inst-3reg usub,
-50 inst-3reg umul,
-51 inst-3reg udiv,
-52 inst-3reg urem,
-53 inst-3reg ushl,
-54 inst-3reg ushr,
-55 inst-2reg readtok,
-56 inst-3reg number,
+ inst-2reg ld,
+ inst-2reg st,
+ inst-2reg push,
+ inst-2reg pop,
+ inst-2reg ldc,
+ inst-2reg stc,
+ inst-2reg ldio,
+ inst-2reg stio,
+ inst-1reg br,
+ inst-2reg brl,
+ inst-2reg bcr,
+ inst-3reg bcrl,
+ inst-3reg ueq,
+ inst-3reg uneq,
+ inst-3reg ult,
+ inst-3reg ugt,
+ inst-3reg ule,
+ inst-3reg uge,
+ inst-3reg uand,
+ inst-3reg uor,
+ inst-2reg unot,
+ inst-3reg uxor,
+ inst-3reg unand,
+ inst-3reg unor,
+ inst-3reg umin,
+ inst-3reg umax,
+ inst-3reg uadd,
+ inst-3reg usub,
+ inst-3reg umul,
+ inst-3reg udiv,
+ inst-3reg urem,
+ inst-3reg ushl,
+ inst-3reg ushr,
+ inst-2reg readtok,
+ inst-3reg number,
+opcode}
 
 : def2argi ( "name" "op" -- )
   create ' , 
@@ -248,6 +323,7 @@ MemorySpace def-space-entry memory-entry
 CoreMemorySpace def-space-entry core-entry
 InstructionSpace def-space-entry instruction-entry
 LabelSpace def-space-entry label-entry 
+IndirectInstructionSpace def-space-entry indirect-instruction-entry 
 : <<linker ( entry id -- ) 
   hex
   dup >r
@@ -255,17 +331,23 @@ LabelSpace def-space-entry label-entry
   s" " r> write-line throw ;
 : <<inst ( inst id -- ) 
   >r
-  @loc swap instruction-entry
+  loc@ swap instruction-entry
+  r> <<linker 
+  loc2+ \ each instruction is two entries
+  ;
+: <<iinst ( inst id -- ) 
+  >r
+  loc@ swap indirect-instruction-entry
   r> <<linker 
   loc2+ \ each instruction is two entries
   ;
 : <<mem ( value id -- )
   >r
-  @loc swap memory-entry
+  loc@ swap memory-entry
   r> <<linker loc1+ ;
 : <<core ( inst id -- )
   >r 
-  @loc swap core-entry
+  loc@ swap core-entry
   r> <<linker loc1+ ;
 : <<register ( index value id -- ) 
   >r
@@ -273,9 +355,10 @@ LabelSpace def-space-entry label-entry
   r> <<linker ; 
 : <<label ( index id -- ) 
   >r
-  @loc swap label-entry
+  loc@ swap label-entry
   r> <<linker ;
 \ labels must be defined ahead of time before first reference
+: reset-labels ( -- ) 0 labelIndex ! ;
 : deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! does> @ ;
 
 
@@ -283,13 +366,7 @@ LabelSpace def-space-entry label-entry
 : .org ( n -- ) loc! ;
 : .data16 ( n id -- ) swap addr16 swap <<mem ;
 : .data32 ( n id -- )  swap addr32 swap <<inst ;
-: .address ( label -- index ) 2@ swap drop ;
-
-  
+\ : dumpable-inst ( "name" "name2" -- ) 
+\  create ' does> swap >r @ execute r> <<inst ;
 
 previous
-( The idea is to write a simple interpreter and perform the memory encoding
-  within gforth and then dump it out to disk in such a way as to make it easy
-  to load into the iris interpreter. The simplest way is to dump it out in the
-  core format as a series of 16 bit numbers with each core section being 64kb
-  in size. )
