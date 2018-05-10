@@ -404,7 +404,7 @@ r15 cconstant ci \ core index number
 : b, ( imm id -- ) $->at0 at0 br, ;
 : bl, ( imm id lr -- ) -rot $->at0 at0 brl, ;
 : bc, ( imm id cond -- ) -rot $->at0 at0 bcr, ;
-: bcl, ( imm id link cond -- ) >r >r $->at0 r> r> swap at0 bcrl, ;
+: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 def3argi addi, add,
 def3argi subi, sub,
 def3argi muli, mul,
