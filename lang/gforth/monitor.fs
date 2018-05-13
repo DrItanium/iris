@@ -84,6 +84,11 @@ ReadLine .label
 	t0 restore-register
 	restore-lr
 	ret,
+deflabel WriteLine
+WriteLine .label
+	save-lr
+	restore-lr
+	ret,
 	
 dictionary-start .org
 CoreDictionaryStart .label
