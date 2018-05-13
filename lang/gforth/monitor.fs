@@ -8,6 +8,7 @@ s" monitor.o" {asm
 0xA000 constant routines-start
 deflabel InputRoutine
 deflabel TerminateExecutionRoutine
+deflabel Start
 deflabel Restart
 deflabel CoreDictionaryStart
 r63 constant &InputRoutine
@@ -27,11 +28,15 @@ TerminateExecutionRoutine .label
 dictionary-start .org
 CoreDictionaryStart .label
 0x0000 .org
-Restart !, &Restart $->
-TerminateExecutionRoutine !, &TerminateExecutionRoutine $->
-InputRoutine !, &InputRoutine $->
-0xFFFF #, ?sysinit $->
+	zero ?sysinit ->
 \ initialization code goes here
+Start .label
+	zero ?sysinit cv neq,
+	cv &Restart bcr, \ skip over the 
+	Restart !, &Restart $->
+	TerminateExecutionRoutine !, &TerminateExecutionRoutine $->
+	InputRoutine !, &InputRoutine $->
+	0xFFFF #, ?sysinit $->
 Restart .label
 	data-stack-start #, dsp $->
 	call-stack-start #, csp $->
@@ -41,6 +46,6 @@ Restart .label
 	zero error-code ->
 	zero ci ->
 InputRoutine .label
-	&TerminateExecutionRoutine lr brl,
+	&TerminateExecutionRoutine br,
 asm}
 bye
