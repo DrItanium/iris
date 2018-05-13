@@ -582,6 +582,12 @@ push, ;
 : nandi, ( imm id src dest -- ) 2>r $->at0 at0 2r> nand, ;
 : nori, ( imm id src dest -- ) 2>r $->at0 at0 2r> nor, ;
 
+: eqz, ( value dest -- ) zero -rot eq, ;
+: neqz, ( value dest -- ) zero -rot neq, ;
+: gtz, ( value dest -- ) zero -rot gt, ;
+: ltz, ( value dest -- ) zero -rot lt, ;
+: gez, ( value dest -- ) zero -rot ge, ;
+: lez, ( value dest -- ) zero -rot le, ;
 
 !def3i !andi, andi, 
 !def3i !ori, ori, 
