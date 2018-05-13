@@ -30,8 +30,6 @@ CoreDictionaryStart .label
 Restart !, &Restart $->
 TerminateExecutionRoutine !, &TerminateExecutionRoutine $->
 InputRoutine !, &InputRoutine $->
-
-
 0xFFFF #, ?sysinit $->
 \ initialization code goes here
 Restart .label
@@ -42,8 +40,7 @@ Restart .label
 	16 #, num-base $->
 	zero error-code ->
 	zero ci ->
-
-
-
+InputRoutine .label
+	&TerminateExecutionRoutine lr brl,
 asm}
 bye
