@@ -512,7 +512,7 @@ push, ;
   if 
   drop move, ( add with zero )
   else
-  -rot inject3#, addi, 
+  -rot inject#3, addi, 
   endif ;
 
 : #subi, ( imm src dest -- ) 
@@ -589,20 +589,20 @@ push, ;
 !def3i !nandi, nandi, 
 !def3i !nori, nori, 
 1 make-update-form-3arg 1+, #addi,
-1 make-update-form 3arg 1-, #subi, 
+1 make-update-form-3arg 1-, #subi, 
 2 make-update-form-3arg 2+, #addi, 
 2 make-update-form-3arg 2-, #subi, 
-1 make-update-form-3arg 2/, #rshift, 
-2 make-update-form-3arg 4*, #lshift, 
-2 make-update-form-3arg 4/, #rshift, 
-3 make-update-form-3arg 8*, #lshift, 
-3 make-update-form-3arg 8/, #rshift, 
-4 make-update-form-3arg 16*, #lshift, 
-4 make-update-form-3arg 16/, #rshift, 
-5 make-update-form-3arg 32*, #lshift, 
-5 make-update-form-3arg 32/, #rshift, 
-6 make-update-form-3arg 64*, #lshift, 
-6 make-update-form-3arg 64/, #rshift, 
+1 make-update-form-3arg 2/, #rshifti, 
+2 make-update-form-3arg 4*, #lshifti, 
+2 make-update-form-3arg 4/, #rshifti, 
+3 make-update-form-3arg 8*, #lshifti, 
+3 make-update-form-3arg 8/, #rshifti, 
+4 make-update-form-3arg 16*, #lshifti, 
+4 make-update-form-3arg 16/, #rshifti, 
+5 make-update-form-3arg 32*, #lshifti, 
+5 make-update-form-3arg 32/, #rshifti, 
+6 make-update-form-3arg 64*, #lshifti, 
+6 make-update-form-3arg 64/, #rshifti, 
 \ special form
 : 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
 
