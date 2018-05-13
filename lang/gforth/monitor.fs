@@ -36,17 +36,85 @@ r54 constant ibcurr
 r53 constant ibend
 r52 constant keep-executing
 r51 constant iblen
+r50 constant t3
+r49 constant t4
+r48 constant t5
 : save-register ( reg -- ) vmsp psh-> ;
 : restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
 : restore-lr ( -- ) lr restore-register ;
+: .leafn ( label -- ) .label ;
+: .fn ( label -- ) .label save-lr ;
+: .fnret ( -- ) restore-lr ret, ;
+: .leafret ( -- ) ret, ;
+
+\ keep overriding it in successive impls of the same function
+
+: save-locals ( count -- )
+	case
+		1 of t0 save-register endof
+		2 of t0 save-register 
+			 t1 save-register endof
+		3 of t0 save-register 
+			 t1 save-register 
+			 t2 save-register endof
+		4 of t0 save-register 
+			 t1 save-register 
+			 t2 save-register 
+			 t3 save-register endof
+		5 of t0 save-register 
+			 t1 save-register 
+			 t2 save-register 
+			 t3 save-register 
+			 t4 save-register endof
+		6 of t0 save-register 
+			 t1 save-register 
+			 t2 save-register 
+			 t3 save-register 
+			 t4 save-register 
+			 t5 save-register endof
+		endcase ;
+: restore-locals ( count -- )
+	case
+		1 of t0 restore-register endof
+		2 of t1 restore-register 
+			 t0 restore-register endof
+		3 of 
+		  t2 restore-register 
+		  t1 restore-register 
+		  t0 restore-register endof
+		4 of 
+		  t3 restore-register
+		  t2 restore-register 
+		  t1 restore-register 
+		  t0 restore-register endof
+		5 of 
+		  t4 restore-register
+		  t3 restore-register
+		  t2 restore-register 
+		  t1 restore-register 
+		  t0 restore-register endof
+		6 of 
+		  t5 restore-register
+		  t4 restore-register
+		  t3 restore-register
+		  t2 restore-register 
+		  t1 restore-register 
+		  t0 restore-register endof
+	endcase ;
+
 routines-start .org
 TerminateExecutionRoutine .label
 	/dev/terminate-vm #->io
 	arg0 io-write
-	ret, 
 
-FixCaseRoutine .label
+deflabel JumpTo
+	JumpTo .label
+	\ arg0 - place to jump to and never return
+	arg0 br,
+
+
+FixCaseRoutine .leafn
 	deflabel DoneFixCaseRoutine
 	\ look in a given range
 	0x97 #, arg0 cv lti,
@@ -56,16 +124,13 @@ FixCaseRoutine .label
 	0x20 #, arg0 arg0 subi,
 	DoneFixCaseRoutine .label
 	arg0 ret0 ->
-	ret,
-ReadLine .label
+	.leafret
+ReadLine .fn
 	\ arg0 - start location
 	\ arg1 - length
 	deflabel ReadLineLoop
 	deflabel ReadLineLoopDone
-	save-lr
-	t0 save-register
-	t1 save-register
-	t2 save-register
+	3 save-locals
 	zero t0 ->
 	arg0 t2 ->
 	/dev/console0 #->io
@@ -85,31 +150,23 @@ ReadLine .label
 	ReadLineLoopDone .label
 	t0 ret1 ->
 	t2 ret0 ->
-	t2 restore-register
-	t1 restore-register
-	t0 restore-register
-	restore-lr
-	ret,
-PrintCharacters .label
-	save-lr
+	3 restore-locals
+	.fnret
+PrintCharacters .fn
 	/dev/console0 #->io
 	WriteRangeToIOAddress !, call,
-	restore-lr
-	ret,
-PrintLine .label
-	save-lr
+	.fnret
+PrintLine .fn
 	PrintCharacters !, call,
 	/dev/console0 #->io
 	0xA #, $->at0
 	at0 io-write
-	restore-lr
-	ret,
-WriteRangeToIOAddress .label	
+	.fnret
+WriteRangeToIOAddress .fn
 	\ arg0 - starting point in memory
 	\ arg1 - length
 	deflabel WriteRangeToIOAddress_Done
 	deflabel WriteRangeToIOAddress_Loop
-	save-lr
 	t0 save-register
 	t1 save-register
 	zero t0 ->
@@ -125,12 +182,11 @@ WriteRangeToIOAddress .label
 	WriteRangeToIOAddress_Done .label
 	t1 restore-register
 	t0 restore-register
-	restore-lr
-	ret,
-SetBase .label 
+	.fnret
+SetBase .leafn
 	\ arg0 - new base
 	arg0 num-base ->
-	ret,
+	.leafret
 UnknownWord .label
 	\ TODO make sure that th
 	dp arg0 ->
@@ -144,35 +200,88 @@ UnknownWord .label
 	PrintCharacters !, call,
 	Start !jmp
 deflabel LoadMemory 
-LoadMemory .label
+LoadMemory .leafn
 	\ arg0 - address to load from memory
 	arg0 ret0 ld,
-	ret,
+	.leafret
 deflabel StoreMemory
-	StoreMemory .label
+	StoreMemory .leafn
 	\ arg0 - address to store to
 	\ arg1 - value to store at given address
 	arg1 arg0 st,
-	ret,
+	.leafret
 deflabel LoadCore
-	LoadCore .label
+	LoadCore .leafn
 	\ arg0 - address in core
 	arg0 ret0 ldc,
-	ret,
+	.leafret
 deflabel StoreCore
-	StoreCore .label
+	StoreCore .fn
 	\ arg0 - address to store at in core
 	\ arg1 - value to store at given address
 	arg1 arg0 stc,
-	ret,
+	.leafret
+: #true ( -- imm id ) 0xFFFF #, ;
+: #false ( -- imm id ) 0x0000 #, ;
 deflabel ReadTokenRoutine
-	ReadTokenRoutine .label
+	ReadTokenRoutine .leafn
 	\ arg0 - dictionary pointer to start at
 	\ arg1 - current address location
 	arg1 arg0 readtok,
 	arg0 ret0 ->
 	arg1 ret1 ->
-	ret,
+	.leafret
+
+
+
+deflabel NumberRoutine
+	NumberRoutine .fn
+	\ arg0 - base address to read from
+	6 save-locals
+	\ t0 - flag
+	\ t1 - p1
+	\ t2 - count
+	\ t3 - current char
+	\ t4 - sgn
+	\ t5 - terminatedEarly
+	\ ret0 - result
+	zero ret0 ->
+	#false t0 $->
+	#false t5 $->
+	arg0 t1 ld, \ load the beginning of the string
+	t1 t2 ld, \ count
+	t1 1+, \ go forward one
+	t1 t3 ld, \ first character
+	0x00FF #, t3 t3 andi, 
+	0x2D #, t3 t4 eqi, \ compare against - sign to see if we're looking at a
+					   \ negative number
+	deflabel HandleSign 
+	deflabel SignHandled
+	HandleSign !, t4 bc,
+	SignHandled !, b,
+	HandleSign .label
+	t1 1+,
+	\ found a minus sign
+	SignHandled .label
+	deflabel NumberRoutineLoop
+	deflabel NumberRoutineDone
+	zero t2 cv eq,
+	NumberRoutineDone !, cv bc,
+	NumberRoutineLoop .label
+		t1 t3 ld,
+		0x00FF #, t3 t3 andi,
+		0x30 #, t3 t3 subi,
+		t3 cv ltz,
+		deflabel NumberRoutine_LessThanZero
+		NumberRoutine_LessThanZero !, cv bc,
+	
+	NumberRoutine_LessThanZero .label
+		#false t0 $->
+		#true t5 $->
+		NumberRoutineDone !, b,
+	NumberRoutineDone .label
+	6 restore-locals
+	.fnret
 
 dictionary-start .org
 CoreDictionaryStart .label
@@ -193,8 +302,8 @@ Restart .label
 	0x10 #, num-base $->
 	zero error-code ->
 	zero ci ->
-	0xFFFF #, keep-executing $->
-	0xFFFF #, error-code $->
+	#true keep-executing $->
+	#true error-code $->
 	0xA #, terminator $->
 InputRoutine .label
 	input-buffer-start #, arg0 $->
@@ -220,5 +329,7 @@ deflabel InputTokenLoop
 	InputTokenLoop !, cv bc, 
 	InputRoutine !, b,
 	TerminateExecutionRoutine !, b,
+	3 save-locals
+	3 restore-locals
 asm}
 bye
