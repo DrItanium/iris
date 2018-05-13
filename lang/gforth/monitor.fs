@@ -71,7 +71,7 @@ ReadLine .label
 	arg0 io-read
 	FixCaseRoutine !, call,
 	ret0 t1 sw,
-	1 t0 t0 #addi,
+	t0 1+,
 	ret0 terminator cv eq,
 	ReadLineLoopDone !, cv bc,
 	t0 arg1 cv neq,
