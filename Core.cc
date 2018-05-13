@@ -182,7 +182,9 @@ namespace iris {
         _core[addr] = lower;
     }
     DefExec(BranchRegister) {
+		// std::cout << "\t\tJumping from: " << std::hex << _pc;
         _pc = getRegisterValue(op._args.dest).address;
+		// std::cout << " to " << std::hex << _pc << std::endl;
     }
     DefExec(BranchRegisterAndLink) {
         setRegister(op._args.src, _pc);
@@ -209,7 +211,12 @@ namespace iris {
     }
     DefExec(LoadIO) {
         auto addr = getSource(op).address;
-        onIODeviceFound(addr, [this, &op, addr](auto& a) { setDestination(op, a.read(addr));});
+        onIODeviceFound(addr, [this, &op, addr](auto& a) 
+				{ 
+					auto result = a.read(addr);
+					// std::cout << "read " << std::hex << result << " from io space" << std::endl;
+					setDestination(op, result);
+				});
     }
     DefExec(StoreIO) {
         auto addr = getRegisterValue(op._args.dest).address;
@@ -365,10 +372,12 @@ namespace iris {
     }
 
     void Core::cycle() {
+		// std::cout << "Cycle: Start IP: " << std::hex << this->_pc << std::endl;
         // load the current instruction and go to the next address
         auto inst = extractInstruction(); // automatically increment PC
         auto op = decodeInstruction(inst);
         dispatchInstruction(op);
+		// std::cout << "Cycle: End IP: " << std::hex << this->_pc << std::endl;
     }
     void Core::execute() {
         while(_keepExecuting) {

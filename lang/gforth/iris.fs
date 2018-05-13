@@ -462,12 +462,10 @@ ioaddr}
 : dump-core ( -- ) ci /dev/core-dump #->io io-write ;
 : load-core ( -- ) ci /dev/core-load #->io io-write ;
 : call, ( dest -- ) lr bl, ;
-: lw, ( src dest -- ) ld, ;
-: sw, ( value addr -- ) st, ;
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A
   \ are loaded into register B (a 16-bit indirect fetch from A to B )
-  lw, ;
+  ld, ;
 
 : pop-> ( s a -- )
   \ the S push down stack top entry is loaded to register A and the stack pointer
@@ -489,6 +487,7 @@ push, ;
 : sti, ( imm id addr -- ) >r $->at0 at0 r> st, ;
 : #sti, ( imm addr -- ) ?imm0 if st, else #, swap sti, endif ;
 : !sti, ( imm addr -- ) !, swap sti, ;
+
 : pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
 : #pushi, ( imm sp -- ) ?imm0 if push, else #, swap pushi, endif ;
 : !pushi, ( imm sp -- ) !, swap pushi, ;
@@ -599,9 +598,9 @@ push, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
 : 2-, ( reg -- ) 2 swap dup #subi, ;
 : 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
-: 2/, ( dest -- ) 1 swap dup #rshift, ;
-: 4*, ( dest -- ) 2 swap dup #lshift, ;
-: 4/, ( dest -- ) 2 swap dup #rshift, ;
+: 2/, ( dest -- ) 1 swap dup #rshifti, ;
+: 4*, ( dest -- ) 2 swap dup #lshifti, ;
+: 4/, ( dest -- ) 2 swap dup #rshifti, ;
 \ 1 make-update-form-3arg 1+, #addi,
 \ 1 make-update-form-3arg 1-, #subi, 
 \ 2 make-update-form-3arg 2+, #addi, 

@@ -16,19 +16,26 @@ deflabel Start
 deflabel Restart
 deflabel CoreDictionaryStart
 deflabel FixCaseRoutine
-r63 constant &InputRoutine
-r62 constant &TerminateExecutionRoutine
-r61 constant &Restart
-r60 constant dp
-r59 constant arg0
-r58 constant arg1
-r57 constant ret0
-r56 constant ?sysinit
-r55 constant &Start
-r54 constant t0
-r53 constant t1
-r52 constant t2
-r51 constant ret1
+deflabel ReadLine
+deflabel WriteRangeToIOAddress
+deflabel PrintCharacters
+deflabel PrintLine
+deflabel SetBase
+deflabel UnknownWord
+r63 constant dp
+r62 constant arg0
+r61 constant arg1
+r60 constant ret0
+r59 constant ?sysinit
+r58 constant t0
+r57 constant t1
+r56 constant t2
+r55 constant ret1
+\ input buffer variables
+r54 constant ibcurr
+r53 constant ibend
+r52 constant keep-executing
+r51 constant iblen
 : save-register ( reg -- ) vmsp psh-> ;
 : restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
@@ -38,19 +45,21 @@ TerminateExecutionRoutine .label
 	/dev/terminate-vm #->io
 	arg0 io-write
 	ret, 
+
 FixCaseRoutine .label
 	deflabel DoneFixCaseRoutine
 	\ look in a given range
-	97 #, arg0 cv lti,
+	0x97 #, arg0 cv lti,
 	DoneFixCaseRoutine !, cv bc,
-	122 #, arg0 cv gti,
+	0x7a #, arg0 cv gti,
 	DoneFixCaseRoutine !, cv bc,
-	32 #, arg0 arg0 subi,
+	0x20 #, arg0 arg0 subi,
 	DoneFixCaseRoutine .label
 	arg0 ret0 ->
 	ret,
-deflabel ReadLine
 ReadLine .label
+	\ arg0 - start location
+	\ arg1 - length
 	deflabel ReadLineLoop
 	deflabel ReadLineLoopDone
 	save-lr
@@ -59,10 +68,7 @@ ReadLine .label
 	t2 save-register
 	zero t0 ->
 	arg0 t2 ->
-	\ arg0 - start location
-	\ arg1 - length
 	/dev/console0 #->io
-	0xA #, terminator $->
 	\ if length is zero then do nothing
 	t2 cv eqz,
 	ReadLineLoopDone !, cv bc,
@@ -70,7 +76,7 @@ ReadLine .label
 	t2 t0 t1 add, 
 	arg0 io-read
 	FixCaseRoutine !, call,
-	ret0 t1 sw,
+	ret0 t1 st,
 	t0 1+,
 	ret0 terminator cv eq,
 	ReadLineLoopDone !, cv bc,
@@ -84,12 +90,61 @@ ReadLine .label
 	t0 restore-register
 	restore-lr
 	ret,
-deflabel WriteLine
-WriteLine .label
+PrintCharacters .label
 	save-lr
+	/dev/console0 #->io
+	WriteRangeToIOAddress !, call,
 	restore-lr
 	ret,
-	
+PrintLine .label
+	save-lr
+	PrintCharacters !, call,
+	/dev/console0 #->io
+	0xA #, $->at0
+	at0 io-write
+	restore-lr
+	ret,
+WriteRangeToIOAddress .label	
+	\ arg0 - starting point in memory
+	\ arg1 - length
+	deflabel WriteRangeToIOAddress_Done
+	deflabel WriteRangeToIOAddress_Loop
+	save-lr
+	t0 save-register
+	t1 save-register
+	zero t0 ->
+	arg1 cv eqz,
+	WriteRangeToIOAddress_Done !, cv bc,
+	WriteRangeToIOAddress_Loop .label
+	arg0 t0 t1 uadd, \ uadd bro!?
+	t1 t1 ld,
+	t1 io-write
+	t0 1+,
+	t0 arg1 cv neq,
+	WriteRangeToIOAddress_Loop !, cv bc,
+	WriteRangeToIOAddress_Done .label
+	t1 restore-register
+	t0 restore-register
+	restore-lr
+	ret,
+SetBase .label 
+	\ arg0 - new base
+	arg0 num-base ->
+	ret,
+UnknownWord .label
+	\ TODO make sure that th
+	dp arg0 ->
+	dp arg1 ld,
+	arg0 1+,
+	arg0 arg1 t0 add,
+	0x3f t0 #sti,
+	t0 1+,
+	0xA t0 #sti,
+	arg1 2+,
+	PrintCharacters !, call,
+	Start !jmp
+
+
 dictionary-start .org
 CoreDictionaryStart .label
 0x0000 .org
@@ -97,22 +152,39 @@ CoreDictionaryStart .label
 \ initialization code goes here
 Start .label
 	zero ?sysinit cv neq,
-	cv &Restart bcr, \ skip over the 
-	Start !, &Start $->
-	Restart !, &Restart $->
-	TerminateExecutionRoutine !, &TerminateExecutionRoutine $->
-	InputRoutine !, &InputRoutine $->
+	Restart !, cv bc,
+\ any init once code goes here!
 	0xFFFF #, ?sysinit $->
 Restart .label
 	vmstack-start #, vmsp $->
 	data-stack-start #, dsp $->
-	call-stack-start #, csp $->
+	call-stack-start #, rsp $->
 	CoreDictionaryStart !, dp $->
 	0x20 #, separator $->
-	16 #, num-base $->
+	0x10 #, num-base $->
 	zero error-code ->
 	zero ci ->
+	0xFFFF #, keep-executing $->
+	0xFFFF #, error-code $->
+	0xA #, terminator $->
 InputRoutine .label
-	&TerminateExecutionRoutine br,
+	input-buffer-start #, arg0 $->
+	0x50 #, arg1 $->
+	ReadLine !, call,
+	ret0 ibcurr ->
+	ret1 iblen ->
+	ibcurr iblen ibend add,
+deflabel ReadTokenRoutine
+	ReadTokenRoutine .label
+	ibcurr dp readtok,
+	keep-executing cv eqz, 
+	TerminateExecutionRoutine !, cv bc,
+	error-code cv neqz, 
+	UnknownWord !, cv bc, 
+	ret0 dsp psh->
+	ibcurr ibend cv neq,
+	ReadTokenRoutine !, cv bc, 
+	InputRoutine !, b,
+	TerminateExecutionRoutine !, b,
 asm}
 bye
