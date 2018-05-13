@@ -11,6 +11,7 @@ deflabel TerminateExecutionRoutine
 deflabel Start
 deflabel Restart
 deflabel CoreDictionaryStart
+deflabel FixCaseRoutine
 r63 constant &InputRoutine
 r62 constant &TerminateExecutionRoutine
 r61 constant &Restart
@@ -19,11 +20,23 @@ r59 constant arg0
 r58 constant arg1
 r57 constant ret0
 r56 constant ?sysinit
+r55 constant &Start
 routines-start .org
 TerminateExecutionRoutine .label
 	/dev/terminate-vm #->io
 	arg0 io-write
 	ret, 
+FixCaseRoutine .label
+	deflabel DoneFixCaseRoutine
+	\ look in a given range
+	97 #, arg0 cv lti,
+	DoneFixCaseRoutine !, cv bc,
+	122 #, arg0 cv gti,
+	DoneFixCaseRoutine !, cv bc,
+	32 #, arg0 arg0 subi,
+	DoneFixCaseRoutine .label
+	arg0 ret0 ->
+	ret,
 	
 dictionary-start .org
 CoreDictionaryStart .label
@@ -33,6 +46,7 @@ CoreDictionaryStart .label
 Start .label
 	zero ?sysinit cv neq,
 	cv &Restart bcr, \ skip over the 
+	Start !, &Start $->
 	Restart !, &Restart $->
 	TerminateExecutionRoutine !, &TerminateExecutionRoutine $->
 	InputRoutine !, &InputRoutine $->
