@@ -139,7 +139,7 @@ IndirectMemorySpace def-space-entry indirect-memory-entry
   hex
   dup >r
   nout
-  s" " r> write-line throw ;
+  s" " r> write-line throw decimal ;
 : <<inst ( inst id -- ) 
   >r
   loc@ swap instruction-entry
@@ -342,7 +342,7 @@ r15 cconstant ci \ core index number
 : $-> ( imm id dest -- n ) set, ;
 : $->at0 ( imm id -- n ) at0 $-> ;
 : $->at1 ( imm id -- n ) at1 $-> ;
-: $->at0-3arg ( imm id a b -- at0 a b ) >r >r $->at0 at0 r> r> swap ;
+: $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
 : $->at0-2arg ( imm id b -- at0 b )
   -rot ( b imm id )
   $->at0 ( b )
@@ -385,7 +385,7 @@ r15 cconstant ci \ core index number
 
 : def2argi ( "name" "op" -- )
   create ' , 
-  does> ( imm dest -- n set-op )
+  does> ( imm id dest -- n set-op )
   >r \ stash the address for now
   $->at0-2arg 
   r> \ get the top back
@@ -394,7 +394,7 @@ r15 cconstant ci \ core index number
 
 : def3argi ( "name" "op" -- )
   create ' , 
-  does> ( imm src dest -- n set-op )
+  does> ( imm id src dest -- n set-op )
   >r \ stash the address for now
   $->at0-3arg
   r> \ get the top back

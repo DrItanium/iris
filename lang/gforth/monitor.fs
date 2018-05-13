@@ -143,7 +143,36 @@ UnknownWord .label
 	arg1 2+,
 	PrintCharacters !, call,
 	Start !jmp
-
+deflabel LoadMemory 
+LoadMemory .label
+	\ arg0 - address to load from memory
+	arg0 ret0 ld,
+	ret,
+deflabel StoreMemory
+	StoreMemory .label
+	\ arg0 - address to store to
+	\ arg1 - value to store at given address
+	arg1 arg0 st,
+	ret,
+deflabel LoadCore
+	LoadCore .label
+	\ arg0 - address in core
+	arg0 ret0 ldc,
+	ret,
+deflabel StoreCore
+	StoreCore .label
+	\ arg0 - address to store at in core
+	\ arg1 - value to store at given address
+	arg1 arg0 stc,
+	ret,
+deflabel ReadTokenRoutine
+	ReadTokenRoutine .label
+	\ arg0 - dictionary pointer to start at
+	\ arg1 - current address location
+	arg1 arg0 readtok,
+	arg0 ret0 ->
+	arg1 ret1 ->
+	ret,
 
 dictionary-start .org
 CoreDictionaryStart .label
@@ -169,21 +198,26 @@ Restart .label
 	0xA #, terminator $->
 InputRoutine .label
 	input-buffer-start #, arg0 $->
+	arg0 1+,
 	0x50 #, arg1 $->
 	ReadLine !, call,
 	ret0 ibcurr ->
 	ret1 iblen ->
 	ibcurr iblen ibend add,
-deflabel ReadTokenRoutine
-	ReadTokenRoutine .label
-	ibcurr dp readtok,
+deflabel InputTokenLoop
+	InputTokenLoop .label
+	dp arg0 ->
+	ibcurr arg1 ->
+	ReadTokenRoutine !, call,
+	ret0 dp ->
+	ret1 ibcurr ->
 	keep-executing cv eqz, 
 	TerminateExecutionRoutine !, cv bc,
 	error-code cv neqz, 
 	UnknownWord !, cv bc, 
 	ret0 dsp psh->
 	ibcurr ibend cv neq,
-	ReadTokenRoutine !, cv bc, 
+	InputTokenLoop !, cv bc, 
 	InputRoutine !, b,
 	TerminateExecutionRoutine !, b,
 asm}

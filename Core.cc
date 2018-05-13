@@ -148,11 +148,36 @@ namespace iris {
         auto b = getSource2(op).integer;
         setDestination(op, a > b ? a : b);
     }
-    DefExec(Eq) { setDestination(op, getSource(op).integer == getSource2(op).integer); }
-    DefExec(Neq) { setDestination(op, getSource(op).integer != getSource2(op).integer); }
-    DefExec(LessThan) { setDestination(op, getSource(op).integer < getSource2(op).integer); }
-    DefExec(LessThanOrEqualTo) { setDestination(op, getSource(op).integer <= getSource2(op).integer); }
-    DefExec(GreaterThan) { setDestination(op, getSource(op).integer > getSource2(op).integer); }
+    DefExec(Eq) { 
+		auto first = getSource(op).integer;
+		auto second = getSource2(op).integer;
+		// std::cout << "eq: " << std::hex << first << " = " << std::hex << second << std::endl;
+		setDestination(op, first == second);
+	}
+    DefExec(Neq) { 
+		auto first = getSource(op).integer;
+		auto second = getSource2(op).integer;
+		// std::cout << "neq: " << std::hex << first << " != " << std::hex << second << std::endl;
+		setDestination(op, first != second);
+	}
+    DefExec(LessThan) { 
+		auto first = getSource(op).integer;
+		auto second = getSource2(op).integer;
+		// std::cout << "lt: " << std::hex << first << " < " << std::hex << second << std::endl;
+		setDestination(op, first < second);
+	}
+    DefExec(LessThanOrEqualTo) { 
+		auto first = getSource(op).integer;
+		auto second = getSource2(op).integer;
+		// std::cout << "le: " << std::hex << first << " <= " << std::hex << second << std::endl;
+		setDestination(op, first <= second);
+	}
+    DefExec(GreaterThan) { 
+		auto first = getSource(op).integer;
+		auto second = getSource2(op).integer;
+		// std::cout << "gt: " << std::hex << first << " > " << std::hex << second << std::endl;
+		setDestination(op, first > second);
+	}
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
@@ -445,7 +470,8 @@ namespace iris {
     }
     Address readFromStandardIn(Address index) {
         if (index == 0) {
-            return Address(byte(char(std::cin.get())));
+			auto result = std::cin.get();
+            return Address(byte(char(result)));
         } else {
             // doesn't make sense to do this
             return 0;
