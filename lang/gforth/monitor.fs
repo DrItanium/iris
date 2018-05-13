@@ -236,6 +236,13 @@ deflabel ReadTokenRoutine
 
 deflabel NumberRoutine
 	NumberRoutine .fn
+	deflabel HandleSign 
+	deflabel SignHandled
+	deflabel NumberRoutineLoop
+	deflabel NumberRoutineDone
+	deflabel NumberRoutine_TerminateEarly
+	deflabel NumberRoutine_GreaterThanNine
+	deflabel NumberRoutine_ContinueHere
 	\ arg0 - base address to read from
 	6 save-locals
 	\ t0 - flag
@@ -245,6 +252,7 @@ deflabel NumberRoutine
 	\ t4 - sgn
 	\ t5 - terminatedEarly
 	\ ret0 - result
+	\ ret1 - another temporary
 	zero ret0 ->
 	#false t0 $->
 	#false t5 $->
@@ -255,31 +263,43 @@ deflabel NumberRoutine
 	0x00FF #, t3 t3 andi, 
 	0x2D #, t3 t4 eqi, \ compare against - sign to see if we're looking at a
 					   \ negative number
-	deflabel HandleSign 
-	deflabel SignHandled
 	HandleSign !, t4 bc,
 	SignHandled !, b,
 	HandleSign .label
 	t1 1+,
 	\ found a minus sign
 	SignHandled .label
-	deflabel NumberRoutineLoop
-	deflabel NumberRoutineDone
-	zero t2 cv eq,
-	NumberRoutineDone !, cv bc,
 	NumberRoutineLoop .label
+		\ while ( count != 0 )
+		zero t2 cv eq,
+		NumberRoutineDone !, cv bc,
 		t1 t3 ld,
 		0x00FF #, t3 t3 andi,
 		0x30 #, t3 t3 subi,
 		t3 cv ltz,
-		deflabel NumberRoutine_LessThanZero
-		NumberRoutine_LessThanZero !, cv bc,
-	
-	NumberRoutine_LessThanZero .label
+		NumberRoutine_TerminateEarly !, cv bc,
+		0x9 #, t3 cv gti,
+		NumberRoutine_GreaterThanNine !, cv bc,
+		NumberRoutine_ContinueHere .label
+		num-base ret1 ->
+		ret1 1-,
+		ret1 t3 cv ge, \ invert logic
+		NumberRoutine_TerminateEarly !, cv bc,
+		num-base ret0 ret0 mul,
+		t3 ret0 ret0 add,
+		t2 1-,
+		t1 1+,
+		NumberRoutineLoop !, b,
+	NumberRoutine_GreaterThanNine .label
+		0x11 #, t3 cv lei, \ invert the logic here
+		NumberRoutine_TerminateEarly !, cv bc,
+		0x7 #, t3 t3 subi,
+		NumberRoutine_ContinueHere !, b,
+	NumberRoutine_TerminateEarly .label
 		#false t0 $->
 		#true t5 $->
-		NumberRoutineDone !, b,
 	NumberRoutineDone .label
+	zero ret1 ->
 	6 restore-locals
 	.fnret
 
