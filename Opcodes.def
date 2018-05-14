@@ -79,3 +79,8 @@ X(UnsignedShiftRight, ThreeRegister, shru)
 // routines from Threaded Interpretive Languages as well
 X(ReadToken, TwoRegister, readtok)
 X(NumberRoutine, ThreeRegister, number-routine)
+// X(Increment, OneRegister, increment)
+// X(Decrement, OneRegister, decrement)
+// increment multiple registers simultaneously
+// X(Increment2, TwoRegister, increment2)
+// X(Decrement2, TwoRegister, decrement2)

@@ -224,13 +224,55 @@ deflabel StoreCore
 : #true ( -- imm id ) 0xFFFF #, ;
 : #false ( -- imm id ) 0x0000 #, ;
 deflabel ReadTokenRoutine
-	ReadTokenRoutine .leafn
+	ReadTokenRoutine .fn
+	deflabel ReadTokenRoutine_Done
+	deflabel ReadTokenRoutine_IgnoreWhitespace
+	deflabel ReadTokenRoutine_IgnoreWhitespace_Done
+	deflabel ReadTokenRoutine_MainLoop_Done
+	deflabel ReadTokenRoutine_MainLoop_Done_Exit2
 	\ arg0 - dictionary pointer to start at
-	\ arg1 - current address location
-	arg1 arg0 readtok,
-	arg0 ret0 ->
+	\ arg1 - line base pointer
+	5 save-locals
+	arg0 arg1 cv eq,
+	ReadTokenRoutine_Done !, cv !bc
+	\ t0 - temporary front
+	\ t1 - start
+	\ t2 - count
+	\ get rid of the front whitespace by iterating through until we see no more :D
+	ReadTokenRoutine_IgnoreWhitespace .label
+	arg1 t0 ld,
+	0x00FF #, t0 t0 andi, 
+	t0 separator cv neq, \ if t0 does not equal the separator then leave
+	ReadTokenRoutine_IgnoreWhitespace_Done !, cv bc,
+	arg1 1+,
+	arg1 t0 ld,
+	ReadTokenRoutine_IgnoreWhitespace !, b,
+	ReadTokenRoutine_IgnoreWhitespace_Done .label
+	zero t2 ->
+	arg1 t1 -> \ save a starting point copy
+	deflabel ReadToken_MainLoop
+	ReadToken_MainLoop .label
+	arg1 1+,
+	t2 1+,
+	arg1 t0 ld,
+	0x00FF #, t0 t0 andi, 
+	t0 separator cv eq,
+	ReadTokenRoutine_MainLoop_Done !, cv bc,
+	t0 cv ltz, 
+	ReadToken_MainLoop_Done_Exit2 !, cv bc,
+	ReadToken_MainLoop !, b,
+	ReadToken_MainLoop_Done_Exit2 .label
+	arg1 1-,
+	ReadToken_MainLoop_Done .label
+	arg1 1+,
 	arg1 ret1 ->
-	.leafret
+	t1 arg1 ->
+	t2 arg0 st,
+	\ TODO do while code goes here
+	\ if the two registers are equal then nothing should be done
+	ReadTokenRoutine_Done .label
+	5 restore-locals
+	.fnret
 
 
 
