@@ -22,29 +22,36 @@ deflabel PrintCharacters
 deflabel PrintLine
 deflabel SetBase
 deflabel UnknownWord
+deflabel ColonRoutine
+deflabel NextRoutine
+deflabel SemiRoutine
+deflabel SemiRoutineStart
+deflabel RunRoutine
 r63 constant dp
 r62 constant arg0
 r61 constant arg1
 r60 constant ret0
-r59 constant ?sysinit
+r59 constant ?sysinit \ start
 r58 constant t0
 r57 constant t1
 r56 constant t2
 r55 constant ret1
 \ input buffer variables
-r54 constant ibcurr
-r53 constant ibend
-r52 constant keep-executing
-r51 constant iblen
-r50 constant t3
-r49 constant t4
-r48 constant t5
-r47 constant top
-r46 constant lower
-r45 constant third
-r44 constant ir \ instruction register
-r43 constant wa \ word address register
-r42 constant ca \ code address register
+r54 constant lbp
+r53 constant keep-executing
+r52 constant t3
+r51 constant t4
+r50 constant t5
+r49 constant top
+r48 constant lower
+r47 constant third
+r46 constant ir \ instruction register
+r45 constant wa \ word address register
+r44 constant ca \ code address register
+r43 constant ctx \ context vocabulary
+r42 constant cmode \ mode 
+r41 constant current \ current vocabulary
+r40 constant cstate \ state
 : save-register ( reg -- ) vmsp psh-> ;
 : restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
@@ -236,31 +243,30 @@ deflabel ReadTokenRoutine
 	deflabel ReadTokenRoutine_IgnoreWhitespace_Done
 	deflabel ReadTokenRoutine_MainLoop_Done
 	deflabel ReadTokenRoutine_MainLoop_Done_Exit2
-	\ arg0 - dictionary pointer to start at
+	\ dp - dictionary pointer to start at
 	\ arg1 - line base pointer
 	5 save-locals
-	arg0 arg1 cv eq,
 	ReadTokenRoutine_Done !, cv bc,
 	\ t0 - temporary front
 	\ t1 - start
 	\ t2 - count
 	\ get rid of the front whitespace by iterating through until we see no more :D
 	ReadTokenRoutine_IgnoreWhitespace .label
-	arg1 t0 ld,
+	lbp t0 ld,
 	0x00FF #, t0 t0 andi, 
 	t0 separator cv neq, \ if t0 does not equal the separator then leave
 	ReadTokenRoutine_IgnoreWhitespace_Done !, cv bc,
-	arg1 1+,
-	arg1 t0 ld,
+	lbp 1+,
+	lbp t0 ld,
 	ReadTokenRoutine_IgnoreWhitespace !, b,
 	ReadTokenRoutine_IgnoreWhitespace_Done .label
 	zero t2 ->
-	arg1 t1 -> \ save a starting point copy
+	lbp t1 -> \ save a starting point copy
 	deflabel ReadToken_MainLoop
 	ReadToken_MainLoop .label
-	arg1 1+,
+	lbp 1+,
 	t2 1+,
-	arg1 t0 ld,
+	lbp t0 ld,
 	0x00FF #, t0 t0 andi, 
 	t0 separator cv eq,
 	ReadTokenRoutine_MainLoop_Done !, cv bc,
@@ -268,20 +274,19 @@ deflabel ReadTokenRoutine
 	ReadTokenRoutine_MainLoop_Done_Exit2 !, cv bc,
 	ReadToken_MainLoop !, b,
 	ReadTokenRoutine_MainLoop_Done_Exit2 .label
-	arg1 1-,
+	lbp 1-,
 	ReadTokenRoutine_MainLoop_Done .label
-	arg1 1+,
-	arg1 ret1 ->
-	t1 arg1 ->
-	t2 arg0 st,
-    arg0 1+,
+	lbp 1+,
+	t1 lbp ->
+	t2 dp st,
+    dp 1+,
     deflabel ReadToken_DoWhileLoop
     ReadToken_DoWhileLoop .label
     \ start copying over memory contents
-    arg1 t0 ld,
-    t0 arg0 st,
-    arg1 1+,
-    arg0 1+,
+    lbp t0 ld,
+    t0 dp st,
+    lbp 1+,
+    dp 1+,
     t2 1-,
     t2 cv gtz,
     ReadTokenRoutine_Done !, cv bc,
@@ -289,7 +294,6 @@ deflabel ReadTokenRoutine
 	\ TODO do while code goes here
 	\ if the two registers are equal then nothing should be done
 	ReadTokenRoutine_Done .label
-    arg0 ret0 ->
 	5 restore-locals
 	.fnret
 
@@ -304,7 +308,6 @@ deflabel NumberRoutine
 	deflabel NumberRoutine_TerminateEarly
 	deflabel NumberRoutine_GreaterThanNine
 	deflabel NumberRoutine_ContinueHere
-	\ arg0 - base address to read from
 	6 save-locals
 	\ t0 - flag
 	\ t1 - p1
@@ -317,7 +320,7 @@ deflabel NumberRoutine
 	zero ret0 ->
 	#false t0 $->
 	#false t5 $->
-	arg0 t1 ld, \ load the beginning of the string
+	dp t1 ld, \ load the beginning of the string
 	t1 t2 ld, \ count
 	t1 1+, \ go forward one
 	t1 t3 ld, \ first character
@@ -367,34 +370,7 @@ deflabel NumberRoutine
   dsp top pop->
   dsp lower pop-> ;
 : push-top ( -- ) top dsp psh-> ;
-deflabel ColonRoutine
-deflabel NextRoutine
-deflabel SemiRoutine
-deflabel SemiRoutineStart
-deflabel RunRoutine
-deflabel StoreWord 
 : next, ( -- ) NextRoutine !, jmp ;
-StoreWord .label
-    \ top is address
-    \ lower is data
-    top-two-elements
-    lower top st, 
-    next,
-deflabel Asterisk
-Asterisk .label
-    top-two-elements
-    top lower top mul, 
-    push-top
-    next,
-deflabel AddRoutine
-AddRoutine .label
-    top-two-elements
-    top lower top add,
-    push-top
-    next,
-
-
-
 : native-routine ( -- ) next-address .data16 ; 
 dictionary-start .org
 \ start the dictionary here
@@ -469,6 +445,22 @@ native-routine
     lower dsp psh->
     top dsp psh->
     third dsp psh->
+    next,
+\ 6INLINE
+deflabel $EchoRoutine
+deflabel InlineRoutine
+deflabel InlineRoutine_Last1
+InlineRoutine .label
+\ 0x4906 #.data16
+\ 0x4C4E #.data16
+\ RotRoutine !.data16
+native-routine
+    ir dsp psh->
+
+InlineRoutine_Last1 .label
+    0x14 #, arg0 set, \ replace cr by a space
+    $EchoRoutine !, call,
+    dsp ir pop->
     next,
 
 CoreDictionaryStart .label
