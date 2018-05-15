@@ -619,4 +619,6 @@ push, ;
 
 ( TODO: redefine multiply and divide to automatically use the faster formats
         if it makes sense )
+: !.data16 ( imm -- ) !, .data16 ;
+: #.data16 ( imm -- ) #, .data16 ;
 previous

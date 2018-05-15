@@ -395,27 +395,26 @@ AddRoutine .label
 
 
 
-
-
+: native-routine ( -- ) next-address .data16 ; 
 dictionary-start .org
 \ start the dictionary here
 \ 7EXECUTE
 deflabel ExecuteRoutine
 ExecuteRoutine .label
-0x4507 #, .data16 
-0x4558 #, .data16
-0 #, .data16
-next-address .data16 \ embed the code address for execution
+0x4507 #.data16 
+0x4558 #.data16
+0 #.data16
+native-routine
 sp wa pop->
 RunRoutine !, jmp
 
 \ 3DUP
 deflabel DupRoutine 
 DupRoutine .label
-0x4403 #, .data16
-0x5055 #, .data16
-ExecuteRoutine !, .data16
-next-address .data16
+0x4403 #.data16
+0x5055 #.data16
+ExecuteRoutine !.data16
+native-routine
     dsp top pop->
     push-top
     push-top
@@ -424,10 +423,10 @@ next-address .data16
 \ 4SWAP
 deflabel SwapRoutine
 SwapRoutine .label
-0x5304 #, .data16
-0x4157 #, .data16
-DupRoutine !, .data16
-next-address .data16
+0x5304 #.data16
+0x4157 #.data16
+DupRoutine !.data16
+native-routine
     top-two-elements
     push-top
     lower dsp psh->
@@ -435,14 +434,41 @@ next-address .data16
 \ 4OVER
 deflabel OverRoutine
 OverRoutine .label
-0x4F04 #, .data16
-0x4556 #, .data16
-SwapRoutine !, .data16
-next-address .data16
+0x4F04 #.data16
+0x4556 #.data16
+SwapRoutine !.data16
+native-routine
     top-two-elements
     lower dsp psh->
     top dsp psh->
     lower dsp psh->
+    next,
+\ 42DUP
+deflabel 2DupRoutine
+2DupRoutine .label
+0x3204 #.data16
+0x5044 #.data16
+OverRoutine !.data16
+native-routine
+    top-two-elements
+    lower dsp psh->
+    top dsp psh->
+    lower dsp psh->
+    top dsp psh->
+    next,
+\ 3ROT
+deflabel RotRoutine
+RotRoutine .label
+0x5203 #.data16
+0x544F #.data16
+2DupRoutine !.data16
+native-routine
+    ( third lower top -- lower top third )
+    top-two-elements
+    dsp third pop->
+    lower dsp psh->
+    top dsp psh->
+    third dsp psh->
     next,
 
 CoreDictionaryStart .label
