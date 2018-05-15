@@ -183,9 +183,7 @@ variable CurrentAssemblyFile
 : <<iinst ( n -- ) curasm@ <<iinst ;
 : <<inst ( n -- ) curasm@ <<inst ;
 : .label ( label -- ) curasm@ <<label ;
-: .data16 ( n -- ) curasm@ swap addr16 swap <<mem ;
-: .data32 ( n -- ) curasm@ swap addr32 swap <<inst ;
-: .idata32 ( n -- ) curasm@ swap addr16 swap <<imem ;
+: .data16 ( imm id -- ) swap addr16 swap curasm@ swap 0= if <<mem else <<imem endif ;
 : .register ( index value -- ) curasm@ <<register ;
 : {asm ( path -- ) 
   w/o create-file throw curasm! 
@@ -601,6 +599,7 @@ push, ;
 : 2/, ( dest -- ) 1 swap dup #rshifti, ;
 : 4*, ( dest -- ) 2 swap dup #lshifti, ;
 : 4/, ( dest -- ) 2 swap dup #rshifti, ;
+: next-address ( -- imm id ) loc@ 1+ #, ;
 \ 1 make-update-form-3arg 1+, #addi,
 \ 1 make-update-form-3arg 1-, #subi, 
 \ 2 make-update-form-3arg 2+, #addi, 

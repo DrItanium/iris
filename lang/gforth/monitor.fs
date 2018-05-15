@@ -39,6 +39,12 @@ r51 constant iblen
 r50 constant t3
 r49 constant t4
 r48 constant t5
+r47 constant top
+r46 constant lower
+r45 constant third
+r44 constant ir \ instruction register
+r43 constant wa \ word address register
+r42 constant ca \ code address register
 : save-register ( reg -- ) vmsp psh-> ;
 : restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
@@ -357,8 +363,88 @@ deflabel NumberRoutine
 	zero ret1 ->
 	6 restore-locals
 	.fnret
+: top-two-elements ( -- ) 
+  dsp top pop->
+  dsp lower pop-> ;
+: push-top ( -- ) top dsp psh-> ;
+deflabel ColonRoutine
+deflabel NextRoutine
+deflabel SemiRoutine
+deflabel SemiRoutineStart
+deflabel RunRoutine
+deflabel StoreWord 
+: next, ( -- ) NextRoutine !, jmp ;
+StoreWord .label
+    \ top is address
+    \ lower is data
+    top-two-elements
+    lower top st, 
+    next,
+deflabel Asterisk
+Asterisk .label
+    top-two-elements
+    top lower top mul, 
+    push-top
+    next,
+deflabel AddRoutine
+AddRoutine .label
+    top-two-elements
+    top lower top add,
+    push-top
+    next,
+
+
+
+
 
 dictionary-start .org
+\ start the dictionary here
+\ 7EXECUTE
+deflabel ExecuteRoutine
+ExecuteRoutine .label
+0x4507 #, .data16 
+0x4558 #, .data16
+0 #, .data16
+next-address .data16 \ embed the code address for execution
+sp wa pop->
+RunRoutine !, jmp
+
+\ 3DUP
+deflabel DupRoutine 
+DupRoutine .label
+0x4403 #, .data16
+0x5055 #, .data16
+ExecuteRoutine !, .data16
+next-address .data16
+    dsp top pop->
+    push-top
+    push-top
+    next,
+
+\ 4SWAP
+deflabel SwapRoutine
+SwapRoutine .label
+0x5304 #, .data16
+0x4157 #, .data16
+DupRoutine !, .data16
+next-address .data16
+    top-two-elements
+    push-top
+    lower dsp psh->
+    next,
+\ 4OVER
+deflabel OverRoutine
+OverRoutine .label
+0x4F04 #, .data16
+0x4556 #, .data16
+SwapRoutine !, .data16
+next-address .data16
+    top-two-elements
+    lower dsp psh->
+    top dsp psh->
+    lower dsp psh->
+    next,
+
 CoreDictionaryStart .label
 0x0000 .org
 	zero ?sysinit ->
@@ -404,7 +490,21 @@ deflabel InputTokenLoop
 	InputTokenLoop !, cv bc, 
 	InputRoutine !, b,
 	TerminateExecutionRoutine !, b,
-	3 save-locals
-	3 restore-locals
+ColonRoutine .label
+    ir rsp psh->
+    wa ir ->
+    NextRoutine !, jmp
+SemiRoutine .label 
+    SemiRoutineStart !, .data16
+SemiRoutineStart .label
+    rs ir pop->
+NextRoutine .label
+    ir wa @->
+    ir 1+,
+RunRoutine .label
+    wa ca @->
+    wa 1+,
+    ca br,
+
 asm}
 bye
