@@ -234,7 +234,7 @@ deflabel ReadTokenRoutine
 	\ arg1 - line base pointer
 	5 save-locals
 	arg0 arg1 cv eq,
-	ReadTokenRoutine_Done !, cv !bc
+	ReadTokenRoutine_Done !, cv bc,
 	\ t0 - temporary front
 	\ t1 - start
 	\ t2 - count
@@ -259,18 +259,31 @@ deflabel ReadTokenRoutine
 	t0 separator cv eq,
 	ReadTokenRoutine_MainLoop_Done !, cv bc,
 	t0 cv ltz, 
-	ReadToken_MainLoop_Done_Exit2 !, cv bc,
+	ReadTokenRoutine_MainLoop_Done_Exit2 !, cv bc,
 	ReadToken_MainLoop !, b,
-	ReadToken_MainLoop_Done_Exit2 .label
+	ReadTokenRoutine_MainLoop_Done_Exit2 .label
 	arg1 1-,
-	ReadToken_MainLoop_Done .label
+	ReadTokenRoutine_MainLoop_Done .label
 	arg1 1+,
 	arg1 ret1 ->
 	t1 arg1 ->
 	t2 arg0 st,
+    arg0 1+,
+    deflabel ReadToken_DoWhileLoop
+    ReadToken_DoWhileLoop .label
+    \ start copying over memory contents
+    arg1 t0 ld,
+    t0 arg0 st,
+    arg1 1+,
+    arg0 1+,
+    t2 1-,
+    t2 cv gtz,
+    ReadTokenRoutine_Done !, cv bc,
+    ReadToken_DoWhileLoop !, b,
 	\ TODO do while code goes here
 	\ if the two registers are equal then nothing should be done
 	ReadTokenRoutine_Done .label
+    arg0 ret0 ->
 	5 restore-locals
 	.fnret
 
