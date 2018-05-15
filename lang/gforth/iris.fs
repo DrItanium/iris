@@ -272,6 +272,22 @@ r12 cconstant at2
 r13 cconstant at3
 r14 cconstant io
 r15 cconstant ci \ core index number
+r16 cconstant arg0
+r17 cconstant arg1
+r18 cconstant arg2
+r19 cconstant arg3
+r20 cconstant loc0
+r21 cconstant loc1
+r22 cconstant loc2
+r23 cconstant loc3
+r24 cconstant loc4
+r25 cconstant loc5
+r26 cconstant loc6
+r27 cconstant loc7
+r28 cconstant out0
+r29 cconstant out1
+r30 cconstant out2
+r31 cconstant out3
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -460,6 +476,7 @@ ioaddr}
 : dump-core ( -- ) ci /dev/core-dump #->io io-write ;
 : load-core ( -- ) ci /dev/core-load #->io io-write ;
 : call, ( dest -- ) lr bl, ;
+: callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A
   \ are loaded into register B (a 16-bit indirect fetch from A to B )
@@ -621,4 +638,47 @@ push, ;
         if it makes sense )
 : !.data16 ( imm -- ) !, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
+: save-register ( reg -- ) vmsp psh-> ;
+: restore-register ( reg -- ) vmsp swap pop-> ;
+: save-lr ( -- ) lr save-register ;
+: restore-lr ( -- ) lr restore-register ;
+: 1save-loc ( -- ) loc0 save-register ;
+: 2save-loc ( -- ) 1save-loc loc1 save-register ;
+: 3save-loc ( -- ) 2save-loc loc2 save-register ;
+: 4save-loc ( -- ) 3save-loc loc3 save-register ;
+: 5save-loc ( -- ) 4save-loc loc4 save-register ;
+: 6save-loc ( -- ) 5save-loc loc5 save-register ;
+: 7save-loc ( -- ) 6save-loc loc6 save-register ;
+: 1restore-loc ( -- ) loc0 restore-register ;
+: 2restore-loc ( -- ) loc1 restore-register 1restore-loc ;
+: 3restore-loc ( -- ) loc2 restore-register 2restore-loc ;
+: 4restore-loc ( -- ) loc3 restore-register 3restore-loc ;
+: 5restore-loc ( -- ) loc4 restore-register 4restore-loc ;
+: 6restore-loc ( -- ) loc5 restore-register 5restore-loc ;
+: 7restore-loc ( -- ) loc6 restore-register 6restore-loc ;
+: save-locals ( count -- )
+  case 
+  1 of 1save-loc endof
+  2 of 2save-loc endof
+  3 of 3save-loc endof
+  4 of 4save-loc endof
+  5 of 5save-loc endof
+  6 of 6save-loc endof
+  7 of 7save-loc endof
+  endcase ;
+: restore-locals ( count -- ) 
+  case 
+  1 of 1restore-loc endof
+  2 of 2restore-loc endof
+  3 of 3restore-loc endof
+  4 of 4restore-loc endof
+  5 of 5restore-loc endof
+  6 of 6restore-loc endof
+  7 of 7restore-loc endof
+  endcase ;
+: (leafn ( label -- ) .label ;
+: leaffn) ( -- ) ret, ;
+: (fn ( label -- ) .label save-lr ;
+: fn) ( -- ) restore-lr ret, ;
+
 previous

@@ -1,5 +1,5 @@
 include iris.fs
-s" monitor.o" {asm
+s" forth.o" {asm
 0xF000 constant input-buffer-start
 0xF100 constant input-buffer-end
 0xD000 constant dictionary-start
