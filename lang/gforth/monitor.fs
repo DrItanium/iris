@@ -52,6 +52,7 @@ r43 constant ctx \ context vocabulary
 r42 constant cmode \ mode 
 r41 constant current \ current vocabulary
 r40 constant cstate \ state
+r39 constant lbp_length
 : save-register ( reg -- ) vmsp psh-> ;
 : restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
@@ -448,17 +449,31 @@ native-routine
     next,
 \ 6INLINE
 deflabel $EchoRoutine
+deflabel $CRLFRoutine
 deflabel InlineRoutine
 deflabel InlineRoutine_Last1
+deflabel InlineRoutine_SaveIt
+deflabel InlineRoutine_NotLc
+deflabel InlineRoutine_End
+deflabel InlineRoutine_TstCr
+deflabel Inlineroutine_Start
 InlineRoutine .label
 \ 0x4906 #.data16
 \ 0x4C4E #.data16
 \ RotRoutine !.data16
 native-routine
     ir dsp psh->
+InlineRoutine_Start .label
+    $CRLFRoutine !, call,
+    input-buffer-start #, lbp set,
 
+    
+InlineRoutine_End .label
+    
+    t1 t0 ->
+    InputRoutine_SaveIt !, b,
 InlineRoutine_Last1 .label
-    0x14 #, arg0 set, \ replace cr by a space
+    0x14 #, t0 set, \ replace cr by a space
     $EchoRoutine !, call,
     dsp ir pop->
     next,
