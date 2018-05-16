@@ -27,6 +27,8 @@ deflabel ?VMStackFull
 deflabel ?VMStackEmpty
 deflabel $KEY 
 deflabel $ECHO 
+deflabel $HEX
+deflabel $KEY->HEX
 monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
@@ -99,6 +101,29 @@ $KEY (fn
     arg0 io-read
     FixCaseRoutine !, call,
     fn)
+$KEY->HEX (fn
+    deflabel $KEY->HEX_Done
+    $KEY !, call,
+    4 save-locals 
+    0x30 #, loc0 set,
+    0x09 #, loc1 set,
+    out0 loc2 ->
+    loc0 loc2 loc2 subi,
+    loc2 cv ltz,
+    $KEY->HEX_Done !, cv bc,
+    loc1 loc2 cv le, 
+    deflabel $KEY->HEX_IsDigit
+    $KEY->HEX_IsDigit !, cv bc,
+    \ TODO keep writing this routine
+    $KEY->HEX_IsDigit .label
+    loc2 out0 ->
+    $KEY->HEX_Done .label
+    4 restore-locals
+    fn)
+
+$HEX (fn
+    \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
+        
 $ECHO (leafn
       \ arg0, the character to write
       /dev/console0 #->io
