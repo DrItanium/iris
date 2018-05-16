@@ -122,6 +122,18 @@ $KEY->HEX (fn
     fn)
 
 $HEX (fn
+    4 save-locals
+    $KEY->HEX !, call,
+    out0 loc0 ->
+    $KEY->HEX !, call,
+    out0 loc1 ->
+    $KEY->HEX !, call,
+    out0 loc2 ->
+    $KEY->HEX !, call,
+    out0 loc3 ->
+    \ TODO keep implementing here
+    4 restore-locals
+    fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
 $ECHO (leafn
