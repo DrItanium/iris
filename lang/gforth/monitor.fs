@@ -102,23 +102,23 @@ $KEY (fn
     FixCaseRoutine !, call,
     fn)
 $KEY->HEX (fn
-    4 save-locals 
+    1 save-locals 
     deflabel $KEY->HEX_Done
     $KEY !, call,
-    0x30 #, loc0 set,
-    0x09 #, loc1 set,
-    out0 loc2 ->
-    loc0 loc2 loc2 subi,
-    loc2 cv ltz,
+    out0 loc0 ->
+    0x30 #, loc0 loc0 subi,
+    loc0 cv ltz,
     $KEY->HEX_Done !, cv bc,
-    loc1 loc2 cv le, 
+    0x09 #, loc0 cv lei, 
     deflabel $KEY->HEX_IsDigit
     $KEY->HEX_IsDigit !, cv bc,
-    \ TODO keep writing this routine
+    0x11 #, loc0 cv lei, 
+    $KEY->HEX_Done !, cv bc,
+    0x7 #, loc0 loc0 subi,
     $KEY->HEX_IsDigit .label
-    loc2 out0 ->
+    loc0 out0 ->
     $KEY->HEX_Done .label
-    4 restore-locals
+    1 restore-locals
     fn)
 
 $HEX (fn
