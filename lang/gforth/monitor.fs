@@ -66,7 +66,7 @@ RetrieveIO (leafn
 FixCaseRoutine (leafn 
 deflabel FixCaseRoutineDone
     \ arg0 - character to fix case of
-    0x97 #, arg0 cv lti,
+    0x61 #, arg0 cv lti,
     FixCaseRoutineDone !, cv bc,
     0x7a #, arg0 cv gti, 
     FixCaseRoutineDone !, cv bc,
@@ -106,6 +106,7 @@ $KEY->HEX (fn
     deflabel $KEY->HEX_Bad
     $KEY !, call,
     out0 loc0 ->
+    deflabel $KEY->HEX_Bad
     0x30 #, loc0 loc0 subi,
     loc0 cv ltz,
     $KEY->HEX_Bad !, cv bc,
@@ -116,11 +117,8 @@ $KEY->HEX (fn
     $KEY->HEX_Bad !, cv bc,
     0x7 #, loc0 loc0 subi,
     $KEY->HEX_IsDigit .label
-    loc0 out0 ->
-    1 restore-locals
-    fn)
     $KEY->HEX_Bad .label
-    zero out0 ->
+    loc0 out0 ->
     1 restore-locals
     fn)
 
@@ -132,19 +130,16 @@ $HEX (fn
     0xF #, out0 cv ugti, 
     $HEX_DONE !, cv bc,
     out0 loc0 ->
-    loc0 inspect-register
     $KEY->HEX !, call,
     0xF #, out0 cv ugti, 
     $HEX_DONE !, cv bc,
     4 #, loc0 loc0 lshifti, 
     out0 loc0 loc0 add,
-    loc0 inspect-register
     $KEY->HEX !, call,
     0xF #, out0 cv ugti, 
     $HEX_DONE !, cv bc,
     4 #, loc0 loc0 lshifti, 
     out0 loc0 loc0 add,
-    loc0 inspect-register
     $KEY->HEX !, call,
     0xF #, out0 cv ugti, 
     $HEX_DONE !, cv bc,
@@ -206,7 +201,6 @@ monitor-loop .org
 deflabel monitor-loop-start
 monitor-loop-start .label
     $HEX !, call,
-    out0 inspect-register
     out0 arg0 -> 
     PRINT-NUMBER !, call,
     monitor-loop-start !, b,
