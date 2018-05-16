@@ -102,9 +102,9 @@ $KEY (fn
     FixCaseRoutine !, call,
     fn)
 $KEY->HEX (fn
+    4 save-locals 
     deflabel $KEY->HEX_Done
     $KEY !, call,
-    4 save-locals 
     0x30 #, loc0 set,
     0x09 #, loc1 set,
     out0 loc2 ->
@@ -122,17 +122,20 @@ $KEY->HEX (fn
     fn)
 
 $HEX (fn
-    4 save-locals
+    1 save-locals
     $KEY->HEX !, call,
     out0 loc0 ->
     $KEY->HEX !, call,
-    out0 loc1 ->
+    4 #, loc0 lshift, 
+    out0 loc0 loc0 add,
     $KEY->HEX !, call,
-    out0 loc2 ->
+    4 #, loc0 lshift, 
+    out0 loc0 loc0 add,
     $KEY->HEX !, call,
-    out0 loc3 ->
+    4 #, loc0 lshift, 
+    out0 loc0 out0 add,
     \ TODO keep implementing here
-    4 restore-locals
+    1 restore-locals
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
