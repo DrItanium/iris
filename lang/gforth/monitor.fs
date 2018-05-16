@@ -63,8 +63,8 @@ StoreIO (leafn
 RetrieveIO (leafn
     out0 io-read
     leafn)
-deflabel FixCaseRoutine_Done
 FixCaseRoutine (leafn 
+deflabel FixCaseRoutineDone
     \ arg0 - character to fix case of
     0x97 #, arg0 cv lti,
     FixCaseRoutineDone !, cv bc,
@@ -103,38 +103,55 @@ $KEY (fn
     fn)
 $KEY->HEX (fn
     1 save-locals 
-    deflabel $KEY->HEX_Done
+    deflabel $KEY->HEX_Bad
     $KEY !, call,
     out0 loc0 ->
     0x30 #, loc0 loc0 subi,
     loc0 cv ltz,
-    $KEY->HEX_Done !, cv bc,
+    $KEY->HEX_Bad !, cv bc,
     0x09 #, loc0 cv lei, 
     deflabel $KEY->HEX_IsDigit
     $KEY->HEX_IsDigit !, cv bc,
-    0x11 #, loc0 cv lei, 
-    $KEY->HEX_Done !, cv bc,
+    0x0A #, loc0 cv lti, 
+    $KEY->HEX_Bad !, cv bc,
     0x7 #, loc0 loc0 subi,
     $KEY->HEX_IsDigit .label
     loc0 out0 ->
-    $KEY->HEX_Done .label
+    1 restore-locals
+    fn)
+    $KEY->HEX_Bad .label
+    zero out0 ->
     1 restore-locals
     fn)
 
 $HEX (fn
+    deflabel $HEX_DONE
     1 save-locals
+    zero loc0 ->
     $KEY->HEX !, call,
+    0xF #, out0 cv ugti, 
+    $HEX_DONE !, cv bc,
     out0 loc0 ->
+    loc0 inspect-register
     $KEY->HEX !, call,
-    4 #, loc0 lshift, 
+    0xF #, out0 cv ugti, 
+    $HEX_DONE !, cv bc,
+    4 #, loc0 loc0 lshifti, 
     out0 loc0 loc0 add,
+    loc0 inspect-register
     $KEY->HEX !, call,
-    4 #, loc0 lshift, 
+    0xF #, out0 cv ugti, 
+    $HEX_DONE !, cv bc,
+    4 #, loc0 loc0 lshifti, 
     out0 loc0 loc0 add,
+    loc0 inspect-register
     $KEY->HEX !, call,
-    4 #, loc0 lshift, 
-    out0 loc0 out0 add,
-    \ TODO keep implementing here
+    0xF #, out0 cv ugti, 
+    $HEX_DONE !, cv bc,
+    4 #, loc0 loc0 lshifti, 
+    out0 loc0 loc0 add,
+    $HEX_DONE .label
+    loc0 out0 ->
     1 restore-locals
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
@@ -144,50 +161,54 @@ $ECHO (leafn
       /dev/console0 #->io
       arg0 io-write
       leafn)
-
-
-PrintCharactersRoutine (leafn
-    /dev/console0 #->io
+deflabel $HEX->KEY 
+$HEX->KEY (leafn
+    deflabel $HEX->KEY_DONE
+    \ go backwards from what we originally got in
+    \ arg0 - contains lowest 4 bits to convert
+    0x000F #, arg0 arg0 andi,
+    0xA #, arg0 cv lti,
+    0x30 #, arg0 arg0 addi, \ always want to do this
+    $HEX->KEY_DONE !, cv bc,
+    0x7 #, arg0 arg0 addi,
+    $HEX->KEY_DONE .label
+    arg0 out0 ->
     leafn)
+deflabel PRINT-NUMBER 
+PRINT-NUMBER (fn
+    deflabel print-number-done
+    \ arg0 - number to print
+    1 save-locals
+    arg0 loc0 ->
+    0xA #, arg0 set,
+    $ECHO !, call,
+    0xC #, loc0 arg0 rshifti,
+    $HEX->KEY !, call,
+    out0 arg0 ->
+    $ECHO !, call,
+    8 #, loc0 arg0 rshifti,
+    $HEX->KEY !, call,
+    out0 arg0 ->
+    $ECHO !, call,
+    4 #, loc0 arg0 rshifti,
+    $HEX->KEY !, call,
+    out0 arg0 ->
+    $ECHO !, call,
+    loc0 arg0 ->
+    $HEX->KEY !, call,
+    out0 arg0 ->
+    $ECHO !, call,
+    print-number-done .label
+    1 restore-locals
+    fn)
 
-ReadLine .fn
-	\ arg0 - start location
-	\ arg1 - length
-	deflabel ReadLineLoop
-	deflabel ReadLineLoopDone
-	3 save-locals
-	zero t0 ->
-	arg0 t2 ->
-	/dev/console0 #->io
-	\ if length is zero then do nothing
-	t2 cv eqz,
-	ReadLineLoopDone !, cv bc,
-	ReadLineLoop .label
-	t2 t0 t1 add, 
-	arg0 io-read
-	FixCaseRoutine !, call,
-	ret0 t1 st,
-	t0 1+,
-	ret0 terminator cv eq,
-	ReadLineLoopDone !, cv bc,
-	t0 arg1 cv neq,
-	ReadLineLoop !, cv bc,
-	ReadLineLoopDone .label
-	t0 ret1 ->
-	t2 ret0 ->
-	3 restore-locals
-	.fnret
-PrintCharacters .fn
-	/dev/console0 #->io
-	WriteRangeToIOAddress !, call,
-	.fnret
-PrintLine .fn
-	PrintCharacters !, call,
-	/dev/console0 #->io
-	0xA #, $->at0
-	at0 io-write
-	.fnret
-WriteRangeToIOAddress .fn
-	.fnret
+monitor-loop .org
+deflabel monitor-loop-start
+monitor-loop-start .label
+    $HEX !, call,
+    out0 inspect-register
+    out0 arg0 -> 
+    PRINT-NUMBER !, call,
+    monitor-loop-start !, b,
 asm}
 bye

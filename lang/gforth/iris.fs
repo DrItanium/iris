@@ -462,8 +462,8 @@ ioaddr: /dev/core-dump
 ioaddr: /dev/core-load
 ioaddr: /dev/dump-vm
 ioaddr: /dev/terminate-vm
+ioaddr: /dev/register
 ioaddr}
-
 : $->io ( imm id -- ) io $-> ;
 : #->io ( imm -- ) #, $->io ;
 : !->io ( imm -- ) !, $->io ;
@@ -471,6 +471,10 @@ ioaddr}
 : ret, ( -- ) lr br, ;
 : io-write ( src -- ) io stio, ;
 : io-read ( dest -- ) io swap ldio, ;
+: inspect-register ( reg -- )
+  /dev/register #, at0 set,
+  #, at1 set,
+  at1 at0 stio, ;
 
 \ core routines
 : dump-core ( -- ) ci /dev/core-dump #->io io-write ;
@@ -677,7 +681,7 @@ push, ;
   7 of 7restore-loc endof
   endcase ;
 : (leafn ( label -- ) .label ;
-: leaffn) ( -- ) ret, ;
+: leafn) ( -- ) ret, ;
 : (fn ( label -- ) .label save-lr ;
 : fn) ( -- ) restore-lr ret, ;
 

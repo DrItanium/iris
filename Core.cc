@@ -569,11 +569,15 @@ namespace iris {
         IODevice coreManipulator(3, 2, nullptr, selectCore);
         IODevice vmDumper(5, 1, nullptr, dumpVM);
 		IODevice vmTerminator(6,1, nullptr, terminateVM);
+        IODevice registerInspector(7,1, nullptr, [this](auto index, auto value) {
+                        std::cout << "Register: " << std::hex << getRegister(byte(0b111111 & value)).get<Address>() << std::endl;
+                    });
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
         installIODevice(vmDumper);
 		installIODevice(vmTerminator);
+        installIODevice(registerInspector);
     }
     void Core::shutdown() {
 
