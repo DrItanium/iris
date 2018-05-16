@@ -3,7 +3,7 @@ include iris.fs
 s" monitor.o" {asm
 0xFFFF constant monitor-memory-end
 0xFA00 constant monitor-routines-start
-0xF300 constant monitor-stack-start 
+0xF200 constant monitor-stack-start 
 0xF100 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
 monitor-memory-start constant monitor-loop
@@ -23,10 +23,16 @@ deflabel FixCaseRoutine
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
 deflabel ReadRangeFromIOAddressRoutine 
+deflabel ?VMStackFull
+deflabel ?VMStackEmpty
+deflabel $KEY 
+deflabel $ECHO 
 monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
     arg0 io-write \ this will not return
+?VMStackFull (leafn monitor-stack-end #, vmsp out0 eqi, leafn)
+?VMStackEmpty (leafn monitor-stack-start #, vmsp out0 eqi, leafn)
 CallRoutine (fn arg0 callr, fn)
 SetIORegister (leafn arg0 io -> leafn)
 
@@ -86,12 +92,18 @@ WriteRangeToIOAddressRoutine (leafn
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
     leafn)
-ReadRangeFromIOAddressRoutine (leafn
-    deflabel ReadRangeFromIOAddress_Done
-    deflabel ReadRangeFromIOAddress_Loop
-
-
-leafn)
+$KEY (fn 
+    \ resets the keyboard and then awaits the next keyboard input
+    \ The next input is return in a known register (in0)
+    /dev/console0 #->io
+    arg0 io-read
+    FixCaseRoutine !, call,
+    fn)
+$ECHO (leafn
+      \ arg0, the character to write
+      /dev/console0 #->io
+      arg0 io-write
+      leafn)
 
 
 PrintCharactersRoutine (leafn
