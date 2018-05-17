@@ -26,6 +26,7 @@ deflabel $KEY
 deflabel $ECHO 
 deflabel $HEX
 deflabel $->HEX
+deflabel $NEWLINE
 monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
@@ -149,6 +150,12 @@ $ECHO (leafn
       /dev/console0 #->io
       arg0 io-write
       leafn)
+$NEWLINE (fn
+    0xA #, arg0 set,
+    $ECHO !, call,
+    fn)
+    
+
 deflabel $HEX->KEY 
 $HEX->KEY (leafn
     deflabel $HEX->KEY_DONE
@@ -168,8 +175,7 @@ PRINT-NUMBER (fn
     \ arg0 - number to print
     1 save-locals
     arg0 loc0 ->
-    0xA #, arg0 set,
-    $ECHO !, call,
+    $NEWLINE !, call,
     0xC #, loc0 arg0 rshifti,
     $HEX->KEY !, call,
     out0 arg0 ->
@@ -236,16 +242,14 @@ monitor-loop-start .label
     $HEX !, call,
     out0 arg0 -> 
     PRINT-NUMBER !, call,
-    0xA #, arg0 set,
-    $ECHO !, call,
+    $NEWLINE !, call,
     monitor-input-start #, arg0 set,
     arg0 arg1 ld, 
-    \ arg1 1-,
+    arg1 1-,
     arg0 1+,
     /dev/console0 #->io
     WriteRangeToIOAddressRoutine !, call,
-    0xA #, arg0 set,
-    $ECHO !, call,
+    $NEWLINE !, call,
     monitor-loop-start !, b,
 asm}
 bye
