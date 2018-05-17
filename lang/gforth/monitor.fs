@@ -27,6 +27,10 @@ deflabel $ECHO
 deflabel $HEX
 deflabel $->HEX
 deflabel $NEWLINE
+deflabel $SPACE
+deflabel printline
+deflabel printbuf
+deflabel printinput
 monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
@@ -145,16 +149,16 @@ $HEX (fn
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
+$SPACE .label
+      0x20 #, arg0 set,
+      $ECHO !, jmp
+$NEWLINE .label
+      0xA #, arg0 set,
 $ECHO (leafn
       \ arg0, the character to write
       /dev/console0 #->io
       arg0 io-write
       leafn)
-$NEWLINE (fn
-    0xA #, arg0 set,
-    $ECHO !, call,
-    fn)
-    
 
 deflabel $HEX->KEY 
 $HEX->KEY (leafn
@@ -228,6 +232,19 @@ readline_done .label
     \ terminator is used to terminate early
     2 restore-locals
     fn)
+
+printinput .label
+    monitor-input-start #, arg0 set,
+printbuf .label
+    arg0 arg1 ld, 
+    arg0 1+,
+printline (fn
+    \ arg0 - start address
+    \ arg1 - length
+    /dev/console0 #->io
+    WriteRangeToIOAddressRoutine !, call,
+    $NEWLINE !, call,
+fn)
 monitor-loop .org
 deflabel monitor-loop-start
     0xA #, terminator set,
@@ -235,7 +252,7 @@ deflabel monitor-loop-start
     0x10 #, num-base set,
 monitor-loop-start .label
     readline !, call,
-    4 #, out0 cv lti, 
+    5 #, out0 cv lti, 
     monitor-loop-start !, cv bc,
     monitor-input-start #, arg0 set,
     arg0 1+,
@@ -243,13 +260,7 @@ monitor-loop-start .label
     out0 arg0 -> 
     PRINT-NUMBER !, call,
     $NEWLINE !, call,
-    monitor-input-start #, arg0 set,
-    arg0 arg1 ld, 
-    arg1 1-,
-    arg0 1+,
-    /dev/console0 #->io
-    WriteRangeToIOAddressRoutine !, call,
-    $NEWLINE !, call,
+    printinput !, call,
     monitor-loop-start !, b,
 asm}
 bye
