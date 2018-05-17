@@ -115,9 +115,7 @@ namespace iris {
             static constexpr RegisterIndex registerErrorCode = 1;
             static constexpr RegisterIndex registerTerminator = 2;
             static constexpr RegisterIndex registerNumericBase = 3;
-            static constexpr RegisterIndex registerStackPointer0 = 4;
-            static constexpr RegisterIndex registerStackPointer1 = 5;
-            static constexpr RegisterIndex registerSeparator = 6;
+            static constexpr RegisterIndex registerSeparator = 4;
             // the error codes that the processor will raise as part of an
             // error happening
             enum class ErrorCodes : Address {

@@ -230,6 +230,8 @@ readline_done .label
 monitor-loop .org
 deflabel monitor-loop-start
     0xA #, terminator set,
+    monitor-stack-start #, vmsp set,
+    0x10 #, num-base set,
 monitor-loop-start .label
     readline !, call,
     4 #, out0 cv lti, 

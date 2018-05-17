@@ -260,9 +260,9 @@ r0 cconstant zero
 r1 cconstant error-code
 r2 cconstant terminator
 r3 cconstant num-base
-r4 cconstant dsp
-r5 cconstant rsp
-r6 cconstant separator
+r4 cconstant separator
+r5 cconstant dsp
+r6 cconstant rsp
 r7 cconstant vmsp
 r8 cconstant cv
 r9 cconstant lr
