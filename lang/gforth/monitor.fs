@@ -22,6 +22,7 @@ deflabel $HEX
 deflabel $->HEX
 deflabel $NEWLINE
 deflabel $SPACE
+deflabel $PROMPT
 deflabel printline
 deflabel printbuf
 deflabel printinput
@@ -118,6 +119,8 @@ $HEX (fn
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
+$PROMPT .label
+      0x2D #, arg0 set,
 $SPACE .label
       0x20 #, arg0 set,
       $ECHO !, jmp
@@ -275,12 +278,68 @@ DISPLAY_REGISTER_L3 (fn
     r31 call-display-register 
     $NEWLINE !, call,
 fn)
+deflabel DISPLAY_REGISTER_L4
+DISPLAY_REGISTER_L4 (fn
+    r32 call-display-register 
+    r33 call-display-register 
+    r34 call-display-register 
+    r35 call-display-register 
+    r36 call-display-register 
+    r37 call-display-register 
+    r38 call-display-register 
+    r39 call-display-register 
+    $NEWLINE !, call,
+fn)
+
+deflabel DISPLAY_REGISTER_L5
+DISPLAY_REGISTER_L5 (fn
+    r40 call-display-register 
+    r41 call-display-register 
+    r42 call-display-register 
+    r43 call-display-register 
+    r44 call-display-register 
+    r45 call-display-register 
+    r46 call-display-register 
+    r47 call-display-register 
+    $NEWLINE !, call,
+fn)
+deflabel DISPLAY_REGISTER_L6
+DISPLAY_REGISTER_L6 (fn
+    r48 call-display-register 
+    r49 call-display-register 
+    r50 call-display-register 
+    r51 call-display-register 
+    r52 call-display-register 
+    r53 call-display-register 
+    r54 call-display-register 
+    r55 call-display-register 
+    $NEWLINE !, call,
+fn)
+deflabel DISPLAY_REGISTER_L7
+DISPLAY_REGISTER_L7 (fn
+    r56 call-display-register 
+    r57 call-display-register 
+    r58 call-display-register 
+    r59 call-display-register 
+    r60 call-display-register 
+    r61 call-display-register 
+    r62 call-display-register 
+    r63 call-display-register 
+    $NEWLINE !, call,
+fn)
 deflabel DISPLAY_REGISTERS
 DISPLAY_REGISTERS (fn
+    $NEWLINE !, call,
+    $NEWLINE !, call,
     DISPLAY_REGISTER_L0 !, call,
     DISPLAY_REGISTER_L1 !, call,
     DISPLAY_REGISTER_L2 !, call,
     DISPLAY_REGISTER_L3 !, call,
+    DISPLAY_REGISTER_L4 !, call,
+    DISPLAY_REGISTER_L5 !, call,
+    DISPLAY_REGISTER_L6 !, call,
+    DISPLAY_REGISTER_L7 !, call,
+    $NEWLINE !, call,
     fn)
 monitor-loop .org
 deflabel monitor-loop-start
@@ -290,6 +349,7 @@ deflabel monitor-call-shutdown
     0x10 #, num-base set,
 monitor-loop-start .label
     DISPLAY_REGISTERS !, call,
+    $PROMPT !, call,
     readline !, call,
     5 #, out0 cv lti, 
     monitor-loop-start !, cv bc,
