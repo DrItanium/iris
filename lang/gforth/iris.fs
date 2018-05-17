@@ -269,25 +269,24 @@ r9 cconstant lr
 r10 cconstant at0
 r11 cconstant at1
 r12 cconstant at2
-r13 cconstant at3
+r13 cconstant cmd \ command buffer register
 r14 cconstant io
-r15 cconstant ci \ core index number
-r16 cconstant arg0
-r17 cconstant arg1
-r18 cconstant arg2
-r19 cconstant arg3
-r20 cconstant loc0
-r21 cconstant loc1
-r22 cconstant loc2
-r23 cconstant loc3
-r24 cconstant loc4
-r25 cconstant loc5
-r26 cconstant loc6
-r27 cconstant loc7
-r28 cconstant out0
-r29 cconstant out1
-r30 cconstant out2
-r31 cconstant out3
+r15 cconstant arg0
+r16 cconstant arg1
+r17 cconstant arg2
+r18 cconstant arg3
+r19 cconstant loc0
+r20 cconstant loc1
+r21 cconstant loc2
+r22 cconstant loc3
+r23 cconstant loc4
+r24 cconstant loc5
+r25 cconstant loc6
+r26 cconstant loc7
+r27 cconstant out0
+r28 cconstant out1
+r29 cconstant out2
+r30 cconstant out3
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -477,8 +476,8 @@ ioaddr}
   at1 at0 stio, ;
 
 \ core routines
-: dump-core ( -- ) ci /dev/core-dump #->io io-write ;
-: load-core ( -- ) ci /dev/core-load #->io io-write ;
+: dump-core ( reg -- ) /dev/core-dump #->io io-write ;
+: load-core ( reg -- ) /dev/core-load #->io io-write ;
 : call, ( dest -- ) lr bl, ;
 : callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 
@@ -684,5 +683,5 @@ push, ;
 : leafn) ( -- ) ret, ;
 : (fn ( label -- ) .label save-lr ;
 : fn) ( -- ) restore-lr ret, ;
-
-previous
+: mask-lower-half, ( src dest -- ) 2>r 0x00FF #, 2r> andi, ;
+: mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;

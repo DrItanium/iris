@@ -2,6 +2,8 @@ include iris.fs
 \ contains all of the registers and pieces used for the monitor itself
 s" monitor.o" {asm
 0xFFFF constant monitor-memory-end
+0xFF00 constant command-table-start
+0xFEFF constant monitor-routines-end
 0xFA00 constant monitor-routines-start
 0xF400 constant monitor-input-end
 0xF300 constant monitor-input-start
@@ -26,7 +28,34 @@ deflabel $PROMPT
 deflabel printline
 deflabel printbuf
 deflabel printinput
+deflabel readline 
+deflabel InvokeCommandRoutine
+command-table-start .org
+TerminateExecutionRoutine !.data16
+$KEY !.data16
+$ECHO !.data16
+$HEX !.data16
+$->HEX !.data16
+$NEWLINE !.data16
+printline !.data16
+printbuf !.data16
+WriteRangeToIOAddressRoutine !.data16
+readline !.data16
+
 monitor-routines-start .org
+\ this must always be first!
+InvokeCommandRoutine (fn
+    \ cmd - contains the command to run (preserved)
+    \ args are setup as needed
+    cmd save-register
+    cmd cmd mask-lower-half,              \ get lower 8 bits (prevent garbage)
+    command-table-start #, cmd cmd uaddi, \ compute table offset 
+    cmd cmd ld,                           \ load the address from memory
+    cmd callr,                            \ perform a call
+    cmd restore-register                  \ restore cmd to what it was
+    fn)                                   \ return
+
+
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
     arg0 io-write \ this will not return
@@ -174,7 +203,6 @@ PRINT-NUMBER (fn
     print-number-done .label
     1 restore-locals
     fn)
-deflabel readline 
 readline (fn
 deflabel readline_loop
 deflabel readline_done
@@ -364,8 +392,8 @@ monitor-loop-start .label
     $NEWLINE !, call,
     printinput !, call,
     monitor-loop-start !, b,
-    zero arg0 ->
 monitor-call-shutdown .label
+    zero arg0 ->
     TerminateExecutionRoutine !, jmp
 
 asm}
