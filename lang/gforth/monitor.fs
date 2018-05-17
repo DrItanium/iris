@@ -25,7 +25,7 @@ deflabel WriteRangeToIOAddressRoutine
 deflabel $KEY 
 deflabel $ECHO 
 deflabel $HEX
-deflabel $KEY->HEX
+deflabel $->HEX
 monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
@@ -79,11 +79,9 @@ WriteRangeToIOAddressRoutine (leafn
 	WriteRangeToIOAddress_Done !, cv bc,
 	WriteRangeToIOAddress_Loop .label
 	arg0 loc0 loc1 uadd, \ uadd bro!?
-    \ loc1 inspect-register
 	loc1 loc1 ld,
 	loc1 io-write
 	loc0 1+,
-    \ loc0 inspect-register
 	loc0 arg1 cv gt,  
 	WriteRangeToIOAddress_Loop !, cv bc,
 	WriteRangeToIOAddress_Done .label
@@ -96,54 +94,53 @@ $KEY (fn
     arg0 io-read
     FixCaseRoutine !, call,
     fn)
-$KEY->HEX (fn
-    deflabel $KEY->HEX_Done
+$->HEX (fn
+    deflabel $->HEX_Done
+    \ arg0 - value to hexify
     1 save-locals 
-    $KEY !, call,
-    out0 loc0 ->
-    0x30 #, loc0 loc0 subi,
+    0x30 #, arg0 loc0 subi,
     loc0 cv ltz,
-    $KEY->HEX_Done !, cv bc,
+    $->HEX_Done !, cv bc,
     0x09 #, loc0 cv lei, 
-    deflabel $KEY->HEX_IsDigit
-    $KEY->HEX_IsDigit !, cv bc,
+    deflabel $->HEX_IsDigit
+    $->HEX_IsDigit !, cv bc,
     0x0A #, loc0 cv lti, 
-    $KEY->HEX_Done !, cv bc,
+    $->HEX_Done !, cv bc,
     0x7 #, loc0 loc0 subi,
-    $KEY->HEX_IsDigit .label
-    $KEY->HEX_Done .label
+    $->HEX_IsDigit .label
+    $->HEX_Done .label
     loc0 out0 ->
     1 restore-locals
     fn)
 
 $HEX (fn
-    \ TODO rewrite to take advantage of the input reading
-    \ read characters
+    \ arg0 - starting location
     deflabel $HEX_DONE
-    1 save-locals
-    zero loc0 ->
-    $KEY->HEX !, call,
-    0xF #, out0 cv ugti, 
-    $HEX_DONE !, cv bc,
-    out0 loc0 ->
-    $KEY->HEX !, call,
-    0xF #, out0 cv ugti, 
-    $HEX_DONE !, cv bc,
-    4 #, loc0 loc0 lshifti, 
-    out0 loc0 loc0 add,
-    $KEY->HEX !, call,
-    0xF #, out0 cv ugti, 
-    $HEX_DONE !, cv bc,
-    4 #, loc0 loc0 lshifti, 
-    out0 loc0 loc0 add,
-    $KEY->HEX !, call,
-    0xF #, out0 cv ugti, 
-    $HEX_DONE !, cv bc,
-    4 #, loc0 loc0 lshifti, 
-    out0 loc0 loc0 add,
-    $HEX_DONE .label
-    loc0 out0 ->
-    1 restore-locals
+    5 save-locals
+    arg0 loc0 ld, \ first character
+    arg0 1+,
+    arg0 loc1 ld, \ second character
+    arg0 1+,
+    arg0 loc2 ld, \ third character
+    arg0 1+,
+    arg0 loc3 ld, \ fourth character
+    loc0 arg0 ->
+    $->HEX !, call,
+    out0 loc4 ->
+    loc1 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc2 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc3 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc4 out0 ->
+    5 restore-locals
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
@@ -222,7 +219,6 @@ readline_done .label
     at0 loc0 at1 usub,
     at1 at0 st,
     at1 out0 ->
-    out0 inspect-register
     \ terminator is used to terminate early
     2 restore-locals
     fn)
@@ -235,12 +231,16 @@ monitor-loop-start .label
     readline !, call,
     4 #, out0 cv lti, 
     monitor-loop-start !, cv bc,
-    \ $HEX !, call,
-    \ out0 arg0 -> 
-    \ PRINT-NUMBER !, call,
+    monitor-input-start #, arg0 set,
+    arg0 1+,
+    $HEX !, call,
+    out0 arg0 -> 
+    PRINT-NUMBER !, call,
+    0xA #, arg0 set,
+    $ECHO !, call,
     monitor-input-start #, arg0 set,
     arg0 arg1 ld, 
-    arg1 1-,
+    \ arg1 1-,
     arg0 1+,
     /dev/console0 #->io
     WriteRangeToIOAddressRoutine !, call,
