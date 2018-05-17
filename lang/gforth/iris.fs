@@ -261,32 +261,30 @@ r1 cconstant error-code
 r2 cconstant terminator
 r3 cconstant num-base
 r4 cconstant separator
-r5 cconstant dsp
-r6 cconstant rsp
-r7 cconstant vmsp
-r8 cconstant cv
-r9 cconstant lr
-r10 cconstant at0
-r11 cconstant at1
-r12 cconstant at2
-r13 cconstant cmd \ command buffer register
-r14 cconstant io
-r15 cconstant arg0
-r16 cconstant arg1
-r17 cconstant arg2
-r18 cconstant arg3
-r19 cconstant loc0
-r20 cconstant loc1
-r21 cconstant loc2
-r22 cconstant loc3
-r23 cconstant loc4
-r24 cconstant loc5
-r25 cconstant loc6
-r26 cconstant loc7
-r27 cconstant out0
-r28 cconstant out1
-r29 cconstant out2
-r30 cconstant out3
+r5 cconstant vmsp
+r6 cconstant cv
+r7 cconstant lr
+r8 cconstant at0
+r9 cconstant at1
+r10 cconstant at2
+r11 cconstant cmd \ command buffer register
+r12 cconstant io
+r13 cconstant arg0
+r14 cconstant arg1
+r15 cconstant arg2
+r16 cconstant arg3
+r17 cconstant loc0
+r18 cconstant loc1
+r19 cconstant loc2
+r20 cconstant loc3
+r21 cconstant loc4
+r22 cconstant loc5
+r23 cconstant loc6
+r24 cconstant loc7
+r25 cconstant out0
+r26 cconstant out1
+r27 cconstant out2
+r28 cconstant out3
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
