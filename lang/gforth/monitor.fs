@@ -13,12 +13,6 @@ monitor-memory-start constant monitor-loop
 0x0000 .org monitor-loop #, jmp
 
 deflabel TerminateExecutionRoutine
-deflabel StoreMemory
-deflabel RetrieveMemory
-deflabel StoreCore
-deflabel RetrieveCore
-deflabel StoreIO
-deflabel RetrieveIO
 deflabel FixCaseRoutine 
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
@@ -36,31 +30,6 @@ TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
     arg0 io-write \ this will not return
 
-StoreMemory (leafn 
-    \ arg0 - data to store
-    \ arg1 - address to store to
-    arg0 arg1 st, 
-    leafn)
-RetrieveMemory (leafn
-    \ arg0 - address to load from
-    arg0 out0 ld, 
-    leafn)
-StoreCore (leafn
-    \ arg0 - data to store in core
-    \ arg1 - core address
-    arg0 arg1 stc, 
-    leafn)
-RetrieveCore (leafn
-    \ arg0 - address of core to load
-    arg0 out0 ldc,
-    leafn)
-StoreIO (leafn
-    \ arg0 - the value to store at the address contained in io
-    arg0 io-write
-    leafn)
-RetrieveIO (leafn
-    out0 io-read
-    leafn)
 FixCaseRoutine (leafn 
 deflabel FixCaseRoutineDone
     \ arg0 - character to fix case of
@@ -247,6 +216,7 @@ printline (fn
 fn)
 monitor-loop .org
 deflabel monitor-loop-start
+deflabel monitor-call-shutdown
     0xA #, terminator set,
     monitor-stack-start #, vmsp set,
     0x10 #, num-base set,
@@ -262,5 +232,9 @@ monitor-loop-start .label
     $NEWLINE !, call,
     printinput !, call,
     monitor-loop-start !, b,
+    zero arg0 ->
+monitor-call-shutdown .label
+    TerminateExecutionRoutine !, jmp
+
 asm}
 bye
