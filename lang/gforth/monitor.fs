@@ -3,6 +3,8 @@ include iris.fs
 s" monitor.o" {asm
 0xFFFF constant monitor-memory-end
 0xFA00 constant monitor-routines-start
+0xF400 constant monitor-input-end
+0xF300 constant monitor-input-start
 0xF200 constant monitor-stack-start 
 0xF100 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
@@ -22,7 +24,6 @@ deflabel RetrieveIO
 deflabel FixCaseRoutine 
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
-deflabel ReadRangeFromIOAddressRoutine 
 deflabel ?VMStackFull
 deflabel ?VMStackEmpty
 deflabel $KEY 
@@ -86,10 +87,12 @@ WriteRangeToIOAddressRoutine (leafn
 	WriteRangeToIOAddress_Done !, cv bc,
 	WriteRangeToIOAddress_Loop .label
 	arg0 loc0 loc1 uadd, \ uadd bro!?
+    \ loc1 inspect-register
 	loc1 loc1 ld,
 	loc1 io-write
 	loc0 1+,
-	loc0 arg1 cv neq,
+    \ loc0 inspect-register
+	loc0 arg1 cv gt,  
 	WriteRangeToIOAddress_Loop !, cv bc,
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
@@ -102,27 +105,28 @@ $KEY (fn
     FixCaseRoutine !, call,
     fn)
 $KEY->HEX (fn
+    deflabel $KEY->HEX_Done
     1 save-locals 
-    deflabel $KEY->HEX_Bad
     $KEY !, call,
     out0 loc0 ->
-    deflabel $KEY->HEX_Bad
     0x30 #, loc0 loc0 subi,
     loc0 cv ltz,
-    $KEY->HEX_Bad !, cv bc,
+    $KEY->HEX_Done !, cv bc,
     0x09 #, loc0 cv lei, 
     deflabel $KEY->HEX_IsDigit
     $KEY->HEX_IsDigit !, cv bc,
     0x0A #, loc0 cv lti, 
-    $KEY->HEX_Bad !, cv bc,
+    $KEY->HEX_Done !, cv bc,
     0x7 #, loc0 loc0 subi,
     $KEY->HEX_IsDigit .label
-    $KEY->HEX_Bad .label
+    $KEY->HEX_Done .label
     loc0 out0 ->
     1 restore-locals
     fn)
 
 $HEX (fn
+    \ TODO rewrite to take advantage of the input reading
+    \ read characters
     deflabel $HEX_DONE
     1 save-locals
     zero loc0 ->
@@ -196,13 +200,51 @@ PRINT-NUMBER (fn
     print-number-done .label
     1 restore-locals
     fn)
-
+deflabel readline 
+readline (fn
+deflabel readline_loop
+deflabel readline_done
+    2 save-locals 
+    monitor-input-start #, loc0 set,
+    loc0 1+,
+    zero loc1 -> \ current
+readline_loop .label 
+    $KEY !, call,  \ get the key
+    out0 loc1 ->
+    loc1 terminator cv eq,
+    readline_done !, cv bc,
+    loc1 loc0 st,
+    loc0 1+,
+    monitor-input-end #, loc0 cv lti,
+    readline_loop !, cv bc,
+readline_done .label 
+    \ save the length in memory
+    monitor-input-start #, at0 set,
+    at0 loc0 at1 usub,
+    at1 at0 st,
+    at1 out0 ->
+    out0 inspect-register
+    \ terminator is used to terminate early
+    2 restore-locals
+    fn)
 monitor-loop .org
 deflabel monitor-loop-start
+    0xA #, terminator set,
 monitor-loop-start .label
-    $HEX !, call,
-    out0 arg0 -> 
-    PRINT-NUMBER !, call,
+    readline !, call,
+    4 #, out0 cv lti, 
+    monitor-loop-start !, cv bc,
+    \ $HEX !, call,
+    \ out0 arg0 -> 
+    \ PRINT-NUMBER !, call,
+    monitor-input-start #, arg0 set,
+    arg0 arg1 ld, 
+    arg1 1-,
+    arg0 1+,
+    /dev/console0 #->io
+    WriteRangeToIOAddressRoutine !, call,
+    0xA #, arg0 set,
+    $ECHO !, call,
     monitor-loop-start !, b,
 asm}
 bye
