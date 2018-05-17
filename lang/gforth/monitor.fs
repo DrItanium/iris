@@ -214,6 +214,28 @@ printline (fn
     WriteRangeToIOAddressRoutine !, call,
     $NEWLINE !, call,
 fn)
+deflabel DISPLAY_REGISTER
+DISPLAY_REGISTER (leafn
+    \ arg0 - register index
+    /dev/register #->io
+    arg0 io-write
+    leafn)
+: call-display-register ( reg -- ) 
+    #, arg0 set, 
+    DISPLAY_REGISTER !, call, 
+    $SPACE !, call, ;
+deflabel DISPLAY_REGISTER_L0
+DISPLAY_REGISTER_L0 (fn
+    r0 call-display-register 
+    r1 call-display-register 
+    r2 call-display-register 
+    r3 call-display-register 
+    r4 call-display-register 
+    r5 call-display-register 
+    r6 call-display-register 
+    r7 call-display-register 
+    $NEWLINE !, call,
+fn)
 monitor-loop .org
 deflabel monitor-loop-start
 deflabel monitor-call-shutdown
@@ -221,6 +243,7 @@ deflabel monitor-call-shutdown
     monitor-stack-start #, vmsp set,
     0x10 #, num-base set,
 monitor-loop-start .label
+    DISPLAY_REGISTER_L0 !, call,
     readline !, call,
     5 #, out0 cv lti, 
     monitor-loop-start !, cv bc,

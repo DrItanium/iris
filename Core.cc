@@ -570,7 +570,8 @@ namespace iris {
         IODevice vmDumper(5, 1, nullptr, dumpVM);
 		IODevice vmTerminator(6,1, nullptr, terminateVM);
         IODevice registerInspector(7,1, nullptr, [this](auto index, auto value) {
-                        std::cout << "Register: " << std::hex << getRegister(byte(0b111111 & value)).get<Address>() << std::endl;
+                        auto maskedIndex = byte(0b111111 & value);
+                        std::cout << "r" << std::dec << int(maskedIndex) << ": " << std::hex << getRegister(maskedIndex).get<Address>();
                     });
         installIODevice(sink);
         installIODevice(console);
