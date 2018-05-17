@@ -372,6 +372,10 @@ DISPLAY_REGISTERS (fn
     DISPLAY_REGISTER_L7 !, call,
     $NEWLINE !, call,
     fn)
+\ deflabel SHOULD_QUIT
+\ SHOULD_QUIT (fn
+\     \ arg0 - start address
+\ fn)
 monitor-loop .org
 deflabel monitor-loop-start
 deflabel monitor-call-shutdown
@@ -382,7 +386,10 @@ monitor-loop-start .label
     DISPLAY_REGISTERS !, call,
     $PROMPT !, call,
     readline !, call,
-    5 #, out0 cv lti, 
+    out0 loc0 ->
+\    4 #, loc0 cv lti, 
+
+    5 #, loc0 cv lti, 
     monitor-loop-start !, cv bc,
     monitor-input-start #, arg0 set,
     arg0 1+,
