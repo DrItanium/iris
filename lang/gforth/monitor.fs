@@ -13,8 +13,6 @@ monitor-memory-start constant monitor-loop
 0x0000 .org monitor-loop #, jmp
 
 deflabel TerminateExecutionRoutine
-deflabel CallRoutine
-deflabel SetIORegister
 deflabel StoreMemory
 deflabel RetrieveMemory
 deflabel StoreCore
@@ -24,8 +22,6 @@ deflabel RetrieveIO
 deflabel FixCaseRoutine 
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
-deflabel ?VMStackFull
-deflabel ?VMStackEmpty
 deflabel $KEY 
 deflabel $ECHO 
 deflabel $HEX
@@ -34,10 +30,6 @@ monitor-routines-start .org
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
     arg0 io-write \ this will not return
-?VMStackFull (leafn monitor-stack-end #, vmsp out0 eqi, leafn)
-?VMStackEmpty (leafn monitor-stack-start #, vmsp out0 eqi, leafn)
-CallRoutine (fn arg0 callr, fn)
-SetIORegister (leafn arg0 io -> leafn)
 
 StoreMemory (leafn 
     \ arg0 - data to store
@@ -204,6 +196,7 @@ deflabel readline
 readline (fn
 deflabel readline_loop
 deflabel readline_done
+deflabel readline_consume_rest_of_line 
     2 save-locals 
     monitor-input-start #, loc0 set,
     loc0 1+,
@@ -217,6 +210,12 @@ readline_loop .label
     loc0 1+,
     monitor-input-end #, loc0 cv lti,
     readline_loop !, cv bc,
+    loc1 terminator cv eq, 
+    readline_done !, cv bc,
+readline_consume_rest_of_line .label
+    $KEY !, call,  \ get the key
+    out0 terminator cv neq,
+    readline_consume_rest_of_line !, cv bc,
 readline_done .label 
     \ save the length in memory
     monitor-input-start #, at0 set,
