@@ -26,6 +26,7 @@
 
 #include "Core.h"
 #include <iostream>
+#include <iomanip>
 #include <functional>
 #include <sstream>
 #include <vector>
@@ -571,7 +572,7 @@ namespace iris {
 		IODevice vmTerminator(6,1, nullptr, terminateVM);
         IODevice registerInspector(7,1, nullptr, [this](auto index, auto value) {
                         auto maskedIndex = byte(0b111111 & value);
-                        std::cout << "r" << std::dec << int(maskedIndex) << ": " << std::hex << getRegister(maskedIndex).get<Address>();
+                        std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
                     });
         installIODevice(sink);
         installIODevice(console);

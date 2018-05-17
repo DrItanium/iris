@@ -236,6 +236,52 @@ DISPLAY_REGISTER_L0 (fn
     r7 call-display-register 
     $NEWLINE !, call,
 fn)
+
+deflabel DISPLAY_REGISTER_L1
+DISPLAY_REGISTER_L1 (fn
+    r8 call-display-register 
+    r9 call-display-register 
+    r10 call-display-register 
+    r11 call-display-register 
+    r12 call-display-register 
+    r13 call-display-register 
+    r14 call-display-register 
+    r15 call-display-register 
+    $NEWLINE !, call,
+fn)
+
+deflabel DISPLAY_REGISTER_L2
+DISPLAY_REGISTER_L2 (fn
+    r16 call-display-register 
+    r17 call-display-register 
+    r18 call-display-register 
+    r19 call-display-register 
+    r20 call-display-register 
+    r21 call-display-register 
+    r22 call-display-register 
+    r23 call-display-register 
+    $NEWLINE !, call,
+fn)
+
+deflabel DISPLAY_REGISTER_L3
+DISPLAY_REGISTER_L3 (fn
+    r24 call-display-register 
+    r25 call-display-register 
+    r26 call-display-register 
+    r27 call-display-register 
+    r28 call-display-register 
+    r29 call-display-register 
+    r30 call-display-register 
+    r31 call-display-register 
+    $NEWLINE !, call,
+fn)
+deflabel DISPLAY_REGISTERS
+DISPLAY_REGISTERS (fn
+    DISPLAY_REGISTER_L0 !, call,
+    DISPLAY_REGISTER_L1 !, call,
+    DISPLAY_REGISTER_L2 !, call,
+    DISPLAY_REGISTER_L3 !, call,
+    fn)
 monitor-loop .org
 deflabel monitor-loop-start
 deflabel monitor-call-shutdown
@@ -243,7 +289,7 @@ deflabel monitor-call-shutdown
     monitor-stack-start #, vmsp set,
     0x10 #, num-base set,
 monitor-loop-start .label
-    DISPLAY_REGISTER_L0 !, call,
+    DISPLAY_REGISTERS !, call,
     readline !, call,
     5 #, out0 cv lti, 
     monitor-loop-start !, cv bc,
