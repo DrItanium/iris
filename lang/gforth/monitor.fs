@@ -119,8 +119,11 @@ $HEX (fn
     fn)
     \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
         
-$PROMPT .label
+$PROMPT (fn
       0x2D #, arg0 set,
+      $ECHO !, call,
+      $SPACE !, call,
+      fn)
 $SPACE .label
       0x20 #, arg0 set,
       $ECHO !, jmp
