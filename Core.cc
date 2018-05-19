@@ -389,6 +389,10 @@ namespace iris {
     DefExec(UnsignedRem) { setDestination(op, getSource(op).address % getSource2(op).address); }
     DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
     DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
+	DefExec(Increment) { setDestination(op, getSource(op).integer + 1); }
+	DefExec(Decrement) { setDestination(op, getSource(op).integer - 1); }
+	DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
+	DefExec(UnsignedDecrement) { setDestination(op, getSource(op).address - 1); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

@@ -122,6 +122,10 @@ opcode: #ulshift
 opcode: #urshift
 opcode: #readtok
 opcode: #number
+opcode: #incr
+opcode: #decr
+opcode: #uincr
+opcode: #udecr
 opcode}
 
 \ registers
@@ -393,6 +397,10 @@ r28 cconstant out3
 #urshift inst-3reg urshift, 
 #readtok inst-2reg readtok,
 #number inst-3reg number,
+#incr inst-2reg incr,
+#decr inst-2reg decr 
+#uincr inst-2reg uincr,
+#udecr inst-2reg udecr 
 
 : def2argi ( "name" "op" -- )
   create ' , 
@@ -577,18 +585,7 @@ push, ;
   endif ;
 
 !def3i !rshifti, rshifti,
-\ : make-update-form-3arg ( constant "name" "function" -- )
-\   create , ' ,
-\   does> ( reg -- )
-\   >r 
-\   dup zero = r> swap 
-\   if 
-\     2drop 
-\   else 
-\     2@ \ load the code and function
-\     >r \ stash the function
-\     swap dup r> execute
-\   endif ;
+
 : andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
 : ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
 : xori, ( imm id src dest -- ) 2>r $->at0 at0 2r> xor, ;
@@ -607,8 +604,8 @@ push, ;
 !def3i !xori, xori, 
 !def3i !nandi, nandi, 
 !def3i !nori, nori, 
-: 1+, ( reg -- ) 1 swap dup #addi, ;
-: 1-, ( reg -- ) 1 swap dup #subi, ;
+: 1+, ( reg -- ) dup #incr, ;
+: 1-, ( reg -- ) dup #decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
 : 2-, ( reg -- ) 2 swap dup #subi, ;
 : 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
@@ -616,25 +613,6 @@ push, ;
 : 4*, ( dest -- ) 2 swap dup #lshifti, ;
 : 4/, ( dest -- ) 2 swap dup #rshifti, ;
 : next-address ( -- imm id ) loc@ 1+ #, ;
-\ 1 make-update-form-3arg 1+, #addi,
-\ 1 make-update-form-3arg 1-, #subi, 
-\ 2 make-update-form-3arg 2+, #addi, 
-\ 2 make-update-form-3arg 2-, #subi, 
-\ 1 make-update-form-3arg 2/, #rshifti, 
-\ 2 make-update-form-3arg 4*, #lshifti, 
-\ 2 make-update-form-3arg 4/, #rshifti, 
-\ 3 make-update-form-3arg 8*, #lshifti, 
-\ 3 make-update-form-3arg 8/, #rshifti, 
-\ 4 make-update-form-3arg 16*, #lshifti, 
-\ 4 make-update-form-3arg 16/, #rshifti, 
-\ 5 make-update-form-3arg 32*, #lshifti, 
-\ 5 make-update-form-3arg 32/, #rshifti, 
-\ 6 make-update-form-3arg 64*, #lshifti, 
-\ 6 make-update-form-3arg 64/, #rshifti, 
-\ special form
-
-( TODO: redefine multiply and divide to automatically use the faster formats
-        if it makes sense )
 : !.data16 ( imm -- ) !, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
 : save-register ( reg -- ) vmsp psh-> ;
