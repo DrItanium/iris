@@ -5,15 +5,19 @@ s" monitor.o" {asm
 0xFF00 constant command-table-start
 0xFEFF constant monitor-routines-end
 0xFA00 constant monitor-routines-start
+0xF600 constant monitor-data-stack-start
+0xF500 constant monitor-data-stack-end
 0xF400 constant monitor-input-end
 0xF300 constant monitor-input-start
 0xF200 constant monitor-stack-start 
 0xF100 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
+\ use the upper stack elements as 
 monitor-memory-start constant monitor-loop
-
+: check-overflow ( -- ) loc@ monitor-routines-end > ABORT" routines are too large!" ;
 0x0000 .org monitor-loop #, jmp
 
+deflabel monitor-loop-start
 deflabel TerminateExecutionRoutine
 deflabel FixCaseRoutine 
 deflabel PrintCharactersRoutine
@@ -30,6 +34,10 @@ deflabel printbuf
 deflabel printinput
 deflabel readline 
 deflabel InvokeCommandRoutine
+deflabel SwitchCore
+deflabel DumpCore
+deflabel LoadCore
+deflabel SwapCore
 command-table-start .org
 TerminateExecutionRoutine !.data16
 $KEY !.data16
@@ -41,6 +49,9 @@ printline !.data16
 printbuf !.data16
 WriteRangeToIOAddressRoutine !.data16
 readline !.data16
+DumpCore !.data16
+LoadCore !.data16
+SwapCore !.data16
 
 monitor-routines-start .org
 \ this must always be first!
@@ -54,6 +65,28 @@ InvokeCommandRoutine (fn
     cmd callr,                            \ perform a call
     cmd restore-register                  \ restore cmd to what it was
     fn)                                   \ return
+DumpCore (leafn
+    \ dump the contents of core memory to disk using the given arg address
+    \ arg0 - core id to dump to ( can easily make a copy by dumping to a different id )
+    /dev/core-dump #->io
+    arg0 io-write
+    leafn)
+LoadCore (leafn
+    \ load a given core segment into memory
+    \ arg0 the index to load from memory
+    /dev/core-load #->io
+    arg0 io-write
+    leafn)
+SwapCore (fn
+    \ save the current state to the target core fragment and then load a new target
+    \ arg0 - core index to save current memory to
+    \ arg1 - core index to load after save is complete
+    2 save-locals
+    DumpCore !, call,
+    arg1 arg0 ->
+    LoadCore !, call,
+    2 restore-locals
+    fn)
 
 
 TerminateExecutionRoutine .label
@@ -372,13 +405,19 @@ DISPLAY_REGISTERS (fn
     DISPLAY_REGISTER_L7 !, call,
     $NEWLINE !, call,
     fn)
-\ deflabel SHOULD_QUIT
-\ SHOULD_QUIT (fn
-\     \ arg0 - start address
-\ fn)
+deflabel CHECK_TERMINATE
+CHECK_TERMINATE (fn
+    1 save-locals 
+    monitor-input-start #, loc0 set,
+    loc0 1+,
+    loc0 loc0 ld,
+    loc0 inspect-register
+    0x4D #, loc0 cv eqi,
+    \ TerminateExecutionRoutine !, cv bc,
+    1 restore-locals
+fn)
+check-overflow
 monitor-loop .org
-deflabel monitor-loop-start
-deflabel monitor-call-shutdown
     0xA #, terminator set,
     monitor-stack-start #, vmsp set,
     0x10 #, num-base set,
@@ -386,9 +425,9 @@ monitor-loop-start .label
     DISPLAY_REGISTERS !, call,
     $PROMPT !, call,
     readline !, call,
+    CHECK_TERMINATE !, call,
+    \ if we fail the check then see if the front of input is M for terMinate
     out0 loc0 ->
-\    4 #, loc0 cv lti, 
-
     5 #, loc0 cv lti, 
     monitor-loop-start !, cv bc,
     monitor-input-start #, arg0 set,
@@ -399,9 +438,6 @@ monitor-loop-start .label
     $NEWLINE !, call,
     printinput !, call,
     monitor-loop-start !, b,
-monitor-call-shutdown .label
-    zero arg0 ->
-    TerminateExecutionRoutine !, jmp
 
 asm}
 bye

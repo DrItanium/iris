@@ -474,8 +474,6 @@ ioaddr}
   at1 at0 stio, ;
 
 \ core routines
-: dump-core ( reg -- ) /dev/core-dump #->io io-write ;
-: load-core ( reg -- ) /dev/core-load #->io io-write ;
 : call, ( dest -- ) lr bl, ;
 : callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 

@@ -94,7 +94,8 @@ namespace iris {
     }
     Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
         Core::DecodedInstruction tmp;
-        switch (getOpcode(i)) {
+        auto op = getOpcode(i);
+        switch (op) {
 #define X(title, style, z) \
             case Opcode :: title : \
                                    tmp = Core::title () ; \
@@ -104,6 +105,9 @@ namespace iris {
 #undef X
 #undef FirstX
             default:
+                std::cout << "@ " << std::hex << _pc << std::endl;
+                std::cout << "bad instruction: " << std::hex << i << std::endl;
+                std::cout << "bad opcode " << int(op) << std::endl;
                 throw Problem("Illegal Opcode!");
         }
         std::visit([this, i](auto&& value) { decodeArguments(i, value._args); }, tmp);
