@@ -281,140 +281,56 @@ printline (fn
     WriteRangeToIOAddressRoutine !, call,
     $NEWLINE !, call,
 fn)
-deflabel DISPLAY_REGISTER
-DISPLAY_REGISTER (leafn
-    \ arg0 - register index
-    /dev/register #->io
-    arg0 io-write
-    leafn)
-: call-display-register ( reg -- ) 
-    #, arg0 set, 
-    DISPLAY_REGISTER !, call, 
-    $SPACE !, call, ;
-deflabel DISPLAY_REGISTER_L0
-DISPLAY_REGISTER_L0 (fn
-    r0 call-display-register 
-    r1 call-display-register 
-    r2 call-display-register 
-    r3 call-display-register 
-    r4 call-display-register 
-    r5 call-display-register 
-    r6 call-display-register 
-    r7 call-display-register 
-    $NEWLINE !, call,
-fn)
-
-deflabel DISPLAY_REGISTER_L1
-DISPLAY_REGISTER_L1 (fn
-    r8 call-display-register 
-    r9 call-display-register 
-    r10 call-display-register 
-    r11 call-display-register 
-    r12 call-display-register 
-    r13 call-display-register 
-    r14 call-display-register 
-    r15 call-display-register 
-    $NEWLINE !, call,
-fn)
-
-deflabel DISPLAY_REGISTER_L2
-DISPLAY_REGISTER_L2 (fn
-    r16 call-display-register 
-    r17 call-display-register 
-    r18 call-display-register 
-    r19 call-display-register 
-    r20 call-display-register 
-    r21 call-display-register 
-    r22 call-display-register 
-    r23 call-display-register 
-    $NEWLINE !, call,
-fn)
-
-deflabel DISPLAY_REGISTER_L3
-DISPLAY_REGISTER_L3 (fn
-    r24 call-display-register 
-    r25 call-display-register 
-    r26 call-display-register 
-    r27 call-display-register 
-    r28 call-display-register 
-    r29 call-display-register 
-    r30 call-display-register 
-    r31 call-display-register 
-    $NEWLINE !, call,
-fn)
-deflabel DISPLAY_REGISTER_L4
-DISPLAY_REGISTER_L4 (fn
-    r32 call-display-register 
-    r33 call-display-register 
-    r34 call-display-register 
-    r35 call-display-register 
-    r36 call-display-register 
-    r37 call-display-register 
-    r38 call-display-register 
-    r39 call-display-register 
-    $NEWLINE !, call,
-fn)
-
-deflabel DISPLAY_REGISTER_L5
-DISPLAY_REGISTER_L5 (fn
-    r40 call-display-register 
-    r41 call-display-register 
-    r42 call-display-register 
-    r43 call-display-register 
-    r44 call-display-register 
-    r45 call-display-register 
-    r46 call-display-register 
-    r47 call-display-register 
-    $NEWLINE !, call,
-fn)
-deflabel DISPLAY_REGISTER_L6
-DISPLAY_REGISTER_L6 (fn
-    r48 call-display-register 
-    r49 call-display-register 
-    r50 call-display-register 
-    r51 call-display-register 
-    r52 call-display-register 
-    r53 call-display-register 
-    r54 call-display-register 
-    r55 call-display-register 
-    $NEWLINE !, call,
-fn)
-deflabel DISPLAY_REGISTER_L7
-DISPLAY_REGISTER_L7 (fn
-    r56 call-display-register 
-    r57 call-display-register 
-    r58 call-display-register 
-    r59 call-display-register 
-    r60 call-display-register 
-    r61 call-display-register 
-    r62 call-display-register 
-    r63 call-display-register 
-    $NEWLINE !, call,
+deflabel DISPLAY_REGISTER8
+DISPLAY_REGISTER8 (fn
+		deflabel DISPLAY-REGISTERS-LOOP
+		\ arg0 start address
+		4 save-locals
+		arg0 loc0 ->
+		$SPACE !, loc2 set,
+		$NEWLINE !, loc3 set,
+		0x8 #, arg0 loc1 addi,
+		DISPLAY-REGISTERS-LOOP .label
+		/dev/register #->io
+		loc0 io-write
+		loc2 callr,
+		loc0 1+, 
+		loc1 loc0 cv lt, 
+		DISPLAY-REGISTERS-LOOP !, cv bc,
+		loc3 callr, 
+		4 restore-locals
 fn)
 deflabel DISPLAY_REGISTERS
 DISPLAY_REGISTERS (fn
-    $NEWLINE !, call,
-    $NEWLINE !, call,
-    DISPLAY_REGISTER_L0 !, call,
-    DISPLAY_REGISTER_L1 !, call,
-    DISPLAY_REGISTER_L2 !, call,
-    DISPLAY_REGISTER_L3 !, call,
-    DISPLAY_REGISTER_L4 !, call,
-    DISPLAY_REGISTER_L5 !, call,
-    DISPLAY_REGISTER_L6 !, call,
-    DISPLAY_REGISTER_L7 !, call,
-    $NEWLINE !, call,
+	2 save-locals
+	$NEWLINE !, loc0 set,
+	DISPLAY_REGISTER8 !, loc1 set,
+	loc0 callr,
+	loc0 callr,
+	zero arg0 -> loc1 callr,
+	0x8 #, arg0 set, loc1 callr,
+	0x10 #, arg0 set, loc1 callr,
+	0x18 #, arg0 set, loc1 callr,
+	0x20 #, arg0 set, loc1 callr,
+	0x28 #, arg0 set, loc1 callr,
+	0x30 #, arg0 set, loc1 callr,
+	0x38 #, arg0 set, loc1 callr,
+	\ 0x40 #, arg0 set, loc1 callr,
+	loc0 callr,
+	2 restore-locals
     fn)
 deflabel CHECK_TERMINATE
 CHECK_TERMINATE (fn
-    1 save-locals 
+    2 save-locals 
+	arg0 loc1 ->
     monitor-input-start #, loc0 set,
     loc0 1+,
     loc0 loc0 ld,
-    loc0 inspect-register
     0x4D #, loc0 cv eqi,
-    \ TerminateExecutionRoutine !, cv bc,
-    1 restore-locals
+	zero arg0 ->
+	TerminateExecutionRoutine !, cv bc,
+	loc1 arg0 ->
+    2 restore-locals
 fn)
 check-overflow
 monitor-loop .org
