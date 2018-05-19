@@ -397,6 +397,11 @@ namespace iris {
         setRegister(op._args.dest, _pc);
         _pc = op._args.imm;
 	}
+	DefExec(ConditionalBranch) {
+		if (getRegister(op._args.dest).getTruth()) {
+			_pc = op._args.imm;
+		}
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

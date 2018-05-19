@@ -127,6 +127,7 @@ opcode: #decr
 opcode: #uincr
 opcode: #udecr
 opcode: #call
+opcode: #condb
 opcode}
 
 \ registers
@@ -402,7 +403,7 @@ r28 cconstant out3
 #decr inst-2reg decr,
 #uincr inst-2reg uincr,
 #udecr inst-2reg udecr,
-: calli, ( imm imm-type dest -- )
+: bl, ( imm imm-type dest -- )
   1reg #call
   or ( imm it v ) 
   rot ( it v imm )  
@@ -411,16 +412,36 @@ r28 cconstant out3
   swap ( v it )
   0= if ( constant ) <<inst else <<iinst endif ;
 : ?imm0 ( imm v -- imm v f ) over 0= ;
-: #calli, ( imm dest -- ) 
+: #bl, ( imm dest -- ) 
   ?imm0
   if 
     \ emit a move zero if it turns out we are looking at a constant zero
     \ zero and 0 translate to the same thing
     move,
   else 
-    #, swap calli, \ otherwise emit as normal
+    #, swap bl, \ otherwise emit as normal
   endif ;
-: !calli, ( imm dest -- ) !, swap calli, ;
+: !bl, ( imm dest -- ) !, swap bl, ;
+
+: bc, ( imm imm-type dest -- )
+  1reg #call
+  or ( imm it v ) 
+  rot ( it v imm )  
+  addr16 16 lshift 
+  or 
+  swap ( v it )
+  0= if ( constant ) <<inst else <<iinst endif ;
+: ?imm0 ( imm v -- imm v f ) over 0= ;
+: #bc, ( imm dest -- ) 
+  ?imm0
+  if 
+    \ emit a move zero if it turns out we are looking at a constant zero
+    \ zero and 0 translate to the same thing
+    move,
+  else 
+    #, swap bc, \ otherwise emit as normal
+  endif ;
+: !bc, ( imm dest -- ) !, swap bc, ;
 
 : def2argi ( "name" "op" -- )
   create ' , 
@@ -440,9 +461,7 @@ r28 cconstant out3
   @ execute \ we should now have the argument correctly setup
   ;
 
-: b, ( imm id -- ) $->at0 at0 br, ;
-: bl, ( imm id lr -- ) -rot $->at0 at0 brl, ;
-: bc, ( imm id cond -- ) -rot $->at0 at0 bcr, ;
+: b, ( imm id -- ) zero bl, ;
 : bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 def3argi addi, add,
 def3argi subi, sub,
@@ -502,7 +521,7 @@ ioaddr}
   at1 at0 stio, ;
 
 \ core routines
-: call, ( dest -- ) lr calli, ;
+: call, ( dest -- ) lr bl, ;
 : callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A

@@ -37,21 +37,24 @@ deflabel SwitchCore
 deflabel DumpCore
 deflabel LoadCore
 deflabel SwapCore
+deflabel IOWrite
 
 monitor-routines-start .org
 \ this must always be first!
-DumpCore (leafn
+
+TerminateExecutionRoutine .label
+	/dev/terminate-vm #->io
+	IOWrite !jmp
+DumpCore .label
     \ dump the contents of core memory to disk using the given arg address
     \ arg0 - core id to dump to ( can easily make a copy by dumping to a different id )
-    /dev/core-dump #->io
-    arg0 io-write
-    leafn)
-LoadCore (leafn
+	/dev/core-dump #->io
+	IOWrite !jmp
+LoadCore .label 
     \ load a given core segment into memory
-    \ arg0 the index to load from memory
-    /dev/core-load #->io
-    arg0 io-write
-    leafn)
+    \ arg0 - the core segment index to load 
+	/dev/core-load #->io
+IOWrite (leafn arg0 io-write leafn)
 SwapCore (fn
     \ save the current state to the target core fragment and then load a new target
     \ arg0 - core index to save current memory to
@@ -60,10 +63,6 @@ SwapCore (fn
     arg1 arg0 ->
     LoadCore !, call,
     fn)
-
-TerminateExecutionRoutine .label
-    /dev/terminate-vm #->io
-    arg0 io-write \ this will not return
 
 FixCaseRoutine (leafn 
 deflabel FixCaseRoutineDone
@@ -95,13 +94,12 @@ WriteRangeToIOAddressRoutine (leafn
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
     leafn)
-$KEY (fn 
+$KEY (leafn 
     \ resets the keyboard and then awaits the next keyboard input
     \ The next input is return in a known register (in0)
     /dev/console0 #->io
     arg0 io-read
-    FixCaseRoutine !, call,
-    fn)
+    leafn)
 $->HEX (fn
     deflabel $->HEX_Done
     \ arg0 - value to hexify
@@ -217,6 +215,7 @@ deflabel readline_consume_rest_of_line
     zero loc1 -> \ current
 readline_loop .label 
     $KEY !, call,  \ get the key
+    FixCaseRoutine !, call,
     out0 loc1 ->
     loc1 terminator cv eq,
     readline_done !, cv bc,
