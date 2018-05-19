@@ -56,11 +56,9 @@ SwapCore (fn
     \ save the current state to the target core fragment and then load a new target
     \ arg0 - core index to save current memory to
     \ arg1 - core index to load after save is complete
-    2 save-locals
     DumpCore !, call,
     arg1 arg0 ->
     LoadCore !, call,
-    2 restore-locals
     fn)
 
 TerminateExecutionRoutine .label
