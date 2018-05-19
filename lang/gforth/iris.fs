@@ -424,7 +424,7 @@ r28 cconstant out3
 : !bl, ( imm dest -- ) !, swap bl, ;
 
 : bc, ( imm imm-type dest -- )
-  1reg #call
+  1reg #condb
   or ( imm it v ) 
   rot ( it v imm )  
   addr16 16 lshift 
