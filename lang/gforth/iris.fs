@@ -126,6 +126,7 @@ opcode: #incr
 opcode: #decr
 opcode: #uincr
 opcode: #udecr
+opcode: #call
 opcode}
 
 \ registers
@@ -398,9 +399,28 @@ r28 cconstant out3
 #readtok inst-2reg readtok,
 #number inst-3reg number,
 #incr inst-2reg incr,
-#decr inst-2reg decr 
+#decr inst-2reg decr,
 #uincr inst-2reg uincr,
-#udecr inst-2reg udecr 
+#udecr inst-2reg udecr,
+: calli, ( imm imm-type dest -- )
+  1reg #call
+  or ( imm it v ) 
+  rot ( it v imm )  
+  addr16 16 lshift 
+  or 
+  swap ( v it )
+  0= if ( constant ) <<inst else <<iinst endif ;
+: ?imm0 ( imm v -- imm v f ) over 0= ;
+: #calli, ( imm dest -- ) 
+  ?imm0
+  if 
+    \ emit a move zero if it turns out we are looking at a constant zero
+    \ zero and 0 translate to the same thing
+    move,
+  else 
+    #, swap calli, \ otherwise emit as normal
+  endif ;
+: !calli, ( imm dest -- ) !, swap calli, ;
 
 : def2argi ( "name" "op" -- )
   create ' , 
@@ -482,7 +502,7 @@ ioaddr}
   at1 at0 stio, ;
 
 \ core routines
-: call, ( dest -- ) lr bl, ;
+: call, ( dest -- ) lr calli, ;
 : callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A
@@ -604,8 +624,8 @@ push, ;
 !def3i !xori, xori, 
 !def3i !nandi, nandi, 
 !def3i !nori, nori, 
-: 1+, ( reg -- ) dup #incr, ;
-: 1-, ( reg -- ) dup #decr, ;
+: 1+, ( reg -- ) dup incr, ;
+: 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
 : 2-, ( reg -- ) 2 swap dup #subi, ;
 : 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
