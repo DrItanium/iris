@@ -33,38 +33,13 @@ deflabel printline
 deflabel printbuf
 deflabel printinput
 deflabel readline 
-deflabel InvokeCommandRoutine
 deflabel SwitchCore
 deflabel DumpCore
 deflabel LoadCore
 deflabel SwapCore
-command-table-start .org
-TerminateExecutionRoutine !.data16
-$KEY !.data16
-$ECHO !.data16
-$HEX !.data16
-$->HEX !.data16
-$NEWLINE !.data16
-printline !.data16
-printbuf !.data16
-WriteRangeToIOAddressRoutine !.data16
-readline !.data16
-DumpCore !.data16
-LoadCore !.data16
-SwapCore !.data16
 
 monitor-routines-start .org
 \ this must always be first!
-InvokeCommandRoutine (fn
-    \ cmd - contains the command to run (preserved)
-    \ args are setup as needed
-    cmd save-register
-    cmd cmd mask-lower-half,              \ get lower 8 bits (prevent garbage)
-    command-table-start #, cmd cmd uaddi, \ compute table offset 
-    cmd cmd ld,                           \ load the address from memory
-    cmd callr,                            \ perform a call
-    cmd restore-register                  \ restore cmd to what it was
-    fn)                                   \ return
 DumpCore (leafn
     \ dump the contents of core memory to disk using the given arg address
     \ arg0 - core id to dump to ( can easily make a copy by dumping to a different id )
@@ -88,7 +63,6 @@ SwapCore (fn
     2 restore-locals
     fn)
 
-
 TerminateExecutionRoutine .label
     /dev/terminate-vm #->io
     arg0 io-write \ this will not return
@@ -104,7 +78,6 @@ deflabel FixCaseRoutineDone
     FixCaseRoutineDone .label
     arg0 out0 ->
     leafn)
- FixCaseRoutine
 WriteRangeToIOAddressRoutine (leafn
 	\ arg0 - starting point in memory
 	\ arg1 - length
@@ -285,37 +258,33 @@ deflabel DISPLAY_REGISTER8
 DISPLAY_REGISTER8 (fn
 		deflabel DISPLAY-REGISTERS-LOOP
 		\ arg0 start address
-		4 save-locals
+		2 save-locals
 		arg0 loc0 ->
-		$SPACE !, loc2 set,
-		$NEWLINE !, loc3 set,
 		0x8 #, arg0 loc1 addi,
 		DISPLAY-REGISTERS-LOOP .label
 		/dev/register #->io
 		loc0 io-write
-		loc2 callr,
+		$SPACE !, call,
 		loc0 1+, 
 		loc1 loc0 cv lt, 
 		DISPLAY-REGISTERS-LOOP !, cv bc,
-		loc3 callr, 
-		4 restore-locals
+		$NEWLINE !, call,
+		2 restore-locals
 fn)
 deflabel DISPLAY_REGISTERS
 DISPLAY_REGISTERS (fn
+	deflabel DISPLAY_REGISTERS_LOOP
 	2 save-locals
 	$NEWLINE !, loc0 set,
-	DISPLAY_REGISTER8 !, loc1 set,
 	loc0 callr,
 	loc0 callr,
-	zero arg0 -> loc1 callr,
-	0x8 #, arg0 set, loc1 callr,
-	0x10 #, arg0 set, loc1 callr,
-	0x18 #, arg0 set, loc1 callr,
-	0x20 #, arg0 set, loc1 callr,
-	0x28 #, arg0 set, loc1 callr,
-	0x30 #, arg0 set, loc1 callr,
-	0x38 #, arg0 set, loc1 callr,
-	\ 0x40 #, arg0 set, loc1 callr,
+	zero loc1 ->
+	DISPLAY_REGISTERS_LOOP .label
+	loc1 arg0 -> 
+	DISPLAY_REGISTER8 !, call,
+	0x8 #, loc1 loc1 addi, 
+	0x40 #, loc1 cv lti,
+	DISPLAY_REGISTERS_LOOP !, cv bc,
 	loc0 callr,
 	2 restore-locals
     fn)
@@ -333,6 +302,11 @@ CHECK_TERMINATE (fn
     2 restore-locals
 fn)
 check-overflow
+cr 
+." routines stop at " loc@ hex . cr
+." words free in routine area: " hex monitor-routines-end loc@ - 1+ hex . cr
+
+
 monitor-loop .org
     0xA #, terminator set,
     monitor-stack-start #, vmsp set,
