@@ -41,6 +41,11 @@ deflabel $HEX->KEY
    zero arg0 ->
   /dev/terminate-vm #->io
   IOWrite !jmp ;
+: #ECHO ( a -- )
+  #, arg0 set,
+  $ECHO !, call, ;
+: $SPACE ( -- ) 0x20 #ECHO ;
+: $PROMPT ( -- ) 0x2D #ECHO $SPACE ;
 0x0000 .org monitor-program-start #, jmp
 
 monitor-program-start .org
@@ -60,7 +65,7 @@ monitor-loop-start .label
 	DISPLAY-REGISTER8-LOOP .label
 	/dev/register #->io
 	loc1 io-write
-	$SPACE !, call,
+	$SPACE
 	loc1 1+, 
 	loc2 loc1 cv lt, 
 	DISPLAY-REGISTER8-LOOP !, cv bc,
@@ -69,9 +74,7 @@ monitor-loop-start .label
 	DISPLAY_REGISTERS_LOOP !, cv bc,
 	loc0 callr,
 	\ print the prompt out
-	0x2D #, arg0 set,
-	$ECHO !, call,
-	$SPACE !, call,
+	$PROMPT
     readline !, call,
 	\ if we fail the check then see if the front of 
 	\ input is M for terMinate
@@ -177,9 +180,6 @@ $->HEX (fn
 
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
-$SPACE .label
-      0x20 #, arg0 set,
-      $ECHO !, jmp
 $NEWLINE .label
       0xA #, arg0 set,
 $ECHO (leafn
