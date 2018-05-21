@@ -3,11 +3,9 @@ include iris.fs
 s" monitor.o" {asm
 0xFFFF constant monitor-memory-end
 0xFF00 constant monitor-program-end
-0xF600 constant monitor-program-start
-0xF600 constant monitor-variables-end
-0xF500 constant monitor-variables-start
-0xF500 constant monitor-data-stack-start
-0xF400 constant monitor-data-stack-end
+0xF500 constant monitor-program-start
+0xF400 constant monitor-variables-end
+0xF300 constant monitor-variables-start
 0xF300 constant monitor-input-end
 0xF200 constant monitor-input-start
 0xF100 constant monitor-stack-start 
@@ -21,7 +19,6 @@ deflabel FixCaseRoutine
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
 deflabel $ECHO 
-deflabel $HEX
 deflabel $->HEX
 deflabel $NEWLINE
 deflabel $SPACE
@@ -91,8 +88,31 @@ monitor-loop-start .label
     5 #, loc0 cv lti, 
     monitor-loop-start !, cv bc,
     monitor-input-start 1+ #, arg0 set,
-    $HEX !, call,
-    out0 arg0 -> 
+\ $HEX
+    deflabel $HEX_DONE
+    arg0 loc0 ld, \ first character
+    arg0 1+,
+    arg0 loc1 ld, \ second character
+    arg0 1+,
+    arg0 loc2 ld, \ third character
+    arg0 1+,
+    arg0 loc3 ld, \ fourth character
+    loc0 arg0 ->
+    $->HEX !, call,
+    out0 loc4 ->
+    loc1 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc2 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc3 arg0 ->
+    $->HEX !, call,
+    4 #, loc4 loc4 lshifti,
+    out0 loc4 loc4 add,
+    loc4 arg0 ->
     PRINT-NUMBER !, call,
     $NEWLINE !, call,
     printinput !, call,
@@ -155,35 +175,6 @@ $->HEX (fn
     1 restore-locals
     fn)
 
-$HEX (fn
-    \ arg0 - starting location
-    deflabel $HEX_DONE
-    5 save-locals
-    arg0 loc0 ld, \ first character
-    arg0 1+,
-    arg0 loc1 ld, \ second character
-    arg0 1+,
-    arg0 loc2 ld, \ third character
-    arg0 1+,
-    arg0 loc3 ld, \ fourth character
-    loc0 arg0 ->
-    $->HEX !, call,
-    out0 loc4 ->
-    loc1 arg0 ->
-    $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc2 arg0 ->
-    $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc3 arg0 ->
-    $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc4 out0 ->
-    5 restore-locals
-    fn)
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
 $SPACE .label
