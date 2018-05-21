@@ -2,27 +2,24 @@ include iris.fs
 \ contains all of the registers and pieces used for the monitor itself
 s" monitor.o" {asm
 0xFFFF constant monitor-memory-end
-0xFF00 constant command-table-start
-0xFEFF constant monitor-routines-end
-0xFA00 constant monitor-routines-start
-0xF600 constant monitor-data-stack-start
-0xF500 constant monitor-data-stack-end
-0xF400 constant monitor-input-end
-0xF300 constant monitor-input-start
-0xF200 constant monitor-stack-start 
-0xF100 constant monitor-stack-end \ 512 elements
+0xFF00 constant monitor-program-end
+0xF600 constant monitor-program-start
+0xF600 constant monitor-variables-end
+0xF500 constant monitor-variables-start
+0xF500 constant monitor-data-stack-start
+0xF400 constant monitor-data-stack-end
+0xF300 constant monitor-input-end
+0xF200 constant monitor-input-start
+0xF100 constant monitor-stack-start 
+0xF000 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
 \ use the upper stack elements as 
-monitor-memory-start constant monitor-loop
-: check-overflow ( -- ) loc@ monitor-routines-end > ABORT" routines are too large!" ;
-0x0000 .org monitor-loop #, jmp
+: check-overflow ( -- ) loc@ monitor-memory-start < ABORT" routines are too large!" ;
 
 deflabel monitor-loop-start
-deflabel TerminateExecutionRoutine
 deflabel FixCaseRoutine 
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
-deflabel $KEY 
 deflabel $ECHO 
 deflabel $HEX
 deflabel $->HEX
@@ -38,13 +35,48 @@ deflabel DumpCore
 deflabel LoadCore
 deflabel SwapCore
 deflabel IOWrite
+deflabel DISPLAY_REGISTERS
+deflabel PRINT-NUMBER 
+deflabel DontTerminateExecution
+: $KEY ( -- ) 
+  /dev/console0 #->io
+  arg0 io-read ;
+: $TERMINATE ( -- )
+   zero arg0 ->
+  /dev/terminate-vm #->io
+  IOWrite !jmp ;
+0x0000 .org monitor-program-start #, jmp
 
-monitor-routines-start .org
+monitor-program-start .org
+    0xA #, terminator set,
+    monitor-stack-start #, vmsp set,
+    0x10 #, num-base set,
+monitor-loop-start .label
+    DISPLAY_REGISTERS !, call,
+    $PROMPT !, call,
+    readline !, call,
+	\ if we fail the check then see if the front of 
+	\ input is M for terMinate
+	\ precompute the offset
+    monitor-input-start 1+ #, loc0 set,
+    loc0 loc0 ld,
+    0x4D #, loc0 cv neqi,
+	DontTerminateExecution !, cv bc,
+	\ terminate execution if we get in here
+	$TERMINATE
+	DontTerminateExecution .label
+	\ end TERMINATE
+    out0 loc0 ->
+    5 #, loc0 cv lti, 
+    monitor-loop-start !, cv bc,
+    monitor-input-start 1+ #, arg0 set,
+    $HEX !, call,
+    out0 arg0 -> 
+    PRINT-NUMBER !, call,
+    $NEWLINE !, call,
+    printinput !, call,
+    monitor-loop-start !, b,
 \ this must always be first!
-
-TerminateExecutionRoutine .label
-	/dev/terminate-vm #->io
-	IOWrite !jmp
 DumpCore .label
     \ dump the contents of core memory to disk using the given arg address
     \ arg0 - core id to dump to ( can easily make a copy by dumping to a different id )
@@ -64,17 +96,6 @@ SwapCore (fn
     LoadCore !, call,
     fn)
 
-FixCaseRoutine (leafn 
-deflabel FixCaseRoutineDone
-    \ arg0 - character to fix case of
-    0x61 #, arg0 cv lti,
-    FixCaseRoutineDone !, cv bc,
-    0x7a #, arg0 cv gti, 
-    FixCaseRoutineDone !, cv bc,
-    0x20 #, arg0 arg0 subi, 
-    FixCaseRoutineDone .label
-    arg0 out0 ->
-    leafn)
 WriteRangeToIOAddressRoutine (leafn
 	\ arg0 - starting point in memory
 	\ arg1 - length
@@ -93,12 +114,6 @@ WriteRangeToIOAddressRoutine (leafn
 	WriteRangeToIOAddress_Loop !, cv bc,
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
-    leafn)
-$KEY (leafn 
-    \ resets the keyboard and then awaits the next keyboard input
-    \ The next input is return in a known register (in0)
-    /dev/console0 #->io
-    arg0 io-read
     leafn)
 $->HEX (fn
     deflabel $->HEX_Done
@@ -179,7 +194,6 @@ $HEX->KEY (leafn
     $HEX->KEY_DONE .label
     arg0 out0 ->
     leafn)
-deflabel PRINT-NUMBER 
 PRINT-NUMBER (fn
     deflabel print-number-done
     \ arg0 - number to print
@@ -209,14 +223,19 @@ readline (fn
 deflabel readline_loop
 deflabel readline_done
 deflabel readline_consume_rest_of_line 
+deflabel FixCaseRoutineDone
     2 save-locals 
-    monitor-input-start #, loc0 set,
-    loc0 1+,
+    monitor-input-start 1+ #, loc0 set,
     zero loc1 -> \ current
 readline_loop .label 
-    $KEY !, call,  \ get the key
-    FixCaseRoutine !, call,
-    out0 loc1 ->
+	$KEY \ get the key
+    0x61 #, arg0 cv lti,
+    FixCaseRoutineDone !, cv bc,
+    0x7a #, arg0 cv gti, 
+    FixCaseRoutineDone !, cv bc,
+    0x20 #, arg0 arg0 subi, 
+FixCaseRoutineDone .label
+    arg0 loc1 ->
     loc1 terminator cv eq,
     readline_done !, cv bc,
     loc1 loc0 st,
@@ -226,7 +245,7 @@ readline_loop .label
     loc1 terminator cv eq, 
     readline_done !, cv bc,
 readline_consume_rest_of_line .label
-    $KEY !, call,  \ get the key
+	$KEY \ get the key
     out0 terminator cv neq,
     readline_consume_rest_of_line !, cv bc,
 readline_done .label 
@@ -242,8 +261,8 @@ readline_done .label
 printinput .label
     monitor-input-start #, arg0 set,
 printbuf .label
-    arg0 arg1 ld, 
-    arg0 1+,
+	arg0 arg1 ld,
+	arg0 1+,
 printline (fn
     \ arg0 - start address
     \ arg1 - length
@@ -268,7 +287,6 @@ DISPLAY_REGISTER8 (fn
 		$NEWLINE !, call,
 		2 restore-locals
 fn)
-deflabel DISPLAY_REGISTERS
 DISPLAY_REGISTERS (fn
 	deflabel DISPLAY_REGISTERS_LOOP
 	2 save-locals
@@ -285,46 +303,11 @@ DISPLAY_REGISTERS (fn
 	loc0 callr,
 	2 restore-locals
     fn)
-deflabel CHECK_TERMINATE
-CHECK_TERMINATE (fn
-    2 save-locals 
-	arg0 loc1 ->
-    monitor-input-start #, loc0 set,
-    loc0 1+,
-    loc0 loc0 ld,
-    0x4D #, loc0 cv eqi,
-	zero arg0 ->
-	TerminateExecutionRoutine !, cv bc,
-	loc1 arg0 ->
-    2 restore-locals
-fn)
-check-overflow
 cr 
 ." routines stop at " loc@ hex . cr
-." words free in routine area: " hex monitor-routines-end loc@ - 1+ hex . cr
+." words free in routine area: " hex monitor-program-end loc@ - 1+ hex . cr
 
 
-monitor-loop .org
-    0xA #, terminator set,
-    monitor-stack-start #, vmsp set,
-    0x10 #, num-base set,
-monitor-loop-start .label
-    DISPLAY_REGISTERS !, call,
-    $PROMPT !, call,
-    readline !, call,
-    CHECK_TERMINATE !, call,
-    \ if we fail the check then see if the front of input is M for terMinate
-    out0 loc0 ->
-    5 #, loc0 cv lti, 
-    monitor-loop-start !, cv bc,
-    monitor-input-start #, arg0 set,
-    arg0 1+,
-    $HEX !, call,
-    out0 arg0 -> 
-    PRINT-NUMBER !, call,
-    $NEWLINE !, call,
-    printinput !, call,
-    monitor-loop-start !, b,
-
+check-overflow
 asm}
 bye

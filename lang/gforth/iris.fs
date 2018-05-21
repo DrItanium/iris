@@ -603,7 +603,6 @@ push, ;
 !def3i !muli, muli,
 !def3i !divi, divi,
 !def3i !remi, remi, 
-
 : lshifti, ( imm id src dest -- ) 2>r $->at0 at0 2r> lshift, ;
 : #lshifti, ( imm src dest -- ) 
   rot dup 0= 
