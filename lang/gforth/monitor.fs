@@ -20,11 +20,8 @@ deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
 deflabel $ECHO 
 deflabel $->HEX
-deflabel $NEWLINE
 deflabel $SPACE
 deflabel printline
-deflabel printbuf
-deflabel printinput
 deflabel readline 
 deflabel SwitchCore
 deflabel DumpCore
@@ -46,6 +43,7 @@ deflabel $HEX->KEY
   $ECHO !, call, ;
 : $SPACE ( -- ) 0x20 #ECHO ;
 : $PROMPT ( -- ) 0x2D #ECHO $SPACE ;
+: $NEWLINE ( -- ) 0xA #ECHO ;
 0x0000 .org monitor-program-start #, jmp
 
 monitor-program-start .org
@@ -56,9 +54,8 @@ monitor-loop-start .label
 	\ print out the set of registers before accepting input
 	deflabel DISPLAY_REGISTERS_LOOP
 	deflabel DISPLAY-REGISTER8-LOOP
-	$NEWLINE !, loc0 set,
-	loc0 callr,
-	loc0 callr,
+	$NEWLINE
+	$NEWLINE
 	zero loc1 ->
 	DISPLAY_REGISTERS_LOOP .label
 	0x8 #, loc1 loc2 addi,
@@ -69,10 +66,10 @@ monitor-loop-start .label
 	loc1 1+, 
 	loc2 loc1 cv lt, 
 	DISPLAY-REGISTER8-LOOP !, cv bc,
-	$NEWLINE !, call,
+	$NEWLINE
 	0x40 #, loc1 cv lti,
 	DISPLAY_REGISTERS_LOOP !, cv bc,
-	loc0 callr,
+	$NEWLINE
 	\ print the prompt out
 	$PROMPT
     readline !, call,
@@ -117,8 +114,11 @@ monitor-loop-start .label
     out0 loc4 loc4 add,
     loc4 arg0 ->
     PRINT-NUMBER !, call,
-    $NEWLINE !, call,
-    printinput !, call,
+	$NEWLINE
+    monitor-input-start 1+ #, arg0 set,
+	arg0 arg1 ld,
+	arg0 1+,
+    printline !, call,
     monitor-loop-start !, b,
 \ this must always be first!
 DumpCore .label
@@ -180,8 +180,6 @@ $->HEX (fn
 
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
-$NEWLINE .label
-      0xA #, arg0 set,
 $ECHO (leafn
       \ arg0, the character to write
       /dev/console0 #->io
@@ -205,7 +203,7 @@ PRINT-NUMBER (fn
     \ arg0 - number to print
     1 save-locals
     arg0 loc0 ->
-    $NEWLINE !, call,
+	$NEWLINE
     0xC #, loc0 arg0 rshifti,
     $HEX->KEY !, call,
     out0 arg0 ->
@@ -264,21 +262,16 @@ readline_done .label
     2 restore-locals
     fn)
 
-printinput .label
-    monitor-input-start #, arg0 set,
-printbuf .label
-	arg0 arg1 ld,
-	arg0 1+,
 printline (fn
     \ arg0 - start address
     \ arg1 - length
     /dev/console0 #->io
     WriteRangeToIOAddressRoutine !, call,
-    $NEWLINE !, call,
+	$NEWLINE
 fn)
 cr 
 ." routines stop at " loc@ hex . cr
-." words free in routine area: " hex monitor-program-end loc@ - 1+ hex . cr
+." words free in routine area: " hex monitor-program-end loc@ - hex . cr
 
 
 check-overflow
