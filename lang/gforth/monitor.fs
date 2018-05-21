@@ -25,7 +25,6 @@ deflabel $HEX
 deflabel $->HEX
 deflabel $NEWLINE
 deflabel $SPACE
-deflabel $PROMPT
 deflabel printline
 deflabel printbuf
 deflabel printinput
@@ -35,9 +34,9 @@ deflabel DumpCore
 deflabel LoadCore
 deflabel SwapCore
 deflabel IOWrite
-deflabel DISPLAY_REGISTERS
 deflabel PRINT-NUMBER 
 deflabel DontTerminateExecution
+deflabel $HEX->KEY 
 : $KEY ( -- ) 
   /dev/console0 #->io
   arg0 io-read ;
@@ -52,8 +51,30 @@ monitor-program-start .org
     monitor-stack-start #, vmsp set,
     0x10 #, num-base set,
 monitor-loop-start .label
-    DISPLAY_REGISTERS !, call,
-    $PROMPT !, call,
+	\ print out the set of registers before accepting input
+	deflabel DISPLAY_REGISTERS_LOOP
+	deflabel DISPLAY-REGISTER8-LOOP
+	$NEWLINE !, loc0 set,
+	loc0 callr,
+	loc0 callr,
+	zero loc1 ->
+	DISPLAY_REGISTERS_LOOP .label
+	0x8 #, loc1 loc2 addi,
+	DISPLAY-REGISTER8-LOOP .label
+	/dev/register #->io
+	loc1 io-write
+	$SPACE !, call,
+	loc1 1+, 
+	loc2 loc1 cv lt, 
+	DISPLAY-REGISTER8-LOOP !, cv bc,
+	$NEWLINE !, call,
+	0x40 #, loc1 cv lti,
+	DISPLAY_REGISTERS_LOOP !, cv bc,
+	loc0 callr,
+	\ print the prompt out
+	0x2D #, arg0 set,
+	$ECHO !, call,
+	$SPACE !, call,
     readline !, call,
 	\ if we fail the check then see if the front of 
 	\ input is M for terMinate
@@ -163,13 +184,8 @@ $HEX (fn
     loc4 out0 ->
     5 restore-locals
     fn)
-    \ reads the next four characters in as hexidecimal characters and converts them to hexidecimal numbers
+    \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
-$PROMPT (fn
-      0x2D #, arg0 set,
-      $ECHO !, call,
-      $SPACE !, call,
-      fn)
 $SPACE .label
       0x20 #, arg0 set,
       $ECHO !, jmp
@@ -181,7 +197,6 @@ $ECHO (leafn
       arg0 io-write
       leafn)
 
-deflabel $HEX->KEY 
 $HEX->KEY (leafn
     deflabel $HEX->KEY_DONE
     \ go backwards from what we originally got in
@@ -270,39 +285,6 @@ printline (fn
     WriteRangeToIOAddressRoutine !, call,
     $NEWLINE !, call,
 fn)
-deflabel DISPLAY_REGISTER8
-DISPLAY_REGISTER8 (fn
-		deflabel DISPLAY-REGISTERS-LOOP
-		\ arg0 start address
-		2 save-locals
-		arg0 loc0 ->
-		0x8 #, arg0 loc1 addi,
-		DISPLAY-REGISTERS-LOOP .label
-		/dev/register #->io
-		loc0 io-write
-		$SPACE !, call,
-		loc0 1+, 
-		loc1 loc0 cv lt, 
-		DISPLAY-REGISTERS-LOOP !, cv bc,
-		$NEWLINE !, call,
-		2 restore-locals
-fn)
-DISPLAY_REGISTERS (fn
-	deflabel DISPLAY_REGISTERS_LOOP
-	2 save-locals
-	$NEWLINE !, loc0 set,
-	loc0 callr,
-	loc0 callr,
-	zero loc1 ->
-	DISPLAY_REGISTERS_LOOP .label
-	loc1 arg0 -> 
-	DISPLAY_REGISTER8 !, call,
-	0x8 #, loc1 loc1 addi, 
-	0x40 #, loc1 cv lti,
-	DISPLAY_REGISTERS_LOOP !, cv bc,
-	loc0 callr,
-	2 restore-locals
-    fn)
 cr 
 ." routines stop at " loc@ hex . cr
 ." words free in routine area: " hex monitor-program-end loc@ - 1+ hex . cr
