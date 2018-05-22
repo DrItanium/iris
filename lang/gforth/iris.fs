@@ -120,8 +120,8 @@ opcode: #udiv
 opcode: #urem
 opcode: #ulshift
 opcode: #urshift
-opcode: #readtok
-opcode: #number
+\ opcode: #readtok
+\ opcode: #number
 opcode: #incr
 opcode: #decr
 opcode: #uincr
@@ -397,8 +397,8 @@ r28 cconstant out3
 #urem inst-3reg urem,
 #ulshift inst-3reg ulshift,
 #urshift inst-3reg urshift, 
-#readtok inst-2reg readtok,
-#number inst-3reg number,
+\ #readtok inst-2reg readtok,
+\ #number inst-3reg number,
 #incr inst-2reg incr,
 #decr inst-2reg decr,
 #uincr inst-2reg uincr,

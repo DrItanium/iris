@@ -77,8 +77,8 @@ X(UnsignedShiftRight, ThreeRegister, shru)
 // "microcode" routines for making the forth interpreter implementation
 // faster
 // routines from Threaded Interpretive Languages as well
-X(ReadToken, TwoRegister, readtok)
-X(NumberRoutine, ThreeRegister, number-routine)
+// X(ReadToken, TwoRegister, readtok)
+// X(NumberRoutine, ThreeRegister, number-routine)
 X(Increment, TwoRegister, incr)
 X(Decrement, TwoRegister, decr)
 X(UnsignedIncrement, TwoRegister, uincr)

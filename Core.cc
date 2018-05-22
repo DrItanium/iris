@@ -274,109 +274,110 @@ namespace iris {
         auto b = getSource2(op).address;
         setDestination(op, a > b ? a : b);
     }
-    DefExec(ReadToken) {
-        if (op._args.dest == op._args.src) {
-            throw Problem("Destination and source must be different!");
-        }
-        // taken from the flow graph on pg 90 of threaded interpretive languages
-        //
-        // three register
-        // src - line buffer
-        // dest - dictionary pointer / destination
-        auto dp = getRegister(op._args.dest).get<Address>();
-        auto lbp = getSource(op).address;
-        auto separator = _registers[registerSeparator].get<signed char>();
-        // ignore any whitespace before token itself
-        for (auto front = _memory[lbp].get<signed char>(); front == separator; ++lbp, front = _memory[lbp].get<signed char>()) { }
-        auto start = lbp; // save the start of the token
-        auto count = 0;
-        while (true) {
-            ++lbp;
-            ++count;
-            auto curr = _memory[lbp].get<signed char>();
-            if (curr == separator) {
-                break;
-            }
-            // the terminator is specially encoded to have the upper most bit 
-            // set to one
-            if (curr < 0) {
-                // line terminator is one bit too far
-                --lbp;
-                break;
-            }
-        }
-        // stash the start of the next token into the lbp (src) register
-        ++lbp;
-        setRegister(op._args.src, lbp);
-        // go back to the starting token position
-        lbp = start;
-        // stash the length into the destination
-        _memory[dp] = count;
-        // go to the next cell
-        ++dp;
-        do {
-            // start copying the token contents over
-          _memory[dp] = _memory[lbp];
-          // advance both
-          ++lbp;
-          ++dp;
-          --count;
-          // keep doing this until we get back to the place we stopped
-        } while (count > 0);
-        // update the dictionary pointer as well
-        setRegister(op._args.dest, dp);
-    }
-    DefExec(NumberRoutine) {
-        // src2 is the base address
-        // src is the resultant number
-        // dest is the success code
-        auto flag = false;
-        auto baseAddress = getSource2(op).address;
-        auto p1 = _memory[baseAddress].get<Integer>();
-        auto count = _memory[p1].get<Address>();
-        ++p1;
-        auto sgn = _memory[p1].get<char>() == '-';
-        if (sgn) {
-            ++p1;
-        }
-        auto result = 0;
-        auto terminatedEarly = false;
-        auto _base = _registers[registerNumericBase].get<Integer>();
-        while (count != 0) {
-            auto num = Integer(_memory[p1].get<signed char>()) - 0x30;
-            if (num < 0) {
-                flag = false;
-                terminatedEarly = true;
-                break;
-            }
-            if (num > 9) {
-                if (num > 0x11) {
-                    num = num - 7;
-                } else {
-                    flag = false;
-                    terminatedEarly = true;
-                    break;
-                }
-            }
-            if (num < (_base - 1)) {
-                result = (result * _base) + num;
-                --count;
-                ++p1;
-            } else {
-                flag = false;
-                terminatedEarly = true;
-                break;
-            }
-        }
-        if (!terminatedEarly) {
-            if (sgn) {
-                result = -result;
-            }
-            flag = true;
-            setRegister(op._args.src, result);
-        }
-        setRegister(op._args.dest, flag);
-    }
+
+    // DefExec(ReadToken) {
+    //     if (op._args.dest == op._args.src) {
+    //         throw Problem("Destination and source must be different!");
+    //     }
+    //     // taken from the flow graph on pg 90 of threaded interpretive languages
+    //     //
+    //     // three register
+    //     // src - line buffer
+    //     // dest - dictionary pointer / destination
+    //     auto dp = getRegister(op._args.dest).get<Address>();
+    //     auto lbp = getSource(op).address;
+    //     auto separator = _registers[registerSeparator].get<signed char>();
+    //     // ignore any whitespace before token itself
+    //     for (auto front = _memory[lbp].get<signed char>(); front == separator; ++lbp, front = _memory[lbp].get<signed char>()) { }
+    //     auto start = lbp; // save the start of the token
+    //     auto count = 0;
+    //     while (true) {
+    //         ++lbp;
+    //         ++count;
+    //         auto curr = _memory[lbp].get<signed char>();
+    //         if (curr == separator) {
+    //             break;
+    //         }
+    //         // the terminator is specially encoded to have the upper most bit 
+    //         // set to one
+    //         if (curr < 0) {
+    //             // line terminator is one bit too far
+    //             --lbp;
+    //             break;
+    //         }
+    //     }
+    //     // stash the start of the next token into the lbp (src) register
+    //     ++lbp;
+    //     setRegister(op._args.src, lbp);
+    //     // go back to the starting token position
+    //     lbp = start;
+    //     // stash the length into the destination
+    //     _memory[dp] = count;
+    //     // go to the next cell
+    //     ++dp;
+    //     do {
+    //         // start copying the token contents over
+    //       _memory[dp] = _memory[lbp];
+    //       // advance both
+    //       ++lbp;
+    //       ++dp;
+    //       --count;
+    //       // keep doing this until we get back to the place we stopped
+    //     } while (count > 0);
+    //     // update the dictionary pointer as well
+    //     setRegister(op._args.dest, dp);
+    // }
+    // DefExec(NumberRoutine) {
+    //     // src2 is the base address
+    //     // src is the resultant number
+    //     // dest is the success code
+    //     auto flag = false;
+    //     auto baseAddress = getSource2(op).address;
+    //     auto p1 = _memory[baseAddress].get<Integer>();
+    //     auto count = _memory[p1].get<Address>();
+    //     ++p1;
+    //     auto sgn = _memory[p1].get<char>() == '-';
+    //     if (sgn) {
+    //         ++p1;
+    //     }
+    //     auto result = 0;
+    //     auto terminatedEarly = false;
+    //     auto _base = _registers[registerNumericBase].get<Integer>();
+    //     while (count != 0) {
+    //         auto num = Integer(_memory[p1].get<signed char>()) - 0x30;
+    //         if (num < 0) {
+    //             flag = false;
+    //             terminatedEarly = true;
+    //             break;
+    //         }
+    //         if (num > 9) {
+    //             if (num > 0x11) {
+    //                 num = num - 7;
+    //             } else {
+    //                 flag = false;
+    //                 terminatedEarly = true;
+    //                 break;
+    //             }
+    //         }
+    //         if (num < (_base - 1)) {
+    //             result = (result * _base) + num;
+    //             --count;
+    //             ++p1;
+    //         } else {
+    //             flag = false;
+    //             terminatedEarly = true;
+    //             break;
+    //         }
+    //     }
+    //     if (!terminatedEarly) {
+    //         if (sgn) {
+    //             result = -result;
+    //         }
+    //         flag = true;
+    //         setRegister(op._args.src, result);
+    //     }
+    //     setRegister(op._args.dest, flag);
+    // }
     DefExec(UnsignedAdd) { setDestination(op, getSource(op).address + getSource2(op).address); }
     DefExec(UnsignedSub) { 
         auto a = getSource(op).address;
