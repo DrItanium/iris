@@ -771,3 +771,10 @@ push, ;
       else 
         2r> lti16, 
       endif ;
+: bclti, ( dest id imm id src dest -- ) dup >r lti, r> bc, ;
+: bcgti, ( dest id imm id src dest -- ) dup >r gti, r> bc, ;
+: bceq, ( dest id src2 src dest -- ) dup >r eq, r> bc, ;
+: bcneq, ( dest id src2 src dest -- ) dup >r neq, r> bc, ;
+: bcneqi, ( dest id imm id src dest -- ) dup >r neqi, r> bc, ;
+: bcgt, ( imm id src2 src dest -- ) dup >r gt, r> bc, ;
+: bceqz, ( imm id src dest -- ) dup >r eqz, r> bc, ;

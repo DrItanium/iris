@@ -77,15 +77,13 @@ monitor-loop-start .label
 	\ precompute the offset
     monitor-input-start 1+ #, loc0 set,
     loc0 loc0 ld,
-    0x4D #, loc0 cv neqi,
-	DontTerminateExecution !, cv bc,
+	DontTerminateExecution !, 0x4D #, loc0 cv bcneqi,
 	\ terminate execution if we get in here
 	$TERMINATE
 	DontTerminateExecution .label
 	\ end TERMINATE
     out0 loc0 ->
-    5 #, loc0 cv lti, 
-    monitor-loop-start !, cv bc,
+    monitor-loop-start !, 5 #, loc0 cv bclti, 
     monitor-input-start 1+ #, arg0 set,
 \ $HEX
     deflabel $HEX_DONE
@@ -117,7 +115,6 @@ monitor-loop-start .label
     monitor-loop-start !, b,
 \ this must always be first!
 IOWrite (leafn arg0 io-write leafn)
-
 WriteRangeToIOAddressRoutine (leafn
 	\ arg0 - starting point in memory
 	\ arg1 - length
@@ -125,15 +122,13 @@ WriteRangeToIOAddressRoutine (leafn
 	deflabel WriteRangeToIOAddress_Loop
     2 save-locals
 	zero loc0 ->
-	arg1 cv eqz,
-	WriteRangeToIOAddress_Done !, cv bc,
+	WriteRangeToIOAddress_Done !, arg1 cv bceqz,
 	WriteRangeToIOAddress_Loop .label
 	arg0 loc0 loc1 uadd, \ uadd bro!?
 	loc1 loc1 ld,
 	loc1 io-write
 	loc0 1+,
-	loc0 arg1 cv gt,  
-	WriteRangeToIOAddress_Loop !, cv bc,
+	WriteRangeToIOAddress_Loop !, loc0 arg1 cv bcgt,
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
     leafn)
@@ -209,27 +204,23 @@ deflabel FixCaseRoutineDone
     2 save-locals 
     monitor-input-start 1+ #, loc0 set,
     zero loc1 -> \ current
+
 readline_loop .label 
 	$KEY \ get the key
-    0x61 #, out0 cv lti,
-    FixCaseRoutineDone !, cv bc,
-    0x7a #, out0 cv gti, 
-    FixCaseRoutineDone !, cv bc,
+    FixCaseRoutineDone !, 0x61 #, out0 cv bclti,
+    FixCaseRoutineDone !, 0x7a #, out0 cv bcgti, 
     0x20 #, out0 out0 subi, 
 FixCaseRoutineDone .label
     out0 loc1 ->
-    loc1 terminator cv eq,
-    readline_done !, cv bc,
+    readline_done !, loc1 terminator cv bceq,
     loc1 loc0 st,
     loc0 1+,
-    monitor-input-end #, loc0 cv lti,
-    readline_loop !, cv bc,
-    loc1 terminator cv eq, 
-    readline_done !, cv bc,
+    readline_loop !, monitor-input-end #, loc0 cv bclti,
+    readline_done !, loc1 terminator cv bceq,
 readline_consume_rest_of_line .label
 	$KEY \ get the key
-    out0 terminator cv neq,
-    readline_consume_rest_of_line !, cv bc,
+    readline_consume_rest_of_line !, out0 terminator cv bcneq,
+
 readline_done .label 
     \ save the length in memory
     monitor-input-start #, at0 set,
