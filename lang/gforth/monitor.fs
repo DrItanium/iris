@@ -136,8 +136,7 @@ $->HEX (fn
     \ arg0 - value to hexify
     1 save-locals 
     0x30 #, arg0 loc0 subi,
-    loc0 cv ltz,
-    $->HEX_Done !, cv bc,
+    $->HEX_Done !, loc0 cv bcltz,
     $->HEX_IsDigit !, 0x0A #, loc0 cv bclti, 
     $->HEX_Done !, 0x0A #, loc0 cv bclti, 
     0x7 #, loc0 loc0 subi,

@@ -766,7 +766,7 @@ push, ;
            2r> lti16,  
          else 
            drop dup ( imm ) 
-           0= if drop zero 2r> lt, else 2r> addi12, endif 
+           0= if drop 2r> ltz, else 2r> lti12, endif 
          endif
       else 
         2r> lti16, 
@@ -779,3 +779,4 @@ push, ;
 : bcgt, ( imm id src2 src dest -- ) dup >r gt, r> bc, ;
 : bceqz, ( imm id src dest -- ) dup >r eqz, r> bc, ;
 : bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
+: bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;

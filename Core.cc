@@ -54,7 +54,7 @@ namespace iris {
         return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
     }
     constexpr Address getImmediate12(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), Address, 0xFFF0'0000, 12>(i);
+        return decodeBits<decltype(i), Address, 0xFFF0'0000, 20>(i);
     }
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
@@ -96,7 +96,7 @@ namespace iris {
         a.dest = getDestinationIndex(i);
     }
     void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
-        a.imm = getImmediate12(i);
+        a.addr = getImmediate12(i);
         a.dest = getDestinationIndex(i);
         a.src = getSourceIndex(i);
     }
@@ -164,31 +164,26 @@ namespace iris {
     DefExec(Eq) { 
 		auto first = getSource(op).integer;
 		auto second = getSource2(op).integer;
-		// std::cout << "eq: " << std::hex << first << " = " << std::hex << second << std::endl;
 		setDestination(op, first == second);
 	}
     DefExec(Neq) { 
 		auto first = getSource(op).integer;
 		auto second = getSource2(op).integer;
-		// std::cout << "neq: " << std::hex << first << " != " << std::hex << second << std::endl;
 		setDestination(op, first != second);
 	}
     DefExec(LessThan) { 
 		auto first = getSource(op).integer;
 		auto second = getSource2(op).integer;
-		// std::cout << "lt: " << std::hex << first << " < " << std::hex << second << std::endl;
 		setDestination(op, first < second);
 	}
     DefExec(LessThanOrEqualTo) { 
 		auto first = getSource(op).integer;
 		auto second = getSource2(op).integer;
-		// std::cout << "le: " << std::hex << first << " <= " << std::hex << second << std::endl;
 		setDestination(op, first <= second);
 	}
     DefExec(GreaterThan) { 
 		auto first = getSource(op).integer;
 		auto second = getSource2(op).integer;
-		// std::cout << "gt: " << std::hex << first << " > " << std::hex << second << std::endl;
 		setDestination(op, first > second);
 	}
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
@@ -425,7 +420,9 @@ namespace iris {
         incr._args.src = op._args.dest;
         perform(incr);
     }
-    DefExec(LessThanImmediate) { setDestination(op, getSource(op).address < op._args.imm); }
+    DefExec(LessThanImmediate) { 
+        setDestination(op, getSource(op).integer < op._args.imm); 
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

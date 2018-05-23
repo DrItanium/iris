@@ -219,7 +219,10 @@ namespace iris {
 				~TwoRegisterWithImmediate() = default;
 				DestinationRegister dest;
                 SourceRegister src;
-				Address imm;
+                union {
+                    Address addr;
+                    Integer imm;
+                };
 			};
 #define X(title, style, z) \
 			struct title final { \
