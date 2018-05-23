@@ -20,7 +20,6 @@ deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
 deflabel $ECHO 
 deflabel $->HEX
-deflabel $SPACE
 deflabel printline
 deflabel readline 
 deflabel SwitchCore
@@ -90,13 +89,10 @@ monitor-loop-start .label
     monitor-input-start 1+ #, arg0 set,
 \ $HEX
     deflabel $HEX_DONE
-    arg0 loc0 ld, \ first character
-    arg0 1+,
-    arg0 loc1 ld, \ second character
-    arg0 1+,
-    arg0 loc2 ld, \ third character
-    arg0 1+,
-    arg0 loc3 ld, \ fourth character
+    arg0 loc0 ldtincr, \ first character
+    arg0 loc1 ldtincr, \ second character
+    arg0 loc2 ldtincr, \ third character
+    arg0 loc3 ldtincr, \ fourth character
     loc0 arg0 ->
     $->HEX !, call,
     out0 loc4 ->
@@ -115,30 +111,12 @@ monitor-loop-start .label
     loc4 arg0 ->
     PRINT-NUMBER !, call,
 	$NEWLINE
-    monitor-input-start 1+ #, arg0 set,
-	arg0 arg1 ld,
-	arg0 1+,
+    monitor-input-start #, arg0 set,
+	arg0 arg1 ldtincr,
     printline !, call,
     monitor-loop-start !, b,
 \ this must always be first!
-DumpCore .label
-    \ dump the contents of core memory to disk using the given arg address
-    \ arg0 - core id to dump to ( can easily make a copy by dumping to a different id )
-	/dev/core-dump #->io
-	IOWrite !jmp
-LoadCore .label 
-    \ load a given core segment into memory
-    \ arg0 - the core segment index to load 
-	/dev/core-load #->io
 IOWrite (leafn arg0 io-write leafn)
-SwapCore (fn
-    \ save the current state to the target core fragment and then load a new target
-    \ arg0 - core index to save current memory to
-    \ arg1 - core index to load after save is complete
-    DumpCore !, call,
-    arg1 arg0 ->
-    LoadCore !, call,
-    fn)
 
 WriteRangeToIOAddressRoutine (leafn
 	\ arg0 - starting point in memory

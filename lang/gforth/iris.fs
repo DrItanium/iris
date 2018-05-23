@@ -135,6 +135,7 @@ opcode: #addi
 opcode: #subi
 opcode: #rshifti
 opcode: #lshifti
+opcode: #ldtincr
 opcode}
 
 \ registers
@@ -668,7 +669,6 @@ push, ;
     at0 swap ( at0 r0 )
     -> 
   endif ;
-: inject#3, ( a b -- #, a b ) 2>r #, 2r> ;
 
 : !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
 
@@ -754,3 +754,5 @@ push, ;
 : fn) ( -- ) restore-lr ret, ;
 : mask-lower-half, ( src dest -- ) 2>r 0x00FF #, 2r> andi, ;
 : mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;
+
+#ldtincr inst-2reg ldtincr,
