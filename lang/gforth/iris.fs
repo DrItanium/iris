@@ -778,3 +778,4 @@ push, ;
 : bcneqi, ( dest id imm id src dest -- ) dup >r neqi, r> bc, ;
 : bcgt, ( imm id src2 src dest -- ) dup >r gt, r> bc, ;
 : bceqz, ( imm id src dest -- ) dup >r eqz, r> bc, ;
+: bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;

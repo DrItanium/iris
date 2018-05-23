@@ -63,11 +63,9 @@ monitor-loop-start .label
 	loc1 io-write
 	$SPACE
 	loc1 1+, 
-	loc2 loc1 cv lt, 
-	DISPLAY-REGISTER8-LOOP !, cv bc,
+	DISPLAY-REGISTER8-LOOP !, loc2 loc1 cv bclt, 
 	$NEWLINE
-	0x40 #, loc1 cv lti,
-	DISPLAY_REGISTERS_LOOP !, cv bc,
+	DISPLAY_REGISTERS_LOOP !, 0x40 #, loc1 cv bclti,
 	$NEWLINE
 	\ print the prompt out
 	$PROMPT
@@ -140,10 +138,8 @@ $->HEX (fn
     0x30 #, arg0 loc0 subi,
     loc0 cv ltz,
     $->HEX_Done !, cv bc,
-    0x0A #, loc0 cv lti, 
-    $->HEX_IsDigit !, cv bc,
-    0x0A #, loc0 cv lti, 
-    $->HEX_Done !, cv bc,
+    $->HEX_IsDigit !, 0x0A #, loc0 cv bclti, 
+    $->HEX_Done !, 0x0A #, loc0 cv bclti, 
     0x7 #, loc0 loc0 subi,
     $->HEX_IsDigit .label
     $->HEX_Done .label
