@@ -501,14 +501,68 @@ def3argi ulti, ult,
 def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
+: zero-instead, ( src dest -- ) swap drop zero swap -> ;
 : emit-2reg-imm12 ( imm12 src dest opcode -- ) >r 2reg-imm12 r> or <<inst ;
 : ?not-imm12 ( imm id -- imm id f ) over 0x0FFF > ;
 : 3insert# ( imm src dest -- imm # src dest ) 2>r #, 2r> ;
 : 3insert! ( imm src dest -- imm # src dest ) 2>r !, 2r> ;
 : addi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> add, ;
 : subi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> sub, ;
+: lshifti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> lshift, ;
+: rshifti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> rshift, ;
 : addi12, ( imm src dest -- ) #addi emit-2reg-imm12 ;
 : subi12, ( imm src dest -- ) #subi emit-2reg-imm12 ;
+: rshifti4, ( imm src dest -- ) 2>r 0xF and 2r> #rshifti emit-2reg-imm12 ;
+: rshifti12, ( imm src dest -- ) 
+  2>r 
+  dup 0xF > 
+  if \ we are going to zero stuff out
+    drop 2r> zero-instead,
+  else
+    2r> rshifti4, 
+  endif ;
+: rshifti, ( imm id src dest -- ) 2>r dup 0= if 2r> rshifti12, else 2r> rshifti16, endif ;
+: #rshifti, ( imm src dest -- ) 2>r #, 2>r rshifti, ;
+: !rshifti, ( imm src dest -- ) 2>r !, 2>r rshifti, ;
+
+: lshifti4, ( imm src dest -- ) 2>r 0xF and 2r> #lshifti emit-2reg-imm12 ;
+: lshifti12, ( imm src dest -- ) 
+  2>r 
+  dup 0xF > 
+  if \ we are going to zero stuff out
+    drop 2r> zero-instead,
+  else
+    2r> lshifti4, 
+  endif ;
+
+: lshifti, ( imm id src dest -- ) 2>r dup 0= if 2r> lshifti12, else 2r> lshifti16, endif ;
+: #lshifti, ( imm src dest -- ) 2>r #, 2>r lshifti, ;
+: !lshifti, ( imm src dest -- ) 2>r !, 2>r lshifti, ;
+
+: #muli, ( imm src dest -- )
+  rot dup 
+  case 
+    0 of drop zero-instead, endof 
+    1 of drop -> endof
+    2 of drop 1 -rot lshifti4, endof \ << 1
+    4 of drop 2 -rot lshifti4, endof \ << 2
+    8 of drop 3 -rot lshifti4, endof \ << 3
+    16 of drop 4 -rot lshifti4, endof \ << 4
+    32 of drop 5 -rot lshifti4, endof \ << 5
+    64 of drop 6 -rot lshifti4, endof \ << 6
+    128 of drop 7 -rot lshifti4, endof \ << 7
+    256 of drop 8 -rot lshifti4, endof \ << 8
+    512 of drop 9 -rot lshifti4, endof \ << 9
+    1024 of drop 10 -rot lshifti4, endof \ << 10
+    2048 of drop 11 -rot lshifti4, endof \ << 11
+    4096 of drop 12 -rot lshifti4, endof \ << 12
+    8192 of drop 13 -rot lshifti4, endof \ << 13
+    16384 of drop 14 -rot lshifti4, endof \ << 14
+    32768 of drop 15 -rot lshifti4, endof \ << 15
+    -rot 3insert# muli, 
+    endcase ;
+
+
 : addi, ( imm id src dest -- ) 
   2>r dup 0= 
       if \ check and make sure to only do this if we encounter 12-bit number
@@ -618,45 +672,14 @@ push, ;
 
 : !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
 
-: #muli, ( imm src dest -- )
-  rot dup 0= 
-  if 
-    drop ( src dest )\ we hit a zero
-    swap ( dest src ) \ drop this argument too!
-    drop ( dest )     \ 
-    zero swap ( zero dest ) 
-    move, \ just assign zero to the register
-  else
-    -rot inject#3, muli, 
-  endif ;
+!def3i !muli, muli,
+
 
 : #divi, ( imm src dest -- ) >r #, swap r> divi, ;
 : #remi, ( imm src dest -- ) >r #, swap r> remi, ;
 
-!def3i !subi, subi,
-!def3i !muli, muli,
 !def3i !divi, divi,
 !def3i !remi, remi, 
-: lshifti, ( imm id src dest -- ) 2>r $->at0 at0 2r> lshift, ;
-: #lshifti, ( imm src dest -- ) 
-  rot dup 0= 
-  if 
-    drop move, \ it becomes a move
-  else
-   -rot inject#3, lshifti, 
-  endif ;
-
-!def3i !lshifti, lshifti,
-: rshifti, ( imm id src dest -- ) 2>r $->at0 at0 2r> rshift, ;
-: #rshifti, ( imm src dest -- ) 
-  rot dup 0=
-  if 
-    drop move, \ it becomes a move
-  else
-    -rot inject#3, rshifti, 
-  endif ;
-
-!def3i !rshifti, rshifti,
 
 : andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
 : ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
