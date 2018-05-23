@@ -214,6 +214,13 @@ namespace iris {
 				DestinationRegister dest;
 				Address imm;
 			};
+			struct TwoRegisterWithImmediate final {
+				TwoRegisterWithImmediate() = default;
+				~TwoRegisterWithImmediate() = default;
+				DestinationRegister dest;
+                SourceRegister src;
+				Address imm;
+			};
 #define X(title, style, z) \
 			struct title final { \
 				title ( ) { } \
@@ -247,6 +254,7 @@ namespace iris {
 			void decodeArguments(RawInstruction, ThreeRegister&) noexcept;
 			void decodeArguments(RawInstruction, FourRegister&) noexcept;
 			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
+			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction(RawInstruction val);
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;

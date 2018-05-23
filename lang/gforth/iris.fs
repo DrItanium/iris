@@ -128,6 +128,10 @@ opcode: #uincr
 opcode: #udecr
 opcode: #call
 opcode: #condb
+opcode: #addi
+opcode: #subi
+opcode: #rshifti
+opcode: #lshifti
 opcode}
 
 \ registers

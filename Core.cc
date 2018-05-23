@@ -53,6 +53,9 @@ namespace iris {
     constexpr Address getImmediate16(RawInstruction i) noexcept {
         return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
     }
+    constexpr Address getImmediate12(RawInstruction i) noexcept {
+        return decodeBits<decltype(i), Address, 0xFFF0'0000, 12>(i);
+    }
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
     Register::~Register() {
@@ -91,6 +94,11 @@ namespace iris {
     void Core::decodeArguments(RawInstruction i, Core::OneRegisterWithImmediate& a) noexcept {
         a.imm = getImmediate16(i);
         a.dest = getDestinationIndex(i);
+    }
+    void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
+        a.imm = getImmediate12(i);
+        a.dest = getDestinationIndex(i);
+        a.src = getSourceIndex(i);
     }
     Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
         Core::DecodedInstruction tmp;
@@ -403,6 +411,10 @@ namespace iris {
 			_pc = op._args.imm;
 		}
 	}
+    DefExec(AddImmediate) { setDestination(op, getSource(op).integer + op._args.imm); }
+    DefExec(SubImmediate) { setDestination(op, getSource(op).integer - op._args.imm); }
+    DefExec(RightShiftImmediate) { setDestination(op, getSource(op).integer >> op._args.imm); }
+    DefExec(LeftShiftImmediate) { setDestination(op, getSource(op).integer << op._args.imm); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
