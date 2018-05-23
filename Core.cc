@@ -415,6 +415,16 @@ namespace iris {
     DefExec(SubImmediate) { setDestination(op, getSource(op).integer - op._args.imm); }
     DefExec(RightShiftImmediate) { setDestination(op, getSource(op).integer >> op._args.imm); }
     DefExec(LeftShiftImmediate) { setDestination(op, getSource(op).integer << op._args.imm); }
+    DefExec(LoadThenIncrement) {
+        Core::Load ld;
+        ld._args.dest = op._args.dest;
+        ld._args.src = op._args.src;
+        perform(ld);
+        Core::Increment incr;
+        incr._args.dest = op._args.dest;
+        incr._args.src = op._args.dest;
+        perform(incr);
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
