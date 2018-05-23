@@ -425,6 +425,7 @@ namespace iris {
         incr._args.src = op._args.dest;
         perform(incr);
     }
+    DefExec(LessThanImmediate) { setDestination(op, getSource(op).address < op._args.imm); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

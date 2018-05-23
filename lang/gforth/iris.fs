@@ -136,6 +136,7 @@ opcode: #subi
 opcode: #rshifti
 opcode: #lshifti
 opcode: #ldtincr
+opcode: #lti
 opcode}
 
 \ registers
@@ -481,7 +482,6 @@ def2argi noti, not,
 def3argi eqi, eq,
 def3argi neqi, neq,
 def3argi gti, gt,
-def3argi lti, lt,
 def3argi gei, ge,
 def3argi lei, le,
 
@@ -756,3 +756,18 @@ push, ;
 : mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;
 
 #ldtincr inst-2reg ldtincr,
+: lti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> lt, ;
+: lti12, ( imm src dest -- ) #lti emit-2reg-imm12 ;
+: lti, ( imm id src dest -- ) 
+  2>r dup 0= 
+      if \ check and make sure to only do this if we encounter 12-bit number
+         ?not-imm12
+         if 
+           2r> lti16,  
+         else 
+           drop dup ( imm ) 
+           0= if drop zero 2r> lt, else 2r> addi12, endif 
+         endif
+      else 
+        2r> lti16, 
+      endif ;

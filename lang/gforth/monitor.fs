@@ -32,7 +32,7 @@ deflabel DontTerminateExecution
 deflabel $HEX->KEY 
 : $KEY ( -- ) 
   /dev/console0 #->io
-  arg0 io-read ;
+  out0 io-read ;
 : $TERMINATE ( -- )
    zero arg0 ->
   /dev/terminate-vm #->io
@@ -211,13 +211,13 @@ deflabel FixCaseRoutineDone
     zero loc1 -> \ current
 readline_loop .label 
 	$KEY \ get the key
-    0x61 #, arg0 cv lti,
+    0x61 #, out0 cv lti,
     FixCaseRoutineDone !, cv bc,
-    0x7a #, arg0 cv gti, 
+    0x7a #, out0 cv gti, 
     FixCaseRoutineDone !, cv bc,
-    0x20 #, arg0 arg0 subi, 
+    0x20 #, out0 out0 subi, 
 FixCaseRoutineDone .label
-    arg0 loc1 ->
+    out0 loc1 ->
     loc1 terminator cv eq,
     readline_done !, cv bc,
     loc1 loc0 st,
