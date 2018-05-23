@@ -139,13 +139,13 @@ WriteRangeToIOAddressRoutine (leafn
     leafn)
 $->HEX (fn
     deflabel $->HEX_Done
+    deflabel $->HEX_IsDigit
     \ arg0 - value to hexify
     1 save-locals 
     0x30 #, arg0 loc0 subi,
     loc0 cv ltz,
     $->HEX_Done !, cv bc,
-    0x09 #, loc0 cv lei, 
-    deflabel $->HEX_IsDigit
+    0x0A #, loc0 cv lti, 
     $->HEX_IsDigit !, cv bc,
     0x0A #, loc0 cv lti, 
     $->HEX_Done !, cv bc,

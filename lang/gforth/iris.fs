@@ -522,7 +522,7 @@ def3argi ugei, uge,
   else
     2r> rshifti4, 
   endif ;
-: rshifti, ( imm id src dest -- ) 2>r dup 0= if 2r> rshifti12, else 2r> rshifti16, endif ;
+: rshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> rshifti12, else 2r> rshifti16, endif ;
 : #rshifti, ( imm src dest -- ) 2>r #, 2>r rshifti, ;
 : !rshifti, ( imm src dest -- ) 2>r !, 2>r rshifti, ;
 
@@ -536,7 +536,7 @@ def3argi ugei, uge,
     2r> lshifti4, 
   endif ;
 
-: lshifti, ( imm id src dest -- ) 2>r dup 0= if 2r> lshifti12, else 2r> lshifti16, endif ;
+: lshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> lshifti12, else 2r> lshifti16, endif ;
 : #lshifti, ( imm src dest -- ) 2>r #, 2>r lshifti, ;
 : !lshifti, ( imm src dest -- ) 2>r !, 2>r lshifti, ;
 
