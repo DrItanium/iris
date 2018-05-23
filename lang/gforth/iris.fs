@@ -29,7 +29,10 @@ variable mloc \ current memory location
 : 1reg ( dest -- value ) dest-reg ;
 : 2reg ( src dest -- value ) 1reg swap src-reg or ;
 : 3reg ( src2 src dest -- value ) 2reg swap src2-reg or ;
+: imm12 ( imm12 -- value ) addr12 20 lshift ;
 : imm16 ( imm16 -- value ) addr16 16 lshift ;
+: 2reg-imm12 ( imm12 src dest -- value ) 2reg swap imm12 or ;
+: 1reg-imm16 ( imm16 dest -- value ) 1reg swap imm16 or ;
 
 : cconstant ( byte "name" -- ) create c, does> c@ ;
 : xop& ( n a -- k ) c@ or ;
@@ -310,6 +313,7 @@ r28 cconstant out3
   does> >r 
         3reg 
 		r> xop& <<inst ;
+       
 
 #add inst-3reg add, 
 : move, ( src dest -- n ) zero swap add, ;
@@ -341,14 +345,13 @@ r28 cconstant out3
 #gt inst-3reg gt,
 #le inst-3reg le,
 #ge inst-3reg ge,
+: ?choose-instruction-kind ( v id -- ) 0= if ( c ) <<inst else <<iinst endif ;
 : set, ( imm imm-type dest -- )
-  1reg #set
-  or ( imm it v ) 
+  1reg #set or ( imm it v ) 
   rot ( it v imm )  
-  addr16 16 lshift 
-  or 
-  swap ( v it )
-  0= if ( constant ) <<inst else <<iinst endif ;
+  imm16 or swap ( v it )
+  ?choose-instruction-kind ;
+\ only known constants here!
 : ?imm0 ( imm v -- imm v f ) over 0= ;
 : #set, ( imm dest -- ) 
   ?imm0
@@ -362,7 +365,6 @@ r28 cconstant out3
 : !set, ( imm dest -- ) !, swap set, ;
 : $-> ( imm id dest -- n ) set, ;
 : $->at0 ( imm id -- n ) at0 $-> ;
-: $->at1 ( imm id -- n ) at1 $-> ;
 : $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
 : $->at0-2arg ( imm id b -- at0 b )
   -rot ( b imm id )
@@ -411,10 +413,10 @@ r28 cconstant out3
   1reg #call
   or ( imm it v ) 
   rot ( it v imm )  
-  addr16 16 lshift 
+  imm16
   or 
   swap ( v it )
-  0= if ( constant ) <<inst else <<iinst endif ;
+  ?choose-instruction-kind ;
 : ?imm0 ( imm v -- imm v f ) over 0= ;
 : #bl, ( imm dest -- ) 
   ?imm0
@@ -431,10 +433,10 @@ r28 cconstant out3
   1reg #condb
   or ( imm it v ) 
   rot ( it v imm )  
-  addr16 16 lshift 
+  imm16
   or 
   swap ( v it )
-  0= if ( constant ) <<inst else <<iinst endif ;
+  ?choose-instruction-kind ;
 : ?imm0 ( imm v -- imm v f ) over 0= ;
 : #bc, ( imm dest -- ) 
   ?imm0
@@ -455,7 +457,6 @@ r28 cconstant out3
   r> \ get the top back
   @ execute \ execute the stashed operation
   ;
-
 : def3argi ( "name" "op" -- )
   create ' , 
   does> ( imm id src dest -- n set-op )
@@ -467,8 +468,6 @@ r28 cconstant out3
 
 : b, ( imm id -- ) zero bl, ;
 : bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
-def3argi addi, add,
-def3argi subi, sub,
 def3argi muli, mul,
 def3argi divi, div,
 def3argi remi, rem,
@@ -502,6 +501,53 @@ def3argi ulti, ult,
 def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
+: emit-2reg-imm12 ( imm12 src dest opcode -- ) >r 2reg-imm12 r> or <<inst ;
+: ?not-imm12 ( imm id -- imm id f ) over 0x0FFF > ;
+: 3insert# ( imm src dest -- imm # src dest ) 2>r #, 2r> ;
+: 3insert! ( imm src dest -- imm # src dest ) 2>r !, 2r> ;
+: addi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> add, ;
+: subi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> sub, ;
+: addi12, ( imm src dest -- ) #addi emit-2reg-imm12 ;
+: subi12, ( imm src dest -- ) #subi emit-2reg-imm12 ;
+: addi, ( imm id src dest -- ) 
+  2>r dup 0= 
+      if \ check and make sure to only do this if we encounter 12-bit number
+         ?not-imm12
+         if 
+           2r> addi16, 
+         else 
+           drop dup ( imm ) 
+           case 
+              0 of drop 2r> -> endof
+              1 of drop 2r> incr, endof
+              2r> addi12,
+           endcase
+         endif
+      else 
+        2r> addi16,
+      endif ;
+: #addi, ( imm src dest -- ) 3insert# addi, ;
+: !addi, ( imm src dest -- ) 3insert! addi, ;
+
+: subi, ( imm id src dest -- ) 
+  2>r dup 0= 
+      if \ check and make sure to only do this if we encounter 12-bit number
+         ?not-imm12
+         if 
+           2r> subi16,
+         else 
+           drop dup ( imm ) 
+           case 
+              0 of drop 2r> -> endof
+              1 of drop 2r> decr, endof
+              2r> subi12,
+           endcase
+         endif
+      else 2r> subi16,
+      endif ;
+: #subi, ( imm src dest -- ) 3insert# subi, ;
+: !subi, ( imm src dest -- ) 3insert! subi, ;
+
 {ioaddr
 ioaddr: /dev/null 
 ioaddr: /dev/console0
@@ -571,21 +617,6 @@ push, ;
 : inject#3, ( a b -- #, a b ) 2>r #, 2r> ;
 
 : !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
-: #addi, ( imm src dest -- ) 
-  rot dup 0= 
-  if 
-  drop move, ( add with zero )
-  else
-  -rot inject#3, addi, 
-  endif ;
-
-: #subi, ( imm src dest -- ) 
-  rot dup 0= 
-  if 
-  drop move, 
-  else
-  -rot inject#3, subi,
-  endif ;
 
 : #muli, ( imm src dest -- )
   rot dup 0= 
@@ -602,7 +633,6 @@ push, ;
 : #divi, ( imm src dest -- ) >r #, swap r> divi, ;
 : #remi, ( imm src dest -- ) >r #, swap r> remi, ;
 
-!def3i !addi, addi,
 !def3i !subi, subi,
 !def3i !muli, muli,
 !def3i !divi, divi,
