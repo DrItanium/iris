@@ -19,6 +19,7 @@ deflabel FixCaseRoutine
 deflabel PrintCharactersRoutine
 deflabel WriteRangeToIOAddressRoutine
 deflabel $ECHO 
+deflabel $NEWLINERoutine
 deflabel $->HEX
 deflabel printline
 deflabel readline 
@@ -42,7 +43,7 @@ deflabel $HEX->KEY
   $ECHO !, call, ;
 : $SPACE ( -- ) 0x20 #ECHO ;
 : $PROMPT ( -- ) 0x2D #ECHO $SPACE ;
-: $NEWLINE ( -- ) 0xA #ECHO ;
+: $NEWLINE ( -- ) $NEWLINERoutine !, call, ;
 0x0000 .org monitor-program-start #, jmp
 
 monitor-program-start .org
@@ -139,6 +140,8 @@ $->HEX (fn
 
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
+$NEWLINERoutine .label
+      0xA #, in0 set,
 $ECHO (leafn
       \ in0, the character to write
       /dev/console0 #->io
