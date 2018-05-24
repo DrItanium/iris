@@ -287,9 +287,9 @@ r8 cconstant at0
 r9 cconstant at1
 r10 cconstant cmd \ command buffer register
 r11 cconstant io
-r12 cconstant arg0
+r12 cconstant in0
 r12 cconstant out0
-r13 cconstant arg1
+r13 cconstant in1
 r13 cconstant out1
 r14 cconstant loc0
 r15 cconstant loc1

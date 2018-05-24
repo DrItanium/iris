@@ -34,11 +34,11 @@ deflabel $HEX->KEY
   /dev/console0 #->io
   out0 io-read ;
 : $TERMINATE ( -- )
-   zero arg0 ->
+   zero in0 ->
   /dev/terminate-vm #->io
   IOWrite !jmp ;
 : #ECHO ( a -- )
-  #, arg0 set,
+  #, in0 set,
   $ECHO !, call, ;
 : $SPACE ( -- ) 0x20 #ECHO ;
 : $PROMPT ( -- ) 0x2D #ECHO $SPACE ;
@@ -84,58 +84,58 @@ monitor-loop-start .label
     monitor-loop-start !, 5 #, loc0 cv bclti, 
     monitor-input-start 1+ #, loc0 set,
 \ $HEX
-    loc0 arg0 ldtincr, \ first character
+    loc0 in0 ldtincr, \ first character
     loc0 loc1 ldtincr, \ second character
     loc0 loc2 ldtincr, \ third character
     loc0 loc3 ldtincr, \ fourth character
     $->HEX !, call,
-    loc1 arg0 out0 loc4 move2, 
+    loc1 in0 out0 loc4 move2, 
     $->HEX !, call,
     4 #, loc4 loc4 lshifti,
     out0 loc4 loc4 add,
-    loc2 arg0 ->
+    loc2 in0 ->
     $->HEX !, call,
     4 #, loc4 loc4 lshifti,
     out0 loc4 loc4 add,
-    loc3 arg0 ->
+    loc3 in0 ->
     $->HEX !, call,
     4 #, loc4 loc4 lshifti,
     out0 loc4 loc4 add,
-    loc4 arg0 ->
+    loc4 in0 ->
     PRINT-NUMBER !, call,
 	$NEWLINE
-    monitor-input-start #, arg0 set,
-	arg0 arg1 ldtincr,
+    monitor-input-start #, in0 set,
+	in0 in1 ldtincr,
     printline !, call,
     monitor-loop-start !, b,
 \ this must always be first!
-IOWrite (leafn arg0 io-write leafn)
+IOWrite (leafn in0 io-write leafn)
 WriteRangeToIOAddressRoutine (leafn
-	\ arg0 - starting point in memory
-	\ arg1 - length
+	\ in0 - starting point in memory
+	\ in1 - length
 	deflabel WriteRangeToIOAddress_Done
 	deflabel WriteRangeToIOAddress_Loop
     2 save-locals
 	zero loc0 ->
-	WriteRangeToIOAddress_Done !, arg1 cv bceqz,
+	WriteRangeToIOAddress_Done !, in1 cv bceqz,
 	WriteRangeToIOAddress_Loop .label
-	arg0 loc0 loc1 uadd, \ uadd bro!?
+	in0 loc0 loc1 uadd, \ uadd bro!?
 	loc1 loc1 ld,
 	loc1 io-write
 	loc0 1+,
-	WriteRangeToIOAddress_Loop !, loc0 arg1 cv bcgt,
+	WriteRangeToIOAddress_Loop !, loc0 in1 cv bcgt,
 	WriteRangeToIOAddress_Done .label
     2 restore-locals
     leafn)
 $->HEX (fn
     deflabel $->HEX_Done
     deflabel $->HEX_IsDigit
-    \ arg0 - value to hexify
-    0x30 #, arg0 arg0 subi,
-    $->HEX_Done !, arg0 cv bcltz,
-    $->HEX_IsDigit !, 0x0A #, arg0 cv bclti, 
-    $->HEX_Done !, 0x0A #, arg0 cv bclti, 
-    0x7 #, arg0 arg0 subi,
+    \ in0 - value to hexify
+    0x30 #, in0 in0 subi,
+    $->HEX_Done !, in0 cv bcltz,
+    $->HEX_IsDigit !, 0x0A #, in0 cv bclti, 
+    $->HEX_Done !, 0x0A #, in0 cv bclti, 
+    0x7 #, in0 in0 subi,
     $->HEX_IsDigit .label
     $->HEX_Done .label
     fn)
@@ -143,37 +143,37 @@ $->HEX (fn
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
         
 $ECHO (leafn
-      \ arg0, the character to write
+      \ in0, the character to write
       /dev/console0 #->io
-      arg0 io-write
+      in0 io-write
       leafn)
 
 $HEX->KEY (leafn
     deflabel $HEX->KEY_DONE
     \ go backwards from what we originally got in
-    \ arg0 - contains lowest 4 bits to convert
-    0x000F #, arg0 arg0 andi,
-    0xA #, arg0 cv lti,
-    0x30 #, arg0 arg0 addi, \ always want to do this
+    \ in0 - contains lowest 4 bits to convert
+    0x000F #, in0 in0 andi,
+    0xA #, in0 cv lti,
+    0x30 #, in0 in0 addi, \ always want to do this
     $HEX->KEY_DONE !, cv bc,
-    0x7 #, arg0 arg0 addi,
+    0x7 #, in0 in0 addi,
     $HEX->KEY_DONE .label
     leafn)
 : print-number-$hex->key ( index -- ) 
-  #, loc0 arg0 rshifti, 
+  #, loc0 in0 rshifti, 
   $HEX->KEY !, call,
   $ECHO !, call, ;
 
 PRINT-NUMBER (fn
     deflabel print-number-done
-    \ arg0 - number to print
+    \ in0 - number to print
     1 save-locals
-    arg0 loc0 ->
+    in0 loc0 ->
 	$NEWLINE
     0xC print-number-$hex->key
     8 print-number-$hex->key
     4 print-number-$hex->key
-    loc0 arg0 ->
+    loc0 in0 ->
     $HEX->KEY !, call,
     $ECHO !, call,
     print-number-done .label
@@ -210,8 +210,8 @@ readline_done .label
     fn)
 
 printline (fn
-    \ arg0 - start address
-    \ arg1 - length
+    \ in0 - start address
+    \ in1 - length
     /dev/console0 #->io
     WriteRangeToIOAddressRoutine !, call,
 	$NEWLINE
