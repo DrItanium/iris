@@ -94,3 +94,4 @@ X(LessThanImmediate, TwoRegisterWithImmediate, lti)
 X(Move, TwoRegister, move)
 // dest src dest2 src2
 X(Move2, FourRegister, move2)
+X(StoreThenIncrement, TwoRegister, sttincr)

@@ -416,8 +416,8 @@ namespace iris {
         ld._args.src = op._args.src;
         perform(ld);
         Core::Increment incr;
-        incr._args.dest = op._args.dest;
-        incr._args.src = op._args.dest;
+        incr._args.dest = op._args.src;
+        incr._args.src = op._args.src;
         perform(incr);
     }
     DefExec(LessThanImmediate) { 
@@ -431,6 +431,17 @@ namespace iris {
         // dest src dest2 src2 
         setDestination(op, getSource(op).address);
         setRegister(op._args.src2, getRegister(op._args.src3).get<Address>());
+    }
+    DefExec(StoreThenIncrement) {
+        Core::Store st;
+        st._args.dest = op._args.dest;
+        st._args.src = op._args.src;
+        perform(st);
+        Core::Increment incr;
+        // increment the destination this time
+        incr._args.dest = op._args.dest;
+        incr._args.src = op._args.dest;
+        perform(incr);
     }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

@@ -131,16 +131,13 @@ $->HEX (fn
     deflabel $->HEX_Done
     deflabel $->HEX_IsDigit
     \ arg0 - value to hexify
-    1 save-locals 
-    0x30 #, arg0 loc0 subi,
-    $->HEX_Done !, loc0 cv bcltz,
-    $->HEX_IsDigit !, 0x0A #, loc0 cv bclti, 
-    $->HEX_Done !, 0x0A #, loc0 cv bclti, 
-    0x7 #, loc0 loc0 subi,
+    0x30 #, arg0 arg0 subi,
+    $->HEX_Done !, arg0 cv bcltz,
+    $->HEX_IsDigit !, 0x0A #, arg0 cv bclti, 
+    $->HEX_Done !, 0x0A #, arg0 cv bclti, 
+    0x7 #, arg0 arg0 subi,
     $->HEX_IsDigit .label
     $->HEX_Done .label
-    loc0 out0 ->
-    1 restore-locals
     fn)
 
     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
@@ -190,7 +187,6 @@ deflabel FixCaseRoutineDone
     2 save-locals 
     monitor-input-start 1+ #, loc0 set,
     zero loc1 -> \ current
-
 readline_loop .label 
 	$KEY \ get the key
     FixCaseRoutineDone !, 0x61 #, out0 cv bclti,
@@ -206,7 +202,6 @@ FixCaseRoutineDone .label
 readline_consume_rest_of_line .label
 	$KEY \ get the key
     readline_consume_rest_of_line !, out0 terminator cv bcneq,
-
 readline_done .label 
     \ save the length in memory
     monitor-input-start #, at0 set,
