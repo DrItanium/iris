@@ -85,23 +85,20 @@ monitor-loop-start .label
     monitor-input-start 1+ #, loc0 set,
 \ $HEX
     loc0 in0 ldtincr, \ first character
-    loc0 loc1 ldtincr, \ second character
-    loc0 loc2 ldtincr, \ third character
-    loc0 loc3 ldtincr, \ fourth character
     $->HEX !, call,
-    loc1 in0 out0 loc4 move2, 
+    out0 loc1 ->
+    loc0 in0 ldtincr, \ second character
     $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc2 in0 ->
+    4 #, loc1 loc1 lshifti,
+    out0 loc1 loc1 add,
+    loc0 in0 ldtincr, \ third character
     $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc3 in0 ->
+    4 #, loc1 loc1 lshifti,
+    out0 loc1 loc1 add,
+    loc0 in0 ldtincr, \ fourth character
     $->HEX !, call,
-    4 #, loc4 loc4 lshifti,
-    out0 loc4 loc4 add,
-    loc4 in0 ->
+    4 #, loc1 loc1 lshifti,
+    out0 loc1 in0 add,
     PRINT-NUMBER !, call,
 	$NEWLINE
     monitor-input-start #, in0 set,
