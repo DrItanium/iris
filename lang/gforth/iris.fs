@@ -140,6 +140,7 @@ opcode: #ldtincr
 opcode: #lti
 opcode: #move
 opcode: #move2
+opcode: #sttincr
 opcode}
 
 \ registers
@@ -789,3 +790,4 @@ push, ;
 : bceqz, ( imm id src dest -- ) dup >r eqz, r> bc, ;
 : bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
 : bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
+#sttincr inst-2reg sttincr,

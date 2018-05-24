@@ -184,21 +184,18 @@ deflabel readline_loop
 deflabel readline_done
 deflabel readline_consume_rest_of_line 
 deflabel FixCaseRoutineDone
-    2 save-locals 
+    1 save-locals 
     monitor-input-start 1+ #, loc0 set,
-    zero loc1 -> \ current
 readline_loop .label 
 	$KEY \ get the key
     FixCaseRoutineDone !, 0x61 #, out0 cv bclti,
     FixCaseRoutineDone !, 0x7a #, out0 cv bcgti, 
     0x20 #, out0 out0 subi, 
 FixCaseRoutineDone .label
-    out0 loc1 ->
-    readline_done !, loc1 terminator cv bceq,
-    loc1 loc0 st,
-    loc0 1+,
+    readline_done !, out0 terminator cv bceq,
+    out0 loc0 sttincr,
     readline_loop !, monitor-input-end #, loc0 cv bclti,
-    readline_done !, loc1 terminator cv bceq,
+    readline_done !, out0 terminator cv bceq,
 readline_consume_rest_of_line .label
 	$KEY \ get the key
     readline_consume_rest_of_line !, out0 terminator cv bcneq,
@@ -209,7 +206,7 @@ readline_done .label
     at1 at0 st,
     at1 out0 ->
     \ terminator is used to terminate early
-    2 restore-locals
+    1 restore-locals
     fn)
 
 printline (fn
