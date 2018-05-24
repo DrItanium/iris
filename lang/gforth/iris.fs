@@ -285,25 +285,20 @@ r6 cconstant cv
 r7 cconstant lr
 r8 cconstant at0
 r9 cconstant at1
-r10 cconstant at2
-r11 cconstant cmd \ command buffer register
-r12 cconstant io
-r13 cconstant arg0
-r13 cconstant out0
-r14 cconstant arg1
-r14 cconstant out1
-r15 cconstant arg2
-r15 cconstant out2
-r16 cconstant arg3
-r16 cconstant out3
-r17 cconstant loc0
-r18 cconstant loc1
-r19 cconstant loc2
-r20 cconstant loc3
-r21 cconstant loc4
-r22 cconstant loc5
-r23 cconstant loc6
-r24 cconstant loc7
+r10 cconstant cmd \ command buffer register
+r11 cconstant io
+r12 cconstant arg0
+r12 cconstant out0
+r13 cconstant arg1
+r13 cconstant out1
+r14 cconstant loc0
+r15 cconstant loc1
+r16 cconstant loc2
+r17 cconstant loc3
+r18 cconstant loc4
+r19 cconstant loc5
+r20 cconstant loc6
+r21 cconstant loc7
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
