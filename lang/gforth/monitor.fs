@@ -199,9 +199,8 @@ readline_consume_rest_of_line .label
 readline_done .label 
     \ save the length in memory
     monitor-input-start #, at0 set,
-    at0 loc0 at1 usub,
-    at1 at0 st,
-    at1 out0 ->
+    at0 loc0 out0 usub,
+    out0 at0 st,
     \ terminator is used to terminate early
     1 restore-locals
     fn)
