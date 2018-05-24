@@ -29,6 +29,7 @@ variable mloc \ current memory location
 : 1reg ( dest -- value ) dest-reg ;
 : 2reg ( src dest -- value ) 1reg swap src-reg or ;
 : 3reg ( src2 src dest -- value ) 2reg swap src2-reg or ;
+: 4reg ( src3 src2 src dest -- value ) 3reg swap src3-reg or ;
 : imm12 ( imm12 -- value ) addr12 20 lshift ;
 : imm16 ( imm16 -- value ) addr16 16 lshift ;
 : 2reg-imm12 ( imm12 src dest -- value ) 2reg swap imm12 or ;
@@ -137,6 +138,8 @@ opcode: #rshifti
 opcode: #lshifti
 opcode: #ldtincr
 opcode: #lti
+opcode: #move
+opcode: #move2
 opcode}
 
 \ registers
@@ -315,12 +318,18 @@ r28 cconstant out3
   does> >r 
         3reg 
 		r> xop& <<inst ;
+: inst-4reg ( opcode-index "name" -- )
+  create c, \ embed opcode
+  does> >r 
+        4reg 
+		r> xop& <<inst ;
        
 
 #add inst-3reg add, 
-: move, ( src dest -- n ) zero swap add, ;
-: nop, ( -- n ) zero zero zero add, ;
-: -> ( src dest -- n ) move, ;
+#move inst-2reg move,
+#move2 inst-4reg move2, 
+: nop ( -- ) zero zero move, ;
+: -> ( src dest -- ) move, ;
 \ constant tagging version
 \ #, is a constant version
 : #, ( imm -- imm16 0 ) addr16 0 ; 

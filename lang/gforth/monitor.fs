@@ -82,17 +82,14 @@ monitor-loop-start .label
 	\ end TERMINATE
     out0 loc0 ->
     monitor-loop-start !, 5 #, loc0 cv bclti, 
-    monitor-input-start 1+ #, arg0 set,
+    monitor-input-start 1+ #, loc0 set,
 \ $HEX
-    deflabel $HEX_DONE
-    arg0 loc0 ldtincr, \ first character
-    arg0 loc1 ldtincr, \ second character
-    arg0 loc2 ldtincr, \ third character
-    arg0 loc3 ldtincr, \ fourth character
-    loc0 arg0 ->
+    loc0 arg0 ldtincr, \ first character
+    loc0 loc1 ldtincr, \ second character
+    loc0 loc2 ldtincr, \ third character
+    loc0 loc3 ldtincr, \ fourth character
     $->HEX !, call,
-    out0 loc4 ->
-    loc1 arg0 ->
+    loc1 arg0 out0 loc4 move2, 
     $->HEX !, call,
     4 #, loc4 loc4 lshifti,
     out0 loc4 loc4 add,

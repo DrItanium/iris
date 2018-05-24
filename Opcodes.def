@@ -91,3 +91,6 @@ X(RightShiftImmediate, TwoRegisterWithImmediate, rshifti)
 X(LeftShiftImmediate, TwoRegisterWithImmediate, lshifti)
 X(LoadThenIncrement, TwoRegister, ldtincr)
 X(LessThanImmediate, TwoRegisterWithImmediate, lti)
+X(Move, TwoRegister, move)
+// dest src dest2 src2
+X(Move2, FourRegister, move2)

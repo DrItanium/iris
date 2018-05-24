@@ -423,6 +423,15 @@ namespace iris {
     DefExec(LessThanImmediate) { 
         setDestination(op, getSource(op).integer < op._args.imm); 
     }
+    DefExec(Move) {
+        setDestination(op, getSource(op).address);
+    }
+    DefExec(Move2) {
+        // perform two register transfers in a single instruction
+        // dest src dest2 src2 
+        setDestination(op, getSource(op).address);
+        setRegister(op._args.src2, getRegister(op._args.src3).get<Address>());
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
