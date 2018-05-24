@@ -161,29 +161,23 @@ $HEX->KEY (leafn
     $HEX->KEY_DONE !, cv bc,
     0x7 #, arg0 arg0 addi,
     $HEX->KEY_DONE .label
-    arg0 out0 ->
     leafn)
+: print-number-$hex->key ( index -- ) 
+  #, loc0 arg0 rshifti, 
+  $HEX->KEY !, call,
+  $ECHO !, call, ;
+
 PRINT-NUMBER (fn
     deflabel print-number-done
     \ arg0 - number to print
     1 save-locals
     arg0 loc0 ->
 	$NEWLINE
-    0xC #, loc0 arg0 rshifti,
-    $HEX->KEY !, call,
-    out0 arg0 ->
-    $ECHO !, call,
-    8 #, loc0 arg0 rshifti,
-    $HEX->KEY !, call,
-    out0 arg0 ->
-    $ECHO !, call,
-    4 #, loc0 arg0 rshifti,
-    $HEX->KEY !, call,
-    out0 arg0 ->
-    $ECHO !, call,
+    0xC print-number-$hex->key
+    8 print-number-$hex->key
+    4 print-number-$hex->key
     loc0 arg0 ->
     $HEX->KEY !, call,
-    out0 arg0 ->
     $ECHO !, call,
     print-number-done .label
     1 restore-locals
