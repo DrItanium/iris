@@ -278,6 +278,72 @@ Routine(ABORT) .label
     RoutineABORT .word \ execute ABORT after an error when WARNING is -1. IT may be changed to a user defined procedure
     RoutineSemicolon .word
 \ terminal routines
+deflabel RoutineEXPECT ( n addr -- ) 
+\ transfer n characters from the terminal to memory starting at addr. 
+\ The text may be terminated by a carriage return
+\ An ASCII NUL is appended to the end of text
+deflabel Routine+
+deflabel Routine-
+deflabel RoutinePush8
+deflabel RoutinePush2
+deflabel RoutineOVER
+deflabel RoutineDO
+deflabel RoutineKEY
+deflabel RoutineDUP
+deflabel Routine+ORIGIN
+deflabel RoutineEqual
+deflabel RoutineR>
+deflabel Routine>R
+deflabel Routine0EH 
+deflabel RoutineI=
+RoutineEXPECT .label
+    RoutineOVER .word Routine+ .word \ address, the end of text
+    RoutineOver .word \ start of text
+    RoutineDo .word  \ repeat the following for n times
+    routineKey .word \ get one character from terminal
+    RoutineDup .word \ make a copy
+    Routine0EH .word Routine+ORIGIN .word \ Get the ascii code of input backspace
+    RoutineEqual .word
+    RoutineIf .word \ if the input is a backspace
+        RoutineDROP .word \ discard the backspace still on stack
+        RoutinePush8 .word \ replace it with back-space for the output device
+        RoutineOVER .word \ copy addr
+        RoutineI= .word \ see if the current character is the first character of text
+        routinedup .word \ copy it, to be used as a flag
+        routiner> .word routinepush2 .word routine- .word routine+ .word \ get the loop index. Decrement it by 1 if it is the starting character, or decrement it by
+                                                                         \ 2 if it is in the middle of the text.
+        routine>r .word \ put the corrected loop back on the return stack
+        routine- \ if the backspace is the first character, ring the bell.
+                 \ otherwise, output backspace and decrement character count
+    routineelse .word \ not a backspace
+        routinedup .word routinepush0d .word routine= .word \ is it a carriage return?
+        routineif .word \ yes
+            routineleave .word \ prepare to exit the loop. CR is the end of text line
+            routinedrop .word routinebl .word \ drop cr on the stack and replace with a blank.
+            routinepush0 .word \ put a null on the stack
+        routineelse .word 
+            routinedup .word \ input is a regular ascii character. make a copy
+        routineendif .word
+        routinei .word routinec! .word \ store the ascii character into the input buffer area
+        routinepush0 .word routinei .word routine1+ .word routine! .word \ guard the text with an ascii null
+    routineendif .word \ end of the input loop
+    routineemit .word \ echo the input character to terminal
+    routineloop .word \ loop back if not the end of text
+    routinedrop .word \ discard the addr remaining on the stack
+    routinesemicolon .word
+deflabel RoutineQUERY
+RoutineQUERY .label
+    \ input 80 characters (or until a carriage-return) from the terminal and 
+    \ place the text in the terminal input buffer.
+    RoutineTIB .word \ contains the qtqrting address of the input terminal buffer
+    8 u<< 0xFF00 and swap 
+    8 u>> or ;
+
+        
+
+
+
+
 
 
 
