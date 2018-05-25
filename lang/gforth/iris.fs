@@ -210,96 +210,96 @@ variable CurrentAssemblyFile
 : asm} ( -- ) curasm@ close-file throw clearasm ;
 
 {registers
-register: r0
-register: r1
-register: r2
-register: r3
-register: r4
-register: r5
-register: r6
-register: r7
-register: r8
-register: r9
-register: r10
-register: r11
-register: r12
-register: r13
-register: r14
-register: r15
-register: r16
-register: r17
-register: r18
-register: r19
-register: r20
-register: r21
-register: r22
-register: r23
-register: r24
-register: r25
-register: r26
-register: r27
-register: r28
-register: r29
-register: r30
-register: r31
-register: r32
-register: r33
-register: r34
-register: r35
-register: r36
-register: r37
-register: r38
-register: r39
-register: r40
-register: r41
-register: r42
-register: r43
-register: r44
-register: r45
-register: r46
-register: r47
-register: r48
-register: r49
-register: r50
-register: r51
-register: r52
-register: r53
-register: r54
-register: r55
-register: r56
-register: r57
-register: r58
-register: r59
-register: r60
-register: r61
-register: r62
-register: r63
+register: x0
+register: x1
+register: x2
+register: x3
+register: x4
+register: x5
+register: x6
+register: x7
+register: x8
+register: x9
+register: x10
+register: x11
+register: x12
+register: x13
+register: x14
+register: x15
+register: x16
+register: x17
+register: x18
+register: x19
+register: x20
+register: x21
+register: x22
+register: x23
+register: x24
+register: x25
+register: x26
+register: x27
+register: x28
+register: x29
+register: x30
+register: x31
+register: x32
+register: x33
+register: x34
+register: x35
+register: x36
+register: x37
+register: x38
+register: x39
+register: x40
+register: x41
+register: x42
+register: x43
+register: x44
+register: x45
+register: x46
+register: x47
+register: x48
+register: x49
+register: x50
+register: x51
+register: x52
+register: x53
+register: x54
+register: x55
+register: x56
+register: x57
+register: x58
+register: x59
+register: x60
+register: x61
+register: x62
+register: x63
 registers}
-r0 cconstant zero
-r1 cconstant error-code
-r2 cconstant terminator
-r3 cconstant num-base
-r4 cconstant separator
-r5 cconstant rsp
-r6 cconstant cv
-r7 cconstant lr
-r8 cconstant at0
-r9 cconstant at1
-r10 cconstant cmd \ command buffer register
-r11 cconstant io
-r12 cconstant in0
-r12 cconstant out0
-r13 cconstant in1
-r13 cconstant out1
-r14 cconstant loc0
-r15 cconstant loc1
-r16 cconstant loc2
-r17 cconstant loc3
-r18 cconstant loc4
-r19 cconstant loc5
-r20 cconstant loc6
-r21 cconstant loc7
-r22 cconstant unused-start
+x0 cconstant zero
+x1 cconstant error-code
+x2 cconstant terminator
+x3 cconstant num-base
+x4 cconstant separator
+x5 cconstant rsp
+x6 cconstant cv
+x7 cconstant lr
+x8 cconstant at0
+x9 cconstant at1
+x10 cconstant cmd \ command buffer register
+x11 cconstant io
+x12 cconstant in0
+x12 cconstant out0
+x13 cconstant in1
+x13 cconstant out1
+x14 cconstant loc0
+x15 cconstant loc1
+x16 cconstant loc2
+x17 cconstant loc3
+x18 cconstant loc4
+x19 cconstant loc5
+x20 cconstant loc6
+x21 cconstant loc7
+x22 cconstant unused-start
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
