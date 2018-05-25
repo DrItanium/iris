@@ -23,7 +23,7 @@ return-stack-end constant data-stack-start
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
-unused-start 1+cconstant sp \ data stack pointer
+unused-start 
 \ constants
 \ user variables
 1+cconstant s0 \ initial value of the data stack pointer
@@ -62,6 +62,10 @@ unused-start 1+cconstant sp \ data stack pointer
 1+cconstant xcsp \ temporarily stored data stack pointer for compilation error checking
 1+cconstant xr# \ location of editor cursor in a text screen
 1+cconstant xhld \ address of the latest character of text during numeric output conversion
+1+cconstant xsp \ data stack pointer
+1+cconstant xrp \ return stack pointer
+1+cconstant xip \ interpretive pointer
+1+cconstant xw \ current word pointer
 
 too-many-vars-defined
 num-base cconstant xbase
@@ -70,6 +74,7 @@ deflabel RoutineCOLD
 deflabel RoutineABORT
 deflabel RoutineQUIT
 deflabel RoutineINTERPRET
+deflabel RoutineNEXT
 
 ram-start .org 
 \ set the constants
@@ -104,6 +109,13 @@ RoutineCOLD .label
 \                \ New words will be added to FORTH vocabulary unless another vocabulary is named.
 \   ABORT        \ call ABORT to do a warm start procedure
 \   ;
+RoutineNEXT .label
+    xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
+    xip 1+, \ Increment xip, pointing to the second word in execution sequence.
+    xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
+                    \ this will make xw point to the parameter field of the word
+    at0 jmp \ jump to the address found at that point
+
 
 \ use the upper stack elements as 
 \ : check-overflow ( -- ) loc@ monitor-memory-start < ABORT" routines are too large!" ;
