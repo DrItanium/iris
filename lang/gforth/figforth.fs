@@ -65,6 +65,7 @@ unused-start
 1+cconstant xrp \ return stack pointer
 1+cconstant xip \ interpretive pointer
 1+cconstant xw \ current word pointer
+1+cconstant xo \ accumulator register ( according to figforth )
 
 too-many-vars-defined
 num-base cconstant xbase
@@ -74,6 +75,9 @@ deflabel RoutineABORT
 deflabel RoutineQUIT
 deflabel RoutineINTERPRET
 deflabel RoutineNEXT
+deflabel RoutineEXECUTE
+deflabel RoutineDOCOLON
+deflabel Routine;S
 
 ram-start .org 
 \ set the constants
@@ -86,7 +90,8 @@ ram-start .org
 \ start user variables
 zero s0 ->
 
-
+: bnext, ( -- ) RoutineNEXT !, b, ;
+: s;, ( -- ) Routine;S !, b, ;
 RoutineCOLD .label 
 \ when the machine starts from cold
 \ COLD calls ABORT
@@ -114,6 +119,68 @@ RoutineNEXT .label
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
     at0 br,         \ jump to the address found at that point
+
+RoutineExecute .label
+    \ execute the definition whose code field address cfa is on the data stack
+    xsp xw pop, \ pop the code field address into xw, the word pointer
+    xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
+    at0 br, 
+RoutineDOCOLON .label \ runtime routine for all colon definitions
+    xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
+    xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
+    \ duplicate NEXT for now
+    bnext,
+Routine;S .label \ perform unnesting
+\ return execution to the calling definition. Unnest one level.
+    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
+    bnext,
+    RoutineNEXT !, b,
+deflabel RoutinePUSH
+RoutinePUSH .label
+    xo xsp push, 
+    bnext,
+deflabel RoutinePOP
+RoutinePOP .label
+    xsp zero pop,
+    bnext,
+deflabel RoutinePUT
+RoutinePUT .label
+    \ replace the top of data stack with the contents of the accumulator
+    xo xsp st, 
+    bnext,
+deflabel routineLIT
+RoutineLIT .label
+    \ push the next word to the data stack as a literal. Increment IP and skip this literal.
+    \ NEXT Return
+    \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
+    \ inline literal to the data stack to be used in computations
+    xip xsp push,
+    xip 1+,
+    bnext,
+
+deflabel RoutineLeftBracket
+RoutineLeftBracket .label
+    \ suspend compilation and execute the words following [ up to ]. 
+    \ this allows calculation or compilation exceptions before resuming compilation
+    \ with ]. 
+    zero xstate ->
+    \ TODO must be executed, not compiled so need to mark this word as immediate
+    \ ;IMMEDIATE
+    s;,
+deflabel RoutineRightBracket
+RoutineRightBracket .label
+    \ resume compilation till the end of a colon definition
+    0xc0 #, xstate set, \ the text interpreter compares the value stored in xstate
+                        \ with the value in the length byte of the definition found
+                        \ in the dictionary. If the definition is an immediate word,
+                        \ its length byte is greater than 0xC0 because of the precedence and the
+                        \ sign bits are both set.
+                        \ 
+                        \ Setting xstate to 0xc0 will force non-immediate words
+                        \ to be compiled and immediate words to be executed, 
+                        \ thus entering into the 'compiling state'
+    s;,
+
 
 
 \ use the upper stack elements as 
