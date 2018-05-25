@@ -157,16 +157,14 @@ RoutineLIT .label
     xip xsp push,
     xip 1+,
     bnext,
-
+deflabel Routine;IMMEDIATE
 deflabel RoutineLeftBracket
 RoutineLeftBracket .label
     \ suspend compilation and execute the words following [ up to ]. 
     \ this allows calculation or compilation exceptions before resuming compilation
     \ with ]. 
     zero xstate ->
-    \ TODO must be executed, not compiled so need to mark this word as immediate
-    \ ;IMMEDIATE
-    s;,
+    Routine;IMMEDIATE !, b,
 deflabel RoutineRightBracket
 RoutineRightBracket .label
     \ resume compilation till the end of a colon definition
@@ -180,6 +178,60 @@ RoutineRightBracket .label
                         \ to be compiled and immediate words to be executed, 
                         \ thus entering into the 'compiling state'
     s;,
+deflabel RoutineWORD
+deflabel RoutineHERE
+deflabel RoutineCREATE
+deflabel RoutineC@
+deflabel Routine@
+deflabel RoutineWIDTH
+deflabel RoutineMIN
+deflabel Routine1+
+deflabel RoutineALLOT
+deflabel RoutineTOGGLE
+deflabel RoutineLATEST,
+deflabel Routine!
+deflabel RoutineBL
+deflabel RoutineDUP
+deflabel Routine0A0H
+deflabel Routine1-
+deflabel Routine80H
+deflabel Routine,
+deflabel Routine2+
+deflabel RoutineSemicolon
+RoutineBL .label bl xsp push, ;s, 
+Routine0A0H .label 0xA0 xsp push, ;s
+Routine80H .label 0x80 xsp push, ;s
+RoutineCREATE .label
+    \ create a dictionary header for a new definition with name cccc. 
+    \ The new word is linked to the current vocabulary. The code field points
+    \ to the parameter field, ready to compile a code definition. 
+    RoutineDOCOLON !.data16
+    RoutineBL !.data16 RoutineWORD !.data16 \ bring the next string delimited by blanks to the top of dictionary
+    RoutineHERE !.data16 \ save the dictionary pointer as name field address to be linked
+    RoutineDUP !.data16 RoutineC@ !.data16 \ get length byte of string
+    RoutineWIDTH !.data16 Routine@ !.data16 \ WIDTH has the maximum number of characters allowed in the name field
+    RoutineWIDTH !.data16 RoutineMIN !.data16 \ use the smaller of the two, and
+    Routine1+ !.data16 RoutineALLOT !.data16 \ allocate space for name field, and advance DP to the link field
+    RoutineDUP !.data16 Routine0A0H !.data16 RoutineTOGGLE !.data16 \ Toggle the 8th (start) and sixth (smudge) bits in the length byte of the name field.
+                                                                    \ make a 'smudged' head so that the dictionary search will not find this name
+    RoutineHERE !.data16 Routine1- !.data16 Routine80H !.data16 RoutineTOGGLE !.data16 \ Toggle the 8th bit in the last character of the name as a delimiter to
+                                                                                       \ the name field.
+    RoutineLatest, !.data16 \ compile the name field address of the last word in the link field, extending the linking chain
+    RoutineCURRENT !.data16 Routine@ !.data16 Routine! !.data16 \ update contents of latest in the current vocabulary
+    RoutineHERE !.data16 Routine2+ !.data16 Routine, !.data16 \ Compile the parameter field address into code field, for teh convenience of a new code
+                                                              \ definition. For other types of definitions, proper code routine address will be compiled here.
+    RoutineSemicolon !.data16
+
+deflabel RoutineCODE
+deflabel RoutineCOMPILE
+deflabel RoutineAssembler
+RoutineCODE .label
+    RoutineDOCOLON !.data16
+    RoutineCREATE !.data16  \ create the header, nothing more to be done on the header
+    RoutineCOMPILE !.data16 \ ????
+    RoutineAssembler !.data16 \ Select ASSEMBLER vocabulary as the CONTEXT vocabulary,
+                              \ which has all the assembly mnemonics and words pertaining to assembly processes.
+    RoutineSemicolon !.data16
 
 
 
