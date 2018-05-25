@@ -280,7 +280,7 @@ r1 cconstant error-code
 r2 cconstant terminator
 r3 cconstant num-base
 r4 cconstant separator
-r5 cconstant vmsp
+r5 cconstant rsp
 r6 cconstant cv
 r7 cconstant lr
 r8 cconstant at0
@@ -299,6 +299,7 @@ r18 cconstant loc4
 r19 cconstant loc5
 r20 cconstant loc6
 r21 cconstant loc7
+r22 cconstant unused-start
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -715,8 +716,8 @@ push, ;
 : next-address ( -- imm id ) loc@ 1+ #, ;
 : !.data16 ( imm -- ) !, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
-: save-register ( reg -- ) vmsp psh-> ;
-: restore-register ( reg -- ) vmsp swap pop-> ;
+: save-register ( reg -- ) rsp psh-> ;
+: restore-register ( reg -- ) rsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
 : restore-lr ( -- ) lr restore-register ;
 : 1save-loc ( -- ) loc0 save-register ;
