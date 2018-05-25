@@ -233,6 +233,53 @@ RoutineCODE .label
                               \ which has all the assembly mnemonics and words pertaining to assembly processes.
     RoutineSemicolon !.data16
 
+: .word ( n -- ) !, .data16 ;
+deflabel Routine?ERROR
+deflabel RoutineSWAP
+deflabel RoutineIF
+deflabel RoutineERROR
+deflabel RoutineELSE
+deflabel RoutineDROP
+deflabel RoutineENDIF
+deflabel RoutineWarning@
+deflabel RoutineABORT
+deflabel RoutineCount
+deflabel RoutineType
+Routine?ERROR .label
+    RoutineSWAP .word
+    routineif .word
+    routineerror .word
+    routineelse .word
+    routinedrop .word
+    routineendif .word
+    RoutineSemicolon .word
+deflabel Routine0< 
+deflabel Routine(ABORT) 
+deflabel RoutinePrintQuestionMark 
+deflabel RoutineMESSAGE 
+deflabel RoutineSP! 
+deflabel RoutineIN@ 
+deflabel RoutineBLK@
+RoutineERROR .label
+    RoutineWarning@ .word
+    Routine0< .word \ see if warning is less than -1
+    RoutineIf .word 
+    Routine(ABORT) .word 
+    RoutineEndif .word
+    RoutineHERE .word RoutineCount .word RoutineType .word \ print name of the offending word on top of the dictionary
+    RoutinePrintQuestionMark .word
+    RoutineMESSAGE .word \ type the error message stored on disk
+    RoutineSP! .word \ clean the data stack
+    RoutineIN@ .word
+    RoutineBLK@ .word \ fetch in and blk on stack for the operator to look at if he wishes
+    RoutineQUIT .word \ restart the forth loop
+    RoutineSemicolon .word
+Routine(ABORT) .label
+    RoutineABORT .word \ execute ABORT after an error when WARNING is -1. IT may be changed to a user defined procedure
+    RoutineSemicolon .word
+\ terminal routines
+
+
 
 
 \ use the upper stack elements as 
