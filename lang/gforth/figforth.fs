@@ -335,9 +335,43 @@ deflabel RoutineQUERY
 RoutineQUERY .label
     \ input 80 characters (or until a carriage-return) from the terminal and 
     \ place the text in the terminal input buffer.
-    RoutineTIB .word \ contains the qtqrting address of the input terminal buffer
-    8 u<< 0xFF00 and swap 
-    8 u>> or ;
+    RoutineTIB .word \ contains the starting address of the input terminal buffer
+    RoutinePush50h .word RoutineEXPECT .word \ get 80 characters
+    Routine0 .word RoutineIn .word Routine! .word \ set the input character counter IN to 0. Text parsing shall begin at TIB
+    RoutineSemicolon .word
+
+RoutineWORD .label ( c -- )
+    ( read text from the input stream until a delimiter c is encountered. Store
+      the text string at the top of dictionary starting HERE. The first byte is
+      the character count, then the text string, and two or more blanks. If
+      BLK is zero, input it from the terminal; otherwise, input from the disc
+      block referred to by BLK. )
+    \ write this in native eventually
+    RoutineBLK@ .word 
+    RoutineIF .word \ BLK = 0 ?, if BLK is not zero, go look at the disk.
+        RoutineBLK@ .word \ The block number
+        RoutineBLOCK .word \ Grab a block of data from disc and put it in a disc buffer
+                           \ Leave the buffer address on the stack. BLOCK is the
+                           \ word to access disc virtual memory
+    RoutineELSE .word \ blk = 0, input is from terminal
+        RoutineTIB@ .word \ text should be put in the terminal input buffer
+    RoutineEndif .word 
+    RoutineIN@ .word \ in contains the character offset into the current input text buffer
+    Routine+ .word \ add offset to the starting address of buffer, pointing to the next character to be read in.
+    RoutineSWAP .word  \ get delimiter c over the string addr
+    RoutineENCLOSE .word \ a primitive word to scan the text. ( addr c -- addr nl n2 n3 )
+    RoutineHERE .word Routine022H .word  RoutineBLANKS .word \ write 34 blanks to the top of dictionary
+    RoutineIN .word Routine+! .word \ increment in by the character count, pointing to the next text string to be parsed.
+    RoutineOVER .word Routine- .word Routine>R .word \ save n2-nl onto the return stack
+    RoutineR .word RoutineOVER .word RoutineC! .word \ store character count as the length byte at HERE.
+    Routine+ .word \ buffer address + nl, starting point of the text string in the text buffer
+    RoutineHERE .word Routine1+ .word \ address after the length byte on dictionary
+    RoutineR> .word \ get the character count back from the return stack
+    RoutineSemicolon .word
+        
+    
+
+    
 
         
 
