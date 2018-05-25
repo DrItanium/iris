@@ -11,6 +11,54 @@ s" monitor.o" {asm
 0xF100 constant monitor-stack-start 
 0xF000 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
+unused-start 1+cconstant cmd \ command buffer register
+1+cconstant in0
+1+cconstant out0
+1+cconstant in1
+1+cconstant out1
+1+cconstant loc0
+1+cconstant loc1
+1+cconstant loc2
+1+cconstant loc3
+1+cconstant loc4
+1+cconstant loc5
+1+cconstant loc6
+1+cconstant loc7
+drop
+: 1save-loc ( -- ) loc0 save-register ;
+: 2save-loc ( -- ) 1save-loc loc1 save-register ;
+: 3save-loc ( -- ) 2save-loc loc2 save-register ;
+: 4save-loc ( -- ) 3save-loc loc3 save-register ;
+: 5save-loc ( -- ) 4save-loc loc4 save-register ;
+: 6save-loc ( -- ) 5save-loc loc5 save-register ;
+: 7save-loc ( -- ) 6save-loc loc6 save-register ;
+: 1restore-loc ( -- ) loc0 restore-register ;
+: 2restore-loc ( -- ) loc1 restore-register 1restore-loc ;
+: 3restore-loc ( -- ) loc2 restore-register 2restore-loc ;
+: 4restore-loc ( -- ) loc3 restore-register 3restore-loc ;
+: 5restore-loc ( -- ) loc4 restore-register 4restore-loc ;
+: 6restore-loc ( -- ) loc5 restore-register 5restore-loc ;
+: 7restore-loc ( -- ) loc6 restore-register 6restore-loc ;
+: save-locals ( count -- )
+  case 
+  1 of 1save-loc endof
+  2 of 2save-loc endof
+  3 of 3save-loc endof
+  4 of 4save-loc endof
+  5 of 5save-loc endof
+  6 of 6save-loc endof
+  7 of 7save-loc endof
+  endcase ;
+: restore-locals ( count -- ) 
+  case 
+  1 of 1restore-loc endof
+  2 of 2restore-loc endof
+  3 of 3restore-loc endof
+  4 of 4restore-loc endof
+  5 of 5restore-loc endof
+  6 of 6restore-loc endof
+  7 of 7restore-loc endof
+  endcase ;
 \ use the upper stack elements as 
 : check-overflow ( -- ) loc@ monitor-memory-start < ABORT" routines are too large!" ;
 

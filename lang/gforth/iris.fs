@@ -275,31 +275,20 @@ register: x61
 register: x62
 register: x63
 registers}
-x0 cconstant zero
-x1 cconstant error-code
-x2 cconstant terminator
-x3 cconstant num-base
-x4 cconstant separator
-x5 cconstant rsp
-x6 cconstant cv
-x7 cconstant lr
-x8 cconstant at0
-x9 cconstant at1
-x10 cconstant cmd \ command buffer register
-x11 cconstant io
-x12 cconstant in0
-x12 cconstant out0
-x13 cconstant in1
-x13 cconstant out1
-x14 cconstant loc0
-x15 cconstant loc1
-x16 cconstant loc2
-x17 cconstant loc3
-x18 cconstant loc4
-x19 cconstant loc5
-x20 cconstant loc6
-x21 cconstant loc7
-x22 cconstant unused-start
+: 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
+x0 1+cconstant zero
+1+cconstant error-code
+1+cconstant terminator
+1+cconstant num-base
+1+cconstant separator
+1+cconstant vmsp
+1+cconstant cv
+1+cconstant lr
+1+cconstant at0
+1+cconstant at1
+1+cconstant io
+1+cconstant unused-start
+drop
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -716,44 +705,10 @@ push, ;
 : next-address ( -- imm id ) loc@ 1+ #, ;
 : !.data16 ( imm -- ) !, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
-: save-register ( reg -- ) rsp psh-> ;
-: restore-register ( reg -- ) rsp swap pop-> ;
+: save-register ( reg -- ) vmsp psh-> ;
+: restore-register ( reg -- ) vmsp swap pop-> ;
 : save-lr ( -- ) lr save-register ;
 : restore-lr ( -- ) lr restore-register ;
-: 1save-loc ( -- ) loc0 save-register ;
-: 2save-loc ( -- ) 1save-loc loc1 save-register ;
-: 3save-loc ( -- ) 2save-loc loc2 save-register ;
-: 4save-loc ( -- ) 3save-loc loc3 save-register ;
-: 5save-loc ( -- ) 4save-loc loc4 save-register ;
-: 6save-loc ( -- ) 5save-loc loc5 save-register ;
-: 7save-loc ( -- ) 6save-loc loc6 save-register ;
-: 1restore-loc ( -- ) loc0 restore-register ;
-: 2restore-loc ( -- ) loc1 restore-register 1restore-loc ;
-: 3restore-loc ( -- ) loc2 restore-register 2restore-loc ;
-: 4restore-loc ( -- ) loc3 restore-register 3restore-loc ;
-: 5restore-loc ( -- ) loc4 restore-register 4restore-loc ;
-: 6restore-loc ( -- ) loc5 restore-register 5restore-loc ;
-: 7restore-loc ( -- ) loc6 restore-register 6restore-loc ;
-: save-locals ( count -- )
-  case 
-  1 of 1save-loc endof
-  2 of 2save-loc endof
-  3 of 3save-loc endof
-  4 of 4save-loc endof
-  5 of 5save-loc endof
-  6 of 6save-loc endof
-  7 of 7save-loc endof
-  endcase ;
-: restore-locals ( count -- ) 
-  case 
-  1 of 1restore-loc endof
-  2 of 2restore-loc endof
-  3 of 3restore-loc endof
-  4 of 4restore-loc endof
-  5 of 5restore-loc endof
-  6 of 6restore-loc endof
-  7 of 7restore-loc endof
-  endcase ;
 : (leafn ( label -- ) .label ;
 : leafn) ( -- ) ret, ;
 : (fn ( label -- ) .label save-lr ;

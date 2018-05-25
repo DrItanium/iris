@@ -22,7 +22,6 @@ return-stack-end constant data-stack-start
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
-: 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 unused-start 
 \ constants
 \ user variables
@@ -114,7 +113,7 @@ RoutineNEXT .label
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
-    at0 jmp \ jump to the address found at that point
+    at0 br,         \ jump to the address found at that point
 
 
 \ use the upper stack elements as 
