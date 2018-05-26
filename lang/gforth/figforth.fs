@@ -70,7 +70,8 @@ unused-start
 1+cconstant xo \ accumulator register ( according to figforth )
 1+cconstant at2 \ another temporary
 1+cconstant xtop \  contents of the top of stack when a pop is called
-1+cconstant xlower \ contents of the second stack when a pop is called
+1+cconstant xlower \ contents of the second stack item when a pop is called
+1+cconstant xthird \ contents of the third stack item
 
 too-many-vars-defined
 num-base cconstant xbase
@@ -196,16 +197,45 @@ deflabel _ALLOT
 deflabel _SWAP
 deflabel _DROP
 deflabel _DUP
+deflabel _-DUP
 deflabel _OVER
 deflabel _+
 deflabel _-
-deflabel _*
+deflabel _rot
+: 1pop ( -- )
+  xsp xtop pop, ;
+: 2pop ( -- )
+  1pop 
+  xsp xlower pop, ;
+: 3pop ( -- )
+  2pop
+  xsp xthird pop, ;
 _+ defmachineword
-    xsp xtop pop, \ b 
-    xsp xlower pop, \ a
+    2pop \ top -> b | lower -> a
     xtop xlower xtop add, 
     xtop xsp push,
     next,
+_+ defmachineword
+    2pop \ a b
+    xtop xlower xtop sub, 
+    xtop xsp push,
+    next,
+_rot defmachineword ( a b c -- b c a )
+    3pop \ a (third) b (lower)  c (top)
+    xlower xsp push,
+    xtop xsp push,
+    xthird xsp push,
+    next,
+_-dup defmachineword \ duplicate if non zero
+    deflabel _-dup_done
+    1pop 
+    xtop cv neqz, 
+    _-dup_done !, cv bc,
+        xtop xsp push,
+    _-dup_done .label
+    xtop xsp push,
+    next,
+
 _over defmachineword
     xsp xtop incr,
     xtop xlower ld,
