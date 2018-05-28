@@ -124,8 +124,6 @@ opcode: #udiv
 opcode: #urem
 opcode: #ulshift
 opcode: #urshift
-\ opcode: #readtok
-\ opcode: #number
 opcode: #incr
 opcode: #decr
 opcode: #uincr
@@ -139,7 +137,6 @@ opcode: #lshifti
 opcode: #ldtincr
 opcode: #lti
 opcode: #move
-opcode: #move2
 opcode: #sttincr
 opcode}
 
@@ -313,7 +310,6 @@ drop
 
 #add inst-3reg add, 
 #move inst-2reg move,
-#move2 inst-4reg move2, 
 : nop ( -- ) zero zero move, ;
 : -> ( src dest -- ) move, ;
 \ constant tagging version

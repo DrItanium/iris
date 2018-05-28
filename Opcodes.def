@@ -22,8 +22,10 @@ X(GreaterThanOrEqualTo, ThreeRegister, ge)
 X(Set, OneRegisterWithImmediate, set)
 X(Load, TwoRegister, ld)
 X(Store, TwoRegister, st)
-X(Push, TwoRegister, push)
-X(Pop, TwoRegister, pop)
+// Push is a decr address then store
+X(Push, TwoRegister, push) // decrement dest and then store src into it
+// Pop is a incr address then load 
+X(Pop, TwoRegister, pop) // increment src and then load into dest
 X(LoadCore, TwoRegister, ldc)
 X(StoreCore, TwoRegister, stc)
 X(LoadIO, TwoRegister, ldio)
@@ -34,24 +36,6 @@ X(BranchRegisterAndLink, TwoRegister, brl)
 X(BranchConditionalRegister, TwoRegister, bcr)
 X(BranchConditionalRegisterLink, ThreeRegister, bcrl)
 // misc
-// Push eight registers onto the stack at a time given the provided bit pattern
-// uses the 16-bit constant like so:
-// 0bRRRRRRRR000GGGGG 
-// where:
-//   G is the bit pattern denoting which group of eight registers to push/pop
-//   R is the bit pattern denoting which of the eight registers in the group
-//     to push/pop onto/off the stack
-//
-// The group bits define which register to start with, it is shifted by three
-// internally to determine the base offset
-// The registers are pushed onto the stack of lowest to highest within the 
-// group. If a given bit pattern does not allow a for a given register to be pushed
-// then it is skipped
-//
-// Registers are popped off the stack from higest to lowest to compliment the 
-// the behavior of push-group
-//
-// If the pattern zero is found in RRRRRRRRR then nothing happens
 X(UnsignedEq, ThreeRegister, equ)
 X(UnsignedNeq, ThreeRegister, nequ)
 X(UnsignedLessThan, ThreeRegister, ltu)
@@ -73,12 +57,6 @@ X(UnsignedDiv, ThreeRegister, divu)
 X(UnsignedRem, ThreeRegister, remu)
 X(UnsignedShiftLeft, ThreeRegister, shlu)
 X(UnsignedShiftRight, ThreeRegister, shru)
-
-// "microcode" routines for making the forth interpreter implementation
-// faster
-// routines from Threaded Interpretive Languages as well
-// X(ReadToken, TwoRegister, readtok)
-// X(NumberRoutine, ThreeRegister, number-routine)
 X(Increment, TwoRegister, incr)
 X(Decrement, TwoRegister, decr)
 X(UnsignedIncrement, TwoRegister, uincr)
@@ -93,5 +71,4 @@ X(LoadThenIncrement, TwoRegister, ldtincr)
 X(LessThanImmediate, TwoRegisterWithImmediate, lti)
 X(Move, TwoRegister, move)
 // dest src dest2 src2
-X(Move2, FourRegister, move2)
 X(StoreThenIncrement, TwoRegister, sttincr)

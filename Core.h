@@ -101,7 +101,7 @@ namespace iris {
 	/**
 	 * The iris core is a 16-bit harvard architecture that has multiple memory
 	 * spaces. Each of them being 64k words (or double word) each. 
-	 * There are four spaces: Code (double word), Data, Stack, and IO. 
+	 * There are three spaces: Memory, Core, and IO. 
 	 *
 	 * this is a slightly improved version of the iris core as it has support
 	 * for multiple stack pointers and such.
@@ -112,10 +112,6 @@ namespace iris {
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address32 addressSize = 0x10000;
             static constexpr RegisterIndex registerZero = 0;
-            static constexpr RegisterIndex registerErrorCode = 1;
-            static constexpr RegisterIndex registerTerminator = 2;
-            static constexpr RegisterIndex registerNumericBase = 3;
-            static constexpr RegisterIndex registerSeparator = 4;
             // the error codes that the processor will raise as part of an
             // error happening
             enum class ErrorCodes : Address {
@@ -159,21 +155,30 @@ namespace iris {
 			}
             using IOWriter = std::function<void(Address, Address)>;
             using IOReader = std::function<Address(Address)>;
-            class IODevice {
+			class AbstractIODevice {
+				public:
+					AbstractIODevice(Address begin, Address length = 1) : _begin(begin), _end(begin + length) { }
+					AbstractIODevice(const AbstractIODevice& other) : _begin(other._begin), _end(other._end) { }
+					virtual bool respondsTo(Address addr) const noexcept = 0;
+					virtual Address read(Address addr) = 0;
+					virtual void write(Address addr, Address value) = 0;
+					Address getBegin() const noexcept { return _begin; }
+					Address getEnd() const noexcept { return _end; }
+				private:
+					Address _begin;
+					Address _end;
+			}
+            class IODevice : public AbstractIODevice {
+				public:
+					using Parent = AbstractIODevice;
                 public:
-                    IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : 
-                        _begin(responseBegin), 
-                        _end(length + responseBegin),
-                        _read(read), 
-                        _write(write) { }
-                    IODevice(const IODevice& other) : _begin(other._begin), _end(other._end), _read(other._read), _write(other._write) { }
+                    IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : Parent(responseBegin, length), _read(read), _write(write) { }
+                    IODevice(const IODevice& other) : Parent(other), _read(other._read), _write(other._write) { }
                     ~IODevice() = default;
-                    bool respondsTo(Address addr) const noexcept;
-                    Address read(Address addr);
-                    void write(Address addr, Address value);
+                    virtual bool respondsTo(Address addr) const noexcept override;
+                    virtual Address read(Address addr) override;
+                    virtual void write(Address addr, Address value) override;
                 private:
-                    Address _begin;
-                    Address _end;
                     IOReader _read;
                     IOWriter _write;
             };
@@ -266,6 +271,18 @@ namespace iris {
 			template<typename T>
 			void setDestination(const T& value, Number n) noexcept {
 				setRegister(value._args.dest, n);
+			}
+			template<typename T>
+			void setSource(const T& value, Number n) noexcept {
+				setRegister(value._args.src, n);
+			}
+			template<typename T>
+			void setSource2(const T& value, Number n) noexcept {
+				setRegister(value._args.src2, n);
+			}
+			template<typename T>
+			Number getDestination(const T& value) const noexcept {
+				return getRegister(value._args.dest).getValue();
 			}
 			template<typename T>
 			Number getSource(const T& value) const noexcept {

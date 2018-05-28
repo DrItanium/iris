@@ -137,8 +137,7 @@ namespace iris {
     DefExec(Sub) { 
         auto a = getSource(op).integer;
         auto b = getSource2(op).integer;
-        auto c = a - b;
-        setDestination(op, c);
+		setDestination(op, a - b);
     }
     DefExec(Mul) { setDestination(op, getSource(op).integer * getSource2(op).integer); }
     DefExec(Div) { setDestination(op, getSource(op).integer / getSource2(op).integer); }
@@ -189,20 +188,22 @@ namespace iris {
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
-        auto addr = getRegisterValue(op._args.src).address;
+		auto addr = getSource(op).address;
         auto value = _memory[addr];
         setDestination(op, value);
     }
-    DefExec(Store) { _memory[getRegisterValue(op._args.dest).address] = getRegisterValue(op._args.src); }
+    DefExec(Store) { 
+		_memory[getDestination(op).address] = getSource(op);
+	}
     DefExec(Push) {
-        Address stackAddress = getRegisterValue(op._args.dest).address - 1;
+        Address stackAddress = getDestination(op).address - 1;
         Address value = getSource(op).address;
         _memory[stackAddress] = value;
-        setRegister(op._args.dest, stackAddress);
+		setDestination(op, stackAddress);
     }
     DefExec(Pop) {
-        setDestination(op, _memory[getRegisterValue(op._args.src).address]);
-        setRegister(op._args.src, getRegisterValue(op._args.src).address + 1);
+        setDestination(op, _memory[getSource(op).address]);
+		setSource(op, getSource(op).address + 1);
     }
     DefExec(LoadCore) {
         auto inst = _core[getSource(op).address];
@@ -211,27 +212,25 @@ namespace iris {
 
     DefExec(StoreCore) {
         auto lower = getSource(op);
-        auto addr = getRegisterValue(op._args.dest).address;
+        auto addr = getDestination(op).address;
         _core[addr] = lower;
     }
     DefExec(BranchRegister) {
-		// std::cout << "\t\tJumping from: " << std::hex << _pc;
-        _pc = getRegisterValue(op._args.dest).address;
-		// std::cout << " to " << std::hex << _pc << std::endl;
+		_pc = getDestination(op).address;
     }
     DefExec(BranchRegisterAndLink) {
-        setRegister(op._args.src, _pc);
-        _pc = getRegisterValue(op._args.dest).address;
+		setSource(op, _pc);
+        _pc = getDestination(op).address;
     }
     DefExec(BranchConditionalRegister) {
         if (getSource(op).getTruth()) {
-            _pc = getRegisterValue(op._args.dest).address;
+			_pc = getDestination(op).address;
         }
     }
     DefExec(BranchConditionalRegisterLink) {
         if (getSource(op).getTruth()) {
-            setRegister(op._args.src2, _pc);
-            _pc = getRegisterValue(op._args.dest).address;
+			setSource2(op, _pc);
+			_pc = getDestination(op).address;
         }
     }
 
@@ -252,7 +251,7 @@ namespace iris {
 				});
     }
     DefExec(StoreIO) {
-        auto addr = getRegisterValue(op._args.dest).address;
+		auto addr = getDestination(op).address;
         onIODeviceFound(addr, [this, &op, addr](auto& a) { a.write(addr, getSource(op).address); });
     }
     DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
@@ -278,109 +277,6 @@ namespace iris {
         setDestination(op, a > b ? a : b);
     }
 
-    // DefExec(ReadToken) {
-    //     if (op._args.dest == op._args.src) {
-    //         throw Problem("Destination and source must be different!");
-    //     }
-    //     // taken from the flow graph on pg 90 of threaded interpretive languages
-    //     //
-    //     // three register
-    //     // src - line buffer
-    //     // dest - dictionary pointer / destination
-    //     auto dp = getRegister(op._args.dest).get<Address>();
-    //     auto lbp = getSource(op).address;
-    //     auto separator = _registers[registerSeparator].get<signed char>();
-    //     // ignore any whitespace before token itself
-    //     for (auto front = _memory[lbp].get<signed char>(); front == separator; ++lbp, front = _memory[lbp].get<signed char>()) { }
-    //     auto start = lbp; // save the start of the token
-    //     auto count = 0;
-    //     while (true) {
-    //         ++lbp;
-    //         ++count;
-    //         auto curr = _memory[lbp].get<signed char>();
-    //         if (curr == separator) {
-    //             break;
-    //         }
-    //         // the terminator is specially encoded to have the upper most bit 
-    //         // set to one
-    //         if (curr < 0) {
-    //             // line terminator is one bit too far
-    //             --lbp;
-    //             break;
-    //         }
-    //     }
-    //     // stash the start of the next token into the lbp (src) register
-    //     ++lbp;
-    //     setRegister(op._args.src, lbp);
-    //     // go back to the starting token position
-    //     lbp = start;
-    //     // stash the length into the destination
-    //     _memory[dp] = count;
-    //     // go to the next cell
-    //     ++dp;
-    //     do {
-    //         // start copying the token contents over
-    //       _memory[dp] = _memory[lbp];
-    //       // advance both
-    //       ++lbp;
-    //       ++dp;
-    //       --count;
-    //       // keep doing this until we get back to the place we stopped
-    //     } while (count > 0);
-    //     // update the dictionary pointer as well
-    //     setRegister(op._args.dest, dp);
-    // }
-    // DefExec(NumberRoutine) {
-    //     // src2 is the base address
-    //     // src is the resultant number
-    //     // dest is the success code
-    //     auto flag = false;
-    //     auto baseAddress = getSource2(op).address;
-    //     auto p1 = _memory[baseAddress].get<Integer>();
-    //     auto count = _memory[p1].get<Address>();
-    //     ++p1;
-    //     auto sgn = _memory[p1].get<char>() == '-';
-    //     if (sgn) {
-    //         ++p1;
-    //     }
-    //     auto result = 0;
-    //     auto terminatedEarly = false;
-    //     auto _base = _registers[registerNumericBase].get<Integer>();
-    //     while (count != 0) {
-    //         auto num = Integer(_memory[p1].get<signed char>()) - 0x30;
-    //         if (num < 0) {
-    //             flag = false;
-    //             terminatedEarly = true;
-    //             break;
-    //         }
-    //         if (num > 9) {
-    //             if (num > 0x11) {
-    //                 num = num - 7;
-    //             } else {
-    //                 flag = false;
-    //                 terminatedEarly = true;
-    //                 break;
-    //             }
-    //         }
-    //         if (num < (_base - 1)) {
-    //             result = (result * _base) + num;
-    //             --count;
-    //             ++p1;
-    //         } else {
-    //             flag = false;
-    //             terminatedEarly = true;
-    //             break;
-    //         }
-    //     }
-    //     if (!terminatedEarly) {
-    //         if (sgn) {
-    //             result = -result;
-    //         }
-    //         flag = true;
-    //         setRegister(op._args.src, result);
-    //     }
-    //     setRegister(op._args.dest, flag);
-    // }
     DefExec(UnsignedAdd) { setDestination(op, getSource(op).address + getSource2(op).address); }
     DefExec(UnsignedSub) { 
         auto a = getSource(op).address;
@@ -398,11 +294,11 @@ namespace iris {
 	DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
 	DefExec(UnsignedDecrement) { setDestination(op, getSource(op).address - 1); }
 	DefExec(Call) {
-        setRegister(op._args.dest, _pc);
+		setDestination(op, _pc);
         _pc = op._args.imm;
 	}
 	DefExec(ConditionalBranch) {
-		if (getRegister(op._args.dest).getTruth()) {
+		if (getDestination(op).getTruth()) {
 			_pc = op._args.imm;
 		}
 	}
@@ -425,12 +321,6 @@ namespace iris {
     }
     DefExec(Move) {
         setDestination(op, getSource(op).address);
-    }
-    DefExec(Move2) {
-        // perform two register transfers in a single instruction
-        // dest src dest2 src2 
-        setDestination(op, getSource(op).address);
-        setRegister(op._args.src2, getRegister(op._args.src3).get<Address>());
     }
     DefExec(StoreThenIncrement) {
         Core::Store st;
@@ -456,12 +346,10 @@ namespace iris {
     }
 
     void Core::cycle() {
-		// std::cout << "Cycle: Start IP: " << std::hex << this->_pc << std::endl;
         // load the current instruction and go to the next address
         auto inst = extractInstruction(); // automatically increment PC
         auto op = decodeInstruction(inst);
         dispatchInstruction(op);
-		// std::cout << "Cycle: End IP: " << std::hex << this->_pc << std::endl;
     }
     void Core::execute() {
         while(_keepExecuting) {
@@ -552,14 +440,13 @@ namespace iris {
             throw Problem("Unimplemented address!");
         }
     }
+	class NumericPrinter : public Core::IODevice {
+
+	};
     void Core::init() {
         // disable writing to register 0
         _registers[registerZero].setValue(0);
         _registers[registerZero].disableWrites();
-        _registers[registerErrorCode].setValue(0);
-        _registers[registerTerminator].setValue(0);
-        _registers[registerNumericBase].setValue(16);
-        _registers[registerSeparator].setValue(' ');
         // setup the basic IO device for console input output
         IODevice sink(0);
         IODevice console(1, 2, readFromStandardIn, writeToStandardOut);
