@@ -155,34 +155,21 @@ namespace iris {
 			}
             using IOWriter = std::function<void(Address, Address)>;
             using IOReader = std::function<Address(Address)>;
-			class AbstractIODevice {
-				public:
-					AbstractIODevice(Address begin, Address length = 1) : _begin(begin), _end(begin + length) { }
-					AbstractIODevice(const AbstractIODevice& other) : _begin(other._begin), _end(other._end) { }
-					virtual bool respondsTo(Address addr) const noexcept = 0;
-					virtual Address read(Address addr) = 0;
-					virtual void write(Address addr, Address value) = 0;
-					Address getBegin() const noexcept { return _begin; }
-					Address getEnd() const noexcept { return _end; }
-				private:
+            class IODevice {
+                public:
+                    IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : _begin(responseBegin), _end(responseBegin + length), _read(read), _write(write) { }
+                    IODevice(const IODevice& other) : _begin(other._begin), _end(other._end), _read(other._read), _write(other._write) { }
+                    ~IODevice() = default;
+					bool respondsTo(Address addr) const noexcept;
+                    virtual Address read(Address addr) ;
+                    virtual void write(Address addr, Address value) ;
+                private:
 					Address _begin;
 					Address _end;
-			}
-            class IODevice : public AbstractIODevice {
-				public:
-					using Parent = AbstractIODevice;
-                public:
-                    IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : Parent(responseBegin, length), _read(read), _write(write) { }
-                    IODevice(const IODevice& other) : Parent(other), _read(other._read), _write(other._write) { }
-                    ~IODevice() = default;
-                    virtual bool respondsTo(Address addr) const noexcept override;
-                    virtual Address read(Address addr) override;
-                    virtual void write(Address addr, Address value) override;
-                private:
                     IOReader _read;
                     IOWriter _write;
             };
-            void installIODevice(IODevice device);
+            void installIODevice(IODevice dev);
 		public:
 
 			// the different containers for instruction forms are defined here

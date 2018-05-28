@@ -440,9 +440,6 @@ namespace iris {
             throw Problem("Unimplemented address!");
         }
     }
-	class NumericPrinter : public Core::IODevice {
-
-	};
     void Core::init() {
         // disable writing to register 0
         _registers[registerZero].setValue(0);
