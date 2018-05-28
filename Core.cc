@@ -516,12 +516,14 @@ namespace iris {
                         auto maskedIndex = byte(0b111111 & value);
                         std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
                     });
+		IODevice hexPrinter(8,1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
         installIODevice(vmDumper);
 		installIODevice(vmTerminator);
         installIODevice(registerInspector);
+		installIODevice(hexPrinter);
     }
     void Core::shutdown() {
 

@@ -161,8 +161,8 @@ namespace iris {
                     IODevice(const IODevice& other) : _begin(other._begin), _end(other._end), _read(other._read), _write(other._write) { }
                     ~IODevice() = default;
 					bool respondsTo(Address addr) const noexcept;
-                    virtual Address read(Address addr) ;
-                    virtual void write(Address addr, Address value) ;
+                    Address read(Address addr) ;
+                    void write(Address addr, Address value) ;
                 private:
 					Address _begin;
 					Address _end;
