@@ -598,6 +598,7 @@ def3argi ugei, uge,
 ioaddr: /dev/null 
 ioaddr: /dev/console0
 ioaddr: /dev/console1
+ioaddr: /dev/console2
 ioaddr: /dev/core-dump
 ioaddr: /dev/core-load
 ioaddr: /dev/dump-vm

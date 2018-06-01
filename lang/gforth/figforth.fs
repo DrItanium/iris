@@ -127,8 +127,8 @@ _COLD .label
     ;
 
 : s;, ( -- ) _;S !, b, ;
-: machine-code-execute ( -- ) @loc 1 + #, .data16 ;
-: embed-docolon ( -- ) DOCOLON !, .data16 ;
+: machine-code-execute ( -- ) loc@ 1+ #, .data16 ;
+: embed-docolon ( -- ) _DOCOLON !, .data16 ;
 : machineword ( n -- ) .label machine-code-execute ;
 : colondef ( n -- ) .label embed-docolon ;
 _Execute .label
@@ -236,14 +236,18 @@ _-dup machineword \ duplicate if non zero
     _-dup_done .label
     xtop xsp push,
     next,
+deflabel _>r
 _>r machineword \ move top item to return stack
     1pop 
     xtop xrp push,
     next,
+deflabel _r>
 _r> machineword \ retrieve item from top of return stack
     xrp xtop pop,
     xtop xsp push,
     next,
+deflabel _r
+deflabel _x
 _r machineword \ copy top of return stack onto stack
    xrp xtop ld,
    xtop xsp push,
@@ -373,7 +377,9 @@ _allot machineword ( n -- )
     xsp xtop pop,
     xtop dp dp add,
     next,
-_dp machineword ( -- n ) dp xsp push, ;s,
+_dp machineword ( -- n ) 
+    dp xsp push, 
+    next,
 _! machineword ( v a -- )
    xsp xtop pop, \ addr
    xsp xlower pop, \ value
@@ -408,444 +414,305 @@ _@ machineword
     xtop xtop ld,
     xtop xsp push,
     next,
+deflabel _.
+_. machineword
+   /dev/console2 #, xlower set,
+   1pop
+   xtop xlower stio,
+   next,
+deflabel _CR
+_CR machineword
+    /dev/console0 #, xlower set,
+    0xA #, xtop set,
+    xtop xlower stio,
+    next,
+deflabel _space
+_space machineword
+    /dev/console0 #, xlower set,
+    0x20 #, xtop set,
+    xtop xlower stio,
+    next,
+deflabel _key
+_key machineword
+    /dev/console0 #, xlower set,
+    xlower xtop ldio,
+    xtop xsp push,
+    next,
+deflabel _emit
+_emit machineword
+    /dev/console0 #, xlower set,
+    1pop
+    xtop xlower stio,
+    next,
+deflabel _sp@
+_sp@ machineword
+    xsp xsp push,
+    next,
 
-
-deflabel _CREATE
-deflabel _WIDTH
-deflabel _MIN
-deflabel _1+
-deflabel _TOGGLE
-deflabel _LATEST,
-deflabel _BL
-deflabel _0A0H
-deflabel _1-
-deflabel _80H
-deflabel _2+
-deflabel _Semicolon
-_BL .label bl xsp push, ;s, 
-_0A0H .label 0xA0 xsp push, ;s
-_80H .label 0x80 xsp push, ;s
-_CREATE .label
-    \ create a dictionary header for a new definition with name cccc. 
-    \ The new word is linked to the current vocabulary. The code field points
-    \ to the parameter field, ready to compile a code definition. 
-    bl #, at0 set,
-    at0 xsp push, \ push bl onto the stack
-
-    _WORD !.data16 \ bring the next string delimited by blanks to the top of dictionary
-    _HERE !.data16 \ save the dictionary pointer as name field address to be linked
-    _DUP !.data16 _C@ !.data16 \ get length byte of string
-    _WIDTH !.data16 _@ !.data16 \ WIDTH has the maximum number of characters allowed in the name field
-    _WIDTH !.data16 _MIN !.data16 \ use the smaller of the two, and
-    _1+ !.data16 _ALLOT !.data16 \ allocate space for name field, and advance DP to the link field
-    _DUP !.data16 _0A0H !.data16 _TOGGLE !.data16 \ Toggle the 8th (start) and sixth (smudge) bits in the length byte of the name field.
-                                                                    \ make a 'smudged' head so that the dictionary search will not find this name
-    _HERE !.data16 _1- !.data16 _80H !.data16 _TOGGLE !.data16 \ Toggle the 8th bit in the last character of the name as a delimiter to
-                                                                                       \ the name field.
-    _Latest, !.data16 \ compile the name field address of the last word in the link field, extending the linking chain
-    _CURRENT !.data16 _@ !.data16 _! !.data16 \ update contents of latest in the current vocabulary
-    _HERE !.data16 _2+ !.data16 _, !.data16 \ Compile the parameter field address into code field, for teh convenience of a new code
-                                                              \ definition. For other types of definitions, proper code routine address will be compiled here.
-    _Semicolon !.data16
-
-deflabel _CODE
-deflabel _COMPILE
-deflabel _Assembler
-_CODE .label
-    _DOCOLON !.data16
-    _CREATE !.data16  \ create the header, nothing more to be done on the header
-    _COMPILE !.data16 \ ????
-    _Assembler !.data16 \ Select ASSEMBLER vocabulary as the CONTEXT vocabulary,
-                              \ which has all the assembly mnemonics and words pertaining to assembly processes.
-    _Semicolon !.data16
-
-deflabel _?ERROR
-deflabel _IF
-deflabel _ERROR
-deflabel _ELSE
-deflabel _ENDIF
-deflabel _Warning@
-deflabel _Count
-deflabel _Type
-_if defshorthand _if.
-_else defshorthand _else.
-_endif defshorthand _endif.
-_do defshorthand _do.
-_loop defshorthand _loop.
-_over defshorthand _over.
-_swap defshorthand _swap.
-_here defshorthand _here.
-_type defshorthand _type.
-_?ERROR .label
-    _SWAP .word
-    _if .word
-    _error .word
-    _else .word
-    _drop .word
-    _endif .word
-    _Semicolon .word
-deflabel _0< 
-deflabel _(ABORT) 
-deflabel _PrintQuestionMark 
-deflabel _MESSAGE 
-deflabel _SP! 
-deflabel _IN@ 
-deflabel _BLK@
-_ERROR .label
-    _Warning@ .word
-    _0< .word \ see if warning is less than -1
-    _if. 
-    _(ABORT) .word 
-    _Endif .word
-    _here.  _Count .word _type. \ print name of the offending word on top of the dictionary
-    _PrintQuestionMark .word
-    _MESSAGE .word \ type the error message stored on disk
-    _SP! .word \ clean the data stack
-    _IN@ .word
-    _BLK@ .word \ fetch in and blk on stack for the operator to look at if he wishes
-    _QUIT .word \ restart the forth loop
-    _Semicolon .word
-_(ABORT) .label
-    _ABORT .word \ execute ABORT after an error when WARNING is -1. IT may be changed to a user defined procedure
-    _Semicolon .word
-\ terminal routines
-deflabel _EXPECT ( n addr -- ) 
-\ transfer n characters from the terminal to memory starting at addr. 
-\ The text may be terminated by a carriage return
-\ An ASCII NUL is appended to the end of text
-deflabel _-
-deflabel _Push8
-deflabel _Push2
-deflabel _DO
-deflabel _KEY
-deflabel _DUP
-deflabel _+ORIGIN
-deflabel _Equal
-deflabel _R>
-deflabel _>R
-deflabel _0EH 
-deflabel _I=
-_EXPECT .label
-    _OVER .word _+ .word \ address, the end of text
-    _Over .word \ start of text
-    _Do .word  \ repeat the following for n times
-    _Key .word \ get one character from terminal
-    _Dup .word \ make a copy
-    _0EH .word _+ORIGIN .word \ Get the ascii code of input backspace
-    _Equal .word
-    _if.  \ if the input is a backspace
-        _DROP .word \ discard the backspace still on stack
-        _Push8 .word \ replace it with back-space for the output device
-        _OVER .word \ copy addr
-        _I= .word \ see if the current character is the first character of text
-        _dup .word \ copy it, to be used as a flag
-        _r> .word _push2 .word _- .word _+ .word \ get the loop index. Decrement it by 1 if it is the starting character, or decrement it by
-                                                                         \ 2 if it is in the middle of the text.
-        _>r .word \ put the corrected loop back on the return stack
-        _- \ if the backspace is the first character, ring the bell.
-                 \ otherwise, output backspace and decrement character count
-    _else .word \ not a backspace
-        _dup .word _push0d .word _= .word \ is it a carriage return?
-        _if .word \ yes
-            _leave .word \ prepare to exit the loop. CR is the end of text line
-            _drop .word _bl .word \ drop cr on the stack and replace with a blank.
-            _push0 .word \ put a null on the stack
-        _else .word 
-            _dup .word \ input is a regular ascii character. make a copy
-        _endif .word
-        _i .word _c! .word \ store the ascii character into the input buffer area
-        _push0 .word _i .word _1+ .word _! .word \ guard the text with an ascii null
-    _endif .word \ end of the input loop
-    _emit .word \ echo the input character to terminal
-    _loop .word \ loop back if not the end of text
-    _drop .word \ discard the addr remaining on the stack
-    _semicolon .word
-deflabel _QUERY
-_QUERY .label
-    \ input 80 characters (or until a carriage-return) from the terminal and 
-    \ place the text in the terminal input buffer.
-    _TIB .word \ contains the starting address of the input terminal buffer
-    _Push50h .word _EXPECT .word \ get 80 characters
-    _0 .word _In .word _! .word \ set the input character counter IN to 0. Text parsing shall begin at TIB
-    _Semicolon .word
-
-_WORD .label ( c -- )
-    ( read text from the input stream until a delimiter c is encountered. Store
-      the text string at the top of dictionary starting HERE. The first byte is
-      the character count, then the text string, and two or more blanks. If
-      BLK is zero, input it from the terminal; otherwise, input from the disc
-      block referred to by BLK. )
-    \ write this in native eventually
-    _BLK@ .word 
-    _IF. \ BLK = 0 ?, if BLK is not zero, go look at the disk.
-        _BLK@ .word \ The block number
-        _BLOCK .word \ Grab a block of data from disc and put it in a disc buffer
-                           \ Leave the buffer address on the stack. BLOCK is the
-                           \ word to access disc virtual memory
-    _ELSE. \ blk = 0, input is from terminal
-        _TIB@ .word \ text should be put in the terminal input buffer
-    _Endif. 
-    _IN@. \ in contains the character offset into the current input text buffer
-    _+. \ add offset to the starting address of buffer, pointing to the next character to be read in.
-    _swap. \ get delimiter c over the string addr
-    _ENCLOSE .word \ a primitive word to scan the text. ( addr c -- addr nl n2 n3 )
-    _here. _022H .word  _BLANKS .word \ write 34 blanks to the top of dictionary
-    _IN. _+!. \ increment in by the character count, pointing to the next text string to be parsed.
-    _OVER. _-. _>R. \ save n2-nl onto the return stack
-    _R. _over. _C!. \ store character count as the length byte at HERE.
-    _+. \ buffer address + nl, starting point of the text string in the text buffer
-    _HERE. _1+. \ address after the length byte on dictionary
-    _R>. \ get the character count back from the return stack
-    _semicolon.
-_TYPE .label ( addr n -- )
-    \ transmit n charactesr from a text string stored at addr to the terminal
-    _-dup .word \ copy n if it is not zero
-    _if. \ n is non-zero
-        _over. _+ .word \ addr + n, the end of the text
-        _swap. \ addr, the start of text
-        _do. \ loop to type n characters
-        _I .word _c@ .word \ fetch character from text
-        _emit .word \ typeout
-        _loop. 
-    _else.
-        _drop. \ discard addr
-    _endif.
-    _semicolon.
-
-_count .label ( addr1 -- addr2 n )
-    \ push the address and byte count of n of a text string at addr1 to the data stack.
-    \ The first byte of the text string is a byte count. COUNT is usually followed by TYPE
-    _dup. _1+. \ addr2 = addr1 + 1
-    _swap. \ swap addr1 over addr2 and fetch teh byte count to the stack
-    _@. \ load the address to get the length
-    _semicolon.
-
-\ deflabel _-trailing
-\ _-trailing .label
-\     deflabel _-trailing_loop
-\     deflabel _-trailing_done
-\     deflabel _-trailing_cond0
-\     xsp at0 ld,
-\     at0 xsp push,  
-\     zero xsp push, 
-\     _-trailing_loop .label
-\     \ over over, copy addr and n1
-\     1 #, xsp at0 addi,
-\     at0 at1 ld,  \ load lower but leave stack alone
-\     xsp at2 ld,  \ load top  but leave stack alone
-\     at1 at2 at0 add, \ combine them
-\     at0 1-, \ decrement it, addr+n1 - 1, the address of the last character in the string
-\     at0 at1 ld, 
-\     bl #, at2 set,
-\     at2 at1 at0 sub, \ see if it is blank
-\     \ TODO continue here
+deflabel _?
+_? machineword
+    1pop 
+    xtop xtop ld,
+    /dev/console0 #, xlower set,
+    xtop xlower stio,
+    next,
     
+deflabel _+!
+_+! machineword
+    2pop \ top - addr 
+         \ lower - n
+    xtop at0 ld,
+    xlower at0 xlower add, 
+    xlower xtop st,
+    next,
+deflabel _cmove
+_cmove machineword ( from to u -- ) \ move u bytes in memory 
+    3pop \ top - u
+         \ lower - to
+         \ third - from
+    deflabel _cmove_loop 
+    deflabel _cmove_done
+    _cmove_loop .label
+    xtop cv ltz,
+    _cmove_done !, cv bc,
+    xlower at0 ldtincr,
+    at0 xthird sttincr,
+    xtop 1-,
+    xlower 1+,
+    xthird 1+,
+    _cmove_loop !, b,
+    _cmove_done .label
+    next,
 
-    
 
-
-
-
-\ use the upper stack elements as 
-\ : check-overflow ( -- ) loc@ monitor-memory-start < ABORT" routines are too large!" ;
-\ deflabel monitor-loop-start
-\ deflabel FixCase_ 
-\ deflabel PrintCharacters_
-\ deflabel WriteRangeToIOAddress_
-\ deflabel $ECHO 
-\ deflabel $NEWLINE_
-\ deflabel $->HEX
-\ deflabel printline
-\ deflabel readline 
-\ deflabel IOWrite
-\ deflabel PRINT-NUMBER 
-\ deflabel DontTerminateExecution
-\ deflabel $HEX->KEY 
-\ deflabel ReadToken
-\ : $KEY ( -- ) /dev/console0 #->io out0 io-read ;
-\ : $TERMINATE ( -- ) zero in0 -> /dev/terminate-vm #->io IOWrite !jmp ;
-\ : #ECHO ( a -- ) #, in0 set, $ECHO !, call, ;
-\ : $SPACE ( -- ) 0x20 #ECHO ;
-\ : $PROMPT ( -- ) 0x2D #ECHO $SPACE ;
-\ : $NEWLINE ( -- ) $NEWLINE_ !, call, ;
-
+\ deflabel _CREATE
+\ deflabel _WIDTH
+\ deflabel _MIN
+\ deflabel _1+
+\ deflabel _TOGGLE
+\ deflabel _LATEST,
+\ deflabel _BL
+\ deflabel _0A0H
+\ deflabel _1-
+\ deflabel _80H
+\ deflabel _2+
+\ deflabel _Semicolon
+\ _BL .label bl xsp push, ;s, 
+\ _0A0H .label 0xA0 xsp push, ;s
+\ _80H .label 0x80 xsp push, ;s
+\ _CREATE .label
+\     \ create a dictionary header for a new definition with name cccc. 
+\     \ The new word is linked to the current vocabulary. The code field points
+\     \ to the parameter field, ready to compile a code definition. 
+\     bl #, at0 set,
+\     at0 xsp push, \ push bl onto the stack
+\ 
+\     _WORD !.data16 \ bring the next string delimited by blanks to the top of dictionary
+\     _HERE !.data16 \ save the dictionary pointer as name field address to be linked
+\     _DUP !.data16 _C@ !.data16 \ get length byte of string
+\     _WIDTH !.data16 _@ !.data16 \ WIDTH has the maximum number of characters allowed in the name field
+\     _WIDTH !.data16 _MIN !.data16 \ use the smaller of the two, and
+\     _1+ !.data16 _ALLOT !.data16 \ allocate space for name field, and advance DP to the link field
+\     _DUP !.data16 _0A0H !.data16 _TOGGLE !.data16 \ Toggle the 8th (start) and sixth (smudge) bits in the length byte of the name field.
+\                                                                     \ make a 'smudged' head so that the dictionary search will not find this name
+\     _HERE !.data16 _1- !.data16 _80H !.data16 _TOGGLE !.data16 \ Toggle the 8th bit in the last character of the name as a delimiter to
+\                                                                                        \ the name field.
+\     _Latest, !.data16 \ compile the name field address of the last word in the link field, extending the linking chain
+\     _CURRENT !.data16 _@ !.data16 _! !.data16 \ update contents of latest in the current vocabulary
+\     _HERE !.data16 _2+ !.data16 _, !.data16 \ Compile the parameter field address into code field, for teh convenience of a new code
+\                                                               \ definition. For other types of definitions, proper code routine address will be compiled here.
+\     _Semicolon !.data16
+\ 
+\ deflabel _CODE
+\ deflabel _COMPILE
+\ deflabel _Assembler
+\ _CODE .label
+\     _DOCOLON !.data16
+\     _CREATE !.data16  \ create the header, nothing more to be done on the header
+\     _COMPILE !.data16 \ ????
+\     _Assembler !.data16 \ Select ASSEMBLER vocabulary as the CONTEXT vocabulary,
+\                               \ which has all the assembly mnemonics and words pertaining to assembly processes.
+\     _Semicolon !.data16
+\ 
+\ deflabel _?ERROR
+\ deflabel _IF
+\ deflabel _ERROR
+\ deflabel _ELSE
+\ deflabel _ENDIF
+\ deflabel _Warning@
+\ deflabel _Count
+\ deflabel _Type
+\ _if defshorthand _if.
+\ _else defshorthand _else.
+\ _endif defshorthand _endif.
+\ _do defshorthand _do.
+\ _loop defshorthand _loop.
+\ _over defshorthand _over.
+\ _swap defshorthand _swap.
+\ _here defshorthand _here.
+\ _type defshorthand _type.
+\ _?ERROR .label
+\     _SWAP .word
+\     _if .word
+\     _error .word
+\     _else .word
+\     _drop .word
+\     _endif .word
+\     _Semicolon .word
+\ deflabel _0< 
+\ deflabel _(ABORT) 
+\ deflabel _PrintQuestionMark 
+\ deflabel _MESSAGE 
+\ deflabel _SP! 
+\ deflabel _IN@ 
+\ deflabel _BLK@
+\ _ERROR .label
+\     _Warning@ .word
+\     _0< .word \ see if warning is less than -1
+\     _if. 
+\     _(ABORT) .word 
+\     _Endif .word
+\     _here.  _Count .word _type. \ print name of the offending word on top of the dictionary
+\     _PrintQuestionMark .word
+\     _MESSAGE .word \ type the error message stored on disk
+\     _SP! .word \ clean the data stack
+\     _IN@ .word
+\     _BLK@ .word \ fetch in and blk on stack for the operator to look at if he wishes
+\     _QUIT .word \ restart the forth loop
+\     _Semicolon .word
+\ _(ABORT) .label
+\     _ABORT .word \ execute ABORT after an error when WARNING is -1. IT may be changed to a user defined procedure
+\     _Semicolon .word
+\ \ terminal routines
+\ deflabel _EXPECT ( n addr -- ) 
+\ \ transfer n characters from the terminal to memory starting at addr. 
+\ \ The text may be terminated by a carriage return
+\ \ An ASCII NUL is appended to the end of text
+\ deflabel _-
+\ deflabel _Push8
+\ deflabel _Push2
+\ deflabel _DO
+\ deflabel _KEY
 \ deflabel _DUP
-\ dictionary-start .org 
+\ deflabel _+ORIGIN
+\ deflabel _Equal
+\ deflabel _R>
+\ deflabel _>R
+\ deflabel _0EH 
+\ deflabel _I=
+\ _EXPECT .label
+\     _OVER .word _+ .word \ address, the end of text
+\     _Over .word \ start of text
+\     _Do .word  \ repeat the following for n times
+\     _Key .word \ get one character from terminal
+\     _Dup .word \ make a copy
+\     _0EH .word _+ORIGIN .word \ Get the ascii code of input backspace
+\     _Equal .word
+\     _if.  \ if the input is a backspace
+\         _DROP .word \ discard the backspace still on stack
+\         _Push8 .word \ replace it with back-space for the output device
+\         _OVER .word \ copy addr
+\         _I= .word \ see if the current character is the first character of text
+\         _dup .word \ copy it, to be used as a flag
+\         _r> .word _push2 .word _- .word _+ .word \ get the loop index. Decrement it by 1 if it is the starting character, or decrement it by
+\                                                                          \ 2 if it is in the middle of the text.
+\         _>r .word \ put the corrected loop back on the return stack
+\         _- \ if the backspace is the first character, ring the bell.
+\                  \ otherwise, output backspace and decrement character count
+\     _else .word \ not a backspace
+\         _dup .word _push0d .word _= .word \ is it a carriage return?
+\         _if .word \ yes
+\             _leave .word \ prepare to exit the loop. CR is the end of text line
+\             _drop .word _bl .word \ drop cr on the stack and replace with a blank.
+\             _push0 .word \ put a null on the stack
+\         _else .word 
+\             _dup .word \ input is a regular ascii character. make a copy
+\         _endif .word
+\         _i .word _c! .word \ store the ascii character into the input buffer area
+\         _push0 .word _i .word _1+ .word _! .word \ guard the text with an ascii null
+\     _endif .word \ end of the input loop
+\     _emit .word \ echo the input character to terminal
+\     _loop .word \ loop back if not the end of text
+\     _drop .word \ discard the addr remaining on the stack
+\     _semicolon .word
+\ deflabel _QUERY
+\ _QUERY .label
+\     \ input 80 characters (or until a carriage-return) from the terminal and 
+\     \ place the text in the terminal input buffer.
+\     _TIB .word \ contains the starting address of the input terminal buffer
+\     _Push50h .word _EXPECT .word \ get 80 characters
+\     _0 .word _In .word _! .word \ set the input character counter IN to 0. Text parsing shall begin at TIB
+\     _Semicolon .word
 \ 
-\ _DUP !, .data16
-\ _Dup .label
+\ _WORD .label ( c -- )
+\     ( read text from the input stream until a delimiter c is encountered. Store
+\       the text string at the top of dictionary starting HERE. The first byte is
+\       the character count, then the text string, and two or more blanks. If
+\       BLK is zero, input it from the terminal; otherwise, input from the disc
+\       block referred to by BLK. )
+\     \ write this in native eventually
+\     _BLK@ .word 
+\     _IF. \ BLK = 0 ?, if BLK is not zero, go look at the disk.
+\         _BLK@ .word \ The block number
+\         _BLOCK .word \ Grab a block of data from disc and put it in a disc buffer
+\                            \ Leave the buffer address on the stack. BLOCK is the
+\                            \ word to access disc virtual memory
+\     _ELSE. \ blk = 0, input is from terminal
+\         _TIB@ .word \ text should be put in the terminal input buffer
+\     _Endif. 
+\     _IN@. \ in contains the character offset into the current input text buffer
+\     _+. \ add offset to the starting address of buffer, pointing to the next character to be read in.
+\     _swap. \ get delimiter c over the string addr
+\     _ENCLOSE .word \ a primitive word to scan the text. ( addr c -- addr nl n2 n3 )
+\     _here. _022H .word  _BLANKS .word \ write 34 blanks to the top of dictionary
+\     _IN. _+!. \ increment in by the character count, pointing to the next text string to be parsed.
+\     _OVER. _-. _>R. \ save n2-nl onto the return stack
+\     _R. _over. _C!. \ store character count as the length byte at HERE.
+\     _+. \ buffer address + nl, starting point of the text string in the text buffer
+\     _HERE. _1+. \ address after the length byte on dictionary
+\     _R>. \ get the character count back from the return stack
+\     _semicolon.
+\ _TYPE .label ( addr n -- )
+\     \ transmit n charactesr from a text string stored at addr to the terminal
+\     _-dup .word \ copy n if it is not zero
+\     _if. \ n is non-zero
+\         _over. _+ .word \ addr + n, the end of the text
+\         _swap. \ addr, the start of text
+\         _do. \ loop to type n characters
+\         _I .word _c@ .word \ fetch character from text
+\         _emit .word \ typeout
+\         _loop. 
+\     _else.
+\         _drop. \ discard addr
+\     _endif.
+\     _semicolon.
 \ 
-\ monitor-program-start .org
-\     0xA #, terminator set,
-\     monitor-stack-start #, rsp set,
-\     0x10 #, num-base set,
-\ monitor-loop-start .label
-\ 	\ print out the set of registers before accepting input
-\ 	deflabel DISPLAY_REGISTERS_LOOP
-\ 	deflabel DISPLAY-REGISTER8-LOOP
-\ 	$NEWLINE
-\ 	$NEWLINE
-\ 	zero loc1 ->
-\ 	DISPLAY_REGISTERS_LOOP .label
-\ 	0x8 #, loc1 loc2 addi,
-\ 	DISPLAY-REGISTER8-LOOP .label
-\ 	/dev/register #->io
-\ 	loc1 io-write
-\ 	$SPACE
-\ 	loc1 1+, 
-\ 	DISPLAY-REGISTER8-LOOP !, loc2 loc1 cv bclt, 
-\ 	$NEWLINE
-\ 	DISPLAY_REGISTERS_LOOP !, 0x40 #, loc1 cv bclti,
-\ 	$NEWLINE
-\ 	\ print the prompt out
-\ 	$PROMPT
-\     readline !, call,
-\ 	\ if we fail the check then see if the front of 
-\ 	\ input is M for terMinate
-\ 	\ precompute the offset
-\     monitor-input-start 1+ #, loc0 set,
-\     loc0 loc0 ld,
-\ 	DontTerminateExecution !, 0x4D #, loc0 cv bcneqi,
-\ 	\ terminate execution if we get in here
-\ 	$TERMINATE
-\ 	DontTerminateExecution .label
-\ 	\ end TERMINATE
-\     out0 loc0 ->
-\     monitor-loop-start !, 5 #, loc0 cv bclti, 
-\     monitor-input-start 1+ #, loc0 set,
-\ \ $HEX
-\     loc0 in0 ldtincr, \ first character
-\     $->HEX !, call,
-\     out0 loc1 ->
-\     loc0 in0 ldtincr, \ second character
-\     $->HEX !, call,
-\     4 #, loc1 loc1 lshifti,
-\     out0 loc1 loc1 add,
-\     loc0 in0 ldtincr, \ third character
-\     $->HEX !, call,
-\     4 #, loc1 loc1 lshifti,
-\     out0 loc1 loc1 add,
-\     loc0 in0 ldtincr, \ fourth character
-\     $->HEX !, call,
-\     4 #, loc1 loc1 lshifti,
-\     out0 loc1 in0 add,
-\     PRINT-NUMBER !, call,
-\ 	$NEWLINE
-\     monitor-input-start #, in0 set,
-\ 	in0 in1 ldtincr,
-\     printline !, call,
-\     monitor-loop-start !, b,
-\ \ this must always be first!
-\ IOWrite (leafn in0 io-write leafn)
-\ WriteRangeToIOAddress_ (leafn
-\ 	\ in0 - starting point in memory
-\ 	\ in1 - length
-\ 	deflabel WriteRangeToIOAddress_Done
-\ 	deflabel WriteRangeToIOAddress_Loop
-\     2 save-locals
-\ 	zero loc0 ->
-\ 	WriteRangeToIOAddress_Done !, in1 cv bceqz,
-\ 	WriteRangeToIOAddress_Loop .label
-\ 	in0 loc0 loc1 uadd, \ uadd bro!?
-\ 	loc1 loc1 ld,
-\ 	loc1 io-write
-\ 	loc0 1+,
-\ 	WriteRangeToIOAddress_Loop !, loc0 in1 cv bcgt,
-\ 	WriteRangeToIOAddress_Done .label
-\     2 restore-locals
-\     leafn)
-\ $->HEX (fn
-\     deflabel $->HEX_Done
-\     deflabel $->HEX_IsDigit
-\     \ in0 - value to hexify
-\     0x30 #, in0 in0 subi,
-\     $->HEX_Done !, in0 cv bcltz,
-\     $->HEX_IsDigit !, 0x0A #, in0 cv bclti, 
-\     $->HEX_Done !, 0x0A #, in0 cv bclti, 
-\     0x7 #, in0 in0 subi,
-\     $->HEX_IsDigit .label
-\     $->HEX_Done .label
-\     fn)
+\ _count .label ( addr1 -- addr2 n )
+\     \ push the address and byte count of n of a text string at addr1 to the data stack.
+\     \ The first byte of the text string is a byte count. COUNT is usually followed by TYPE
+\     _dup. _1+. \ addr2 = addr1 + 1
+\     _swap. \ swap addr1 over addr2 and fetch teh byte count to the stack
+\     _@. \ load the address to get the length
+\     _semicolon.
 \ 
-\     \ reads the next four characters in as hexadecimal characters and converts them to hexidecimal numbers
-\         
-\ $NEWLINE_ .label
-\       0xA #, in0 set,
-\ $ECHO (leafn
-\       \ in0, the character to write
-\       /dev/console0 #->io
-\       in0 io-write
-\       leafn)
-\ 
-\ $HEX->KEY (leafn
-\     deflabel $HEX->KEY_DONE
-\     \ go backwards from what we originally got in
-\     \ in0 - contains lowest 4 bits to convert
-\     0x000F #, in0 in0 andi,
-\     0xA #, in0 cv lti,
-\     0x30 #, in0 in0 addi, \ always want to do this
-\     $HEX->KEY_DONE !, cv bc,
-\     0x7 #, in0 in0 addi,
-\     $HEX->KEY_DONE .label
-\     leafn)
-\ : print-number-$hex->key ( index -- ) 
-\   #, loc0 in0 rshifti, 
-\   $HEX->KEY !, call,
-\   $ECHO !, call, ;
-\ 
-\ PRINT-NUMBER (fn
-\     deflabel print-number-done
-\     \ in0 - number to print
-\     1 save-locals
-\     in0 loc0 ->
-\ 	$NEWLINE
-\     0xC print-number-$hex->key
-\     8 print-number-$hex->key
-\     4 print-number-$hex->key
-\     loc0 in0 ->
-\     $HEX->KEY !, call,
-\     $ECHO !, call,
-\     print-number-done .label
-\     1 restore-locals
-\     fn)
-\ readline (fn
-\ deflabel readline_loop
-\ deflabel readline_done
-\ deflabel readline_consume_rest_of_line 
-\ deflabel FixCase_Done
-\     1 save-locals 
-\     monitor-input-start 1+ #, loc0 set,
-\ readline_loop .label 
-\ 	$KEY \ get the key
-\     FixCase_Done !, 0x61 #, out0 cv bclti,
-\     FixCase_Done !, 0x7a #, out0 cv bcgti, 
-\     0x20 #, out0 out0 subi, 
-\ FixCase_Done .label
-\     readline_done !, out0 terminator cv bceq,
-\     out0 loc0 sttincr,
-\     readline_loop !, monitor-input-end #, loc0 cv bclti,
-\     readline_done !, out0 terminator cv bceq,
-\ readline_consume_rest_of_line .label
-\ 	$KEY \ get the key
-\     readline_consume_rest_of_line !, out0 terminator cv bcneq,
-\ readline_done .label 
-\     \ save the length in memory
-\     monitor-input-start #, at0 set,
-\     at0 loc0 out0 usub,
-\     out0 at0 st,
-\     \ terminator is used to terminate early
-\     1 restore-locals
-\     fn)
-\ 
-\ printline (fn
-\     \ in0 - start address
-\     \ in1 - length
-\     /dev/console0 #->io
-\     WriteRangeToIOAddress_ !, call,
-\ 	$NEWLINE
-\ fn)
-\ 
-\ 
-\ check-overflow
+\ \ deflabel _-trailing
+\ \ _-trailing .label
+\ \     deflabel _-trailing_loop
+\ \     deflabel _-trailing_done
+\ \     deflabel _-trailing_cond0
+\ \     xsp at0 ld,
+\ \     at0 xsp push,  
+\ \     zero xsp push, 
+\ \     _-trailing_loop .label
+\ \     \ over over, copy addr and n1
+\ \     1 #, xsp at0 addi,
+\ \     at0 at1 ld,  \ load lower but leave stack alone
+\ \     xsp at2 ld,  \ load top  but leave stack alone
+\ \     at1 at2 at0 add, \ combine them
+\ \     at0 1-, \ decrement it, addr+n1 - 1, the address of the last character in the string
+\ \     at0 at1 ld, 
+\ \     bl #, at2 set,
+\ \     at2 at1 at0 sub, \ see if it is blank
+\ \     \ TODO continue here
 asm}
 bye

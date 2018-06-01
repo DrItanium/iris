@@ -163,6 +163,7 @@ namespace iris {
 					bool respondsTo(Address addr) const noexcept;
                     Address read(Address addr) ;
                     void write(Address addr, Address value) ;
+                    Address getEnd() const noexcept { return _end; }
                 private:
 					Address _begin;
 					Address _end;

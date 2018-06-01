@@ -426,6 +426,7 @@ namespace iris {
     }
     void writeToStandardOut(Address index, Address value) {
         if (index == 0) {
+            // print as char code
             std::cout << char(value);
         } else if (index == 1) {
             // control setup / extra actions
@@ -436,6 +437,9 @@ namespace iris {
                 default:
                     break;
             }
+        } else if (index == 2) {
+            // print numeric representation
+            std::cout << value;
         } else {
             throw Problem("Unimplemented address!");
         }
@@ -445,8 +449,6 @@ namespace iris {
         _registers[registerZero].setValue(0);
         _registers[registerZero].disableWrites();
         // setup the basic IO device for console input output
-        IODevice sink(0);
-        IODevice console(1, 2, readFromStandardIn, writeToStandardOut);
         auto selectCore = [this](auto index, auto value) {
             // we use the index to determine what action to perform
             std::stringstream fileName;
@@ -509,14 +511,16 @@ namespace iris {
 				throw Problem("Unimplemented address!");
 			}
 		};
-        IODevice coreManipulator(3, 2, nullptr, selectCore);
-        IODevice vmDumper(5, 1, nullptr, dumpVM);
-		IODevice vmTerminator(6,1, nullptr, terminateVM);
-        IODevice registerInspector(7,1, nullptr, [this](auto index, auto value) {
+        IODevice sink(0);
+        IODevice console(sink.getEnd(), 3, readFromStandardIn, writeToStandardOut);
+        IODevice coreManipulator(console.getEnd(), 2, nullptr, selectCore);
+        IODevice vmDumper(coreManipulator.getEnd(), 1, nullptr, dumpVM);
+		IODevice vmTerminator(vmDumper.getEnd(),1, nullptr, terminateVM);
+        IODevice registerInspector(vmTerminator.getEnd(),1, nullptr, [this](auto index, auto value) {
                         auto maskedIndex = byte(0b111111 & value);
                         std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
                     });
-		IODevice hexPrinter(8,1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
+		IODevice hexPrinter(registerInspector.getEnd(),1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
