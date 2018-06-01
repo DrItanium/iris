@@ -131,6 +131,10 @@ _COLD .label
 : embed-docolon ( -- ) _DOCOLON !, .data16 ;
 : machineword ( n -- ) .label machine-code-execute ;
 : colondef ( n -- ) .label embed-docolon ;
+: machine-code-jump ( imm id -- ) 
+  at0 set,
+  at0 at0 ld,
+  at0 br, ;
 _Execute .label
     \ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
@@ -370,13 +374,6 @@ _swap machineword
     xtop xsp push, 
     xlower xsp push,
     next,
-_here machineword 
-    xdp xsp push,
-    next,
-_allot machineword ( n -- )
-    xsp xtop pop,
-    xtop dp dp add,
-    next,
 _dp machineword ( -- n ) 
     dp xsp push, 
     next,
@@ -385,12 +382,6 @@ _! machineword ( v a -- )
    xsp xlower pop, \ value
    xlower xtop st, \ perform the store
    next,
-deflabel _,
-_, machineword ( n -- )
-    xsp xtop pop, \ get n
-    xtop xdp st, \ save it to the current dict pointer front
-    dp 1+, \ move ahead by one
-    next,
 
 deflabel _C@
 deflabel _C,
@@ -483,6 +474,50 @@ _cmove machineword ( from to u -- ) \ move u bytes in memory
     _cmove_loop !, b,
     _cmove_done .label
     next,
+deflabel _fill
+_fill machineword ( addr n b -- ) \ fill u bytes in memory with b beginning at address
+    3pop \ top - b
+         \ lower - u
+         \ third - addr
+    deflabel _fill_loop
+    deflabel _fill_done
+    _fill_loop .label
+    xlower cv eqz,
+    _fill_done !, cv bc,
+    xtop xthird sttincr,
+    xlower 1-,
+    _fill_loop !, b,
+    _fill_done .label
+    next,
+deflabel _erase
+_erase machineword ( addr u -- ) \ fill u bytes in memory with zeros
+    zero xsp push,
+    _fill !, machine-code-jump
+deflabel _bl
+_bl machineword 
+    0x20 #, xsp pushi,
+    next,
+deflabel _blanks
+_blanks machineword ( addr u -- ) \ fill u bytes in memory with zeros
+    0x20 #, at0 set,
+    at0 xsp push,
+    _fill !, machine-code-jump
+
+_here machineword 
+    xdp xsp push,
+    next,
+_allot machineword ( n -- )
+    xsp xtop pop,
+    xtop dp dp add,
+    next,
+deflabel _,
+_, machineword ( n -- )
+    xsp xtop pop, \ get n
+    xtop xdp st, \ save it to the current dict pointer front
+    dp 1+, \ move ahead by one
+    next,
+\ deflabel _'
+
 
 
 \ deflabel _CREATE

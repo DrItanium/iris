@@ -22,20 +22,16 @@ X(GreaterThanOrEqualTo, ThreeRegister, ge)
 X(Set, OneRegisterWithImmediate, set)
 X(Load, TwoRegister, ld)
 X(Store, TwoRegister, st)
-// Push is a decr address then store
 X(Push, TwoRegister, push) // decrement dest and then store src into it
-// Pop is a incr address then load 
 X(Pop, TwoRegister, pop) // increment src and then load into dest
 X(LoadCore, TwoRegister, ldc)
 X(StoreCore, TwoRegister, stc)
 X(LoadIO, TwoRegister, ldio)
 X(StoreIO, TwoRegister, stio)
-// branch operations
 X(BranchRegister, OneRegister, br)
 X(BranchRegisterAndLink, TwoRegister, brl)
 X(BranchConditionalRegister, TwoRegister, bcr)
 X(BranchConditionalRegisterLink, ThreeRegister, bcrl)
-// misc
 X(UnsignedEq, ThreeRegister, equ)
 X(UnsignedNeq, ThreeRegister, nequ)
 X(UnsignedLessThan, ThreeRegister, ltu)
@@ -70,5 +66,4 @@ X(LeftShiftImmediate, TwoRegisterWithImmediate, lshifti)
 X(LoadThenIncrement, TwoRegister, ldtincr)
 X(LessThanImmediate, TwoRegisterWithImmediate, lti)
 X(Move, TwoRegister, move)
-// dest src dest2 src2
 X(StoreThenIncrement, TwoRegister, sttincr)
