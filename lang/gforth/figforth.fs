@@ -554,17 +554,47 @@ _COLD colondef
 \ COLD calls ABORT
 \ ABORT calls QUIT
 deflabel _leftbracket
-_leftbracket colondef
-    _zero.
-    _state .word
-    _!.
-    _;IMMEDIATE .word
+_leftbracket machineword 
+    zero xstate move,
+    \ ;IMMEDIATE to mark it as an immediate word
+    next,
 deflabel _rightbracket
-_rightbracket colondef
-    0xc0 compile-literal
-    _state .word
-    _!.
+_rightbracket machineword 
+    0xFFFF #, xstate set,
+    next,
+deflabel _create
+_create colondef
+    bl compile-literal
+    _word .word
+    _here .word
+    _dup .word _c@ .word
+    _width .word _@ .word
+    _min .word
+    _1+ .word _allot .word
+    _dup .word 0x0A0 compile-literal _toggle .word
+    _here .word
+    _1- .word
+    0x80 compile-literal
+    _toggle .word
+    _latest, .word
+    _current .word
+    _@ .word
+    _! .word
+    _here .word
+    _2+ .word
+    _, .word
     _;s .word
+
+deflabel _code
+_code colondef
+    _create .word
+    __compile_ .word
+    _assembler .word
+    _;s .word
+deflabel _?error
+_?error colondef
+    _swap .word
+
 asm}
 
 bye
