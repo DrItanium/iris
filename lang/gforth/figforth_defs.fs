@@ -326,3 +326,72 @@ orig 0x0c + @ forth
         \ otherwise continue the listing of names
   drop \ discard the parameter field address on stack and return
   ;
+: (;code) ( -- )
+  r> \ pop the address of the next instruction off the return stack,
+     \ which is the starting address of the runtime code routine
+  latest \ get the name field address of the word under construction
+  pfa cfa ! \ find the code field address and store in it the address of the
+            \ code routine to be exec at runtime
+  ;
+: ;code ( -- ) 
+  \ stop compilation and terminate a new defining word ccc by compiling the run-time routine
+  \ (;code). Assemble the assembly mnemonics following. Used in the form:
+  \ 
+  \ : cccc -- ;CODE assembly mnemonics
+  ?CSP \ check the stack pointer. Issue an error message if not equal to what was saved in csp by :
+  compile \ when ;code is executed at runtime, the address of the next word will be compiled into dictionary
+  (;code) \ runtime procedure which completes the definition of a new defining word
+  [compile] \ compile the next immediate word instead of executing it
+  [ \ return to executing state to assemble the following assembly mnemonics
+    smudge \ toggle the smudge bit in the length byte, and complete the new definition
+    ; immediate
+                
+
+: constant ( n -- )
+  create 
+  smudge
+  ,
+  ;code 
+  docon:
+    xw xsp push,
+    next,
+
+: <builds ( -- )
+  \ create a new header for a definition with the name taken from the next text
+  \ in the input stream
+  0 constant \ create a new entry in the dictionary with a zero in its parameter
+             \ field. It will be replaced by the address of the code field routine
+             \ after DOES> when DOES> is executed
+             ;
+: <does ( -- )
+  \ define runtime routine action within a high-level defining word.
+  \ alters the code field and the first cell in the parameter field in the 
+  \ defining word, so that when a new word create by this defining word is called,
+  \ the sequence of words compiled after DOES> will be executed
+  r> \ get the addr of the first word after does>
+  latest \ get the name field address of the new definition under construction
+  pfa ! \ store the address of the runtime routine as the first param
+  ;code \ when does> is executed, it will first do the following code routine
+        \ because ;code puts the next address into the code field of code>
+  dodoe: 
+  xip xrp push,
+  xw xip move,
+  xw 1+,
+  xw xsp push,
+  next,
+
+
+: variable ( n -- )
+  constant
+  ;code
+  dovar:
+    xw xsp push,
+    next,
+
+: user ( n -- )
+  constant
+  ;code
+  douse:
+    xw xsp push,
+    xsp xup xup add,
+    next,

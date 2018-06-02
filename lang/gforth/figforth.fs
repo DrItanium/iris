@@ -519,7 +519,13 @@ _rightbracket machineword
     0xFFFF #, xstate set,
     next,
 
-
+deflabel _dodoe
+_dodoe machineword
+    xip xrp push,
+    xw xip move,
+    xw 1+,
+    xw xsp push,
+    next,
 asm}
 
 bye
