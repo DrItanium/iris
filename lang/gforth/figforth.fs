@@ -497,6 +497,8 @@ _pad machineword ( n -- )
     next,
 deflabel _,
 _, machineword ( n -- )
+    \ store n into the next available cell above dictionary and advance DP by 2 thus
+    \ compiling into the dictionary
     xsp xtop pop, \ get n
     xtop xdp st, \ save it to the current dict pointer front
     dp 1+, \ move ahead by one
@@ -507,52 +509,6 @@ _zero machineword
     zero xsp push,
     next,
 _zero defshorthand _zero.
-deflabel _erase
-_erase colondef ( addr u -- ) \ fill u bytes in memory with zeros
-    _zero.
-    _fill .word
-    _;S .word
-deflabel _blanks
-_blanks colondef ( addr u -- ) \ fill u bytes in memory with zeros
-    bl compile-literal
-    _fill .word
-    _;S .word
-deflabel _empty-buffers
-deflabel _density
-_COLD colondef
-    _empty-buffers .word
-    _zero.
-    _density .word
-    _!.
-    _first .word
-    _use .word
-    _!.
-    _dr0 .word
-    _zero.
-    _eprint .word
-    _!.
-    _orig .word
-    0x12 compile-literal
-    _+ .word
-    _up .word
-    _@ .word
-    6 compile-literal
-    _+ .word
-    0x10 compile-literal
-    _cmove .word
-    _orig .word
-    0x0C compile-literal
-    _+ .word
-    _@ .word
-    _forth .word
-    6 compile-literal
-    _+ .word
-    _!. 
-    _abort .word
-    _;s .word
-\ when the machine starts from cold
-\ COLD calls ABORT
-\ ABORT calls QUIT
 deflabel _leftbracket
 _leftbracket machineword 
     zero xstate move,
@@ -562,38 +518,7 @@ deflabel _rightbracket
 _rightbracket machineword 
     0xFFFF #, xstate set,
     next,
-deflabel _create
-_create colondef
-    bl compile-literal
-    _word .word
-    _here .word
-    _dup .word _c@ .word
-    _width .word _@ .word
-    _min .word
-    _1+ .word _allot .word
-    _dup .word 0x0A0 compile-literal _toggle .word
-    _here .word
-    _1- .word
-    0x80 compile-literal
-    _toggle .word
-    _latest, .word
-    _current .word
-    _@ .word
-    _! .word
-    _here .word
-    _2+ .word
-    _, .word
-    _;s .word
 
-deflabel _code
-_code colondef
-    _create .word
-    __compile_ .word
-    _assembler .word
-    _;s .word
-deflabel _?error
-_?error colondef
-    _swap .word
 
 asm}
 
