@@ -306,3 +306,23 @@ orig 0x0c + @ forth
   current @ ! \ store it in the current vocabulary, adjusting the current vocabulary to the fact that
               \ all definitions above (including) cccc no longer exist
   ;
+: vlist ( -- )
+  \ list the names of all entries in the context vocabulary. The 'break' key on
+  \ terminal will terminate the listing
+  0x80 out ! \ init the output char count to print 128 chars
+  context @ @ \ fetch the name field address of the last word in the context vocab
+  begin
+    out @ \ get the out char count
+    c/l >  \ if it is larger than the chars per line of the output device
+    if 
+        cr 0 out ! \ output a cr/lf and reset out
+    endif
+    dup id. \ type out the name and 
+    space space \ add two spaces
+    pfa lfa @ \ get the link pointing to previous word
+    dup 0=    \ see if it is zero, the end of the link,
+    ?terminal or \ or if the break key on terminal was pressed.
+  until \ exit at the end of link or after break key was pressed; 
+        \ otherwise continue the listing of names
+  drop \ discard the parameter field address on stack and return
+  ;
