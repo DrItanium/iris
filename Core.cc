@@ -133,6 +133,9 @@ namespace iris {
     }
 #define DefExec(title) \
     void Core::perform ( const Core:: title & op ) 
+	DefExec(Illegal) {
+		throw Problem("Illegal Instruction Invoked!");
+	}
     DefExec(Add) { setDestination(op, getSource(op).integer + getSource2(op).integer); }
     DefExec(Sub) { 
         auto a = getSource(op).integer;

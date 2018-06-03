@@ -102,6 +102,7 @@ deflabel-here _next
   deflabel-here 
   execute-latest 
   machine-code-execute ;
+: embed-string-length ( len -- ) #, .data16 ;
 deflabel-here _execute
     \ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer

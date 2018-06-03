@@ -69,6 +69,7 @@ variable mloc \ current memory location
 : ioaddr: ( n -- k ) dup constant 1+ ;
 
 {opcode
+opcode: #illegal,
 opcode: #add 
 opcode: #sub 
 opcode: #mul 
@@ -312,6 +313,7 @@ drop
 
 #add inst-3reg add, 
 #move inst-2reg move,
+
 : nop ( -- ) zero zero move, ;
 : -> ( src dest -- ) move, ;
 \ constant tagging version
