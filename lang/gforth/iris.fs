@@ -199,6 +199,8 @@ variable CurrentAssemblyFile
 : <<iinst ( n -- ) curasm@ <<iinst ;
 : <<inst ( n -- ) curasm@ <<inst ;
 : .label ( label -- ) curasm@ <<label ;
+: execute-latest ( -- * ) latest name>int execute ;
+: deflabel-here ( "name" -- ) deflabel execute-latest .label ;
 : .data16 ( imm id -- ) swap addr16 swap curasm@ swap 0= if <<mem else <<imem endif ;
 : .register ( index value -- ) curasm@ <<register ;
 : {asm ( path -- ) 

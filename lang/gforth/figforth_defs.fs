@@ -1,3 +1,13 @@
+: compile ( -- )
+	?comp  \ error if not compiling
+	r>     \ top of return stack is pointing to the next word following COMPILE
+	dup 2 + >r \ increment this pointer by 2 to point to the second word
+			   \ following COMPILE, which will be the next word to be executed. 
+			   \ The word immediately following COMPILE should be compiled, not
+			   \ executed.
+	@ ,        \ do the compilation at runtime
+	;
+
 : lfa ( pfa -- lfa ) 
     \ convert the parameter field address to link field address
 4 - ; 
@@ -20,14 +30,6 @@
   \ leave the name field address of the last word defined in the current vocabulary
   current @ @ ;
 
-: ' ( -- pfa )
-  \ locate a word in the dictionary. Form is ' cccc
-  -find \ get cccc and search the dictionary, first the context and then the 
-        \ current vocabularies
-  0= 0 ?error \ not found, issue error message
-  drop 
-  [compile] \ compile the next immediate word literal to compile the parameter field address at run-time
-  literal ; immediate
 
 
 : create ( -- ) 
@@ -43,7 +45,6 @@
   current @ !
   here 2+ , ;
 
-: code ( -- ) create [compile] assembler ;
 
 : expect ( addr n -- )
 over + over 
@@ -288,24 +289,6 @@ orig 0x0c + @ forth
     \ convert the parameter field address to name field address
     5 - 
     -1 traverse ;
-: forget ( -- )
-  \ special form, forget cccc
-  \ delete definitions defined after and including the word cccc. The current and
-  \ context vocabulary must be the same
-
-  current @ context @ - 0x12 ?error \ compare current with context, if not the same, issue an error
-  [compile] ' \ locate cccc in the dictionary
-  dup \ copy the parameter field address
-  fence @ \ compare with the context in the user variable fence
-  < 0xF ?error \ if cccc is less than fence, do not forget. Fence guards the trunk forth vocabulary 
-               \ from being accidentally forgotten.
-  dup nfa \ fetch teh name field address of cccc and,
-  dp !    \ store in the dictionary pointer DP. Now the top of the dictionary is redefined to be the first byte of cccc
-          \ in effect deleting all definitions above cccc.
-  lfa @ \ get the link field address of cccc pointing to the word just below it.
-  current @ ! \ store it in the current vocabulary, adjusting the current vocabulary to the fact that
-              \ all definitions above (including) cccc no longer exist
-  ;
 : vlist ( -- )
   \ list the names of all entries in the context vocabulary. The 'break' key on
   \ terminal will terminate the listing
@@ -332,6 +315,41 @@ orig 0x0c + @ forth
   latest \ get the name field address of the word under construction
   pfa cfa ! \ find the code field address and store in it the address of the
             \ code routine to be exec at runtime
+  ;
+: [compile] ( -- )
+  \ force the compilation of the following immediate word
+  -find \ accept
+  0= 0 ?error 
+  drop
+  cfa , 
+  ; immediate
+
+: ' ( -- pfa )
+  \ locate a word in the dictionary. Form is ' cccc
+  -find \ get cccc and search the dictionary, first the context and then the 
+        \ current vocabularies
+  0= 0 ?error \ not found, issue error message
+  drop 
+  [compile] \ compile the next immediate word literal to compile the parameter field address at run-time
+  literal ; immediate
+: code ( -- ) create [compile] assembler ;
+: forget ( -- )
+  \ special form, forget cccc
+  \ delete definitions defined after and including the word cccc. The current and
+  \ context vocabulary must be the same
+
+  current @ context @ - 0x12 ?error \ compare current with context, if not the same, issue an error
+  [compile] ' \ locate cccc in the dictionary
+  dup \ copy the parameter field address
+  fence @ \ compare with the context in the user variable fence
+  < 0xF ?error \ if cccc is less than fence, do not forget. Fence guards the trunk forth vocabulary 
+               \ from being accidentally forgotten.
+  dup nfa \ fetch teh name field address of cccc and,
+  dp !    \ store in the dictionary pointer DP. Now the top of the dictionary is redefined to be the first byte of cccc
+          \ in effect deleting all definitions above cccc.
+  lfa @ \ get the link field address of cccc pointing to the word just below it.
+  current @ ! \ store it in the current vocabulary, adjusting the current vocabulary to the fact that
+              \ all definitions above (including) cccc no longer exist
   ;
 : ;code ( -- ) 
   \ stop compilation and terminate a new defining word ccc by compiling the run-time routine
@@ -395,3 +413,58 @@ orig 0x0c + @ forth
     xw xsp push,
     xsp xup xup add,
     next,
+
+: if ( f -- ) \ at runtime
+     ( -- addr n ) \ at compile time
+	 compile 0branch
+	 here \ push dictionary address on stack to be used by else or endif to
+	      \ calculate branching effect.
+	 0 , \ compile a dummy zero here, later it is to be replaced by an
+	     \ offset value used by 0BRANCH to compute the next word address
+	 2   \ error checking number.
+	 ; immediate
+: endif ( addr n -- ) \ compile time
+  ?comp          \ issue an error message if we are not compiling
+  2 ?pairs endif \ must be paired with IF or else.
+  				 \ if n is not 2, the structure was disturbed or improperly
+				 \ nested.
+  here   \ push the current dictionary address to stack
+  over - \ here-addr is the forward branching offset
+  swap ! \ store the offset in addr, thus completing the if-endif or
+         \ if-else-endif construct
+  ; immediate
+
+: else ( a1 n1 -- a2 n2 ) 
+       2 ?pairs \ error checking for proper nesting
+	   compile branch \ compile branch at runtime when else is executed.
+	   here           \ push here on stack as a2
+	   0 ,            \ dummy zero reserving a cell for branching to endif
+	   swap           \ move a1 to top of stack
+	   [compile] endif \ call endif to work on the offset for forward branching
+	   2 
+	   ; immediate
+\ editor stuff
+: text ( c -- )
+  \ move a text string delimited by character c from the dict buf into PAD,
+  \ blank-filling the remainder of PAD to 64 chars
+  here \ top of dict to be used as a word buffer
+  c/l 1+ blanks \ fill word buffer with 65 blanks
+  word 			\ move the text, delimited by character c, from the input
+  				\ stream to the word buf
+  pad 			\ address of the text buffer
+  c/l 1+ cmove  \ move the text 64 bytes of text and 1 length byte to pad
+  ;
+: line ( n -- addr )
+  \ leave address of the beginning of line n in the screen buffer.
+  \ the screen number is in SCR. Read the disk block from disk if it is not
+  \ already in the disk buffers
+  
+  dup 0xFFF0 and \ make sure n is between 0 and 15
+  17 ?error \ if not, issue an error message
+  scr @ \ get the screen number from SCR
+  (line)  \ read the screen into screen buffer which is composed of the disk
+  		  \ buffers. Compute the address of the n'th line in the screen buffer
+		  \ and push it on the stack
+  drop    \ discard the char count left on stack by (line)
+		  \ only the line address is left on stack now
+  ;

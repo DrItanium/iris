@@ -76,15 +76,6 @@ unused-start
 too-many-vars-defined
 num-base cconstant xbase
 
-deflabel _COLD
-deflabel _ABORT
-_abort defshorthand _abort.
-deflabel _QUIT
-deflabel _INTERPRET
-deflabel _NEXT
-deflabel _EXECUTE
-deflabel _DOCOLON
-deflabel _;S
 
 ram-start .org 
 \ set the constants
@@ -94,54 +85,53 @@ ram-start .org
 0x80 constant b/buf 
 \ start user variables
 zero xs0 ->
-
-: next, ( -- )
+deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
     at0 br,         \ jump to the address found at that point
-    ;
-
-: ;s, ( -- ) _;S !, b, ;
+: next, ( -- ) _next !, b, ;
 : machine-code-execute ( -- ) loc@ 1+ #, .data16 ;
-: embed-docolon ( -- ) _DOCOLON !, .data16 ;
 : machineword ( n -- ) .label machine-code-execute ;
-: colondef ( n -- ) .label embed-docolon ;
 : machine-code-jump ( imm id -- ) 
   at0 set,
   at0 at0 ld,
   at0 br, ;
-_Execute .label
+: defmachineword ( "name" -- ) 
+  deflabel-here 
+  execute-latest 
+  machine-code-execute ;
+deflabel-here _execute
     \ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
     xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
     at0 br, 
-_DOCOLON .label \ runtime routine for all colon definitions
+deflabel-here _docolon 
+	\ runtime routine for all colon definitions
     xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     \ duplicate NEXT for now
     next,
-_;S .label \ perform unnesting
+: embed-docolon ( -- ) _DOCOLON !, .data16 ;
+: colondef ( n -- ) .label embed-docolon ;
+deflabel-here _;S
+\ _;S .label \ perform unnesting
 \ return execution to the calling definition. Unnest one level.
     xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
     next,
-deflabel _PUSH
-_PUSH machineword
+: ;s, ( -- ) _;S !, b, ;
+defmachineword _push
     xo xsp push, 
     next,
-deflabel _POP
-_POP machineword
+defmachineword _pop
     xsp zero pop,
     next,
-deflabel _PUT
-_PUT machineword
+defmachineword _put
     \ replace the top of data stack with the contents of the accumulator
     xo xsp st, 
     next,
-deflabel _LIT
-_LIT machineword
-
+defmachineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
     \ NEXT Return
     \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
@@ -155,42 +145,6 @@ _LIT machineword
   _LIT !, .data16
   #, .data16 ;
 
-deflabel _;IMMEDIATE
-deflabel _LeftBracket
-_LeftBracket machineword
-    \ suspend compilation and execute the words following [ up to ]. 
-    \ this allows calculation or compilation exceptions before resuming compilation
-    \ with ]. 
-    zero xstate ->
-    _;IMMEDIATE !, b,
-deflabel _RightBracket
-_RightBracket machineword
-    \ resume compilation till the end of a colon definition
-    0xc0 #, xstate set, \ the text interpreter compares the value stored in xstate
-                        \ with the value in the length byte of the definition found
-                        \ in the dictionary. If the definition is an immediate word,
-                        \ its length byte is greater than 0xC0 because of the precedence and the
-                        \ sign bits are both set.
-                        \ 
-                        \ Setting xstate to 0xc0 will force non-immediate words
-                        \ to be compiled and immediate words to be executed, 
-                        \ thus entering into the 'compiling state'
-    next,
-deflabel _WORD
-deflabel _HERE
-deflabel _DP
-deflabel _!
-_! defshorthand _!.
-deflabel _ALLOT
-deflabel _SWAP
-deflabel _DROP
-deflabel _DUP
-deflabel _-DUP
-deflabel _OVER
-deflabel _+
-deflabel _-
-deflabel _*
-deflabel _rot
 : 1pop ( -- )
   xsp xtop pop, ;
 : 2pop ( -- )
@@ -199,23 +153,23 @@ deflabel _rot
 : 3pop ( -- )
   2pop
   xsp xthird pop, ;
-_+ machineword
+defmachineword _+
     2pop \ top -> b | lower -> a
     xtop xlower xtop add, 
     xtop xsp push,
     next,
-_- machineword
+defmachineword _-
     2pop \ a b
     xtop xlower xtop sub, 
     xtop xsp push,
     next,
-_rot machineword ( a b c -- b c a )
+defmachineword _rot ( a b c -- b c a )
     3pop \ a (third) b (lower)  c (top)
     xlower xsp push,
     xtop xsp push,
     xthird xsp push,
     next,
-_-dup machineword \ duplicate if non zero
+defmachineword _-dup \ duplicate if non zero
     deflabel _-dup_done
     1pop 
     xtop cv eqz, 
@@ -224,55 +178,46 @@ _-dup machineword \ duplicate if non zero
     _-dup_done .label
     xtop xsp push,
     next,
-deflabel _>r
-_>r machineword \ move top item to return stack
+defmachineword _>r \ move top item to return stack
     1pop 
     xtop xrp push,
     next,
-deflabel _r>
-_r> machineword \ retrieve item from top of return stack
+defmachineword _r> \ retrieve item from top of return stack
     xrp xtop pop,
     xtop xsp push,
     next,
-deflabel _r
-deflabel _x
-_r machineword \ copy top of return stack onto stack
+defmachineword _r \ copy top of return stack onto stack
    xrp xtop ld,
    xtop xsp push,
    next,
-_* machineword 
+defmachineword _*
     2pop 
     xtop xlower xtop mul,
     xtop xsp push,
     next,
-deflabel _/
-_/ machineword
+defmachineword _/
     2pop
     xtop xlower xtop div, 
     xtop xsp push,
     next,
 
-deflabel _mod
-_mod machineword
+defmachineword _mod
     2pop
     xtop xlower xtop rem, 
     xtop xsp push,
     next,
-deflabel _min
-_min machineword
+defmachineword _min
     2pop
     xtop xlower xtop min,
     xtop xsp push,
     next,
-deflabel _max
-_max machineword
+defmachineword _max
     2pop
     xtop xlower xtop max,
     xtop xsp push,
     next,
 
-deflabel _abs
-_abs machineword
+defmachineword _abs
     deflabel _absDone
     1pop
     xtop cv gez,
@@ -282,171 +227,149 @@ _abs machineword
     xtop xsp push,
     next,
 
-deflabel _minus
-_minus machineword
+defmachineword _minus
     deflabel _minusDone
     1pop
     0xFFFF #, xtop xtop muli, \ multiply by negative one
     xtop xsp push,
     next,
-deflabel _and
-_and machineword
+defmachineword _and
     2pop
     xtop xlower xtop and,
     xtop xsp push,
     next,
-deflabel _or
-_or machineword
+defmachineword _or
     2pop
     xtop xlower xtop or,
     xtop xsp push,
     next,
-deflabel _xor
-_xor machineword
+defmachineword _xor
     2pop
     xtop xlower xtop xor,
     xtop xsp push,
     next,
-deflabel _<
-_< machineword
+defmachineword _<
     2pop
     xtop xlower xtop lt,
     xtop xsp push,
     next,
-deflabel _>
-_> machineword
+defmachineword _>
     2pop
     xtop xlower xtop gt,
     xtop xsp push,
     next,
-deflabel _=
-_= machineword
+defmachineword _=
     2pop
     xtop xlower xtop eq,
     xtop xsp push,
     next,
 
-deflabel _0<
-_0< machineword
+defmachineword _0<
     1pop
     xtop xtop ltz,
     xtop xsp push,
     next,
-deflabel _0=
-_0= machineword
+defmachineword _0=
     1pop
     xtop xtop eqz,
     xtop xsp push,
     next,
 
-_over machineword
+defmachineword _over 
     xsp xtop incr,
     xtop xlower ld,
     xlower xsp push,
     next,
-_dup machineword
+defmachineword _dup 
     xsp xtop ld,
     xtop xsp push,
     next,
-_drop machineword
+defmachineword _drop 
     xsp zero pop, 
     next,
 
-_swap machineword
-    xsp xtop pop, \ get a
-    xsp xlower pop, \ get b
+defmachineword _swap
+	2pop \ top - a 
+		 \ lower - b
     xtop xsp push, 
     xlower xsp push,
     next,
-_dp machineword ( -- n ) 
+defmachineword _dp ( -- n ) 
     dp xsp push, 
     next,
-_! machineword ( v a -- )
-   xsp xtop pop, \ addr
-   xsp xlower pop, \ value
+defmachineword _! ( v a -- )
+   2pop \ top - addr
+   		\ lower - value
    xlower xtop st, \ perform the store
    next,
 
-deflabel _c,
-_c, machineword
-    xsp xtop pop, \ get n
+defmachineword _c,
+	1pop
     0xFF #, xtop xtop andi, 
     xtop xdp st, \ save it to the current dict pointer front
     dp 1+, \ move ahead by one
     next,
-deflabel _c!
-_c! machineword ( value addr -- )
-    xsp xtop pop, \ addr
-    xsp xlower pop, \ value
+defmachineword _c!  ( value addr -- )
+	2pop \ top - addr
+		 \ lower - value
     0xFF #, xlower xlower andi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
     next,
-deflabel _c@
-_c@ machineword
+defmachineword _c@
     1pop \ top - addr
     xtop xtop ld,
     0xFF #, xtop xtop andi,
     xtop xsp push,
     next,
-deflabel _@
-_@ machineword
+defmachineword _@
     1pop
     xtop xtop ld,
     xtop xsp push,
     next,
-deflabel _.
-_. machineword
+defmachineword _.
    /dev/console2 #, xlower set,
    1pop
    xtop xlower stio,
    next,
-deflabel _CR
-_CR machineword
+defmachineword _cr
     /dev/console0 #, xlower set,
     0xA #, xtop set,
     xtop xlower stio,
     next,
-deflabel _space
-_space machineword
+defmachineword _space
     /dev/console0 #, xlower set,
     0x20 #, xtop set,
     xtop xlower stio,
     next,
-deflabel _key
-_key machineword
+defmachineword _key
     /dev/console0 #, xlower set,
     xlower xtop ldio,
     xtop xsp push,
     next,
-deflabel _emit
-_emit machineword
+defmachineword _emit
     /dev/console0 #, xlower set,
     1pop
     xtop xlower stio,
     next,
-deflabel _sp@
-_sp@ machineword
+defmachineword _sp@
     xsp xsp push,
     next,
 
-deflabel _?
-_? machineword
+defmachineword _?
     1pop 
     xtop xtop ld,
     /dev/console0 #, xlower set,
     xtop xlower stio,
     next,
     
-deflabel _+!
-_+! machineword
+defmachineword _+!
     2pop \ top - addr 
          \ lower - n
     xtop at0 ld,
     xlower at0 xlower add, 
     xlower xtop st,
     next,
-deflabel _cmove
-_cmove machineword ( from to u -- ) \ move u bytes in memory 
+defmachineword _cmove ( from to u -- ) \ move u bytes in memory 
     3pop \ top - u
          \ lower - to
          \ third - from
@@ -463,8 +386,8 @@ _cmove machineword ( from to u -- ) \ move u bytes in memory
     _cmove_loop !, b,
     _cmove_done .label
     next,
-deflabel _fill
-_fill machineword ( addr n b -- ) \ fill u bytes in memory with b beginning at address
+defmachineword _fill ( addr n b -- ) 
+	\ fill u bytes in memory with b beginning at address
     3pop \ top - b
          \ lower - u
          \ third - addr
@@ -478,54 +401,60 @@ _fill machineword ( addr n b -- ) \ fill u bytes in memory with b beginning at a
     _fill_loop !, b,
     _fill_done .label
     next,
-deflabel _bl
-_bl machineword 
+defmachineword _bl
     bl #, xsp pushi,
     next,
 
-_here machineword 
+defmachineword _here
     xdp xsp push,
     next,
-_allot machineword ( n -- )
-    xsp xtop pop,
+defmachineword _allot ( n -- )
+	1pop
     xtop dp dp add,
     next,
-deflabel _pad
-_pad machineword ( n -- )
+defmachineword _pad ( -- n )
     0x44 #, xdp xtop addi,
     xtop xsp push,
     next,
-deflabel _,
-_, machineword ( n -- )
+defmachineword _, ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
-    xsp xtop pop, \ get n
+	1pop 
     xtop xdp st, \ save it to the current dict pointer front
     dp 1+, \ move ahead by one
     next,
-\ deflabel _'
-deflabel _zero
-_zero machineword
+defmachineword _zero
     zero xsp push,
     next,
-_zero defshorthand _zero.
-deflabel _leftbracket
-_leftbracket machineword 
+defmachineword _leftbracket
     zero xstate move,
     \ ;IMMEDIATE to mark it as an immediate word
     next,
-deflabel _rightbracket
-_rightbracket machineword 
+defmachineword _rightbracket
     0xFFFF #, xstate set,
     next,
 
-deflabel _dodoe
-_dodoe machineword
+defmachineword _dodoe_prime
     xip xrp push,
     xw xip move,
     xw 1+,
     xw xsp push,
     next,
+defmachineword _branch
+	xip xtop ld,
+	xtop xip xip add,
+	next,
+defmachineword _0branch
+	deflabel _zbra1
+	1pop \ flag
+	zero xtop cv neq,
+	_zbra1 !, cv bc,
+	xip xlower ld,
+	xip xlower xip add,
+	next,
+	_zbra1 .label
+	0x2 #, xip xip addi,
+	next,
 asm}
 
 bye
