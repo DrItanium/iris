@@ -330,27 +330,27 @@ defmachineword _@
 defmachineword _.
    /dev/console2 #, xlower set,
    1pop
-   xtop xlower stio,
+   xtop xlower st,
    next,
 defmachineword _cr
     /dev/console0 #, xlower set,
     0xA #, xtop set,
-    xtop xlower stio,
+    xtop xlower st,
     next,
 defmachineword _space
     /dev/console0 #, xlower set,
     0x20 #, xtop set,
-    xtop xlower stio,
+    xtop xlower st,
     next,
 defmachineword _key
     /dev/console0 #, xlower set,
-    xlower xtop ldio,
+    xlower xtop ld,
     xtop xsp push,
     next,
 defmachineword _emit
     /dev/console0 #, xlower set,
     1pop
-    xtop xlower stio,
+    xtop xlower st,
     next,
 defmachineword _sp@
     xsp xsp push,
@@ -360,7 +360,7 @@ defmachineword _?
     1pop 
     xtop xtop ld,
     /dev/console0 #, xlower set,
-    xtop xlower stio,
+    xtop xlower st,
     next,
     
 defmachineword _+!
