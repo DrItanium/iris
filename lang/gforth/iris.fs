@@ -39,10 +39,10 @@ variable mloc \ current memory location
 : xop& ( n a -- k ) c@ or ;
 0 constant RegisterValueSpace
 1 constant MemorySpace
-3 constant InstructionSpace 
-4 constant LabelSpace
-5 constant IndirectInstructionSpace
-6 constant IndirectMemorySpace
+2 constant InstructionSpace 
+3 constant LabelSpace
+4 constant IndirectInstructionSpace
+5 constant IndirectMemorySpace
 
 
 : linker-entry ( kind address value -- n ) 
