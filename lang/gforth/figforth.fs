@@ -116,8 +116,9 @@ deflabel-here _next
 
 : defmachineword ( "name" -- ) 
   deflabel-here 
-  execute-latest last-word !
-  last-word @ dup !, .data16
+  last-word @ !, .data16
+  execute-latest dup 
+  last-word !
   machine-code-execute ;
 : embed-string-length ( len -- ) #, .data16 ;
 deflabel-here _execute
