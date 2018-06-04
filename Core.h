@@ -110,6 +110,10 @@ namespace iris {
 		public: 
 			static constexpr Address registerCount = 64;
 			static constexpr Address maxAddress = 0xFFFF;
+			static constexpr Address ioSpaceStart = 0xFF00;
+			static constexpr Address ioSpaceEnd = maxAddress; 
+			static constexpr Address coreCacheStart = 0xE000;
+			static constexpr Address coreCacheEnd = 0xF000;
 			static constexpr Address32 addressSize = 0x10000;
             static constexpr RegisterIndex registerZero = 0;
             // the error codes that the processor will raise as part of an
@@ -125,8 +129,7 @@ namespace iris {
 			using RegisterFile = std::unique_ptr<Register[]>;
 			struct InstallToRegister final { };
             struct InstallToMemory final { };
-            struct InstallToCore final { };
-			using SectionInstallationTarget = std::variant<InstallToRegister, InstallToMemory, InstallToCore>;
+			using SectionInstallationTarget = std::variant<InstallToRegister, InstallToMemory>;
 		public:
 			Core();
 			void init();
@@ -146,8 +149,6 @@ namespace iris {
 								}
                             } else if constexpr (std::is_same_v<K, InstallToMemory>) {
                                 _memory[address].address = value;
-                            } else if constexpr (std::is_same_v<K, InstallToCore>) {
-                                _core[address].address = value;
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 							}
@@ -282,12 +283,13 @@ namespace iris {
 			}
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
+			void store(Address addr, Number value) noexcept;
+			Address load(Address addr) noexcept;
 		private:
 			void cycle();
 		private:
 			Address _pc;
             MemoryBlock16 _memory;
-            MemoryBlock16 _core;
 			// IO space is special and is really a mapping to native goings
 			// on!
 			RegisterFile _registers;

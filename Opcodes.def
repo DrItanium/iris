@@ -25,10 +25,6 @@ X(Load, TwoRegister, ld)
 X(Store, TwoRegister, st)
 X(Push, TwoRegister, push) // decrement dest and then store src into it
 X(Pop, TwoRegister, pop) // increment src and then load into dest
-X(LoadCore, TwoRegister, ldc)
-X(StoreCore, TwoRegister, stc)
-X(LoadIO, TwoRegister, ldio)
-X(StoreIO, TwoRegister, stio)
 X(BranchRegister, OneRegister, br)
 X(BranchRegisterAndLink, TwoRegister, brl)
 X(BranchConditionalRegister, TwoRegister, bcr)

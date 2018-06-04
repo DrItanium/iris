@@ -39,7 +39,6 @@ variable mloc \ current memory location
 : xop& ( n a -- k ) c@ or ;
 0 constant RegisterValueSpace
 1 constant MemorySpace
-2 constant CoreMemorySpace
 3 constant InstructionSpace 
 4 constant LabelSpace
 5 constant IndirectInstructionSpace
@@ -64,8 +63,8 @@ variable mloc \ current memory location
 : {opcode ( -- 0 ) {registers ;
 : opcode: dup cconstant 1+ ;
 : opcode} ( n -- ) registers} ;
-: {ioaddr ( -- 0 ) {registers ;
-: ioaddr} ( n -- ) registers} ;
+: {ioaddr ( -- 0 ) 0xFF00 ;
+: ioaddr} ( n -- ) drop ;
 : ioaddr: ( n -- k ) dup constant 1+ ;
 
 {opcode
@@ -96,10 +95,6 @@ opcode: #ld
 opcode: #st
 opcode: #push
 opcode: #pop
-opcode: #ldc
-opcode: #stc
-opcode: #ldio
-opcode: #stio
 opcode: #br
 opcode: #brl
 opcode: #bcr
@@ -147,7 +142,6 @@ set-current \ go back
 
 RegisterValueSpace def-space-entry register-entry
 MemorySpace def-space-entry memory-entry
-\ CoreMemorySpace def-space-entry core-entry
 InstructionSpace def-space-entry instruction-entry
 LabelSpace def-space-entry label-entry 
 IndirectInstructionSpace def-space-entry indirect-instruction-entry 
@@ -371,10 +365,6 @@ drop
 #st inst-2reg st,
 #push inst-2reg push,
 #pop inst-2reg pop,
-#ldc inst-2reg ldc,
-#stc inst-2reg stc,
-#ldio inst-2reg ldio,
-#stio inst-2reg stio,
 #br inst-1reg br,
 #brl inst-2reg brl,
 #bcr inst-2reg bcr,
@@ -614,12 +604,12 @@ ioaddr}
 : !->io ( imm -- ) !, $->io ;
 
 : ret, ( -- ) lr br, ;
-: io-write ( src -- ) io stio, ;
-: io-read ( dest -- ) io swap ldio, ;
+: io-write ( src -- ) io st, ;
+: io-read ( dest -- ) io swap ld, ;
 : inspect-register ( reg -- )
   /dev/register #, at0 set,
   #, at1 set,
-  at1 at0 stio, ;
+  at1 at0 st, ;
 
 \ core routines
 : call, ( dest -- ) lr bl, ;

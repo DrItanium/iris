@@ -46,7 +46,6 @@ namespace iris {
             enum class Kind : iris::byte {
                 RegisterValue,
                 MemorySpace,
-                CoreMemory,
                 Instruction,
                 LabelEntry,
                 IndirectInstruction,
@@ -123,9 +122,6 @@ int main(int argc, char** argv) {
                     break;
                 case Kind::MemorySpace:
                     core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
-                    break;
-                case Kind::CoreMemory:
-                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToCore());
                     break;
                 case Kind::Instruction:
                     // only 32kb worth of instructions allowed

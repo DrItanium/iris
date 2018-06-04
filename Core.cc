@@ -69,7 +69,6 @@ namespace iris {
 
     Core::Core() : _pc(0) { 
         _memory = std::make_unique<Number[]>(addressSize);
-        _core = std::make_unique<Number[]>(addressSize);
         _registers = std::make_unique<Register[]>(registerCount);
     }
     void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
@@ -191,12 +190,10 @@ namespace iris {
     DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
     DefExec(Set) { setDestination(op, op._args.imm); }
     DefExec(Load) { 
-		auto addr = getSource(op).address;
-        auto value = _memory[addr];
-        setDestination(op, value);
+		setDestination(op, load(getSource(op).address));
     }
     DefExec(Store) { 
-		_memory[getDestination(op).address] = getSource(op);
+		store(getDestination(op).address, getSource(op));
 	}
     DefExec(Push) {
         Address stackAddress = getDestination(op).address - 1;
@@ -207,16 +204,6 @@ namespace iris {
     DefExec(Pop) {
         setDestination(op, _memory[getSource(op).address]);
 		setSource(op, getSource(op).address + 1);
-    }
-    DefExec(LoadCore) {
-        auto inst = _core[getSource(op).address];
-        setDestination(op, inst);
-    }
-
-    DefExec(StoreCore) {
-        auto lower = getSource(op);
-        auto addr = getDestination(op).address;
-        _core[addr] = lower;
     }
     DefExec(BranchRegister) {
 		_pc = getDestination(op).address;
@@ -244,19 +231,22 @@ namespace iris {
             }
         }
     }
-    DefExec(LoadIO) {
-        auto addr = getSource(op).address;
-        onIODeviceFound(addr, [this, &op, addr](auto& a) 
-				{ 
-					auto result = a.read(addr);
-					// std::cout << "read " << std::hex << result << " from io space" << std::endl;
-					setDestination(op, result);
-				});
-    }
-    DefExec(StoreIO) {
-		auto addr = getDestination(op).address;
-        onIODeviceFound(addr, [this, &op, addr](auto& a) { a.write(addr, getSource(op).address); });
-    }
+	void Core::store(Address addr, Number value) noexcept {
+		if (addr >= ioSpaceStart) {
+			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value.address); });
+		} else {
+			_memory[addr] = value.address;
+		}
+	}
+	Address Core::load(Address addr) noexcept {
+		if (addr >= ioSpaceStart) {
+			Address outcome = 0;
+        	onIODeviceFound(addr, [addr, &outcome](auto& a) { outcome = a.read(addr); });
+			return outcome;
+		} else {
+			return _memory[addr].address;
+		}
+	}
     DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
     DefExec(UnsignedNeq) { setDestination(op, getSource(op).address != getSource2(op).address); }
     DefExec(UnsignedLessThan) { setDestination(op, getSource(op).address < getSource2(op).address); }
@@ -376,7 +366,6 @@ namespace iris {
             putRegister(_registers[i]);
         }
         walkThroughSection([this, putAddress](int i) { putAddress(_memory[i].get<Address>()); });
-        walkThroughSection([this, putAddress](int i) { putAddress(_core[i].get<Address>()); });
     }
     void Core::install(std::istream& in) {
         auto getByte = [&in]() {
@@ -401,7 +390,6 @@ namespace iris {
             }
         };
         walkThroughSection([this, getAddress](int i) { _memory[i].address = getAddress(); });
-        walkThroughSection([this, getAddress](int i) { _core[i].address = getAddress(); });
     }
     Address Core::IODevice::read(Address addr) {
         if (_read) {
@@ -465,7 +453,7 @@ namespace iris {
                 //
                 // Also make git not view the file as a binary file
                 if (outputFile.is_open()) {
-                    for (int i = 0; i < 0x10000 ; ++i) {
+                    for (int i = coreCacheStart; i < coreCacheEnd ; ++i) {
                         outputFile << std::hex << _memory[i].address << std::endl;
                     }
                 }
@@ -474,11 +462,11 @@ namespace iris {
                 // load core from disk
                 std::ifstream inputFile(path);
                 if (inputFile.is_open()) {
-                    for (int i = 0; i < 0x10000; ++i) {
+                    for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
                         inputFile >> std::hex >> _memory[i].address;
                     }
                 } else {
-                    for (int i = 0; i < 0x10000; ++i) {
+                    for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
                         _memory[i].address = 0;
                     }
                 }
@@ -514,7 +502,7 @@ namespace iris {
 				throw Problem("Unimplemented address!");
 			}
 		};
-        IODevice sink(0);
+        IODevice sink(ioSpaceStart);
         IODevice console(sink.getEnd(), 3, readFromStandardIn, writeToStandardOut);
         IODevice coreManipulator(console.getEnd(), 2, nullptr, selectCore);
         IODevice vmDumper(coreManipulator.getEnd(), 1, nullptr, dumpVM);
