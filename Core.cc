@@ -512,6 +512,8 @@ namespace iris {
                         std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
                     });
 		IODevice hexPrinter(registerInspector.getEnd(),1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
+		IODevice decPrinter(hexPrinter.getEnd(), 1, nullptr, [](auto index, auto value) { std::cout << std::dec << value; });
+		IODevice octPrinter(decPrinter.getEnd(), 1, nullptr, [](auto index, auto value) { std::cout << std::oct << value; });
         installIODevice(sink);
         installIODevice(console);
         installIODevice(coreManipulator);
@@ -519,6 +521,8 @@ namespace iris {
 		installIODevice(vmTerminator);
         installIODevice(registerInspector);
 		installIODevice(hexPrinter);
+		installIODevice(decPrinter);
+		installIODevice(octPrinter);
     }
     void Core::shutdown() {
 

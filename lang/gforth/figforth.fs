@@ -478,6 +478,10 @@ s" 0branch" defmachineword _0branch
 	_zbra1 .label
 	0x2 #, xip xip addi,
 	next,
+s" ?comp" defmachineword _?comp
+	zero xstate cv neq,
+	cv xsp push,
+	next,
 asm}
 
 bye

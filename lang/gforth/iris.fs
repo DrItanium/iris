@@ -598,6 +598,9 @@ ioaddr: /dev/core-load
 ioaddr: /dev/dump-vm
 ioaddr: /dev/terminate-vm
 ioaddr: /dev/register
+ioaddr: /dev/hexprint
+ioaddr: /dev/decprint
+ioaddr: /dev/octprint
 ioaddr}
 : $->io ( imm id -- ) io $-> ;
 : #->io ( imm -- ) #, $->io ;
