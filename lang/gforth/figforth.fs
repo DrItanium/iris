@@ -24,8 +24,6 @@ return-stack-end constant data-stack-start
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
-: .word ( n -- ) !, .data16 ;
-: defshorthand ( n "name" -- ) create , does> @ .word ;
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
 deflabel &TIB \ address of the terminal input buffer
@@ -59,7 +57,7 @@ deflabel &DPL      \ number of digits to the right of the decimal point on doubl
                    \ location of a decimal point in user generated formatting. The default value on single number input is -1
 deflabel &FLD      \ field width for formatted number output
 deflabel &CSP      \ temporarily stored data stack pointer for compilation error checking
-deflabel &#r       \ location of editor cursor in a text screen
+deflabel &R#       \ location of editor cursor in a text screen
 deflabel &HLD      \ address of the latest character of text during numeric output conversion
 deflabel &SEPARATOR \ word separator contents
 deflabel &TERMINATOR \ terminator index
@@ -78,6 +76,7 @@ unused-start
 1+cconstant xthird \ contents of the third stack item
 1+cconstant xdp    \ temporary storage container for the dictionary pointer
 1+cconstant xtaddr \ temporary storage for an address
+1+cconstant xstate \ temporary storage for the state variable
 too-many-vars-defined
 
 
@@ -165,7 +164,7 @@ s" lit" defmachineword _lit
     xip xsp push,
     xip 1+,
     next,
-: compile-literal ( n -- )
+: push-literal ( n -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
   _LIT !, .data16
@@ -320,11 +319,6 @@ s" swap" defmachineword _swap
     xtop xsp push, 
     xlower xsp push,
     next,
-s" dp" defmachineword _dp ( -- n ) 
-	&DP xtaddr set,
-	xtaddr xdp ld,
-    xdp xsp push, 
-    next,
 s" !" defmachineword _! ( v a -- )
    2pop \ top - addr
    		\ lower - value
@@ -468,11 +462,14 @@ s" 0" defmachineword _zero
     zero xsp push,
     next,
 s" [" defmachineword _leftbracket
-    zero xstate move,
+	&state !, xtaddr set,
+	zero xtaddr st,
     \ ;IMMEDIATE to mark it as an immediate word
     next,
 s" ]" defmachineword _rightbracket
+	&state !, xtaddr set,
     0xFFFF #, xstate set,
+	xstate xtaddr st,
     next,
 
 s" dodoe" defmachineword _dodoe_prime
@@ -497,9 +494,37 @@ s" 0branch" defmachineword _0branch
 	0x2 #, xip xip addi,
 	next,
 s" ?comp" defmachineword _?comp
+	&state !, xtaddr set,
+	xtaddr xstate ld,
 	zero xstate cv neq,
 	cv xsp push,
 	next,
+: defvariableword ( label str-addr len "name" -- )
+	defmachineword
+	!, xtop set,
+	xtop xsp push,
+	next, ;
+	
+&state s" state" defvariableword _state
+&base s" base" defvariableword _base
+&current s" current" defvariableword _current
+&tib s" tib" defvariableword _tib
+&s0 s" s0" defvariableword _s0
+&r0 s" r0" defvariableword _r0
+&warning s" warning" defvariableword _warning
+&dp s" dp" defvariableword _dp
+&fence s" fence" defvariableword _fence
+&voc-link s" voc-link" defvariableword _voc-link
+&blk s" blk" defvariableword _blk
+&in s" in" defvariableword _in
+&out s" out" defvariableword _out
+&dpl s" dpl" defvariableword _dpl
+&fld s" fld" defvariableword _fld
+&csp s" csp" defvariableword _csp
+&r#  s" r#" defvariableword _r#
+&hld s" hld" defvariableword _hld
+&separator s" separator" defvariableword _separator
+&terminator s" terminator" defvariableword _terminator
 system-start .org \ system variables
 &state .label 0 #, .data16
 &base .label 0x10 #, .data16

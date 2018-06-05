@@ -146,21 +146,24 @@ InstructionSpace def-space-entry instruction-entry
 LabelSpace def-space-entry label-entry 
 IndirectInstructionSpace def-space-entry indirect-instruction-entry 
 IndirectMemorySpace def-space-entry indirect-memory-entry
+variable CurrentAssemblyFile
+
+: curasm@ ( -- file ) CurrentAssemblyFile @ ;
+: curasm! ( n -- ) CurrentAssemblyFile ! ;
 : <<linker ( entry id -- ) 
   hex
   dup >r
   nout
   s" " r> write-line throw decimal ;
+: clearasm ( -- ) 0 curasm! ;
 : <<inst ( inst id -- ) 
-  >r
   loc@ swap instruction-entry
-  r> <<linker 
+  curasm@ <<linker 
   loc2+ \ each instruction is two entries
   ;
 : <<iinst ( inst id -- ) 
-  >r
   loc@ swap indirect-instruction-entry
-  r> <<linker 
+  curasm@ <<linker 
   loc2+ \ each instruction is two entries
   ;
 : <<mem ( value id -- )
@@ -186,13 +189,6 @@ IndirectMemorySpace def-space-entry indirect-memory-entry
 
 : .org ( n -- ) loc! ;
 
-variable CurrentAssemblyFile
-
-: curasm@ ( -- file ) CurrentAssemblyFile @ ;
-: curasm! ( n -- ) CurrentAssemblyFile ! ;
-: clearasm ( -- ) 0 curasm! ;
-: <<iinst ( n -- ) curasm@ <<iinst ;
-: <<inst ( n -- ) curasm@ <<inst ;
 : .label ( label -- ) curasm@ <<label ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
@@ -399,7 +395,6 @@ drop
   or 
   swap ( v it )
   ?choose-instruction-kind ;
-: ?imm0 ( imm v -- imm v f ) over 0= ;
 : #bl, ( imm dest -- ) 
   ?imm0
   if 
@@ -419,7 +414,6 @@ drop
   or 
   swap ( v it )
   ?choose-instruction-kind ;
-: ?imm0 ( imm v -- imm v f ) over 0= ;
 : #bc, ( imm dest -- ) 
   ?imm0
   if 
@@ -453,11 +447,6 @@ drop
 def3argi muli, mul,
 def3argi divi, div,
 def3argi remi, rem,
-def3argi andi, and,
-def3argi ori, or,
-def3argi xori, xor,
-def3argi nori, nor,
-def3argi nandi, nand,
 def2argi noti, not,
 def3argi eqi, eq,
 def3argi neqi, neq,
