@@ -178,16 +178,32 @@ s" lit" defmachineword _lit
 : 3pop ( -- )
   2pop
   xsp xthird pop, ;
-s" +" defmachineword _+
-    2pop \ top -> b | lower -> a
-    xtop xlower xtop add, 
-    xtop xsp push,
-    next,
-s" -" defmachineword _-
-    2pop \ a b
-    xtop xlower xtop sub, 
-    xtop xsp push,
-    next,
+: defbinaryop ( str length "name" "op" -- )
+  defmachineword 
+  2pop
+  xtop xlower xtop ' execute 
+  xtop xsp push,
+  next, ;
+s" +" defbinaryop _+ add,
+s" -" defbinaryop _- sub, 
+s" *" defbinaryop _* mul,
+s" /" defbinaryop _/ div, 
+s" mod" defbinaryop _mod rem,
+s" min" defbinaryop _min min,
+s" max" defbinaryop _max max,
+s" and" defbinaryop _and and,
+s" or"  defbinaryop _or or,
+s" xor" defbinaryop _xor xor,
+s" <"  defbinaryop _< lt,
+s" >" defbinaryop _> gt,
+s" =" defbinaryop _= eq,
+s" !=" defbinaryop _!= neq,
+s" >=" defbinaryop _>= ge,
+s" <=" defbinaryop _>= le,
+s" nand" defbinaryop _nand nand,
+s" nor" defbinaryop _nor nor,
+s" lshift" defbinaryop _lshift lshift,
+s" rshift" defbinaryop _rshift rshift,
 s" rot" defmachineword _rot ( a b c -- b c a )
     3pop \ a (third) b (lower)  c (top)
     xlower xsp push,
@@ -215,33 +231,6 @@ s" r" defmachineword _r \ copy top of return stack onto stack
    xrp xtop ld,
    xtop xsp push,
    next,
-s" *" defmachineword _*
-    2pop 
-    xtop xlower xtop mul,
-    xtop xsp push,
-    next,
-s" /" defmachineword _/
-    2pop
-    xtop xlower xtop div, 
-    xtop xsp push,
-    next,
-
-s" mod" defmachineword _mod
-    2pop
-    xtop xlower xtop rem, 
-    xtop xsp push,
-    next,
-s" min" defmachineword _min
-    2pop
-    xtop xlower xtop min,
-    xtop xsp push,
-    next,
-s" max" defmachineword _max
-    2pop
-    xtop xlower xtop max,
-    xtop xsp push,
-    next,
-
 s" abs" defmachineword _abs
     deflabel _absDone
     1pop
@@ -256,36 +245,6 @@ s" minus" defmachineword _minus
     deflabel _minusDone
     1pop
     0xFFFF #, xtop xtop muli, \ multiply by negative one
-    xtop xsp push,
-    next,
-s" and" defmachineword _and
-    2pop
-    xtop xlower xtop and,
-    xtop xsp push,
-    next,
-s" or" defmachineword _or
-    2pop
-    xtop xlower xtop or,
-    xtop xsp push,
-    next,
-s" xor" defmachineword _xor
-    2pop
-    xtop xlower xtop xor,
-    xtop xsp push,
-    next,
-s" <" defmachineword _<
-    2pop
-    xtop xlower xtop lt,
-    xtop xsp push,
-    next,
-s" >" defmachineword _>
-    2pop
-    xtop xlower xtop gt,
-    xtop xsp push,
-    next,
-s" =" defmachineword _=
-    2pop
-    xtop xlower xtop eq,
     xtop xsp push,
     next,
 
