@@ -1,6 +1,14 @@
 include iris.fs
 \ contains all of the registers and pieces used for the monitor itself
 s" monitor.o" {asm
+: save-register ( reg -- ) vmsp psh-> ;
+: restore-register ( reg -- ) vmsp swap pop-> ;
+: save-lr ( -- ) lr save-register ;
+: restore-lr ( -- ) lr restore-register ;
+: (leafn ( label -- ) .label ;
+: leafn) ( -- ) ret, ;
+: (fn ( label -- ) .label save-lr ;
+: fn) ( -- ) restore-lr ret, ;
 0xFFFF constant monitor-memory-end
 0xFF00 constant monitor-program-end
 0xF500 constant monitor-program-start
@@ -12,6 +20,11 @@ s" monitor.o" {asm
 0xF000 constant monitor-stack-end \ 512 elements
 0xF000 constant monitor-memory-start
 unused-start 1+cconstant cmd \ command buffer register
+1+cconstant num-base
+1+cconstant terminator
+1+cconstant separator
+1+cconstant error-code
+1+cconstant vmsp
 1+cconstant in0
 1+cconstant out0
 1+cconstant in1

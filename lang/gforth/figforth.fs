@@ -5,12 +5,14 @@ s" figforth.o" {asm
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
 0xFFFF constant ram-end
+0xFF00 constant io-start
+0xF000 constant system-start
 0x0000 constant ram-start
 ram-start constant interpreter-start
 \ 0x0100 constant bootstrap-end
-0xFF00 constant &LIMIT
-&LIMIT 0x420 - constant &FIRST \ address of the first byte of the disk buffers
-&FIRST 0xE0 - constant system-variables-end
+0xF000 constant &LIMIT
+0xE000 constant &FIRST \ address of the first byte of the disk buffers
+system-start constant system-variables-end
 system-variables-end 0x100 - constant system-variables-start
 system-variables-start constant input-buffer-end
 input-buffer-end 0x100 - constant input-buffer-start
@@ -24,45 +26,47 @@ return-stack-end constant data-stack-start
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 : .word ( n -- ) !, .data16 ;
 : defshorthand ( n "name" -- ) create , does> @ .word ;
+deflabel &S0 \ initial value of the data stack pointer
+deflabel &R0 \ initial value of the return stack pointer
+deflabel &TIB \ address of the terminal input buffer
+deflabel &WARNING \ error message control number. If 1, disk is present, 
+                  \ and screen 4 of drive 0 is the base location of error messages
+                  \ if 0, no disk is present and error messages will be presented
+                  \ by number. If -1, execute (ABORT) on error
+deflabel &FENCE \ address below which FORGETting is trapped.
+                \ To forget below this point, the user must alter the contents
+                \ of FENCE
+deflabel &DP \ The dictionary pointer which contains the next free memory
+             \ above the dictionary. The value may be read by HERE and altered
+             \ by ALLOT.
+deflabel &VOC-LINK \ address of a field in the definition of the most recently created
+                   \ created vocabulary. All vocabulary names are linked by
+                   \ these fields to allow control for FORGETting through multiple
+                   \ vocabularies
+deflabel &BLK \ current block number under interpretatio. If 0, input is
+              \ being taken from the terminal input buffer
+deflabel &IN  \ Byte offset within the current input text buffer (terminal or
+              \ disk) from which the next text will be accepted. WORD uses and
+              \ move the value of IN
+deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
+              \ The user may yalter and examine OUT to control output display formatting.
+deflabel &SCR      \ Screen number most recently referenced by LIST
+deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
+deflabel &CURRENT  \ Pointer to the vocabulary in which new definitions are to be added
+deflabel &STATE    \ If 0, the system is in interpretive or executing state. If non-zero, the system is in compiling state. The value itself is implementation
+                   \ dependent. So in this case it would be 0 is interpretive and 0xFFFF is compiling
+deflabel &DPL      \ number of digits to the right of the decimal point on double integer input. It may also be used to hold output column
+                   \ location of a decimal point in user generated formatting. The default value on single number input is -1
+deflabel &FLD      \ field width for formatted number output
+deflabel &CSP      \ temporarily stored data stack pointer for compilation error checking
+deflabel &#r       \ location of editor cursor in a text screen
+deflabel &HLD      \ address of the latest character of text during numeric output conversion
+deflabel &SEPARATOR \ word separator contents
+deflabel &TERMINATOR \ terminator index
+deflabel &BASE       \ numeric base
 unused-start 
 \ constants
 \ user variables
-1+cconstant xs0 \ initial value of the data stack pointer
-1+cconstant xr0 \ initial value of the return stack pointer
-1+cconstant x&tib \ address of the terminal input buffer
-1+cconstant xwarning \ error message control number. If 1, disk is present, 
-                    \ and screen 4 of drive 0 is the base location of error messages
-                    \ if 0, no disk is present and error messages will be presented
-                    \ by number. If -1, execute (ABORT) on error
-1+cconstant xfence \ address below which FORGETting is trapped.
-                  \ To forget below this point, the user must alter the contents
-                  \ of FENCE
-1+cconstant xdp \ The dictionary pointer which contains the next free memory
-               \ above the dictionary. The value may be read by HERE and altered
-               \ by ALLOT.
-1+cconstant xvoc-link \ address of a field in the definition of the most recently created
-                     \ created vocabulary. All vocabulary names are linked by
-                     \ these fields to allow control for FORGETting through multiple
-                     \ vocabularies
-1+cconstant xblk \ current block number under interpretatio. If 0, input is
-                \ being taken from the terminal input buffer
-1+cconstant xin \ Byte offset within the current input text buffer (terminal or
-               \ disk) from which the next text will be accepted. WORD uses and
-               \ move the value of IN
-1+cconstant xout \ Offset in the text output buffer. Its value is incremented by EMIT
-                 \ The user may yalter and examine OUT to control output display formatting.
-
-1+cconstant xscr \ Screen number most recently referenced by LIST
-1+cconstant xoffset \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
-1+cconstant xcurrent \ Pointer to the vocabulary in which new definitions are to be added
-1+cconstant xstate \ If 0, the system is in interpretive or executing state. If non-zero, the system is in compiling state. The value itself is implementation
-                   \ dependent. So in this case it would be 0 is interpretive and 0xFFFF is compiling
-1+cconstant xdpl \ number of digits to the right of the decimal point on double integer input. It may also be used to hold output column
-                 \ location of a decimal point in user generated formatting. The default value on single number input is -1
-1+cconstant xfld  \ field width for formatted number output
-1+cconstant xcsp \ temporarily stored data stack pointer for compilation error checking
-1+cconstant xr# \ location of editor cursor in a text screen
-1+cconstant xhld \ address of the latest character of text during numeric output conversion
 1+cconstant xsp \ data stack pointer
 1+cconstant xrp \ return stack pointer
 1+cconstant xip \ interpretive pointer
@@ -72,12 +76,11 @@ unused-start
 1+cconstant xtop \  contents of the top of stack when a pop is called
 1+cconstant xlower \ contents of the second stack item when a pop is called
 1+cconstant xthird \ contents of the third stack item
-
+1+cconstant xdp    \ temporary storage container for the dictionary pointer
+1+cconstant xtaddr \ temporary storage for an address
 too-many-vars-defined
-num-base cconstant xbase
 
 
-ram-start .org 
 \ set the constants
 &LIMIT constant xlimit
 &FIRST constant xfirst
@@ -85,8 +88,8 @@ ram-start .org
 0x80 constant b/buf 
 variable last-word
 0 last-word !
-\ start user variables
-zero xs0 ->
+\ program start
+ram-start .org 
 deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
@@ -318,7 +321,9 @@ s" swap" defmachineword _swap
     xlower xsp push,
     next,
 s" dp" defmachineword _dp ( -- n ) 
-    dp xsp push, 
+	&DP xtaddr set,
+	xtaddr xdp ld,
+    xdp xsp push, 
     next,
 s" !" defmachineword _! ( v a -- )
    2pop \ top - addr
@@ -329,8 +334,11 @@ s" !" defmachineword _! ( v a -- )
 s" c," defmachineword _c,
 	1pop
     0xFF #, xtop xtop andi, 
+	&DP xtaddr set,
+	xtaddr xdp ld, 
     xtop xdp st, \ save it to the current dict pointer front
-    dp 1+, \ move ahead by one
+    xdp 1+, \ move ahead by one
+	xdp xtaddr st,
     next,
 s" c!" defmachineword _c!  ( value addr -- )
 	2pop \ top - addr
@@ -429,13 +437,20 @@ s" bl" defmachineword _bl
     next,
 
 s" here" defmachineword _here
+	&DP xtaddr set,
+	xtaddr xdp ld, 
     xdp xsp push,
     next,
 s" allot" defmachineword _allot ( n -- )
 	1pop
-    xtop dp dp add,
+	&DP xtaddr set,
+	xtaddr xdp ld, 
+    xtop xdp xdp add,
+	xdp xtaddr st,
     next,
 s" pad" defmachineword _pad ( -- n )
+	&DP xtaddr set,
+	xtaddr xdp ld, 
     0x44 #, xdp xtop addi,
     xtop xsp push,
     next,
@@ -443,8 +458,11 @@ s" ," defmachineword _, ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
 	1pop 
+	&DP xtaddr set,
+	xtaddr xdp ld, 
     xtop xdp st, \ save it to the current dict pointer front
-    dp 1+, \ move ahead by one
+    xdp 1+, \ move ahead by one
+	xdp xtaddr st,
     next,
 s" 0" defmachineword _zero
     zero xsp push,
@@ -482,6 +500,27 @@ s" ?comp" defmachineword _?comp
 	zero xstate cv neq,
 	cv xsp push,
 	next,
+system-start .org \ system variables
+&state .label 0 #, .data16
+&base .label 0x10 #, .data16
+&tib  .label 0 #, .data16
+&s0   .label 0 #, .data16
+&r0   .label 0 #, .data16
+&warning   .label 0 #, .data16
+&fence .label 0 #, .data16
+&dp .label 0 #, .data16
+&voc-link .label 0 #, .data16
+&blk .label 0 #, .data16
+&in .label 0 #, .data16
+&out .label 0 #, .data16
+&current .label 0 #, .data16
+&dpl  .label 0 #, .data16
+&fld  .label 0 #, .data16
+&csp  .label 0 #, .data16
+&r#   .label 0 #, .data16
+&hld  .label 0 #, .data16
+&separator .label 0 #, .data16
+&terminator .label 0 #, .data16
 asm}
 
 bye

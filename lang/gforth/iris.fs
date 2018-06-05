@@ -271,11 +271,6 @@ register: x63
 registers}
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 x0 1+cconstant zero
-1+cconstant error-code
-1+cconstant terminator
-1+cconstant num-base
-1+cconstant separator
-1+cconstant vmsp
 1+cconstant cv
 1+cconstant lr
 1+cconstant at0
@@ -699,14 +694,6 @@ push, ;
 : next-address ( -- imm id ) loc@ 1+ #, ;
 : !.data16 ( imm -- ) !, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
-: save-register ( reg -- ) vmsp psh-> ;
-: restore-register ( reg -- ) vmsp swap pop-> ;
-: save-lr ( -- ) lr save-register ;
-: restore-lr ( -- ) lr restore-register ;
-: (leafn ( label -- ) .label ;
-: leafn) ( -- ) ret, ;
-: (fn ( label -- ) .label save-lr ;
-: fn) ( -- ) restore-lr ret, ;
 : mask-lower-half, ( src dest -- ) 2>r 0x00FF #, 2r> andi, ;
 : mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;
 
