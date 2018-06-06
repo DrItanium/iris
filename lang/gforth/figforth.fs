@@ -496,7 +496,7 @@ s" octal" defmachineword _octal \ set the base to 8
 	at0 xtaddr st,
 	next,
 s" c/l" defmachineword _c/l 
-	0x40 #, xtop set,
+	0x50 #, xtop set,
 	xtop xsp push,
 	next,
 s" b/buf" defmachineword _b/buf
