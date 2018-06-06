@@ -482,31 +482,6 @@ back 			\ compute backward branching offset and compile the offset
   compile (loop) \ compile loop at runtime when loop is executed
   back \ compute and compile the backward branch offset
   ; immediate
-\ editor stuff
-: text ( c -- )
-  \ move a text string delimited by character c from the dict buf into PAD,
-  \ blank-filling the remainder of PAD to 64 chars
-  here \ top of dict to be used as a word buffer
-  c/l 1+ blanks \ fill word buffer with 65 blanks
-  word 			\ move the text, delimited by character c, from the input
-  				\ stream to the word buf
-  pad 			\ address of the text buffer
-  c/l 1+ cmove  \ move the text 64 bytes of text and 1 length byte to pad
-  ;
-: line ( n -- addr )
-  \ leave address of the beginning of line n in the screen buffer.
-  \ the screen number is in SCR. Read the disk block from disk if it is not
-  \ already in the disk buffers
-  
-  dup 0xFFF0 and \ make sure n is between 0 and 15
-  17 ?error \ if not, issue an error message
-  scr @ \ get the screen number from SCR
-  (line)  \ read the screen into screen buffer which is composed of the disk
-  		  \ buffers. Compute the address of the n'th line in the screen buffer
-		  \ and push it on the stack
-  drop    \ discard the char count left on stack by (line)
-		  \ only the line address is left on stack now
-  ;
 : +loop ( n1 -- ) \ runtime
 		( addr n1 -- ) \ compile time
 	\ increment the loop index by n1 on the stack and test for loop completion
