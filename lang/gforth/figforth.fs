@@ -516,6 +516,79 @@ s" immediate" defmachineword _immediate
 	xlower at0 xlower or,
 	xlower xtop st,
 	next,
+s" (do)" defmachineword _(do)
+	2pop 
+	xlower xrp push,
+	xtop xrp push,
+	next,
+s" I" defmachineword _I
+	xrp xtop ld, \ load the top loop element
+	xtop xsp push, \ put it onto the data stack
+	next,
+s" leave" defmachineword _leave
+	\ make the loop limit equal to the loop count and force the loop to
+	\ terminate at loop or +loop
+	\ copy loop count to loop limit on return stack
+	xrp xtop pop,
+	xrp zero pop,
+	xtop xrp push,
+	xtop xrp push,
+	next,
+s" (loop)" defmachineword _(loop)
+	deflabel loop_1
+	\ runtime routine of loop
+	xrp xtaddr move,
+	xtaddr xtop ld, 
+	xtop 1+,
+	xtop xtaddr st,
+	2 #, xtaddr xtaddr addi,
+	xtaddr xlower ld,
+	xtop xlower cv ge, 
+	(loop)_1 !, cv bc,
+	xip at0 ld, \ add backwards branch offset to IP and branch back to the DO-LOOP
+	at0 xip xip add, 
+	next,
+	loop_1 .label
+	\ discard the loop parameters off the return stack
+	xrp zero pop,
+	xrp zero pop,
+	2 #, xip xip addi, \ advance ip over the inline offset number and continue
+		               \ executing the next word after loop
+	next,
+
+s" (+loop)" defmachineword _(+loop)
+	deflabel loop_2
+	deflabel loop_3
+	\ runtime routine at the end of a DO --+loop loop
+	1pop
+	xrp xlower ld,
+	xtop xlower xlower add,
+	xlower xrp st,
+	zero xtop cv lt, \ if n is less than zero, jump to loop3 for special processing
+	loop_3 !, cv bc, \ jump to loop3 for special processing
+	xrp xtaddr move,
+	xtaddr at0 ld, \ loop count
+	xtaddr 1+,
+	xtaddr at1 ld, \ loop limit
+	at0 at1 cv le,
+	loop_2 !, cv bc,
+	xip at0 ld,
+	at0 xip xip add,
+	next,
+	loop_2 .label
+		xrp zero pop,
+		xrp zero pop,
+		2 #, xip xip addi,
+		next,
+	loop_3 .label
+	xtaddr at0 ld, \ loop count
+	xtaddr 1+,
+	xtaddr at1 ld, \ loop limit
+	at1 at0 cv le, \ negative increment n, reverse comparison
+	loop_2 !, cv bc,
+	xip at0 ld,
+	at0 xip xip add, \ not yet done with the loop. Return to the word after DO
+	next,
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword

@@ -431,6 +431,57 @@ orig 0x0c + @ forth
 	   [compile] endif \ call endif to work on the offset for forward branching
 	   2 
 	   ; immediate
+
+: begin ( -- addr n )
+	?comp \ error if not compiling
+	here  \ push dictionary pointer onto stack to be used to compute backwards
+	      \ branching offset
+	1     \ error checking number
+	; immediate
+: until ( addr n -- )
+\ compile 0branch and an in-line offset from here to addr. Test the error
+\ checking code n.
+\ if not equal to 1, there is an error in the nesting structure
+1 ?pairs \ if n is not 1, issue an error message
+compile 0branch \ compile 0branch at runtime
+back 			\ compute backward branching offset and compile the offset
+; immediate
+
+: again ( addr n -- ) 
+  \ similar to until but compile braing instead of 0branch in the dictionary
+  \ to construct an infinite loop. 
+  \ 
+  \ Execution cannot leave this loop unless the words R> drop are executed in a
+  \ word inside this loop
+  1 ?pairs \ error checking
+  compile branch \ compile branch and an offset to begin
+  back ; immediate
+: while ( a1 n1 -- a1 n1 a2 n2 )
+  [compile] if \ call if to compile 0branch and the offset
+  2 + \ leave 4 as n2 to be checked by repeat
+  ; immediate
+
+: repeat ( a1 n1 a2 n2 -- )
+  \ compile branch to jump back to begin. Resolve also the branching offset
+  \ required by while
+  >r >r \ get a2 and n2 out of the way
+  [compile] again \ let again do the dirty work of compiling unconditional
+  \ branch back to begin
+  r> r> \ restore addr2 and n2 
+  [compile] endif \ use endif to resolve the forward branching needed by WHILE
+  ; immediate
+: do ( n1 n2 -- ) \ runtime
+     ( -- addr n ) \ compile time
+	 compile (do) \ compile the runtime routine address of (do) into the dictionary
+	 here \ address addr for bacward branching from loop or loop.
+	 3 \ number for error checking
+	 ; immediate
+: loop ( addr n -- )
+  \ terminate a do loop structure in a colon definition
+  3 ?pairs \ check the number left by do, it should be a 3
+  compile (loop) \ compile loop at runtime when loop is executed
+  back \ compute and compile the backward branch offset
+  ; immediate
 \ editor stuff
 : text ( c -- )
   \ move a text string delimited by character c from the dict buf into PAD,
@@ -456,3 +507,12 @@ orig 0x0c + @ forth
   drop    \ discard the char count left on stack by (line)
 		  \ only the line address is left on stack now
   ;
+: +loop ( n1 -- ) \ runtime
+		( addr n1 -- ) \ compile time
+	\ increment the loop index by n1 on the stack and test for loop completion
+	\ branch back to do if not yet done
+	3 ?pairs \ check n. If it is not 3 as left by DO, issue an error message
+	compile (+loop) \ compile the address of (+loop) at runtime when the colon
+	                \ definition is being built
+	back \ compile back branch offset
+	; immediate
