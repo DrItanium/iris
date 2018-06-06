@@ -103,7 +103,7 @@ deflabel-here _next
   at0 at0 ld,
   at0 br, ;
 : embed-name ( str length -- ) 
-  dup 0x00FF and 8 lshift #, .data16 \ embed length and normal flags
+  dup #, .data16 \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
   	1 of 0xFF and #, .data16 
@@ -116,12 +116,19 @@ deflabel-here _next
 	0xFFFF0000 and 16 rshift #, .data16 
    endcase ;
 
-: defmachineword ( "name" -- ) 
+0 constant word/none
+1 constant word/smudge
+2 constant word/imm
+word/imm word/smudge or constant word/all
+: defmachineword-base ( str length control-bits "name" -- ) 
   deflabel-here 
+  #, .data16 \ stash the control bits here
+  embed-name
   last-word @ !, .data16
   execute-latest dup 
   last-word !
   machine-code-execute ;
+: defmachineword ( str length "name" -- ) word/none defmachineword-base ;
 : embed-string-length ( len -- ) #, .data16 ;
 deflabel-here _execute
     \ execute the definition whose code field address cfa is on the data stack
@@ -420,10 +427,9 @@ s" ," defmachineword _, ( n -- )
 s" 0" defmachineword _zero
     zero xsp push,
     next,
-s" [" defmachineword _leftbracket
+s" [" word/imm defmachineword-base _leftbracket
 	&state !, xtaddr set,
 	zero xtaddr st,
-    \ ;IMMEDIATE to mark it as an immediate word
     next,
 s" ]" defmachineword _rightbracket
 	&state !, xtaddr set,
@@ -431,7 +437,7 @@ s" ]" defmachineword _rightbracket
 	xstate xtaddr st,
     next,
 
-s" dodoe" defmachineword _dodoe_prime
+s" dodoes" defmachineword _dodoes_prime
     xip xrp push,
     xw xip move,
     xw 1+,
@@ -458,6 +464,59 @@ s" ?comp" defmachineword _?comp
 	zero xstate cv neq,
 	cv xsp push,
 	next,
+s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
+	1pop
+	4 #, xtop xtop subi, 
+	xtop xsp push,
+	next,
+s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
+	1pop
+	2 #, xtop xtop subi,
+	xtop xsp push,
+	next,
+s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
+	&current !, xtaddr set,
+    xtaddr xtop ld,
+	xtop xtop ld,
+	xtop xsp push,
+	next,
+s" hex" defmachineword _hex \ set the base to 16
+	&base !, xtaddr set,
+	0x10 #, at0 set,
+	at0 xtaddr st,
+	next,
+s" decimal" defmachineword _decimal \ set the base to 10
+	&base !, xtaddr set,
+	0xA #, at0 set,
+	at0 xtaddr st,
+	next,
+s" octal" defmachineword _octal \ set the base to 8
+	&base !, xtaddr set,
+	0x8 #, at0 set,
+	at0 xtaddr st,
+	next,
+s" c/l" defmachineword _c/l 
+	0x40 #, xtop set,
+	xtop xsp push,
+	next,
+s" b/buf" defmachineword _b/buf
+	b/buf #, xtop set,
+	xtop xsp push,
+	next,
+s" b/scr" defmachineword _b/scr
+	b/scr #, xtop set,
+	xtop xsp push,
+	next,
+s" immediate" defmachineword _immediate
+	\ mark the current dictionary entry as immediate
+	&dp !, xtaddr set,
+	xtaddr xtop ld,
+	xtop xlower ld,
+	word/imm #, at0 set,
+	xlower at0 xlower or,
+	xlower xtop st,
+	next,
+
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
 	!, xtop set,

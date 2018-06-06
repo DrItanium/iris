@@ -8,12 +8,6 @@
 	@ ,        \ do the compilation at runtime
 	;
 
-: lfa ( pfa -- lfa ) 
-    \ convert the parameter field address to link field address
-4 - ; 
-: cfa ( pfa -- cfa ) 
-    \ convert the parameter field address to code field address
-    2 - ;
 : (abort) ( -- ) ABORT ;
 : error ( n -- in blk )
   warning @ 0<
@@ -26,10 +20,14 @@
   blk @
   quit ;
 : ?ERROR ( f n -- ) swap if error else drop endif ;
-: latest ( -- addr )
-  \ leave the name field address of the last word defined in the current vocabulary
-  current @ @ ;
 
+: word ( c ------ )
+\ work horse of the interpreter
+blk @ if blk @ block else tib @ endif 
+in @ + swap enclose here 0x22 blanks in +! over - >r R here C! + 
+here !+
+R> 
+;  \ move the string from input buffer to top of dictionary
 
 
 : create ( -- ) 
@@ -68,13 +66,6 @@ drop ;
 
 : query TIB 0x50 expect 0 in ! ;
 
-: word ( c ------ )
-\ work horse of the interpreter
-blk @ if blk @ block else tib @ endif 
-in @ + swap enclose here 0x22 blanks in +! over - >r R here C! + 
-here !+
-R> 
-;  \ move the string from input buffer to top of dictionary
 
 : type  ( addr n -- )
   -dup 
@@ -150,9 +141,6 @@ R>
     cr I 3 .R space
     I SCR @ .line
     loop cr ;
-: hex 0x10 base ! ;
-: octal 0x8 base ! ;
-: decimal 0x0a base ! ; 
 
 : (number) ( d1 addr1 -- d2 addr2 )
   \ runtime routine of number conversion. Convert an ascii text beginning at addr1 + 1
