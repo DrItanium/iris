@@ -545,7 +545,7 @@ s" (loop)" defmachineword _(loop)
 	2 #, xtaddr xtaddr addi,
 	xtaddr xlower ld,
 	xtop xlower cv ge, 
-	(loop)_1 !, cv bc,
+	loop_1 !, cv bc,
 	xip at0 ld, \ add backwards branch offset to IP and branch back to the DO-LOOP
 	at0 xip xip add, 
 	next,
