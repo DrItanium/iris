@@ -637,15 +637,12 @@ ram-start .org
 	\ setup the return stack pointer
 	return-stack-start #, &R0 !, assign-variable,
 	xtop xrp move,
-	\ setup the terminal input buffer
-	input-buffer-start #, &tib !, assign-variable,
-	\ setup the numeric base
-	0x10 #, &base !, assign-variable,
-	\ setup the fence
-	base-dict-done !, &fence !, assign-variable,
+	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
+	0x10 #, &base !, assign-variable,              \ setup the numeric base
+	base-dict-done !, &fence !, assign-variable,   \ setup the fence
+	base-dict-done !, &dp !, assign-variable,      \ setup the dictionary pointer
 	&state !, zero-variable, 
 	&warning !, zero-variable,
-	\ setup the dictionary pointer
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
