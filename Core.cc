@@ -142,8 +142,22 @@ namespace iris {
 		setDestination(op, a - b);
     }
     DefExec(Mul) { setDestination(op, getSource(op).integer * getSource2(op).integer); }
-    DefExec(Div) { setDestination(op, getSource(op).integer / getSource2(op).integer); }
-    DefExec(Rem) { setDestination(op, getSource(op).integer % getSource2(op).integer); }
+    DefExec(Div) { 
+		auto denom = getSource2(op).integer;
+		if (denom == 0) {
+			setDestination(op, Number(0u));
+		} else {
+			setDestination(op, getSource(op).integer / denom);
+		}
+	}
+    DefExec(Rem) { 
+		auto denom = getSource2(op).integer;
+		if (denom == 0) {
+			setDestination(op, Number(0u));
+		} else {
+			setDestination(op, getSource(op).integer % denom);
+		}
+	}
     DefExec(ShiftLeft) { setDestination(op, getSource(op).integer << getSource2(op).integer); }
     DefExec(ShiftRight) { setDestination(op, getSource(op).integer >> getSource2(op).integer); }
     DefExec(And) { setDestination(op, getSource(op).integer & getSource2(op).integer); }
@@ -278,8 +292,22 @@ namespace iris {
         setDestination(op, c);
     }
     DefExec(UnsignedMul) { setDestination(op, getSource(op).address * getSource2(op).address); }
-    DefExec(UnsignedDiv) { setDestination(op, getSource(op).address / getSource2(op).address); }
-    DefExec(UnsignedRem) { setDestination(op, getSource(op).address % getSource2(op).address); }
+	DefExec(UnsignedDiv) { 
+		auto denom = getSource2(op).address;
+		if (denom == 0) {
+			setDestination(op, 0);
+		} else {
+			setDestination(op, getSource(op).address / denom);
+		}
+	}
+    DefExec(UnsignedRem) { 
+		auto denom = getSource2(op).address;
+		if (denom == 0) {
+			setDestination(op, 0);
+		} else {
+			setDestination(op, getSource(op).address % denom);
+		}
+	}
     DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
     DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
 	DefExec(Increment) { setDestination(op, getSource(op).integer + 1); }
