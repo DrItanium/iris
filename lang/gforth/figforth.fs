@@ -33,6 +33,7 @@ output-buffer-start 0x100 + constant output-buffer-end
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
+deflabel forth_vocabulary_start
 deflabel base-dict-done
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
@@ -622,15 +623,20 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
 	xfourth xsp push,
 	xthird xsp push,
 	next,
+: assign-variable, ( value type address type -- )
+  xtaddr set,
+  xtop set,
+  xtop xtaddr st, ;
+s" forth" defmachineword _forth
+	\ set the context to the forth base vocabulary
+	forth_vocabulary_start !, &context !, assign-variable,
+	next,
+.label forth_vocabulary_start
 s" terminate" defmachineword _terminate
 	/dev/terminate-vm #, xtaddr set,
 	zero xtaddr st,
 	next,
 base-dict-done .label \ always is the front address
-: assign-variable, ( value type address type -- )
-  xtaddr set,
-  xtop set,
-  xtop xtaddr st, ;
 : zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
 ram-start .org
 	\ setup the data stack pointer
@@ -645,7 +651,7 @@ ram-start .org
 	base-dict-done !, &dp !, assign-variable,      \ setup the dictionary pointer
 	&state !, zero-variable, 
 	&warning !, zero-variable,
-	_terminate !, &context !, assign-variable,      \ setup the context variable
+	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
