@@ -23,8 +23,12 @@
 
 : word ( c ------ )
 \ work horse of the interpreter
-blk @ if blk @ block else tib @ endif 
-in @ + swap enclose here 0x22 blanks in +! over - >r R here C! + 
+blk @ if 
+        blk @ block 
+	  else 
+	   tib @ 
+	  endif 
+       in @ + swap enclose here 0x22 blanks in +! over - >r R here C! + 
 here !+
 R> 
 ;  \ move the string from input buffer to top of dictionary

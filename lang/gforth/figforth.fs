@@ -12,18 +12,28 @@ ram-start constant interpreter-start
 \ 0x0100 constant bootstrap-end
 0xF000 constant &LIMIT
 0xE000 constant &FIRST \ address of the first byte of the disk buffers
-system-start constant system-variables-end
+\ 0xF000 - 0xF100 \ system variables
+\ 0xF100 - 0xF400 \ data stack
+\ 0xF400 - 0xF600 \ return stack
+\ 0xF600 - 0xF700 \ input buffer
+\ 0xF800 - 0xF900 \ output buffer
+0xF100 constant system-variables-end
 system-variables-end 0x100 - constant system-variables-start
-system-variables-start constant input-buffer-end
-input-buffer-end 0x100 - constant input-buffer-start
-input-buffer-start constant return-stack-start \ 512 entries
-return-stack-start 0x200 - constant return-stack-end
-return-stack-end constant data-stack-start
+system-variables-end constant data-stack-end
+data-stack-end 0x300 + constant data-stack-start
+data-stack-start constant return-stack-end
+return-stack-end 0x200 + constant return-stack-start
+return-stack-start constant input-buffer-start
+input-buffer-start 0x100 + constant input-buffer-end
+input-buffer-end constant output-buffer-start
+output-buffer-start 0x100 + constant output-buffer-end
+
 
 \ bootstrap-end constant dictionary-start
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
+deflabel base-dict-done
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
 deflabel &TIB \ address of the terminal input buffer
@@ -89,7 +99,8 @@ too-many-vars-defined
 variable last-word
 0 last-word !
 \ program start
-ram-start .org 
+0x1000 .org \ dictionary starts at 0x1000
+\ jump to COLD most likely here
 deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
@@ -609,6 +620,33 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
 	xfourth xsp push,
 	xthird xsp push,
 	next,
+s" terminate" defmachineword _terminate
+	/dev/terminate-vm #, xtaddr set,
+	zero xtaddr st,
+	next,
+base-dict-done .label \ always is the front address
+: assign-variable, ( value type address type -- )
+  xtaddr set,
+  xtop set,
+  xtop xtaddr st, ;
+: zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
+ram-start .org
+	\ setup the data stack pointer
+	data-stack-start #, &S0 !, assign-variable,
+	xtop xsp move,
+	\ setup the return stack pointer
+	return-stack-start #, &R0 !, assign-variable,
+	xtop xrp move,
+	\ setup the terminal input buffer
+	input-buffer-start #, &tib !, assign-variable,
+	\ setup the numeric base
+	0x10 #, &base !, assign-variable,
+	\ setup the fence
+	base-dict-done !, &fence !, assign-variable,
+	&state !, zero-variable, 
+	&warning !, zero-variable,
+	\ setup the dictionary pointer
+
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
 	!, xtop set,
