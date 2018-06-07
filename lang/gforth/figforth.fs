@@ -77,6 +77,7 @@ unused-start
 1+cconstant xdp    \ temporary storage container for the dictionary pointer
 1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xstate \ temporary storage for the state variable
+1+cconstant xfourth \ contents of the fourth stack item
 too-many-vars-defined
 
 
@@ -589,7 +590,25 @@ s" (+loop)" defmachineword _(+loop)
 	xip at0 ld,
 	at0 xip xip add, \ not yet done with the loop. Return to the word after DO
 	next,
-
+s" 2drop" defmachineword _2drop ( a b -- ) 2pop next,
+s" 2dup" defmachineword _2dup ( a b -- a b a b ) 
+	xsp xtaddr move,
+	xtaddr xtop ld,
+	xtaddr 1+,
+	xtaddr xlower ld,
+	xlower xsp push,
+	xtop xsp push,
+	next,
+s" 2swap" defmachineword _2swap ( a b c d -- c d a b ) 
+	3pop \ d - top
+		 \ c - lower
+		 \ b - third
+	xsp xfourth pop, \ a - fourth
+	xlower xsp push,
+    xtop xsp push,
+	xfourth xsp push,
+	xthird xsp push,
+	next,
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
 	!, xtop set,
