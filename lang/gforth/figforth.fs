@@ -60,6 +60,8 @@ deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EM
               \ The user may yalter and examine OUT to control output display formatting.
 deflabel &SCR      \ Screen number most recently referenced by LIST
 deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
+deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
+                   \ will first begin
 deflabel &CURRENT  \ Pointer to the vocabulary in which new definitions are to be added
 deflabel &STATE    \ If 0, the system is in interpretive or executing state. If non-zero, the system is in compiling state. The value itself is implementation
                    \ dependent. So in this case it would be 0 is interpretive and 0xFFFF is compiling
@@ -643,6 +645,7 @@ ram-start .org
 	base-dict-done !, &dp !, assign-variable,      \ setup the dictionary pointer
 	&state !, zero-variable, 
 	&warning !, zero-variable,
+	_terminate !, &context !, assign-variable,      \ setup the context variable
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
@@ -691,6 +694,7 @@ system-start .org \ system variables
 &hld  .label 0 #, .data16
 &separator .label 0 #, .data16
 &terminator .label 0 #, .data16
+&context .label 0 #, .data16
 asm}
 
 bye
