@@ -34,6 +34,9 @@ output-buffer-start 0x100 + constant output-buffer-end
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 deflabel forth_vocabulary_start
+deflabel _cold
+deflabel _abort
+deflabel _quit
 deflabel base-dict-done
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
@@ -639,19 +642,22 @@ s" terminate" defmachineword _terminate
 base-dict-done .label \ always is the front address
 : zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
 ram-start .org
+	_cold .label
+	base-dict-done !, &fence !, assign-variable,   				\ setup the fence
+	base-dict-done !, &dp !, assign-variable,      				\ setup the dictionary pointer
+	0x10 #, &base !, assign-variable,              \ setup the numeric base
+	_abort .label
+	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
 	\ setup the data stack pointer
 	data-stack-start #, &S0 !, assign-variable,
 	xtop xsp move,
 	\ setup the return stack pointer
 	return-stack-start #, &R0 !, assign-variable,
 	xtop xrp move,
-	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
-	0x10 #, &base !, assign-variable,              \ setup the numeric base
-	base-dict-done !, &fence !, assign-variable,   \ setup the fence
-	base-dict-done !, &dp !, assign-variable,      \ setup the dictionary pointer
-	&state !, zero-variable, 
 	&warning !, zero-variable,
-	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
+	_quit .label
+	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
+	&state !, zero-variable, 
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
