@@ -675,6 +675,7 @@ s" word" defmachineword _word
 \ grab from a block at this point
 		&blk !, xtaddr set,
 		xtaddr xtaddr ld,
+		
 		\ call block and return here
 	_word_choice_done !, b,
 	_word_from_terminal .label

@@ -270,7 +270,6 @@ registers}
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 x0 1+cconstant zero
 1+cconstant cv
-1+cconstant lr
 1+cconstant at0
 1+cconstant at1
 1+cconstant io
@@ -595,7 +594,6 @@ ioaddr}
 : #->io ( imm -- ) #, $->io ;
 : !->io ( imm -- ) !, $->io ;
 
-: ret, ( -- ) lr br, ;
 : io-write ( src -- ) io st, ;
 : io-read ( dest -- ) io swap ld, ;
 : inspect-register ( reg -- )
@@ -604,8 +602,6 @@ ioaddr}
   at1 at0 st, ;
 
 \ core routines
-: call, ( dest -- ) lr bl, ;
-: callr, ( reg -- ) lr swap brl, ;
 : @-> ( a b -- ) 
   \ the contents of the memory location word whose address is in register A
   \ are loaded into register B (a 16-bit indirect fetch from A to B )

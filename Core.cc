@@ -223,7 +223,10 @@ namespace iris {
 		_pc = getDestination(op).address;
     }
     DefExec(BranchRegisterAndLink) {
-		setSource(op, _pc);
+		Address stackAddress = getSource(op).address - 1;
+		Address value = _pc;
+		store(stackAddress, value);
+		setSource(op, stackAddress);
         _pc = getDestination(op).address;
     }
     DefExec(BranchConditionalRegister) {
@@ -233,7 +236,11 @@ namespace iris {
     }
     DefExec(BranchConditionalRegisterLink) {
         if (getSource(op).getTruth()) {
-			setSource2(op, _pc);
+			// setSource2(op, _pc);
+			Address stackAddress = getSource2(op).address - 1;
+			Address value = _pc;
+			store(stackAddress, value);
+			setSource2(op, stackAddress);
 			_pc = getDestination(op).address;
         }
     }
@@ -315,7 +322,11 @@ namespace iris {
 	DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
 	DefExec(UnsignedDecrement) { setDestination(op, getSource(op).address - 1); }
 	DefExec(Call) {
-		setDestination(op, _pc);
+		// setDestination(op, _pc);
+		Address stackAddress = getDestination(op).address - 1;
+		Address value = _pc;
+		store(stackAddress, value);
+		setDestination(op, stackAddress);
         _pc = op._args.imm;
 	}
 	DefExec(ConditionalBranch) {
