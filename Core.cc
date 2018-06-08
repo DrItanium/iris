@@ -354,6 +354,18 @@ namespace iris {
         incr._args.src = op._args.dest;
         perform(incr);
     }
+	DefExec(ReadLine) {
+		std::string _input;
+		std::getline(std::cin, _input);
+		auto length = getSource(op).address;
+		Address numToCopy = ((_input.size() > length) ? length : _input.size()) - 1;
+		auto address = getDestination(op).address;
+		store(address, Number(numToCopy));
+		++address;
+		for (Address i = 0u; i < numToCopy; ++i, ++address) {
+			store(address, _input[i]);
+		}
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

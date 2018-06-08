@@ -64,3 +64,15 @@ X(LoadThenIncrement, TwoRegister, ldtincr)
 X(LessThanImmediate, TwoRegisterWithImmediate, lti)
 X(Move, TwoRegister, move)
 X(StoreThenIncrement, TwoRegister, sttincr)
+X(ReadLine, TwoRegister, wltm) // write a line from stdin into memory
+							   // dest - address to write to (length is written
+							   // into the first cell)
+							   // src - maximum length
+// X(ReadWord, OneRegister, rwim) // read a word separated by a space into the given address
+							   // dest - address to write to (length is written
+							   // into the first cell)
+
+//X(ParseNumber, FourRegister, pn) // src3 - address of start 
+								  // src2 - length
+								  // src - base
+								  // dest - where resulting data goes

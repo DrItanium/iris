@@ -634,6 +634,8 @@ s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start !, &context !, assign-variable,
 	next,
+s" abort" defmachineword __abort
+	_abort !, b,
 .label forth_vocabulary_start
 s" terminate" defmachineword _terminate
 	/dev/terminate-vm #, xtaddr set,
@@ -658,6 +660,7 @@ ram-start .org
 	_quit .label
 	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
 	&state !, zero-variable, 
+		
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
