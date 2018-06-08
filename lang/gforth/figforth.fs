@@ -98,6 +98,8 @@ unused-start
 1+cconstant xfourth \ contents of the fourth stack item
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
+1+cconstant xfifth \ temporary storage register five
+1+cconstant cv2
 too-many-vars-defined
 
 
@@ -316,7 +318,7 @@ s" !" defmachineword _! ( v a -- )
 s" c," defmachineword _c,
 	1pop
     0xFF #, xtop xtop andi, 
-	&DP xtaddr set,
+	&DP !, xtaddr set,
 	xtaddr xdp ld, 
     xtop xdp st, \ save it to the current dict pointer front
     xdp 1+, \ move ahead by one
@@ -419,19 +421,19 @@ s" bl" defmachineword _bl
     next,
 
 s" here" defmachineword _here
-	&DP xtaddr set,
+	&DP !, xtaddr set,
 	xtaddr xdp ld, 
     xdp xsp push,
     next,
 s" allot" defmachineword _allot ( n -- )
 	1pop
-	&DP xtaddr set,
+	&DP !, xtaddr set,
 	xtaddr xdp ld, 
     xtop xdp xdp add,
 	xdp xtaddr st,
     next,
 s" pad" defmachineword _pad ( -- n )
-	&DP xtaddr set,
+	&DP !, xtaddr set,
 	xtaddr xdp ld, 
     0x44 #, xdp xtop addi,
     xtop xsp push,
@@ -440,7 +442,7 @@ s" ," defmachineword _, ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
 	1pop 
-	&DP xtaddr set,
+	&DP !, xtaddr set,
 	xtaddr xdp ld, 
     xtop xdp st, \ save it to the current dict pointer front
     xdp 1+, \ move ahead by one
@@ -639,6 +641,18 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
 	xtaddr set,
 	r> 
 	xtaddr swap ld, ;
+: zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
+: ?compiling, ( label -- ) 
+	&state !, xtaddr set,
+	xtaddr xtop ld, \ load the state
+	zero xtop cv neq, \ check and see if it is not equal to zero
+	!, cv bc,
+	;
+: ?interpreting, ( label -- )
+	&state !, xtaddr set,
+	xtaddr xtop ld, \ load the state
+	zero xtop cv eq, \ check and see if it is equal to zero
+	!, cv bc, ;
 s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start !, &context !, assign-variable,
@@ -669,7 +683,50 @@ s" block" defmachineword _block
 	!, xtop set,
 	xtop xsp push,
 	next, ;
-s" number" defmachineword _number \ initial basic number routine
+: push-zero, ( sp -- ) zero swap push, ;
+
+s" number" defmachineword _number \ initial basic number routine for parsing
+	\ assembler version of the forth logic, is not optimized in anyway, only
+	\ designed to streamline conversion
+	1pop \ xtop - address to start at
+	zero xsp push,
+	zero xsp push,
+	xtop xsp push,
+	1 #, xtop xlower addi,
+	xlower xsp push,
+	1pop 
+	xtop xlower ld, 
+	xlower xsp push,
+	1pop
+	0x2D #, xtop cv eqi, 
+	cv xsp push,
+	cv xrp push, \ stash a copy
+	2pop 
+	0x1 #, xtop xtop andi, \ make sure that the flag is just one before adding
+	xlower xtop xtop add,
+	xtop xsp push,
+	0xFFFF #, xsp pushi,
+	\ check and zee if we are compiling
+	&state !, xtaddr set,
+	xtaddr xtaddr ld, \ load the state
+	zero xtaddr cv eq, \ check and see if it is not equal to zero
+	_handle_error !, cv bc,
+	&dp !, xtaddr set,
+	xtaddr at0 ld, 
+    at0 xsp push,
+	0x1 #, at0 set,
+	at0 xsp push,
+	&dpl !, xtaddr set,
+	xtaddr xsp push,
+	
+	2pop \ top - address
+		 \ lower - thing to store
+	xlower xtop st,
+
+
+
+
+
 
 	
 &state s" state" defvariableword _state
@@ -699,18 +756,6 @@ s" terminate" defmachineword _terminate
 	zero xtaddr st,
 	next,
 base-dict-done .label \ always is the front address
-: zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
-: ?compiling, ( label -- ) 
-	&state !, xtaddr set,
-	xtaddr xtop ld, \ load the state
-	zero xtop cv neq, \ check and see if it is not equal to zero
-	!, cv bc,
-	;
-: ?interpreting, ( label -- )
-	&state !, xtaddr set,
-	xtaddr xtop ld, \ load the state
-	zero xtop cv eq, \ check and see if it is equal to zero
-	!, cv bc, ;
 ram-start .org
 	_cold .label
 	zero xcoreid move, \ set to the zeroth core by default

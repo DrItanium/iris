@@ -380,51 +380,39 @@ namespace iris {
 	DefExec(PrintOK) {
 		std::cout << "  ok" << std::endl;
 	}
-	DefExec(ParseNumber) {
-		// parse a number from the input string given
-		// src will be the error code
-		// src2 contains the length
-		// src3 contains the string to process
-		// dest will contain the final outcome
-		auto address = getSource3(op).address;
-		auto length = getSource2(op).address;
-		Address outcome = 0;
-		std::stringstream ss;
-		for (auto a = 0; a < length; ++a) {
-			// we have to walk through this
-			auto value = load(address + a);
-			auto ch = char(value);
-			if (ch == ' ') {
-				break;
-			} else {
-				outcome = outcome << 4;
-				switch (ch) {
-					case '0': outcome &= 0xFFF0; break;
-					case '1': outcome += 1 ; break;
-					case '2': outcome += 2 ; break;
-					case '3': outcome += 3 ; break;
-					case '4': outcome += 4 ; break;
-					case '5': outcome += 5 ; break;
-					case '6': outcome += 6 ; break;
-					case '7': outcome += 7 ; break;
-					case '8': outcome += 8 ; break;
-					case '9': outcome += 9 ; break;
-					case 'a': case 'A': outcome += 0xA; break;
-					case 'b': case 'B': outcome += 0xB; break;
-					case 'c': case 'C': outcome += 0xC; break;
-					case 'd': case 'D': outcome += 0xD; break;
-					case 'e': case 'E': outcome += 0xE; break;
-					case 'f': case 'F': outcome += 0xF; break;
-					default: 
-						setSource(op, -1);
-						setDestination(op, 0);
-						return;
-
-				}
+	DefExec(Digit) {
+		// src3 - character to convert
+		// src2 - number base
+		// src - number
+		// dest - success flag
+		auto numBase = getSource2(op).get<unsigned char>();
+		constexpr unsigned char normalizationValue = '0';
+		auto character = getSource3(op).get<unsigned char>();
+		if (character < normalizationValue) {
+			setDestination(op, false);
+			setSource(op, 0);
+			return;
+		} else if (character == normalizationValue) {
+			setDestination(op, true);
+			setSource(op, 0);
+			return;
+		} 
+		auto value = character - normalizationValue;
+		if (value > 0x9) {
+			value -= 0x7;
+			if (value < 0xa) {
+				setDestination(op, false);
+				setSource(op, 0);
+				return;
 			}
+		} 
+		if (value >= numBase) {
+			setDestination(op, false);
+			setSource(op, 0);
+			return;
 		}
-		setDestination(op, outcome);
-		setSource(op, 0);
+		setDestination(op, true);
+		setSource(op, Address(value));
 	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

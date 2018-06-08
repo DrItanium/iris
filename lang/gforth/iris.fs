@@ -136,7 +136,7 @@ opcode: #move
 opcode: #sttincr
 opcode: #rltm
 opcode: #prok
-opcode: #num
+opcode: #digit
 opcode}
 
 \ registers
@@ -716,4 +716,4 @@ push, ;
 #sttincr inst-2reg sttincr,
 #rltm inst-2reg rltm,
 #prok inst-no-reg prok,
-#num inst-2reg parse-num,
+#digit inst-4reg digit, 
