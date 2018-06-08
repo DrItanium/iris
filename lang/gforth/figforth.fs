@@ -654,6 +654,7 @@ s" block" defmachineword _block
 	_block_done !, cv bc,
 	\ if they are not then perform the sync automatically followed by
 	\ loading the new id
+	\ will need to expand on this later on by encoding the core contents
 	/dev/core-dump #, io set,
 	xcoreid io st,
 	/dev/core-load #, io set,
@@ -740,12 +741,12 @@ ram-start .org
 	\ setup the return stack pointer
 	return-stack-start #, &R0 !, assign-variable,
 	xtop xrp move,
-	0xFFFF #, &warning !, assign-variable \ always skip error messages for now
+	0xFFFF #, &warning !, assign-variable, \ always skip error messages for now
 	_quit .label
 	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
 	&state !, zero-variable, 
 	deflabel-here _quit_loop_start
-	return-stack-start #, rsp set, \ clear return stack
+	return-stack-start #, xrp set, \ clear return stack
 	input-buffer-start #, at0 set, \ set where to write to
 	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
 	at1 at0 rltm, \ input a line of text
