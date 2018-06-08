@@ -270,6 +270,10 @@ namespace iris {
 				setRegister(value._args.src2, n);
 			}
 			template<typename T>
+			void setSource3(const T& value, Number n) noexcept {
+				setRegister(value._args.src3, n);
+			}
+			template<typename T>
 			Number getDestination(const T& value) const noexcept {
 				return getRegister(value._args.dest).getValue();
 			}
@@ -280,6 +284,10 @@ namespace iris {
 			template<typename T>
 			Number getSource2(const T& value) const noexcept {
                 return getRegister(value._args.src2).getValue();
+			}
+			template<typename T>
+			Number getSource3(const T& value) const noexcept {
+                return getRegister(value._args.src3).getValue();
 			}
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);

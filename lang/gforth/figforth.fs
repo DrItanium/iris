@@ -664,31 +664,13 @@ s" block" defmachineword _block
 	&FIRST #, at0 set,
 	at0 xsp push,
 	next,
-
-s" word" defmachineword _word
-	deflabel _word_choice_done
-	deflabel _word_from_terminal
-	2pop \ top - blk id
-		 \ lower - in value
-	xtop cv eqz, \ 
-	_word_from_terminal !, cv bc,
-\ grab from a block at this point
-		&blk !, xtaddr set,
-		xtaddr xtaddr ld,
-		
-		\ call block and return here
-	_word_choice_done !, b,
-	_word_from_terminal .label
-		&tib !, xtaddr set,
-		xtaddr xtop 
-	_word_choice_done .label
-
-
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
 	!, xtop set,
 	xtop xsp push,
 	next, ;
+s" number" defmachineword _number \ initial basic number routine
+
 	
 &state s" state" defvariableword _state
 &base s" base" defvariableword _base
@@ -731,6 +713,9 @@ base-dict-done .label \ always is the front address
 	!, cv bc, ;
 ram-start .org
 	_cold .label
+	zero xcoreid move, \ set to the zeroth core by default
+	/dev/core-load #, io set,
+	xcoreid io st, \ setup the zeroth core
 	base-dict-done !, &fence !, assign-variable,   				\ setup the fence
 	base-dict-done !, &dp !, assign-variable,      				\ setup the dictionary pointer
 	0x10 #, &base !, assign-variable,              \ setup the numeric base
