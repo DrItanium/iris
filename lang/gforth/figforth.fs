@@ -57,7 +57,7 @@ deflabel &VOC-LINK \ address of a field in the definition of the most recently c
                    \ created vocabulary. All vocabulary names are linked by
                    \ these fields to allow control for FORGETting through multiple
                    \ vocabularies
-deflabel &BLK \ current block number under interpretatio. If 0, input is
+deflabel &BLK \ current block number under interpretation. If 0, input is
               \ being taken from the terminal input buffer
 deflabel &IN  \ Byte offset within the current input text buffer (terminal or
               \ disk) from which the next text will be accepted. WORD uses and
@@ -97,6 +97,7 @@ unused-start
 1+cconstant xstate \ temporary storage for the state variable
 1+cconstant xfourth \ contents of the fourth stack item
 1+cconstant xerror \ error code
+1+cconstant xcoreid \ current core section id
 too-many-vars-defined
 
 
@@ -633,12 +634,53 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
   xtaddr set,
   xtop set,
   xtop xtaddr st, ;
+: load-variable, ( var type reg -- )
+	>r
+	xtaddr set,
+	r> 
+	xtaddr swap ld, ;
 s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start !, &context !, assign-variable,
 	next,
-s" abort" defmachineword __abort
-	_abort !, b,
+s" abort" defmachineword __abort _abort !, b,
+s" cold" defmachineword __cold _cold !, b,
+s" quit" defmachineword __quit _quit !, b,
+s" block" defmachineword _block 
+	deflabel _block_done
+	( bid -- addr )
+	1pop \ xtop - block number to select
+	xcoreid xtop cv eq, \ if the ids are the same then do nothing
+	_block_done !, cv bc,
+	\ if they are not then perform the sync automatically followed by
+	\ loading the new id
+	/dev/core-dump #, io set,
+	xcoreid io st,
+	/dev/core-load #, io set,
+	xtop io st,
+	xtop xcoreid move, 
+	_block_done .label
+	&FIRST #, at0 set,
+	at0 xsp push,
+	next,
+
+s" word" defmachineword _word
+	deflabel _word_choice_done
+	deflabel _word_from_terminal
+	2pop \ top - blk id
+		 \ lower - in value
+	xtop cv eqz, \ 
+	_word_from_terminal !, cv bc,
+\ grab from a block at this point
+		&blk !, xtaddr set,
+		xtaddr xtaddr ld,
+		\ call block and return here
+	_word_choice_done !, b,
+	_word_from_terminal .label
+		&tib !, xtaddr set,
+		xtaddr xtop 
+	_word_choice_done .label
+
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
