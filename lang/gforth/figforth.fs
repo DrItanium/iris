@@ -660,7 +660,19 @@ ram-start .org
 	_quit .label
 	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
 	&state !, zero-variable, 
-		
+	deflabel-here _quit_loop_start
+	return-stack-start #, rsp set, \ clear return stack
+	input-buffer-start #, at0 set, \ set where to write to
+	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
+	at1 at0 rltm, \ input a line of text
+	\ perform interpretation
+	\ do error checking
+	&state !, xtaddr set,
+	xtaddr xtop ld,
+	zero xtop cv neq,
+	_quit_loop_start !, cv bc,
+	\ type OK on terminal
+	_quit_loop_start !, b,
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
