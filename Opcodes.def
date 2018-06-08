@@ -68,6 +68,7 @@ X(ReadLine, TwoRegister, wltm) // write a line from stdin into memory
 							   // dest - address to write to (length is written
 							   // into the first cell)
 							   // src - maximum length
+X(PrintOK, NoArguments, prok) // print ok
 // X(ReadWord, OneRegister, rwim) // read a word separated by a space into the given address
 							   // dest - address to write to (length is written
 							   // into the first cell)

@@ -135,6 +135,7 @@ opcode: #lti
 opcode: #move
 opcode: #sttincr
 opcode: #rltm
+opcode: #prok
 opcode}
 
 \ registers
@@ -275,6 +276,9 @@ x0 1+cconstant zero
 1+cconstant io
 1+cconstant unused-start
 drop
+: inst-no-reg ( opcode-index "name" -- )
+  create c, \ embed opcode
+  does> @ <<inst ;
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> >r 
@@ -714,3 +718,4 @@ push, ;
 : bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
 #sttincr inst-2reg sttincr,
 #rltm inst-2reg rltm,
+#prok inst-no-reg prok,

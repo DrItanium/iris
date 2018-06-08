@@ -38,6 +38,8 @@ deflabel _cold
 deflabel _abort
 deflabel _quit
 deflabel base-dict-done
+deflabel _handle-error
+deflabel _interpret
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
 deflabel &TIB \ address of the terminal input buffer
@@ -94,6 +96,7 @@ unused-start
 1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xstate \ temporary storage for the state variable
 1+cconstant xfourth \ contents of the fourth stack item
+1+cconstant xerror \ error code
 too-many-vars-defined
 
 
@@ -636,43 +639,6 @@ s" forth" defmachineword _forth
 	next,
 s" abort" defmachineword __abort
 	_abort !, b,
-.label forth_vocabulary_start
-s" terminate" defmachineword _terminate
-	/dev/terminate-vm #, xtaddr set,
-	zero xtaddr st,
-	next,
-base-dict-done .label \ always is the front address
-: zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
-ram-start .org
-	_cold .label
-	base-dict-done !, &fence !, assign-variable,   				\ setup the fence
-	base-dict-done !, &dp !, assign-variable,      				\ setup the dictionary pointer
-	0x10 #, &base !, assign-variable,              \ setup the numeric base
-	_abort .label
-	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
-	\ setup the data stack pointer
-	data-stack-start #, &S0 !, assign-variable,
-	xtop xsp move,
-	\ setup the return stack pointer
-	return-stack-start #, &R0 !, assign-variable,
-	xtop xrp move,
-	&warning !, zero-variable,
-	_quit .label
-	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
-	&state !, zero-variable, 
-	deflabel-here _quit_loop_start
-	return-stack-start #, rsp set, \ clear return stack
-	input-buffer-start #, at0 set, \ set where to write to
-	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
-	at1 at0 rltm, \ input a line of text
-	\ perform interpretation
-	\ do error checking
-	&state !, xtaddr set,
-	xtaddr xtop ld,
-	zero xtop cv neq,
-	_quit_loop_start !, cv bc,
-	\ type OK on terminal
-	_quit_loop_start !, b,
 
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
@@ -700,6 +666,75 @@ ram-start .org
 &hld s" hld" defvariableword _hld
 &separator s" separator" defvariableword _separator
 &terminator s" terminator" defvariableword _terminator
+
+.label forth_vocabulary_start
+s" terminate" defmachineword _terminate
+	/dev/terminate-vm #, xtaddr set,
+	zero xtaddr st,
+	next,
+base-dict-done .label \ always is the front address
+: zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
+: ?compiling, ( label -- ) 
+	&state !, xtaddr set,
+	xtaddr xtop ld, \ load the state
+	zero xtop cv neq, \ check and see if it is not equal to zero
+	!, cv bc,
+	;
+: ?interpreting, ( label -- )
+	&state !, xtaddr set,
+	xtaddr xtop ld, \ load the state
+	zero xtop cv eq, \ check and see if it is equal to zero
+	!, cv bc, ;
+ram-start .org
+	_cold .label
+	base-dict-done !, &fence !, assign-variable,   				\ setup the fence
+	base-dict-done !, &dp !, assign-variable,      				\ setup the dictionary pointer
+	0x10 #, &base !, assign-variable,              \ setup the numeric base
+	_abort .label
+	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
+	\ setup the data stack pointer
+	data-stack-start #, &S0 !, assign-variable,
+	xtop xsp move,
+	\ setup the return stack pointer
+	return-stack-start #, &R0 !, assign-variable,
+	xtop xrp move,
+	0xFFFF #, &warning !, assign-variable \ always skip error messages for now
+	_quit .label
+	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
+	&state !, zero-variable, 
+	deflabel-here _quit_loop_start
+	return-stack-start #, rsp set, \ clear return stack
+	input-buffer-start #, at0 set, \ set where to write to
+	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
+	at1 at0 rltm, \ input a line of text
+	\ perform interpretation
+	\ at the end check and see if we are looking at 
+	zero xerror cv neq, 
+	_handle-error !, cv bc,
+	_quit_loop_start ?compiling,
+	prok, \ type OK on terminal
+	_quit_loop_start !, b,
+_handle-error .label
+	deflabel _handle-error0
+	&warning !, xtaddr set,
+	0xFFFF #, at1 set,
+	xtaddr at0 ld,
+	at1 at0 cv neq, \ equal negative one?
+	_handle-error0 !, cv bc,
+	_abort !, b,
+	_handle-error0 .label
+	\ print text string under interpretation
+	\ perform checks to see what kind of warning message we should print
+	\ TODO add support for printing more information
+	data-stack-start #, xsp set,
+	\ push IN and BLK on Data stack
+	&in !, xtaddr set,
+	xtaddr xsp push,
+	&blk !, xtaddr set,
+	xtaddr xsp push,
+	_quit !, b,
+
+
 system-start .org \ system variables
 &state .label 0 #, .data16
 &base .label 0x10 #, .data16

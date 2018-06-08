@@ -366,6 +366,9 @@ namespace iris {
 			store(address, _input[i]);
 		}
 	}
+	DefExec(PrintOK) {
+		std::cout << "  ok" << std::endl;
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
