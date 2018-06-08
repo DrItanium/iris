@@ -134,6 +134,7 @@ opcode: #ldtincr
 opcode: #lti
 opcode: #move
 opcode: #sttincr
+opcode: #rltm
 opcode}
 
 \ registers
@@ -712,3 +713,4 @@ push, ;
 : bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
 : bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
 #sttincr inst-2reg sttincr,
+#rltm inst-2reg rltm,
