@@ -80,6 +80,7 @@ deflabel &HLD      \ address of the latest character of text during numeric outp
 deflabel &SEPARATOR \ word separator contents
 deflabel &TERMINATOR \ terminator index
 deflabel &BASE       \ numeric base
+deflabel &width 	\ width of some kind
 unused-start 
 \ constants
 \ user variables
@@ -290,24 +291,31 @@ s" 0=" defmachineword _0=
     xtop xsp push,
     next,
 
+: over, ( -- ) 
+	2pop 
+	xlower xsp push,
+	xtop xsp push,
+	xlower xsp push, ;
 s" over" defmachineword _over 
-    xsp xtop incr,
-    xtop xlower ld,
-    xlower xsp push,
-    next,
+	over,
+	next,
+: dup, ( -- ) 
+	xsp at0 ld,
+	at0 xsp push, ;
 s" dup" defmachineword _dup 
-    xsp xtop ld,
-    xtop xsp push,
+	dup,
     next,
+: drop, ( -- ) xsp zero pop, ;
 s" drop" defmachineword _drop 
-    xsp zero pop, 
+	drop,
     next,
-
+: swap, ( -- )
+	2pop \ top -- b
+		 \ lower -- a
+	xtop xsp push,
+	xlower xsp push, ;
 s" swap" defmachineword _swap
-	2pop \ top - a 
-		 \ lower - b
-    xtop xsp push, 
-    xlower xsp push,
+	swap,
     next,
 s" !" defmachineword _! ( v a -- )
    2pop \ top - addr
@@ -342,8 +350,8 @@ s" @" defmachineword _@
     xtop xsp push,
     next,
 s" ." defmachineword _.
-   /dev/console2 #, xlower set,
    1pop
+   /dev/console2 #, xlower set,
    xtop xlower st,
    next,
 s" cr" defmachineword _cr
@@ -356,16 +364,21 @@ s" space" defmachineword _space
     0x20 #, xtop set,
     xtop xlower st,
     next,
-s" key" defmachineword _key
-    /dev/console0 #, xlower set,
-    xlower xtop ld,
-    xtop xsp push,
-    next,
-s" emit" defmachineword _emit
-    /dev/console0 #, xlower set,
-    1pop
-    xtop xlower st,
-    next,
+: key, ( -- )
+	/dev/console0 #, xlower set,
+	xlower xtop ld,
+	xtop xsp push, ;
+: emit, ( -- )
+	/dev/console0 #, xlower set,
+	1pop
+	xtop xlower st, ;
+
+s" key" defmachineword _key 
+	key, 
+	next,
+s" emit" defmachineword _emit 
+	emit, 
+next,
 s" sp@" defmachineword _sp@
     xsp xsp push,
     next,
@@ -549,14 +562,16 @@ s" I" defmachineword _I
 	xrp xtop ld, \ load the top loop element
 	xtop xsp push, \ put it onto the data stack
 	next,
+: leave, ( -- ) 
+		xrp xtop pop,
+		xrp zero pop,
+		xtop xrp push,
+		xtop xrp push, ;
 s" leave" defmachineword _leave
 	\ make the loop limit equal to the loop count and force the loop to
 	\ terminate at loop or +loop
 	\ copy loop count to loop limit on return stack
-	xrp xtop pop,
-	xrp zero pop,
-	xtop xrp push,
-	xtop xrp push,
+	leave,
 	next,
 s" (loop)" defmachineword _(loop)
 	deflabel loop_1
@@ -694,9 +709,6 @@ s" block" defmachineword _block
 	xtaddr at0 ld, 
     at0 xsp push,
 	0x1 #, xsp pushi, ;
-: dup, ( -- ) 
-	xsp at0 ld,
-	at0 xsp push, ;
 : 1+,, ( -- )
 	1pop
 	1 #, xtop xtop addi,
@@ -734,11 +746,6 @@ s" block" defmachineword _block
 : r>, ( -- )
 	xrp xtop pop,
 	xtop xsp push, ;
-: swap, ( -- )
-	2pop \ top -- b
-		 \ lower -- a
-	xtop xsp push,
-	xlower xsp push, ;
 : if,, ( jump type -- )
 	1pop
 	xtop cv eqz,
@@ -838,6 +845,121 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	negate,
 	number_finish .label
 	next,
+s" (abort)" defmachineword __abort_ _abort !, b,
+s" expect" defmachineword _expect
+	over, +, over, 
+	deflabel-here expect_loop
+	key, \ key inlined
+	dup, \ make a copy
+	0xE #, lit,
+	+, origin,  \ ????? ORIGIN?
+	=,
+	deflabel expect_else0
+	deflabel expect_endif0
+	expect_else0 !, if,,
+		drop,
+		8 #, lit,
+		over,
+		I, =,
+		dup, 
+		r>, 
+		2 #, lit, 
+		-, +, \ get the loop index. Decrement it by one. If it is
+			  \ the starting 
+		r>, -,
+		expect_endif0 !, b,
+		expect_else0 .label
+			dup, 
+			0xD #, lit,
+			=,
+		deflabel expect_else1
+		deflabel expect_endif1
+			expect_else1 !, if,,
+				leave, 
+				drop, 
+				bl #, lit, 
+				0,,
+				expect_endif1 !, b,
+			expect_else1 .label
+				dup,
+			expect_endif1 .label
+				I,
+				c!, 
+				0,,
+				1+,,
+				!,
+	expect_endif0 .label
+	emit,
+	deflabel compile_loop_1
+	\ runtime routine of loop
+	xrp xtaddr move,
+	xtaddr xtop ld,
+	xtop 1+,
+	xtop xtaddr st,
+	2 #, xtaddr xtaddr addi,
+	xtaddr xlower ld,
+	xtop xlower cv ge, 
+	compile_loop_1 !, cv bc,
+	expect_loop !, b,
+	compile_loop_1 .label
+	\ discard the loop parameters off the return stack
+	xrp zero pop,
+	xrp zero pop,
+	drop,
+	next,
+
+s" create" defmachineword _create
+	bl #, lit,
+	word,
+	here,
+	dup, c@,
+	&width !, lit, @,
+	min,
+	1+,, allot,
+	dup, 0xa0 #, lit, toggle,
+	here, 1-,, 0x80 #, lit, toggle,
+	latest,,
+	&current #, lit, #, !, 
+	here, 2 #, lit, +, ,, next,
+
+s" word" defmachineword _word
+	&blk #, lit, @,
+	deflabel _word_else0
+	deflabel _word_endif0
+	_word_else0 !, if,,
+		&blk #, lit @, block,
+		_word_endif0 !, b,
+	_word_else0 .label
+		&tib !, lit, @, 
+	_word_endif0 .label
+		&in !, lit, @, +, swap, 
+	    enclose,
+		here,
+		0x22 #, lit,
+		blanks, 
+		&in !, lit, 
+		+!, 
+		over,
+		-, 
+		>r,
+		r,
+		here,
+		c!,
+		+,
+		here,
+		!+,
+		r>, 
+		next,
+
+	
+
+
+
+
+
+
+
+
 
 
 
@@ -948,6 +1070,7 @@ system-start .org \ system variables
 &separator .label 0 #, .data16
 &terminator .label 0 #, .data16
 &context .label 0 #, .data16
+&width .label 0 #, .data16
 asm}
 
 bye

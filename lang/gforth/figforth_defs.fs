@@ -34,40 +34,6 @@ R>
 ;  \ move the string from input buffer to top of dictionary
 
 
-: create ( -- ) 
-  bl word
-  here
-  dup c@
-  width @
-  min
-  1+ allot
-  dup 0x0a0 toggle
-  here 1- 0x80 toggle
-  latest,
-  current @ !
-  here 2+ , ;
-
-
-: expect ( addr n -- )
-over + over 
-do 
-key 
-dup 0xE +origin = 
-if 
-drop 0x8 over I= dup r> 0x2 - + r> - 
-else 
-dup 0x0D = 
-if 
-  leave drop bl 0 
-else 
-  dup 
-endif 
-I C! 0 I 1+ ! 
-endif 
-emit 
-loop 
-drop ; 
-
 : query TIB 0x50 expect 0 in ! ;
 
 
@@ -145,59 +111,6 @@ drop ;
     cr I 3 .R space
     I SCR @ .line
     loop cr ;
-
-: (number) ( d1 addr1 -- d2 addr2 )
-  \ runtime routine of number conversion. Convert an ascii text beginning at addr1 + 1
-  \ according to base. The result is accumulated with d1 to become d2. Addr2 is
-  \ the address of the first unconvertable digit
-  begin
-    1+ dup >r 
-    c@ 
-    base @
-    digit
-    while
-    swap 
-    base @ U* 
-    drop 
-    rot 
-    base @ U*
-    D+
-    dpl @ 1+
-    if 
-      1 dpl +!
-      endif 
-      r>
-      repeat
-      r>
-      ;
-
-: number ( addr -- d )
-  0 0 rot \ push the two zero's on stack as the initial value of d
-  dup 1+ c@ \ get the first digit
-  0x2D = \ is it a -sign ?
-  dup >R \ save the flag on return stack
-  + \ if the first digit is -, the flag is 1, and addr + 1 points to the second digit
-    \ addr + 0 remains the same, pointing to the first digit
-  -1 \ The initial value of dpl
-  begin 
-    dpl ! \ store the decimal point counter
-    (number) \ convert one digit after another until an invalid char occurs.
-             \ result is accumulated into d.
-    dup c@   \ fetch the invalid digit
-    bl - \ is it a blank?
-  while  \ not a blank, see if it is a decimal point
-    dup c@  \ get the digit sign
-    0x2e - \ is it a decimal point?
-    0 ?error \ not a decimal point, it is an illegal character for a number.
-             \ issue an error message and quit
-    0 \ a decimal point was found. set DPL to 0 the next time
-    repeat \ exit here if a blank was detected. Otherwise repeat the conversion
-           \ process
-    drop \ discard addr on stack
-    r>   \ pop the flag of - sign back
-    if dminus \ negate d if the first digit is a - sign
-    endif 
-;
 
 : <# ( -- )
   pad \ pad is the scratch pad address for text output, 68 bytes above the dictionary head HERE
