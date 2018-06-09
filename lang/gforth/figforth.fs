@@ -416,6 +416,7 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_loop !, b,
     _fill_done .label
     next,
+: bl, ( -- ) bl #, xsp pushi, ;
 s" bl" defmachineword _bl
     bl #, xsp pushi,
     next,
@@ -684,29 +685,8 @@ s" block" defmachineword _block
 	xtop xsp push,
 	next, ;
 : push-zero, ( sp -- ) zero swap push, ;
-
-s" number" defmachineword _number \ initial basic number routine for parsing
-	\ assembler version of the forth logic, is not optimized in anyway, only
-	\ designed to streamline conversion
-	1pop \ xtop - address to start at
-	zero xsp push,
-	zero xsp push,
-	xtop xsp push,
-	1 #, xtop xlower addi,
-	xlower xsp push,
-	1pop 
-	xtop xlower ld, 
-	xlower xsp push,
-	1pop
-	0x2D #, xtop cv eqi, 
-	cv xsp push,
-	cv xrp push, \ stash a copy
-	2pop 
-	0x1 #, xtop xtop andi, \ make sure that the flag is just one before adding
-	xlower xtop xtop add,
-	xtop xsp push,
-	0xFFFF #, xsp pushi,
-	\ check and zee if we are compiling
+: begin, ( -- ) 
+	\ check and see if we are compiling
 	&state !, xtaddr set,
 	xtaddr xtaddr ld, \ load the state
 	zero xtaddr cv eq, \ check and see if it is not equal to zero
@@ -714,14 +694,150 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	&dp !, xtaddr set,
 	xtaddr at0 ld, 
     at0 xsp push,
-	0x1 #, at0 set,
-	at0 xsp push,
-	&dpl !, xtaddr set,
-	xtaddr xsp push,
-	
+	0x1 #, xsp pushi, ;
+: dup, ( -- ) 
+	xsp at0 ld,
+	at0 xsp push, ;
+: 1+,, ( -- )
+	1pop
+	1 #, xtop xtop addi,
+	xtop xsp push, ;
+: c@,, ( -- )
+	1pop 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	xtop xsp push, ;
+: lit, ( n t -- ) xsp pushi, ;
+: =, ( -- )
+	2pop 
+	xlower xtop cv eq,
+	cv xsp push, ;
+: >r, ( -- )
+	1pop
+	xtop xrp push, ;
+: store, ( -- )
 	2pop \ top - address
 		 \ lower - thing to store
 	xlower xtop st,
+	;
+: +, ( -- ) 2pop xlower xtop xtop add, xtop xsp push, ;
+: -, ( -- ) 2pop xlower xtop xtop sub, xtop xsp push, ;
+: rot, ( -- ) 
+	3pop ( a b c -- b c a )
+		 \ top - c
+		 \ lower - b
+		 \ third - a 
+	xlower xsp push,
+	xtop xsp push,
+	xthird xsp push, ;
+: 0,, ( -- ) 0 #, lit, ;
+: drop, ( -- ) xsp zero pop, ;
+: r>, ( -- )
+	xrp xtop pop,
+	xtop xsp push, ;
+: swap, ( -- )
+	2pop \ top -- b
+		 \ lower -- a
+	xtop xsp push,
+	xlower xsp push, ;
+: if,, ( jump type -- )
+	1pop
+	xtop cv eqz,
+	cv bc, ;
+: negate, ( -- )
+	1pop
+	xtop xtop not,
+	xtop xsp push, ;
+: base@, ( -- )
+	&base !, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push,
+	;
+: dpl@, ( -- )
+	&dpl !, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push, 
+	;
+: u*, ( -- )
+	2pop
+	xlower xtop xtop umul,
+	xtop xsp push, ;
+
+s" number" defmachineword _number \ initial basic number routine for parsing
+	deflabel number_finish
+	\ assembler version of the forth logic, is not optimized in anyway, only
+	\ designed to streamline conversion
+	0,, 0,, rot, 
+	dup, 
+	1+,,
+	c@,,
+	0x2D #, lit, 
+	=,
+	dup,
+	>r, \ stash a copy
+	1pop
+	0x1 #, xtop xtop andi, \ make sure that the flag is just one before adding
+	xtop xsp push,
+	+,
+	0xFFFF #, lit,
+	deflabel-here number_begin
+	&dpl !, lit,
+	store,
+	\ (number)
+	deflabel-here (number)_begin
+	1+,, dup, >r,
+	c@,,
+	base@,
+	2pop \ top - n1
+		 \ lower - c
+	xlower xtop xthird xfourth digit, \ parse the digit using the CPU
+	zero xfourth cv eq, \ did we hit a non digit
+	(number)_done !, cv bc,
+	xthird xsp push,
+	base@, u*,
+	rot,
+	base@, u*,
+	+,
+	dpl@, 1+,,
+	deflabel (number)_noincr
+	(number)_noincr !, if,,
+	1 #, lit,
+	&dpl !, lit,
+    2pop \ top - addr 
+         \ lower - n
+    xtop xthird ld,
+    xlower xthird xlower add, 
+    xlower xtop st,
+	(number)_noincr .label
+	r>,
+	(number)_begin !, b,
+	(number)_done .label
+	r>,
+	dup, c@,
+	bl, -,
+	1pop \ get the flag
+	xtop cv eqz,
+	number_done !, cv bc,
+	\ while loop check
+	dup, c@,,
+	0x2e #, lit, -, \ is it a decimal point?
+	0,, 
+	deflabel number-not-error
+	swap,
+	number-not-error !, if,, 
+	_handle_error !, b,
+	number-not-error .label
+	drop,
+	0,, \ a decimal point was found. set DPL to 0 the next time
+	number_begin !, b,
+	deflabel-here number_done 
+	drop,
+	r>,
+	number_finish !, if,, 
+	negate,
+	number_finish .label
+	next,
+
 
 
 

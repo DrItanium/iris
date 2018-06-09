@@ -73,3 +73,8 @@ X(Digit, FourRegister, digit) // convert the provided character in src3 with
 	                          // base n1 to a binary number n2 with a true flag
 							  // on top of stack. If the digit is an invalid
 							  // character, only a false flagis left on stack.
+							  // ( c n1 -- n2 tf or ff )
+							  // src3 - character to convert
+							  // src2 - number base
+							  // src - number
+							  // dest - success flag
