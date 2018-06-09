@@ -40,6 +40,7 @@ deflabel _quit
 deflabel base-dict-done
 deflabel _handle-error
 deflabel _interpret
+deflabel &porigin
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
 deflabel &TIB \ address of the terminal input buffer
@@ -332,22 +333,27 @@ s" c," defmachineword _c,
     xdp 1+, \ move ahead by one
 	xdp xtaddr st,
     next,
-s" c!" defmachineword _c!  ( value addr -- )
+: c!, ( -- )
 	2pop \ top - addr
 		 \ lower - value
     0xFF #, xlower xlower andi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
-    next,
+		;
+s" c!" defmachineword _c!  ( value addr -- ) c!, next,
+: c@, ( -- )
+	1pop 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	xtop xsp push, ;
 s" c@" defmachineword _c@
-    1pop \ top - addr
-    xtop xtop ld,
-    0xFF #, xtop xtop andi,
-    xtop xsp push,
+	c@,
     next,
-s" @" defmachineword _@
+: @, ( -- )
     1pop
     xtop xtop ld,
-    xtop xsp push,
+    xtop xsp push, ;
+s" @" defmachineword _@
+	@,
     next,
 s" ." defmachineword _.
    1pop
@@ -558,9 +564,13 @@ s" (do)" defmachineword _(do)
 	xlower xrp push,
 	xtop xrp push,
 	next,
-s" I" defmachineword _I
+: I, ( -- )
 	xrp xtop ld, \ load the top loop element
 	xtop xsp push, \ put it onto the data stack
+	;
+
+s" I" defmachineword _I
+	I,
 	next,
 : leave, ( -- ) 
 		xrp xtop pop,
@@ -713,11 +723,6 @@ s" block" defmachineword _block
 	1pop
 	1 #, xtop xtop addi,
 	xtop xsp push, ;
-: c@, ( -- )
-	1pop 
-	xtop xtop ld,
-	0xFF #, xtop xtop andi,
-	xtop xsp push, ;
 : lit, ( n t -- ) xsp pushi, ;
 : =, ( -- )
 	2pop 
@@ -742,7 +747,6 @@ s" block" defmachineword _block
 	xtop xsp push,
 	xthird xsp push, ;
 : 0,, ( -- ) 0 #, lit, ;
-: drop, ( -- ) xsp zero pop, ;
 : r>, ( -- )
 	xrp xtop pop,
 	xtop xsp push, ;
@@ -851,9 +855,8 @@ s" expect" defmachineword _expect
 	deflabel-here expect_loop
 	key, \ key inlined
 	dup, \ make a copy
-	0xE #, lit,
-	+, origin,  \ ????? ORIGIN?
-	=,
+	0x8 #, lit, \ load the ascii backspace code
+	=, \ is it a backspace?
 	deflabel expect_else0
 	deflabel expect_endif0
 	expect_else0 !, if,,
@@ -908,26 +911,29 @@ s" expect" defmachineword _expect
 	drop,
 	next,
 
-s" create" defmachineword _create
-	bl #, lit,
-	word,
-	here,
-	dup, c@,
-	&width !, lit, @,
-	min,
-	1+,, allot,
-	dup, 0xa0 #, lit, toggle,
-	here, 1-,, 0x80 #, lit, toggle,
-	latest,,
-	&current #, lit, #, !, 
-	here, 2 #, lit, +, ,, next,
-
 s" word" defmachineword _word
 	&blk #, lit, @,
 	deflabel _word_else0
 	deflabel _word_endif0
 	_word_else0 !, if,,
-		&blk #, lit @, block,
+		&blk #, lit, @, 
+		\ block,
+		deflabel _block_done0
+		( bid -- addr )
+		1pop \ xtop - block number to select
+		xcoreid xtop cv eq, \ if the ids are the same then do nothing
+		_block_done !, cv bc,
+		\ if they are not then perform the sync automatically followed by
+		\ loading the new id
+		\ will need to expand on this later on by encoding the core contents
+		/dev/core-dump #, io set,
+		xcoreid io st,
+		/dev/core-load #, io set,
+		xtop io st,
+		xtop xcoreid move, 
+		_block_done0 .label
+		&FIRST #, at0 set,
+		at0 xsp push,
 		_word_endif0 !, b,
 	_word_else0 .label
 		&tib !, lit, @, 
@@ -950,6 +956,65 @@ s" word" defmachineword _word
 		!+,
 		r>, 
 		next,
+s" create" defmachineword _create
+	bl #, lit,
+	&blk #, lit, @,
+	deflabel _word_else1
+	deflabel _word_endif1
+	_word_else0 !, if,,
+		&blk #, lit, @, block,
+		_word_endif1 !, b,
+	_word_else1 .label
+		&tib !, lit, @, 
+	_word_endif1 .label
+		&in !, lit, @, +, swap, 
+	    enclose,
+		here,
+		0x22 #, lit,
+		blanks, 
+		&in !, lit, 
+		+!, 
+		over,
+		-, 
+		>r,
+		r,
+		here,
+		c!,
+		+,
+		here,
+		!+,
+		r>, 
+	here,
+	dup, c@,
+	&width !, lit, @,
+	min,
+	1+,, allot,
+	dup, 0xa0 #, lit, toggle,
+	here, 1-,, 0x80 #, lit, toggle,
+	latest,,
+	&current #, lit, #, !, 
+	here, 2 #, lit, +, ,, next,
+s" compile" defmachineword _compile
+	?comp, \ error if not compiling
+	r>,    \ top of return stack is pointing to the next word following compile
+	dup, 2 #, lit, +, >r,
+	@, ,, 
+	next,
+s" count" defmachineword _count dup, 1+,, swap, next,
+	 
+	
+s" nfa" defmachineword _nfa
+	5 #, lit, 
+	-,
+	0xFFFF #, lit,
+	traverse, 
+	next, 
+\ s" ?error" defmachineword _?error
+\ 	swap,
+\ 	deflabel _?error_else
+\ 	deflabel _?error_endif
+\ 	_?error_else !, if,,
+	
 
 	
 
@@ -1071,6 +1136,7 @@ system-start .org \ system variables
 &terminator .label 0 #, .data16
 &context .label 0 #, .data16
 &width .label 0 #, .data16
+&porigin .label 0 #, .data16
 asm}
 
 bye

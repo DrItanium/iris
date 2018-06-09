@@ -1,14 +1,3 @@
-: compile ( -- )
-	?comp  \ error if not compiling
-	r>     \ top of return stack is pointing to the next word following COMPILE
-	dup 2 + >r \ increment this pointer by 2 to point to the second word
-			   \ following COMPILE, which will be the next word to be executed. 
-			   \ The word immediately following COMPILE should be compiled, not
-			   \ executed.
-	@ ,        \ do the compilation at runtime
-	;
-
-: (abort) ( -- ) ABORT ;
 : error ( n -- in blk )
   warning @ 0<
   if (abort) endif 
@@ -20,19 +9,6 @@
   blk @
   quit ;
 : ?ERROR ( f n -- ) swap if error else drop endif ;
-
-: word ( c ------ )
-\ work horse of the interpreter
-blk @ if 
-        blk @ block 
-	  else 
-	   tib @ 
-	  endif 
-       in @ + swap enclose here 0x22 blanks in +! over - >r R here C! + 
-here !+
-R> 
-;  \ move the string from input buffer to top of dictionary
-
 
 : query TIB 0x50 expect 0 in ! ;
 
@@ -49,8 +25,6 @@ R>
   else 
     drop
   endif ;
-
-: count ( addr n -- ) dup 1+ swap ;
 
 : -trailing ( addr n1 -- addr n2 )
   dup 0
@@ -118,19 +92,6 @@ R>
   ;
 : erase ( addr u -- ) 0 fill ;
 : blanks ( addr u -- ) bl fill ;
-\ when the machine starts from cold
-\ COLD calls ABORT
-\ ABORT calls QUIT
-: cold 
-empty-buffers
-0 density !
-first use !
-dr0 0 eprint !
-orig 0x12 + 
-up @ 6 + 
-0x10 cmove 
-orig 0x0c + @ forth 
-6 + ! abort ;
 
 : -find ( -- [ pfa b tf ] or [ f ] )
   \ accept the next word delimited by blanks in the input stream to here, and
@@ -190,10 +151,6 @@ orig 0x0c + @ forth
   until \ loop back if not the end
   swap drop \ discard n
   ;
-: nfa ( pfa -- nfa )
-    \ convert the parameter field address to name field address
-    5 - 
-    -1 traverse ;
 : vlist ( -- )
   \ list the names of all entries in the context vocabulary. The 'break' key on
   \ terminal will terminate the listing
