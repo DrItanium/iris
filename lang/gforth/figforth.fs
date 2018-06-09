@@ -416,7 +416,6 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_loop !, b,
     _fill_done .label
     next,
-: bl, ( -- ) bl #, xsp pushi, ;
 s" bl" defmachineword _bl
     bl #, xsp pushi,
     next,
@@ -690,7 +689,7 @@ s" block" defmachineword _block
 	&state !, xtaddr set,
 	xtaddr xtaddr ld, \ load the state
 	zero xtaddr cv eq, \ check and see if it is not equal to zero
-	_handle_error !, cv bc,
+	_handle-error !, cv bc,
 	&dp !, xtaddr set,
 	xtaddr at0 ld, 
     at0 xsp push,
@@ -702,7 +701,7 @@ s" block" defmachineword _block
 	1pop
 	1 #, xtop xtop addi,
 	xtop xsp push, ;
-: c@,, ( -- )
+: c@, ( -- )
 	1pop 
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
@@ -770,7 +769,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	0,, 0,, rot, 
 	dup, 
 	1+,,
-	c@,,
+	c@,
 	0x2D #, lit, 
 	=,
 	dup,
@@ -786,12 +785,13 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	\ (number)
 	deflabel-here (number)_begin
 	1+,, dup, >r,
-	c@,,
+	c@,
 	base@,
 	2pop \ top - n1
 		 \ lower - c
 	xlower xtop xthird xfourth digit, \ parse the digit using the CPU
 	zero xfourth cv eq, \ did we hit a non digit
+	deflabel (number)_done
 	(number)_done !, cv bc,
 	xthird xsp push,
 	base@, u*,
@@ -814,23 +814,24 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	(number)_done .label
 	r>,
 	dup, c@,
-	bl, -,
+	bl #, lit, -,
 	1pop \ get the flag
 	xtop cv eqz,
+	deflabel number_done
 	number_done !, cv bc,
 	\ while loop check
-	dup, c@,,
+	dup, c@,
 	0x2e #, lit, -, \ is it a decimal point?
 	0,, 
 	deflabel number-not-error
 	swap,
 	number-not-error !, if,, 
-	_handle_error !, b,
+	_handle-error !, b,
 	number-not-error .label
 	drop,
 	0,, \ a decimal point was found. set DPL to 0 the next time
 	number_begin !, b,
-	deflabel-here number_done 
+	number_done .label
 	drop,
 	r>,
 	number_finish !, if,, 

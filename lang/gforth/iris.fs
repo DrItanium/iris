@@ -632,18 +632,6 @@ push, ;
 : pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
 : #pushi, ( imm sp -- ) ?imm0 if push, else #, swap pushi, endif ;
 : !pushi, ( imm sp -- ) !, swap pushi, ;
-: swap, ( src dest -- ) 
-  2dup = if 
-  \ ignore the operation if they are equal and don't dump anything out
-    2drop 
-  else
-    dup ( src dest dest )
-    at0 -> ( stash dest in at0 )
-    over swap ( r0 r0 r1 )
-    -> 
-    at0 swap ( at0 r0 )
-    -> 
-  endif ;
 
 : !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
 
