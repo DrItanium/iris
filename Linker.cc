@@ -107,7 +107,6 @@ int main(int argc, char** argv) {
     using Address = iris::Address;
     using LabelIndex = iris::RawInstruction;
     using Kind = iris::LinkerEntry::Kind;
-    using Problem = iris::Problem;
     for (auto const & path : files) {
         std::map<LabelIndex, Address> _labelMappings;
         std::list<iris::LinkerEntry> _delayedInstructions;
@@ -137,7 +136,8 @@ int main(int argc, char** argv) {
                      _delayedInstructions.emplace_back(entry);
                      break;
                 default:
-                        throw Problem("Illegal linker entry kind defined!");
+					 std::cerr << "Illegal linker entry kind defined!" << std::endl;
+					 return 1;
             }
         }
         if (in.bad()) {
@@ -155,16 +155,20 @@ int main(int argc, char** argv) {
                     core.install(address, lowerHalf, iris::Core::InstallToMemory());
                     core.install(address + 1, r->second, iris::Core::InstallToMemory());
                 } else {
-                    throw Problem("Not all labels are defined for given indirect instructions!");
+					std::cerr << "Not all labels are defined for given indirect instructions!" << std::endl;
+					std::cerr << "\t\t target index is: " << upperHalf << std::endl;
+					return 1;
                 }
             } else if (kind == Kind::IndirectMemory) {
                 if (auto r = _labelMappings.find(e.getValue()); r != _labelMappings.end()) {
                     core.install(e.getAddress(), r->second, iris::Core::InstallToMemory());
                 } else {
-                    throw Problem("Not all labels are defined for the given indirect indirections!");
+					std::cerr << "Not all labels are defined for the given indirect memory!" << std::endl;
+					return 1;
                 }
             } else {
-                throw Problem("Unsupported linker entry kind in the delay list!");
+				std::cerr << "Unsupported linker entry kind in the delay list!" << std::endl;
+				return 1;
             }
         }
     }
