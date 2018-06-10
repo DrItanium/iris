@@ -88,18 +88,13 @@ unused-start
 1+cconstant xrp \ return stack pointer
 1+cconstant xip \ interpretive pointer
 1+cconstant xw \ current word pointer
-1+cconstant xo \ accumulator register ( according to figforth )
-1+cconstant at2 \ another temporary
 1+cconstant xtop \  contents of the top of stack when a pop is called
 1+cconstant xlower \ contents of the second stack item when a pop is called
 1+cconstant xthird \ contents of the third stack item
-1+cconstant xdp    \ temporary storage container for the dictionary pointer
-1+cconstant xtaddr \ temporary storage for an address
-1+cconstant xstate \ temporary storage for the state variable
 1+cconstant xfourth \ contents of the fourth stack item
+1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
-1+cconstant xfifth \ temporary storage register five
 too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
@@ -191,7 +186,7 @@ dup 0xFFFF and #, .data16 \ lower characters
 0xFFFF0000 and 16 rshift #, .data16 \ rest of name
 0 #, .data16
 _push machine-code-execute last-word !
-    xo xsp push, 
+    xtop xsp push, 
     next,
 s" ;s" defmachineword _;s
 	\ return execution to the calling definition. Unnest one level.
@@ -202,7 +197,7 @@ s" pop" defmachineword _pop
     next,
 s" put" defmachineword _put
     \ replace the top of data stack with the contents of the accumulator
-    xo xsp st, 
+    xtop xsp st, 
     next,
 s" lit" defmachineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
@@ -377,10 +372,10 @@ s" c," defmachineword _c,
 	1pop
     0xFF #, xtop xtop andi, 
 	&DP ??, xtaddr set,
-	xtaddr xdp ld, 
-    xtop xdp st, \ save it to the current dict pointer front
-    xdp 1+, \ move ahead by one
-	xdp xtaddr st,
+	xtaddr xlower ld, 
+    xtop xlower st, \ save it to the current dict pointer front
+    xlower 1+, \ move ahead by one
+	xlower xtaddr st,
     next,
 : c!, ( -- )
 	2pop \ top - addr
@@ -511,8 +506,8 @@ s" allot" defmachineword _allot ( n -- )
     next,
 s" pad" defmachineword _pad ( -- n )
 	&DP ??, xtaddr set,
-	xtaddr xdp ld, 
-    0x44 #, xdp xtop addi,
+	xtaddr xtop ld, 
+    0x44 #, xtop xtop addi,
     xtop xsp push,
     next,
 : ,, ( -- )
@@ -533,8 +528,8 @@ s" [" word/imm defmachineword-base _leftbracket
     next,
 s" ]" defmachineword _rightbracket
 	&state ??, xtaddr set,
-    0xFFFF #, xstate set,
-	xstate xtaddr st,
+    0xFFFF #, xtop set,
+	xtop xtaddr st,
     next,
 
 s" dodoes" defmachineword _dodoes_prime
@@ -560,8 +555,8 @@ s" 0branch" defmachineword _0branch
 	next,
 : ?comp, ( -- )
 	&state ??, xtaddr set,
-	xtaddr xstate ld,
-	zero xstate cv neq,
+	xtaddr xtop ld,
+	zero xtop cv neq,
 	cv xsp push, ;
 s" ?comp" defmachineword _?comp
 	?comp,
