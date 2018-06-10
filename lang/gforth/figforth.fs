@@ -171,7 +171,15 @@ deflabel-here _docolon
     \ duplicate NEXT for now
     next,
 : embed-docolon ( -- ) _DOCOLON !, .data16 ;
-: colondef ( n -- ) .label embed-docolon ;
+: defcolonword-base ( str length control-bits "name" -- ) 
+  deflabel-here 
+  #, .data16 \ stash the control bits here
+  embed-name
+  last-word @ !, .data16
+  execute-latest dup 
+  last-word !
+  embed-docolon ;
+: defcolonword ( n -- ) word/none defcolonword-base ;
 deflabel-here _;S
 \ _;S .label \ perform unnesting
 \ return execution to the calling definition. Unnest one level.
@@ -462,6 +470,7 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_loop !, b,
     _fill_done .label
     next,
+
 s" blanks" defmachineword _blanks ( addr n -- ) 
 	\ fill u bytes in memory with b beginning at address
 	bl #lit,
@@ -480,6 +489,14 @@ s" blanks" defmachineword _blanks ( addr n -- )
 s" bl" defmachineword _bl
     bl #, xsp pushi,
     next,
+s" 0" defmachineword _zero
+    zero xsp push,
+    next,
+: defword, ( v -- ) !, .data16 ;
+s" erase" defcolonword _erase
+	_zero defword,
+	_fill defword,
+	_;S defword,
 : here, ( -- ) 
 	&DP !, xtaddr set,
 	xtaddr xtop ld,
@@ -514,9 +531,6 @@ s" ," defmachineword _, ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
 	,,
-    next,
-s" 0" defmachineword _zero
-    zero xsp push,
     next,
 s" [" word/imm defmachineword-base _leftbracket
 	&state !, xtaddr set,
