@@ -1124,29 +1124,13 @@ s" nfa" defmachineword _nfa
 	0xFFFF #, lit,
 	traverse, _nfa_traverse_body
 	next, 
-\ s" ?error" defmachineword _?error
-\ 	swap,
-\ 	deflabel _?error_else
-\ 	deflabel _?error_endif
-\ 	_?error_else !, if,,
-	
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+s" definitions" defmachineword _definitions
+  \ used in the form: cccc definitions 
+  \ make cccc vocabulary the current vocabulary.
+  \ new definitions will be added to the cccc vocabulary
+	&context !, lit, @, 
+	&current !, lit, !, 
+	next,
 	
 &state s" state" defvariableword _state
 &base s" base" defvariableword _base

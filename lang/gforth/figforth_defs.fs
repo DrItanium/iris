@@ -91,7 +91,6 @@
   HLD ! \ hld is a user variable holding the address of last character in the output text string
   ;
 : erase ( addr u -- ) 0 fill ;
-: blanks ( addr u -- ) bl fill ;
 
 : -find ( -- [ pfa b tf ] or [ f ] )
   \ accept the next word delimited by blanks in the input stream to here, and
@@ -130,27 +129,7 @@
   \ be stored into the variable context. the next dictionary search will begin with the cccc vocabulary
   ;
 
-: definitions ( -- )
-  \ used in the form: cccc definitions 
-  \ make cccc vocabulary the current vocabulary.
-  \ new definitions will be added to the cccc vocabulary
-  context @ current ! ;
 \ dictionary entry stuff
-: traverse ( a1 n -- a2 )
-  \ move across the name field of a variable length name field.
-  \ a1 is the address of either the length byte or the last character
-  \ if n == 1, the motion is towards high memory; 
-  \ if n == -1, the motion is towards low memory
-  \ a2 is the address of the other end of the name field
-  swap \ get a1 to the top of the stack
-  begin
-    over + \ copy n and add to addr, pointing to the next character
-    0x7F \ test number for the eighth bit of a character
-    over c@ \ fetch the character
-    < \ if it is greater than 127, the end is reached
-  until \ loop back if not the end
-  swap drop \ discard n
-  ;
 : vlist ( -- )
   \ list the names of all entries in the context vocabulary. The 'break' key on
   \ terminal will terminate the listing
