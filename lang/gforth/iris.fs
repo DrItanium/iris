@@ -310,8 +310,8 @@ drop
 \ constant tagging version
 \ #, is a constant version
 : #, ( imm -- imm16 0 ) addr16 0 ; 
-\ !, is an indirect instruction
-: !, ( -- 1 ) 1 ;
+\ ??, is an indirect instruction
+: ??, ( -- 1 ) 1 ;
 
 #sub inst-3reg sub, 
 #mul inst-3reg mul, 
@@ -333,7 +333,15 @@ drop
 #gt inst-3reg gt,
 #le inst-3reg le,
 #ge inst-3reg ge,
-: ?choose-instruction-kind ( v id -- ) 0= if ( c ) <<inst else <<iinst endif ;
+: ?choose-instruction-kind ( v id -- ) 
+0= 
+if 
+( c ) 
+	<<inst 
+	else 
+	<<iinst 
+	endif 
+	;
 : set, ( imm imm-type dest -- )
   1reg #set or ( imm it v ) 
   rot ( it v imm )  
@@ -350,7 +358,7 @@ drop
   else 
     #, swap set, \ otherwise emit as normal
   endif ;
-: !set, ( imm dest -- ) !, swap set, ;
+: ??set, ( imm dest -- ) ??, swap set, ;
 : $-> ( imm id dest -- n ) set, ;
 : $->at0 ( imm id -- n ) at0 $-> ;
 : $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
@@ -410,7 +418,7 @@ drop
   else 
     #, swap bl, \ otherwise emit as normal
   endif ;
-: !bl, ( imm dest -- ) !, swap bl, ;
+: ??bl, ( imm dest -- ) ??, swap bl, ;
 
 : bc, ( imm imm-type dest -- )
   1reg #condb
@@ -429,7 +437,7 @@ drop
   else 
     #, swap bc, \ otherwise emit as normal
   endif ;
-: !bc, ( imm dest -- ) !, swap bc, ;
+: ??bc, ( imm dest -- ) ??, swap bc, ;
 
 : def2argi ( "name" "op" -- )
   create ' , 
@@ -481,7 +489,7 @@ def3argi ugei, uge,
 : emit-2reg-imm12 ( imm12 src dest opcode -- ) >r 2reg-imm12 r> or <<inst ;
 : ?not-imm12 ( imm id -- imm id f ) over 0x0FFF > ;
 : 3insert# ( imm src dest -- imm # src dest ) 2>r #, 2r> ;
-: 3insert! ( imm src dest -- imm # src dest ) 2>r !, 2r> ;
+: 3insert?? ( imm src dest -- imm # src dest ) 2>r ??, 2r> ;
 : addi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> add, ;
 : subi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> sub, ;
 : lshifti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> lshift, ;
@@ -499,7 +507,7 @@ def3argi ugei, uge,
   endif ;
 : rshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> rshifti12, else 2r> rshifti16, endif ;
 : #rshifti, ( imm src dest -- ) 2>r #, 2>r rshifti, ;
-: !rshifti, ( imm src dest -- ) 2>r !, 2>r rshifti, ;
+: ??rshifti, ( imm src dest -- ) 2>r ??, 2>r rshifti, ;
 
 : lshifti4, ( imm src dest -- ) 2>r 0xF and 2r> #lshifti emit-2reg-imm12 ;
 : lshifti12, ( imm src dest -- ) 
@@ -513,7 +521,7 @@ def3argi ugei, uge,
 
 : lshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> lshifti12, else 2r> lshifti16, endif ;
 : #lshifti, ( imm src dest -- ) 2>r #, 2>r lshifti, ;
-: !lshifti, ( imm src dest -- ) 2>r !, 2>r lshifti, ;
+: ??lshifti, ( imm src dest -- ) 2>r ??, 2>r lshifti, ;
 
 : #muli, ( imm src dest -- )
   rot dup 
@@ -557,7 +565,7 @@ def3argi ugei, uge,
         2r> addi16,
       endif ;
 : #addi, ( imm src dest -- ) 3insert# addi, ;
-: !addi, ( imm src dest -- ) 3insert! addi, ;
+: ??addi, ( imm src dest -- ) 3insert?? addi, ;
 
 : subi, ( imm id src dest -- ) 
   2>r dup 0= 
@@ -576,7 +584,7 @@ def3argi ugei, uge,
       else 2r> subi16,
       endif ;
 : #subi, ( imm src dest -- ) 3insert# subi, ;
-: !subi, ( imm src dest -- ) 3insert! subi, ;
+: ??subi, ( imm src dest -- ) 3insert?? subi, ;
 
 {ioaddr
 ioaddr: /dev/null 
@@ -594,7 +602,7 @@ ioaddr: /dev/octprint
 ioaddr}
 : $->io ( imm id -- ) io $-> ;
 : #->io ( imm -- ) #, $->io ;
-: !->io ( imm -- ) !, $->io ;
+: ??->io ( imm -- ) ??, $->io ;
 
 : io-write ( src -- ) io st, ;
 : io-read ( dest -- ) io swap ld, ;
@@ -621,29 +629,29 @@ push, ;
 
 : jmp ( addr id -- ) b, ;
 : #jmp ( addr -- ) #, jmp ;
-: !jmp ( addr -- ) !, jmp ;
+: ??jmp ( addr -- ) ??, jmp ;
 : ldi, ( imm id dest -- ) >r $->at0 at0 r> ld, ;
 : #ldi, ( imm dest -- ) ?imm0 if ld, else #, swap ldi, endif ;
-: !ldi, ( imm dest -- ) !, swap ldi, ;
+: ??ldi, ( imm dest -- ) ??, swap ldi, ;
 
 : sti, ( imm id addr -- ) >r $->at0 at0 r> st, ;
 : #sti, ( imm addr -- ) ?imm0 if st, else #, swap sti, endif ;
-: !sti, ( imm addr -- ) !, swap sti, ;
+: ??sti, ( imm addr -- ) ??, swap sti, ;
 
 : pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
 : #pushi, ( imm sp -- ) ?imm0 if push, else #, swap pushi, endif ;
-: !pushi, ( imm sp -- ) !, swap pushi, ;
+: ??pushi, ( imm sp -- ) ??, swap pushi, ;
 
-: !def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r !, swap 2r> @ execute ;
+: ??def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r ??, swap 2r> @ execute ;
 
-!def3i !muli, muli,
+??def3i ??muli, muli,
 
 
 : #divi, ( imm src dest -- ) >r #, swap r> divi, ;
 : #remi, ( imm src dest -- ) >r #, swap r> remi, ;
 
-!def3i !divi, divi,
-!def3i !remi, remi, 
+??def3i ??divi, divi,
+??def3i ??remi, remi, 
 
 : andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
 : ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
@@ -658,11 +666,11 @@ push, ;
 : gez, ( value dest -- ) zero -rot ge, ;
 : lez, ( value dest -- ) zero -rot le, ;
 
-!def3i !andi, andi, 
-!def3i !ori, ori, 
-!def3i !xori, xori, 
-!def3i !nandi, nandi, 
-!def3i !nori, nori, 
+??def3i ??andi, andi, 
+??def3i ??ori, ori, 
+??def3i ??xori, xori, 
+??def3i ??nandi, nandi, 
+??def3i ??nori, nori, 
 : 1+, ( reg -- ) dup incr, ;
 : 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
@@ -672,7 +680,7 @@ push, ;
 : 4*, ( dest -- ) 2 swap dup #lshifti, ;
 : 4/, ( dest -- ) 2 swap dup #rshifti, ;
 : next-address ( -- imm id ) loc@ 1+ #, ;
-: !.data16 ( imm -- ) !, .data16 ;
+: ??.data16 ( imm -- ) ??, .data16 ;
 : #.data16 ( imm -- ) #, .data16 ;
 : mask-lower-half, ( src dest -- ) 2>r 0x00FF #, 2r> andi, ;
 : mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;

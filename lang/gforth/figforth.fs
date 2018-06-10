@@ -106,7 +106,7 @@ too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
-: !lit, ( n -- ) !, lit, ;
+: ??lit, ( n -- ) ??, lit, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -124,7 +124,8 @@ deflabel-here _next
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
     at0 br,         \ jump to the address found at that point
-: next, ( -- ) _next !, b, ;
+: next, ( -- ) _next ??, b, ;
+: x.scr ( -- ) hex .s decimal cr ;
 : machine-code-execute ( -- ) loc@ 1+ #, .data16 ;
 : machineword ( n -- ) .label machine-code-execute ;
 : machine-code-jump ( imm id -- ) 
@@ -135,26 +136,30 @@ deflabel-here _next
   dup #, .data16 \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
-  	1 of drop 0xFF and #, .data16 
-	     0 #, .data16 endof
-	2 of drop 0xFFFF and #, .data16
-	     0 #, .data16 endof
-	3 of drop dup 0xFFFF and #, .data16
+  	1 of 0xFF and #, .data16 
+	     0 #, .data16 
+		 endof
+	2 of 0xFFFF and #, .data16 
+	     0 #, .data16 
+		 endof
+	3 of dup 0xFFFF and #, .data16
 	     0xFF0000 and 16 rshift #, .data16 endof
-	drop dup 0xFFFF and #, .data16
+	dup 0xFFFF and #, .data16
 	0xFFFF0000 and 16 rshift #, .data16 
    endcase ;
+
 
 0 constant word/none
 1 constant word/smudge
 2 constant word/imm
 word/imm word/smudge or constant word/all
+
 : defmachineword-base ( str length control-bits "name" -- ) 
   deflabel-here 
   #, .data16 \ stash the control bits here
   embed-name
-  last-word @ !, .data16
-  execute-latest dup 
+  last-word @ ??, .data16 
+  execute-latest
   last-word !
   machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
@@ -170,24 +175,24 @@ deflabel-here _docolon
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     \ duplicate NEXT for now
     next,
-: embed-docolon ( -- ) _DOCOLON !, .data16 ;
+: embed-docolon ( -- ) _DOCOLON ??, .data16 ;
 : defcolonword-base ( str length control-bits "name" -- ) 
   deflabel-here 
   #, .data16 \ stash the control bits here
   embed-name
-  last-word @ !, .data16
+  last-word @ ??, .data16
   execute-latest dup 
   last-word !
   embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
-: defword, ( v -- ) !, .data16 ;
+: defword, ( v -- ) ??, .data16 ;
 deflabel-here _push
 s" push" #, .data16 \ embed length
+@
 dup 0xFFFF and #, .data16 \ lower characters
 0xFFFF0000 and 16 rshift #, .data16 \ rest of name
 0 #, .data16
-_push machine-code-execute
-_push last-word !
+_push machine-code-execute last-word !
     xo xsp push, 
     next,
 s" ;s" defmachineword _;s
@@ -212,7 +217,7 @@ s" lit" defmachineword _lit
 : push-literal ( n -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
-  _LIT !, .data16
+  _LIT ??, .data16
   #, .data16 ;
 
 : 1pop ( -- )
@@ -273,7 +278,7 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
     deflabel _-dup_done
     1pop 
     xtop cv eqz, 
-    _-dup_done !, cv bc,
+    _-dup_done ??, cv bc,
         xtop xsp push,
     _-dup_done .label
     xtop xsp push,
@@ -313,7 +318,7 @@ s" abs" defmachineword _abs
     deflabel _absDone
     1pop
     xtop cv gez,
-    _absDone !, cv bc,
+    _absDone ??, cv bc,
     0xFFFF #, xtop xtop muli, \ multiply by negative one
     _absDone .label
     xtop xsp push,
@@ -363,16 +368,17 @@ s" drop" defmachineword _drop
 s" swap" defmachineword _swap
 	swap,
     next,
-s" !" defmachineword _! ( v a -- )
+: !,, ( -- )
    2pop \ top - addr
    		\ lower - value
    xlower xtop st, \ perform the store
-   next,
+	;
+s" !" defmachineword _! ( v a -- ) !,, next,
 
 s" c," defmachineword _c,
 	1pop
     0xFF #, xtop xtop andi, 
-	&DP !, xtaddr set,
+	&DP ??, xtaddr set,
 	xtaddr xdp ld, 
     xtop xdp st, \ save it to the current dict pointer front
     xdp 1+, \ move ahead by one
@@ -457,13 +463,13 @@ s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory
     deflabel _cmove_done
     _cmove_loop .label
     xtop cv ltz,
-    _cmove_done !, cv bc,
+    _cmove_done ??, cv bc,
     xlower at0 ldtincr,
     at0 xthird sttincr,
     xtop 1-,
     xlower 1+,
     xthird 1+,
-    _cmove_loop !, b,
+    _cmove_loop ??, b,
     _cmove_done .label
     next,
 s" fill" defmachineword _fill ( addr n b -- ) 
@@ -475,10 +481,10 @@ s" fill" defmachineword _fill ( addr n b -- )
     deflabel _fill_done
     _fill_loop .label
     xlower cv eqz,
-    _fill_done !, cv bc,
+    _fill_done ??, cv bc,
     xtop xthird sttincr,
     xlower 1-,
-    _fill_loop !, b,
+    _fill_loop ??, b,
     _fill_done .label
     next,
 
@@ -489,7 +495,7 @@ s" 0" defmachineword _zero
     zero xsp push,
     next,
 : here, ( -- ) 
-	&DP !, xtaddr set,
+	&DP ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xsp push, ;
 
@@ -498,7 +504,7 @@ s" here" defmachineword _here
     next,
 : allot, ( -- )
 	1pop
-	&DP !, xtaddr set,
+	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
     xlower xtop xlower add,
 	xlower xtaddr st, ;
@@ -506,14 +512,14 @@ s" allot" defmachineword _allot ( n -- )
 	allot,
     next,
 s" pad" defmachineword _pad ( -- n )
-	&DP !, xtaddr set,
+	&DP ??, xtaddr set,
 	xtaddr xdp ld, 
     0x44 #, xdp xtop addi,
     xtop xsp push,
     next,
 : ,, ( -- )
 	1pop 
-	&DP !, xtaddr set,
+	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
     xtop xlower st, \ save it to the current dict pointer front
     xlower 1+, \ move ahead by one
@@ -524,11 +530,11 @@ s" ," defmachineword _, ( n -- )
 	,,
     next,
 s" [" word/imm defmachineword-base _leftbracket
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
 	zero xtaddr st,
     next,
 s" ]" defmachineword _rightbracket
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
     0xFFFF #, xstate set,
 	xstate xtaddr st,
     next,
@@ -547,7 +553,7 @@ s" 0branch" defmachineword _0branch
 	deflabel _zbra1
 	1pop \ flag
 	zero xtop cv neq,
-	_zbra1 !, cv bc,
+	_zbra1 ??, cv bc,
 	xip xlower ld,
 	xip xlower xip add,
 	next,
@@ -555,7 +561,7 @@ s" 0branch" defmachineword _0branch
 	0x2 #, xip xip addi,
 	next,
 : ?comp, ( -- )
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
 	xtaddr xstate ld,
 	zero xstate cv neq,
 	cv xsp push, ;
@@ -573,7 +579,7 @@ s" cfa" defmachineword _cfa \ convert the parameter field address to code field 
 	xtop xsp push,
 	next,
 : latest,, ( -- )
-	&current !, xtaddr set,
+	&current ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xtop ld,
 	xtop xsp push, ;
@@ -581,17 +587,17 @@ s" latest" defmachineword _latest \ leave the name field address of the last wor
 	latest,,
 	next,
 s" hex" defmachineword _hex \ set the base to 16
-	&base !, xtaddr set,
+	&base ??, xtaddr set,
 	0x10 #, at0 set,
 	at0 xtaddr st,
 	next,
 s" decimal" defmachineword _decimal \ set the base to 10
-	&base !, xtaddr set,
+	&base ??, xtaddr set,
 	0xA #, at0 set,
 	at0 xtaddr st,
 	next,
 s" octal" defmachineword _octal \ set the base to 8
-	&base !, xtaddr set,
+	&base ??, xtaddr set,
 	0x8 #, at0 set,
 	at0 xtaddr st,
 	next,
@@ -609,7 +615,7 @@ s" b/scr" defmachineword _b/scr
 	next,
 s" immediate" defmachineword _immediate
 	\ mark the current dictionary entry as immediate
-	&dp !, xtaddr set,
+	&dp ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xlower ld,
 	word/imm #, at0 set,
@@ -650,7 +656,7 @@ s" (loop)" defmachineword _(loop)
 	2 #, xtaddr xtaddr addi,
 	xtaddr xlower ld,
 	xtop xlower cv ge, 
-	loop_1 !, cv bc,
+	loop_1 ??, cv bc,
 	xip at0 ld, \ add backwards branch offset to IP and branch back to the DO-LOOP
 	at0 xip xip add, 
 	next,
@@ -660,6 +666,10 @@ s" (loop)" defmachineword _(loop)
 	xrp zero pop,
 	2 #, xip xip addi, \ advance ip over the inline offset number and continue
 		               \ executing the next word after loop
+	next,
+: enclose,, ( -- ) xsp enclose, ;
+s" enclose" defmachineword _enclose
+	enclose,,
 	next,
 
 s" (+loop)" defmachineword _(+loop)
@@ -671,13 +681,13 @@ s" (+loop)" defmachineword _(+loop)
 	xtop xlower xlower add,
 	xlower xrp st,
 	zero xtop cv lt, \ if n is less than zero, jump to loop3 for special processing
-	loop_3 !, cv bc, \ jump to loop3 for special processing
+	loop_3 ??, cv bc, \ jump to loop3 for special processing
 	xrp xtaddr move,
 	xtaddr at0 ld, \ loop count
 	xtaddr 1+,
 	xtaddr at1 ld, \ loop limit
 	at0 at1 cv le,
-	loop_2 !, cv bc,
+	loop_2 ??, cv bc,
 	xip at0 ld,
 	at0 xip xip add,
 	next,
@@ -691,7 +701,7 @@ s" (+loop)" defmachineword _(+loop)
 	xtaddr 1+,
 	xtaddr at1 ld, \ loop limit
 	at1 at0 cv le, \ negative increment n, reverse comparison
-	loop_2 !, cv bc,
+	loop_2 ??, cv bc,
 	xip at0 ld,
 	at0 xip xip add, \ not yet done with the loop. Return to the word after DO
 	next,
@@ -737,29 +747,29 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
 	xtaddr swap ld, ;
 : zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
 : ?compiling, ( label -- ) 
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
 	xtaddr xtop ld, \ load the state
 	zero xtop cv neq, \ check and see if it is not equal to zero
-	!, cv bc,
+	??, cv bc,
 	;
 : ?interpreting, ( label -- )
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
 	xtaddr xtop ld, \ load the state
 	zero xtop cv eq, \ check and see if it is equal to zero
-	!, cv bc, ;
+	??, cv bc, ;
 s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
-	forth_vocabulary_start !, &context !, assign-variable,
+	forth_vocabulary_start ??, &context ??, assign-variable,
 	next,
-s" abort" defmachineword __abort _abort !, b,
-s" cold" defmachineword __cold _cold !, b,
-s" quit" defmachineword __quit _quit !, b,
+s" abort" defmachineword __abort _abort ??, b,
+s" cold" defmachineword __cold _cold ??, b,
+s" quit" defmachineword __quit _quit ??, b,
 s" block" defmachineword _block 
 	deflabel _block_done
 	( bid -- addr )
 	1pop \ xtop - block number to select
 	xcoreid xtop cv eq, \ if the ids are the same then do nothing
-	_block_done !, cv bc,
+	_block_done ??, cv bc,
 	\ if they are not then perform the sync automatically followed by
 	\ loading the new id
 	\ will need to expand on this later on by encoding the core contents
@@ -774,17 +784,17 @@ s" block" defmachineword _block
 	next,
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
-	!, xtop set,
+	??, xtop set,
 	xtop xsp push,
 	next, ;
 : push-zero, ( sp -- ) zero swap push, ;
 : begin, ( -- ) 
 	\ check and see if we are compiling
-	&state !, xtaddr set,
+	&state ??, xtaddr set,
 	xtaddr xtaddr ld, \ load the state
 	zero xtaddr cv eq, \ check and see if it is not equal to zero
-	_handle-error !, cv bc,
-	&dp !, xtaddr set,
+	_handle-error ??, cv bc,
+	&dp ??, xtaddr set,
 	xtaddr at0 ld, 
     at0 xsp push,
 	0x1 #, xsp pushi, ;
@@ -815,12 +825,12 @@ s" block" defmachineword _block
 	xtop xtop not,
 	xtop xsp push, ;
 : base@, ( -- )
-	&base !, xtaddr set,
+	&base ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xsp push,
 	;
 : dpl@, ( -- )
-	&dpl !, xtaddr set,
+	&dpl ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xsp push, 
 	;
@@ -847,7 +857,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	+,
 	0xFFFF #lit,
 	deflabel-here number_begin
-	&dpl !lit,
+	&dpl ??lit,
 	store,
 	\ (number)
 	deflabel-here (number)_begin
@@ -859,7 +869,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	xlower xtop xthird xfourth digit, \ parse the digit using the CPU
 	zero xfourth cv eq, \ did we hit a non digit
 	deflabel (number)_done
-	(number)_done !, cv bc,
+	(number)_done ??, cv bc,
 	xthird xsp push,
 	base@, u*,
 	rot,
@@ -867,9 +877,9 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	+,
 	dpl@, 1+,,
 	deflabel (number)_noincr
-	(number)_noincr !, if,,
+	(number)_noincr ??, if,,
 	1 #lit,
-	&dpl !lit,
+	&dpl ??lit,
     2pop \ top - addr 
          \ lower - n
     xtop xthird ld,
@@ -877,7 +887,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
     xlower xtop st,
 	(number)_noincr .label
 	r>,
-	(number)_begin !, b,
+	(number)_begin ??, b,
 	(number)_done .label
 	r>,
 	dup, c@,
@@ -885,27 +895,27 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	1pop \ get the flag
 	xtop cv eqz,
 	deflabel number_done
-	number_done !, cv bc,
+	number_done ??, cv bc,
 	\ while loop check
 	dup, c@,
 	0x2e #lit, -, \ is it a decimal point?
 	0,, 
 	deflabel number-not-error
 	swap,
-	number-not-error !, if,, 
-	_handle-error !, b,
+	number-not-error ??, if,, 
+	_handle-error ??, b,
 	number-not-error .label
 	drop,
 	0,, \ a decimal point was found. set DPL to 0 the next time
-	number_begin !, b,
+	number_begin ??, b,
 	number_done .label
 	drop,
 	r>,
-	number_finish !, if,, 
+	number_finish ??, if,, 
 	negate,
 	number_finish .label
 	next,
-s" (abort)" defmachineword __abort_ _abort !, b,
+s" (abort)" defmachineword __abort_ _abort ??, b,
 s" expect" defmachineword _expect
 	over, +, over, 
 	deflabel-here expect_loop
@@ -915,7 +925,7 @@ s" expect" defmachineword _expect
 	=, \ is it a backspace?
 	deflabel expect_else0
 	deflabel expect_endif0
-	expect_else0 !, if,,
+	expect_else0 ??, if,,
 		drop,
 		8 #lit,
 		over,
@@ -926,19 +936,19 @@ s" expect" defmachineword _expect
 		-, +, \ get the loop index. Decrement it by one. If it is
 			  \ the starting 
 		r>, -,
-		expect_endif0 !, b,
+		expect_endif0 ??, b,
 		expect_else0 .label
 			dup, 
 			0xD #lit,
 			=,
 		deflabel expect_else1
 		deflabel expect_endif1
-			expect_else1 !, if,,
+			expect_else1 ??, if,,
 				leave, 
 				drop, 
 				bl #lit, 
 				0,,
-				expect_endif1 !, b,
+				expect_endif1 ??, b,
 			expect_else1 .label
 				dup,
 			expect_endif1 .label
@@ -946,7 +956,7 @@ s" expect" defmachineword _expect
 				c!, 
 				0,,
 				1+,,
-				!,
+				!,,
 	expect_endif0 .label
 	emit,
 	deflabel compile_loop_1
@@ -958,8 +968,8 @@ s" expect" defmachineword _expect
 	2 #, xtaddr xtaddr addi,
 	xtaddr xlower ld,
 	xtop xlower cv ge, 
-	compile_loop_1 !, cv bc,
-	expect_loop !, b,
+	compile_loop_1 ??, cv bc,
+	expect_loop ??, b,
 	compile_loop_1 .label
 	\ discard the loop parameters off the return stack
 	xrp zero pop,
@@ -968,17 +978,17 @@ s" expect" defmachineword _expect
 	next,
 
 s" word" defmachineword _word
-	&blk #lit, @,
+	&blk ??lit, @,
 	deflabel _word_else0
 	deflabel _word_endif0
-	_word_else0 !, if,,
-		&blk #lit, @, 
+	_word_else0 ??, if,,
+		&blk ??lit, @, 
 		\ block,
 		deflabel _block_done0
 		( bid -- addr )
 		1pop \ xtop - block number to select
 		xcoreid xtop cv eq, \ if the ids are the same then do nothing
-		_block_done0 !, cv bc,
+		_block_done0 ??, cv bc,
 		\ if they are not then perform the sync automatically followed by
 		\ loading the new id
 		\ will need to expand on this later on by encoding the core contents
@@ -990,12 +1000,12 @@ s" word" defmachineword _word
 		_block_done0 .label
 		&FIRST #, at0 set,
 		at0 xsp push,
-		_word_endif0 !, b,
+		_word_endif0 ??, b,
 	_word_else0 .label
-		&tib !lit, @, 
+		&tib ??lit, @, 
 	_word_endif0 .label
-		&in !lit, @, +, swap, 
-	    enclose,
+		&in ??lit, @, +, swap, 
+	    enclose,,
 		here,
 		0x22 #lit,
 		bl #lit,
@@ -1005,12 +1015,12 @@ s" word" defmachineword _word
     	deflabel _blanks_done0
     	deflabel-here _blanks_loop0
     	xlower cv eqz,
-    	_blanks_done0 !, cv bc,
+    	_blanks_done0 ??, cv bc,
     	xtop xthird sttincr,
     	xlower 1-,
-    	_blanks_loop0 !, b,
+    	_blanks_loop0 ??, b,
     	_blanks_done0 .label
-		&in !lit, 
+		&in ??lit, 
 		+!, 
 		over,
 		-, 
@@ -1025,17 +1035,17 @@ s" word" defmachineword _word
 		next,
 s" create" defmachineword _create
 	bl #lit,
-	&blk #lit, @,
+	&blk ??lit, @,
 	deflabel _word_else1
 	deflabel _word_endif1
-	_word_else1 !, if,,
-		&blk #lit, @, 
+	_word_else1 ??, if,,
+		&blk ??lit, @, 
 		\ block,
 		deflabel _block_done1
 		( bid -- addr )
 		1pop \ xtop - block number to select
 		xcoreid xtop cv eq, \ if the ids are the same then do nothing
-		_block_done1 !, cv bc,
+		_block_done1 ??, cv bc,
 		\ if they are not then perform the sync automatically followed by
 		\ loading the new id
 		\ will need to expand on this later on by encoding the core contents
@@ -1047,12 +1057,12 @@ s" create" defmachineword _create
 		_block_done1 .label
 		&FIRST #, at0 set,
 		at0 xsp push,
-		_word_endif1 !, b,
+		_word_endif1 ??, b,
 	_word_else1 .label
-		&tib !lit, @, 
+		&tib ??lit, @, 
 	_word_endif1 .label
-		&in !lit, @, +, swap, 
-	    enclose,
+		&in ??lit, @, +, swap, 
+	    enclose,,
 		here,
 		0x22 #lit,
 		bl #lit,
@@ -1062,12 +1072,12 @@ s" create" defmachineword _create
     	deflabel _blanks_done1
     	deflabel-here _blanks_loop1
     	xlower cv eqz,
-    	_blanks_done1 !, cv bc,
+    	_blanks_done1 ??, cv bc,
     	xtop xthird sttincr,
     	xlower 1-,
-    	_blanks_loop1 !, b,
+    	_blanks_loop1 ??, b,
     	_blanks_done1 .label
-		&in !lit, 
+		&in ??lit, 
 		+!, 
 		over,
 		-, 
@@ -1081,13 +1091,13 @@ s" create" defmachineword _create
 		r>, 
 	here,
 	dup, c@,
-	&width !lit, @,
+	&width ??lit, @,
 	min,,
 	1+,, allot,
 	dup, 0xa0 #lit, toggle,
 	here, 1-,, 0x80 #lit, toggle,
 	latest,,
-	&current #lit, @, !, 
+	&current ??lit, @, !,,
 	here, 2 #lit, +, ,, next,
 s" compile" defmachineword _compile
 	?comp, \ error if not compiling
@@ -1110,7 +1120,7 @@ s" count" defmachineword _count dup, 1+,, swap, next,
 	<, \ if it is greater than 127, the end is reached
 	1pop \ flag
 	zero xtop cv eq,
-	r> !, cv bc, \ loop back if not the end
+	r> ??, cv bc, \ loop back if not the end
 	swap, drop,  \ discard n
 	;
 	
@@ -1127,8 +1137,8 @@ s" definitions" defmachineword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
   \ new definitions will be added to the cccc vocabulary
-	&context !lit, @, 
-	&current !lit, !, 
+	&context ??lit, @, 
+	&current ??lit, !,,
 	next,
 	
 &state s" state" defvariableword _state
@@ -1162,21 +1172,21 @@ ram-start .org
 	zero xcoreid move, \ set to the zeroth core by default
 	/dev/core-load #, io set,
 	xcoreid io st, \ setup the zeroth core
-	base-dict-done !, &fence !, assign-variable,   				\ setup the fence
-	base-dict-done !, &dp !, assign-variable,      				\ setup the dictionary pointer
-	0x10 #, &base !, assign-variable,              \ setup the numeric base
+	base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
+	base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
+	0x10 #, &base ??, assign-variable,              \ setup the numeric base
 	_abort .label
-	forth_vocabulary_start !, &context !, assign-variable,      \ setup the context variable
+	forth_vocabulary_start ??, &context ??, assign-variable,      \ setup the context variable
 	\ setup the data stack pointer
-	data-stack-start #, &S0 !, assign-variable,
+	data-stack-start #, &S0 ??, assign-variable,
 	xtop xsp move,
 	\ setup the return stack pointer
-	return-stack-start #, &R0 !, assign-variable,
+	return-stack-start #, &R0 ??, assign-variable,
 	xtop xrp move,
-	0xFFFF #, &warning !, assign-variable, \ always skip error messages for now
+	0xFFFF #, &warning ??, assign-variable, \ always skip error messages for now
 	_quit .label
-	input-buffer-start #, &tib !, assign-variable, \ setup the terminal input buffer
-	&state !, zero-variable, 
+	input-buffer-start #, &tib ??, assign-variable, \ setup the terminal input buffer
+	&state ??, zero-variable, 
 	deflabel-here _quit_loop_start
 	return-stack-start #, xrp set, \ clear return stack
 	input-buffer-start #, at0 set, \ set where to write to
@@ -1185,29 +1195,29 @@ ram-start .org
 	\ perform interpretation
 	\ at the end check and see if we are looking at 
 	zero xerror cv neq, 
-	_handle-error !, cv bc,
+	_handle-error ??, cv bc,
 	_quit_loop_start ?compiling,
 	prok, \ type OK on terminal
-	_quit_loop_start !, b,
+	_quit_loop_start ??, b,
 _handle-error .label
 	deflabel _handle-error0
-	&warning !, xtaddr set,
+	&warning ??, xtaddr set,
 	0xFFFF #, at1 set,
 	xtaddr at0 ld,
 	at1 at0 cv neq, \ equal negative one?
-	_handle-error0 !, cv bc,
-	_abort !, b,
+	_handle-error0 ??, cv bc,
+	_abort ??, b,
 	_handle-error0 .label
 	\ print text string under interpretation
 	\ perform checks to see what kind of warning message we should print
 	\ TODO add support for printing more information
 	data-stack-start #, xsp set,
 	\ push IN and BLK on Data stack
-	&in !, xtaddr set,
+	&in ??, xtaddr set,
 	xtaddr xsp push,
-	&blk !, xtaddr set,
+	&blk ??, xtaddr set,
 	xtaddr xsp push,
-	_quit !, b,
+	_quit ??, b,
 
 
 system-start .org \ system variables
