@@ -209,24 +209,28 @@ namespace iris {
     DefExec(Store) { 
 		store(getDestination(op).address, getSource(op));
 	}
+	void Core::push(RegisterIndex index, Number value) noexcept {
+		Address stackAddress = getRegister(index).get<Address>() - 1;
+		store(stackAddress, value);
+		setRegister(index, stackAddress);
+	}
+	Number Core::pop(RegisterIndex index) noexcept {
+		auto addr = getRegister(index).get<Address>();
+		auto result = load(addr);
+		setRegister(index, addr + 1);
+		return result;
+	}
     DefExec(Push) {
-        Address stackAddress = getDestination(op).address - 1;
-        Address value = getSource(op).address;
-        _memory[stackAddress] = value;
-		setDestination(op, stackAddress);
+		push(op._args.dest, getSource(op));
     }
     DefExec(Pop) {
-        setDestination(op, _memory[getSource(op).address]);
-		setSource(op, getSource(op).address + 1);
+		setDestination(op, pop(op._args.src));
     }
     DefExec(BranchRegister) {
 		_pc = getDestination(op).address;
     }
     DefExec(BranchRegisterAndLink) {
-		Address stackAddress = getSource(op).address - 1;
-		Address value = _pc;
-		store(stackAddress, value);
-		setSource(op, stackAddress);
+		push(op._args.src, _pc);
         _pc = getDestination(op).address;
     }
     DefExec(BranchConditionalRegister) {
@@ -236,11 +240,7 @@ namespace iris {
     }
     DefExec(BranchConditionalRegisterLink) {
         if (getSource(op).getTruth()) {
-			// setSource2(op, _pc);
-			Address stackAddress = getSource2(op).address - 1;
-			Address value = _pc;
-			store(stackAddress, value);
-			setSource2(op, stackAddress);
+			push(op._args.src2, _pc);
 			_pc = getDestination(op).address;
         }
     }
@@ -322,11 +322,7 @@ namespace iris {
 	DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
 	DefExec(UnsignedDecrement) { setDestination(op, getSource(op).address - 1); }
 	DefExec(Call) {
-		// setDestination(op, _pc);
-		Address stackAddress = getDestination(op).address - 1;
-		Address value = _pc;
-		store(stackAddress, value);
-		setDestination(op, stackAddress);
+		push(op._args.dest, _pc);
         _pc = op._args.imm;
 	}
 	DefExec(ConditionalBranch) {
@@ -413,6 +409,47 @@ namespace iris {
 		}
 		setDestination(op, true);
 		setSource(op, Address(value));
+	}
+	DefExec(Enclose) {
+		// taken from the 8086 figforth impl
+		auto terminator = pop(op._args.dest).address;
+		auto addr = pop(op._args.dest).address;
+		push(op._args.dest, addr);
+		//terminator &= 0x00FF; // clear the upper half
+		Integer offsetCounter = -1;
+		--addr;
+		// scan to first non-terminator char
+		do {
+			++addr;
+			++offsetCounter;
+			// wait for non terminator
+		} while (load(addr) == terminator);
+		push(op._args.dest, offsetCounter);
+		if (load(addr) == 0) {
+			// found null before first terminator
+			push(op._args.dest, offsetCounter + 1);
+			push(op._args.dest, offsetCounter);
+			return;
+		}
+		// found first text character, count the characters
+		bool foundTerminatorAtEnd = false;
+		do {
+			++addr;
+			++offsetCounter;
+			if (load(addr) == terminator) {
+				foundTerminatorAtEnd = true;
+				break;
+			}
+		}  while(load(addr) != 0);
+		if (foundTerminatorAtEnd) {
+			push(op._args.dest, offsetCounter);
+			push(op._args.dest, offsetCounter+1);
+		} else {
+			// found null at end of text
+			// counters are equal
+			push(op._args.dest, offsetCounter);
+			push(op._args.dest, offsetCounter);
+		}
 	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

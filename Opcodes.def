@@ -78,3 +78,12 @@ X(Digit, FourRegister, digit) // convert the provided character in src3 with
 							  // src2 - number base
 							  // src - number
 							  // dest - success flag
+X(Enclose, OneRegister, enclose) 
+	// A primitive word to scan the text. From the byte address and the
+	// delimiter c, it determines the byte offset to the first non-delimiter
+	// character, the offset to the first delimiter after the text string, and
+	// the offset to the next character after the delimiter. If the string is
+	// delimited by a nul, the last offset is equal  to the previous offset
+	// dest - stack pointer to grab arguments from
+	// ( addr c -- addr nl n2 n3 )
+

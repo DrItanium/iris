@@ -289,6 +289,8 @@ namespace iris {
 			Number getSource3(const T& value) const noexcept {
                 return getRegister(value._args.src3).getValue();
 			}
+			Number pop(RegisterIndex reg) noexcept;
+			void push(RegisterIndex reg, Number value) noexcept;
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
 			void store(Address addr, Number value) noexcept;

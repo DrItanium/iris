@@ -137,6 +137,7 @@ opcode: #sttincr
 opcode: #rltm
 opcode: #prok
 opcode: #digit
+opcode: #enclose
 opcode}
 
 \ registers
@@ -705,3 +706,4 @@ push, ;
 #rltm inst-2reg rltm,
 #prok inst-no-reg prok,
 #digit inst-4reg digit, 
+#enclose inst-1reg enclose,
