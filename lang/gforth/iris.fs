@@ -143,7 +143,6 @@ opcode}
 set-current \ go back
 
 
-RegisterValueSpace def-space-entry register-entry
 MemorySpace def-space-entry memory-entry
 InstructionSpace def-space-entry instruction-entry
 LabelSpace def-space-entry label-entry 
@@ -177,10 +176,6 @@ variable CurrentAssemblyFile
   >r
   loc@ swap indirect-memory-entry
   r> <<linker loc1+ ;
-: <<register ( index value id -- ) 
-  >r
-  register-entry 
-  r> <<linker ; 
 : <<label ( index id -- ) 
   >r
   loc@ swap label-entry
@@ -196,7 +191,6 @@ variable CurrentAssemblyFile
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
 : .data16 ( imm id -- ) swap addr16 swap curasm@ swap 0= if <<mem else <<imem endif ;
-: .register ( index value -- ) curasm@ <<register ;
 : {asm ( path -- ) 
   w/o create-file throw curasm! 
   reset-labels ;
