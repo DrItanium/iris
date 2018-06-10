@@ -1,4 +1,4 @@
-FirstX(Illegal, ThreeRegister, illegal) // prevent errant execution
+FirstX(Illegal, NoArguments, illegal) // prevent errant execution
 X(Add, ThreeRegister, add)
 X(Sub, ThreeRegister, sub)
 X(Mul, ThreeRegister, mul)

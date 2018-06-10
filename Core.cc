@@ -476,7 +476,7 @@ namespace iris {
     }
 
     void Core::dump(std::ostream& out) {
-		for (int i = 0; i < Core::maxAddress; ++i) {
+		for (int i = 0; i < (Core::maxAddress + 1); ++i) {
 			auto value = load(i, true);
 			out.put(decodeBits<Address, char, 0x00FF, 0>(value));
 			out.put(decodeBits<Address, char, 0xFF00, 8>(value));
@@ -496,7 +496,7 @@ namespace iris {
             auto upper = Address(getByte()) << 8;
             return lower | upper;
         };
-		for (int i = 0 ; i < Core::maxAddress; ++i) {
+		for (int i = 0 ; i < (Core::maxAddress + 1); ++i) {
 			store(i, getAddress(), true);
 		}
     }

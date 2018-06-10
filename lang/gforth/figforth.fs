@@ -1169,9 +1169,9 @@ s" terminate" defmachineword _terminate
 base-dict-done .label \ always is the front address
 ram-start .org
 	_cold .label
-	zero xcoreid move, \ set to the zeroth core by default
-	/dev/core-load #, io set,
-	xcoreid io st, \ setup the zeroth core
+	\ zero xcoreid move, \ set to the zeroth core by default
+	\ /dev/core-load #, io set,
+	\ xcoreid io st, \ setup the zeroth core
 	base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
 	base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
 	0x10 #, &base ??, assign-variable,              \ setup the numeric base
