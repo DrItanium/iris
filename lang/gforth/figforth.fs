@@ -135,13 +135,13 @@ deflabel-here _next
   dup #, .data16 \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
-  	1 of 0xFF and #, .data16 
+  	1 of drop 0xFF and #, .data16 
 	     0 #, .data16 endof
-	2 of 0xFFFF and #, .data16
+	2 of drop 0xFFFF and #, .data16
 	     0 #, .data16 endof
-	3 of dup 0xFFFF and #, .data16
+	3 of drop dup 0xFFFF and #, .data16
 	     0xFF0000 and 16 rshift #, .data16 endof
-	dup 0xFFFF and #, .data16
+	drop dup 0xFFFF and #, .data16
 	0xFFFF0000 and 16 rshift #, .data16 
    endcase ;
 
@@ -182,7 +182,9 @@ deflabel-here _docolon
 : defcolonword ( n -- ) word/none defcolonword-base ;
 : defword, ( v -- ) !, .data16 ;
 deflabel-here _push
-s" push" embed-name 
+s" push" #, .data16 \ embed length
+dup 0xFFFF and #, .data16 \ lower characters
+0xFFFF0000 and 16 rshift #, .data16 \ rest of name
 0 #, .data16
 _push machine-code-execute
 _push last-word !
@@ -233,6 +235,11 @@ s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
 s" mod" defbinaryop _mod rem,
 s" min" defbinaryop _min min,
+: min,, ( -- )
+	2pop
+	xtop xlower xtop min,
+	xtop xsp push, ;
+
 s" max" defbinaryop _max max,
 s" and" defbinaryop _and and,
 s" or"  defbinaryop _or or,
@@ -1075,12 +1082,12 @@ s" create" defmachineword _create
 	here,
 	dup, c@,
 	&width !lit, @,
-	min,
+	min,,
 	1+,, allot,
 	dup, 0xa0 #lit, toggle,
 	here, 1-,, 0x80 #lit, toggle,
 	latest,,
-	&current #lit, #, !, 
+	&current #lit, @, !, 
 	here, 2 #lit, +, ,, next,
 s" compile" defmachineword _compile
 	?comp, \ error if not compiling
@@ -1144,8 +1151,7 @@ s" definitions" defmachineword _definitions
 &hld s" hld" defvariableword _hld
 &separator s" separator" defvariableword _separator
 &terminator s" terminator" defvariableword _terminator
-
-.label forth_vocabulary_start
+forth_vocabulary_start .label 
 s" terminate" defmachineword _terminate
 	/dev/terminate-vm #, xtaddr set,
 	zero xtaddr st,
