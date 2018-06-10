@@ -293,8 +293,8 @@ namespace iris {
 			void push(RegisterIndex reg, Number value) noexcept;
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
-			void store(Address addr, Number value) noexcept;
-			Address load(Address addr) noexcept;
+			void store(Address addr, Number value, bool unmapIOSpace = false) noexcept;
+			Address load(Address addr, bool unmapIOSpace = false) noexcept;
 		private:
 			void cycle();
 		private:

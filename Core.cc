@@ -252,15 +252,15 @@ namespace iris {
             }
         }
     }
-	void Core::store(Address addr, Number value) noexcept {
-		if (addr >= ioSpaceStart) {
+	void Core::store(Address addr, Number value, bool unmapIO) noexcept {
+		if (!unmapIO && addr >= ioSpaceStart) {
 			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value.address); });
 		} else {
 			_memory[addr] = value.address;
 		}
 	}
-	Address Core::load(Address addr) noexcept {
-		if (addr >= ioSpaceStart) {
+	Address Core::load(Address addr, bool unmapIO) noexcept {
+		if (!unmapIO && addr >= ioSpaceStart) {
 			Address outcome = 0;
         	onIODeviceFound(addr, [addr, &outcome](auto& a) { outcome = a.read(addr); });
 			return outcome;
@@ -477,7 +477,7 @@ namespace iris {
 
     void Core::dump(std::ostream& out) {
 		for (int i = 0; i < Core::maxAddress; ++i) {
-			auto value = load(i);
+			auto value = load(i, true);
 			out.put(decodeBits<Address, char, 0x00FF, 0>(value));
 			out.put(decodeBits<Address, char, 0xFF00, 8>(value));
 		}
@@ -497,7 +497,7 @@ namespace iris {
             return lower | upper;
         };
 		for (int i = 0 ; i < Core::maxAddress; ++i) {
-			store(i, getAddress());
+			store(i, getAddress(), true);
 		}
     }
     Address Core::IODevice::read(Address addr) {
