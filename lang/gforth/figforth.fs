@@ -104,6 +104,7 @@ unused-start
 1+cconstant cv2
 too-many-vars-defined
 
+: lit, ( n t -- ) xsp pushi, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -228,6 +229,10 @@ s" and" defbinaryop _and and,
 s" or"  defbinaryop _or or,
 s" xor" defbinaryop _xor xor,
 s" <"  defbinaryop _< lt,
+: <, ( -- ) 
+	2pop
+	xtop xlower xtop lt,
+	xtop xsp push, ;
 s" >" defbinaryop _> gt,
 s" =" defbinaryop _= eq,
 s" !=" defbinaryop _!= neq,
@@ -260,10 +265,29 @@ s" r>" defmachineword _r> \ retrieve item from top of return stack
     xrp xtop pop,
     xtop xsp push,
     next,
+: r, ( -- ) 
+	xrp xtop ld,
+	xtop xsp push, 
+;
 s" r" defmachineword _r \ copy top of return stack onto stack
-   xrp xtop ld,
-   xtop xsp push,
+   r,
    next,
+: 1+,, ( -- )
+	1pop
+	xtop 1+,
+	xtop xsp push, ;
+
+s" 1+" defmachineword _1+
+	1+,,
+	next,
+: 1-,, ( -- )
+	1pop
+	xtop 1-,
+	xtop xsp push, ;
+
+s" 1-" defmachineword _1-
+	1-,,
+	next,
 s" abs" defmachineword _abs
     deflabel _absDone
     1pop
@@ -395,13 +419,14 @@ s" ?" defmachineword _?
     /dev/console0 #, xlower set,
     xtop xlower st,
     next,
-    
-s" +!" defmachineword _+!
+: +!, ( -- )
     2pop \ top - addr 
          \ lower - n
     xtop at0 ld,
     xlower at0 xlower add, 
-    xlower xtop st,
+    xlower xtop st, ;
+s" +!" defmachineword _+!
+	+!,
     next,
 s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory 
     3pop \ top - u
@@ -435,21 +460,40 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_loop !, b,
     _fill_done .label
     next,
+s" blanks" defmachineword _blanks ( addr n -- ) 
+	\ fill u bytes in memory with b beginning at address
+	bl #, lit,
+    3pop \ top - b
+         \ lower - u
+		 \ third - addr
+    deflabel _blanks_done
+    deflabel-here _blanks_loop
+    xlower cv eqz,
+    _blanks_done !, cv bc,
+    xtop xthird sttincr,
+    xlower 1-,
+    _blanks_loop !, b,
+    _blanks_done .label
+    next,
 s" bl" defmachineword _bl
     bl #, xsp pushi,
     next,
+: here, ( -- ) 
+	&DP !, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push, ;
 
 s" here" defmachineword _here
-	&DP !, xtaddr set,
-	xtaddr xdp ld, 
-    xdp xsp push,
+	here,
     next,
-s" allot" defmachineword _allot ( n -- )
+: allot, ( -- )
 	1pop
 	&DP !, xtaddr set,
-	xtaddr xdp ld, 
-    xtop xdp xdp add,
-	xdp xtaddr st,
+	xtaddr xlower ld, 
+    xlower xtop xlower add,
+	xlower xtaddr st, ;
+s" allot" defmachineword _allot ( n -- )
+	allot,
     next,
 s" pad" defmachineword _pad ( -- n )
 	&DP !, xtaddr set,
@@ -457,15 +501,17 @@ s" pad" defmachineword _pad ( -- n )
     0x44 #, xdp xtop addi,
     xtop xsp push,
     next,
+: ,, ( -- )
+	1pop 
+	&DP !, xtaddr set,
+	xtaddr xlower ld, 
+    xtop xlower st, \ save it to the current dict pointer front
+    xlower 1+, \ move ahead by one
+	xlower xtaddr st, ;
 s" ," defmachineword _, ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
-	1pop 
-	&DP !, xtaddr set,
-	xtaddr xdp ld, 
-    xtop xdp st, \ save it to the current dict pointer front
-    xdp 1+, \ move ahead by one
-	xdp xtaddr st,
+	,,
     next,
 s" 0" defmachineword _zero
     zero xsp push,
@@ -501,11 +547,13 @@ s" 0branch" defmachineword _0branch
 	_zbra1 .label
 	0x2 #, xip xip addi,
 	next,
-s" ?comp" defmachineword _?comp
+: ?comp, ( -- )
 	&state !, xtaddr set,
 	xtaddr xstate ld,
 	zero xstate cv neq,
-	cv xsp push,
+	cv xsp push, ;
+s" ?comp" defmachineword _?comp
+	?comp,
 	next,
 s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
 	1pop
@@ -517,11 +565,13 @@ s" cfa" defmachineword _cfa \ convert the parameter field address to code field 
 	2 #, xtop xtop subi,
 	xtop xsp push,
 	next,
-s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
+: latest,, ( -- )
 	&current !, xtaddr set,
-    xtaddr xtop ld,
+	xtaddr xtop ld,
 	xtop xtop ld,
-	xtop xsp push,
+	xtop xsp push, ;
+s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
+	latest,,
 	next,
 s" hex" defmachineword _hex \ set the base to 16
 	&base !, xtaddr set,
@@ -638,6 +688,18 @@ s" (+loop)" defmachineword _(+loop)
 	xip at0 ld,
 	at0 xip xip add, \ not yet done with the loop. Return to the word after DO
 	next,
+: toggle, ( -- )
+	2pop  \ top - addr
+		  \ lower - pattern
+	xtop xthird ld,
+	xthird xlower xthird xor,
+	xtop xthird st, ;
+
+
+s" toggle" defmachineword _toggle ( p addr -- )
+	toggle,
+	next,
+	
 s" 2drop" defmachineword _2drop ( a b -- ) 2pop next,
 s" 2dup" defmachineword _2dup ( a b -- a b a b ) 
 	xsp xtaddr move,
@@ -719,11 +781,6 @@ s" block" defmachineword _block
 	xtaddr at0 ld, 
     at0 xsp push,
 	0x1 #, xsp pushi, ;
-: 1+,, ( -- )
-	1pop
-	1 #, xtop xtop addi,
-	xtop xsp push, ;
-: lit, ( n t -- ) xsp pushi, ;
 : =, ( -- )
 	2pop 
 	xlower xtop cv eq,
@@ -922,7 +979,7 @@ s" word" defmachineword _word
 		( bid -- addr )
 		1pop \ xtop - block number to select
 		xcoreid xtop cv eq, \ if the ids are the same then do nothing
-		_block_done !, cv bc,
+		_block_done0 !, cv bc,
 		\ if they are not then perform the sync automatically followed by
 		\ loading the new id
 		\ will need to expand on this later on by encoding the core contents
@@ -942,7 +999,18 @@ s" word" defmachineword _word
 	    enclose,
 		here,
 		0x22 #, lit,
-		blanks, 
+		bl #, lit,
+    	3pop \ top - b
+    	     \ lower - u
+			 \ third - addr
+    	deflabel _blanks_done0
+    	deflabel-here _blanks_loop0
+    	xlower cv eqz,
+    	_blanks_done0 !, cv bc,
+    	xtop xthird sttincr,
+    	xlower 1-,
+    	_blanks_loop0 !, b,
+    	_blanks_done0 .label
 		&in !, lit, 
 		+!, 
 		over,
@@ -953,7 +1021,7 @@ s" word" defmachineword _word
 		c!,
 		+,
 		here,
-		!+,
+		+!,
 		r>, 
 		next,
 s" create" defmachineword _create
@@ -961,8 +1029,25 @@ s" create" defmachineword _create
 	&blk #, lit, @,
 	deflabel _word_else1
 	deflabel _word_endif1
-	_word_else0 !, if,,
-		&blk #, lit, @, block,
+	_word_else1 !, if,,
+		&blk #, lit, @, 
+		\ block,
+		deflabel _block_done1
+		( bid -- addr )
+		1pop \ xtop - block number to select
+		xcoreid xtop cv eq, \ if the ids are the same then do nothing
+		_block_done1 !, cv bc,
+		\ if they are not then perform the sync automatically followed by
+		\ loading the new id
+		\ will need to expand on this later on by encoding the core contents
+		/dev/core-dump #, io set,
+		xcoreid io st,
+		/dev/core-load #, io set,
+		xtop io st,
+		xtop xcoreid move, 
+		_block_done1 .label
+		&FIRST #, at0 set,
+		at0 xsp push,
 		_word_endif1 !, b,
 	_word_else1 .label
 		&tib !, lit, @, 
@@ -971,7 +1056,18 @@ s" create" defmachineword _create
 	    enclose,
 		here,
 		0x22 #, lit,
-		blanks, 
+		bl #, lit,
+    	3pop \ top - b
+    	     \ lower - u
+			 \ third - addr
+    	deflabel _blanks_done1
+    	deflabel-here _blanks_loop1
+    	xlower cv eqz,
+    	_blanks_done1 !, cv bc,
+    	xtop xthird sttincr,
+    	xlower 1-,
+    	_blanks_loop1 !, b,
+    	_blanks_done1 .label
 		&in !, lit, 
 		+!, 
 		over,
@@ -982,7 +1078,7 @@ s" create" defmachineword _create
 		c!,
 		+,
 		here,
-		!+,
+		+!,
 		r>, 
 	here,
 	dup, c@,
@@ -1001,13 +1097,32 @@ s" compile" defmachineword _compile
 	@, ,, 
 	next,
 s" count" defmachineword _count dup, 1+,, swap, next,
-	 
+: traverse, ( -- )
+	\ move across the name field of a variable length name field.
+	\ a1 is the address of either the length byte or the last character
+	\ if n == 1, the motion is towards high memory; 
+	\ if n == -1, the motion is towards low memory
+	\ a2 is the address of the other end of the name field
+	swap, \ get a1 to the top of the stack
+	deflabel-here execute-latest >r 
+	over, +, \ copy n and add to addr, pointing to the next character
+	0x7F #, lit, \ test number for the eighth bit of a character
+	over, c@, \ fetch the character
+	<, \ if it is greater than 127, the end is reached
+	1pop \ flag
+	zero xtop cv eq,
+	r> !, cv bc, \ loop back if not the end
+	swap, drop,  \ discard n
+	;
 	
+s" traverse" defmachineword _traverse
+	traverse, _traverse_body
+	next,
 s" nfa" defmachineword _nfa
 	5 #, lit, 
 	-,
 	0xFFFF #, lit,
-	traverse, 
+	traverse, _nfa_traverse_body
 	next, 
 \ s" ?error" defmachineword _?error
 \ 	swap,
