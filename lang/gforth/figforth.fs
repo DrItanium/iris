@@ -105,6 +105,8 @@ unused-start
 too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
+: #lit, ( n -- ) #, lit, ;
+: !lit, ( n -- ) !, lit, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -462,7 +464,7 @@ s" fill" defmachineword _fill ( addr n b -- )
     next,
 s" blanks" defmachineword _blanks ( addr n -- ) 
 	\ fill u bytes in memory with b beginning at address
-	bl #, lit,
+	bl #lit,
     3pop \ top - b
          \ lower - u
 		 \ third - addr
@@ -803,7 +805,7 @@ s" block" defmachineword _block
 	xlower xsp push,
 	xtop xsp push,
 	xthird xsp push, ;
-: 0,, ( -- ) 0 #, lit, ;
+: 0,, ( -- ) 0 #lit, ;
 : r>, ( -- )
 	xrp xtop pop,
 	xtop xsp push, ;
@@ -838,7 +840,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	dup, 
 	1+,,
 	c@,
-	0x2D #, lit, 
+	0x2D #lit, 
 	=,
 	dup,
 	>r, \ stash a copy
@@ -846,9 +848,9 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	0x1 #, xtop xtop andi, \ make sure that the flag is just one before adding
 	xtop xsp push,
 	+,
-	0xFFFF #, lit,
+	0xFFFF #lit,
 	deflabel-here number_begin
-	&dpl !, lit,
+	&dpl !lit,
 	store,
 	\ (number)
 	deflabel-here (number)_begin
@@ -869,8 +871,8 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	dpl@, 1+,,
 	deflabel (number)_noincr
 	(number)_noincr !, if,,
-	1 #, lit,
-	&dpl !, lit,
+	1 #lit,
+	&dpl !lit,
     2pop \ top - addr 
          \ lower - n
     xtop xthird ld,
@@ -882,14 +884,14 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	(number)_done .label
 	r>,
 	dup, c@,
-	bl #, lit, -,
+	bl #lit, -,
 	1pop \ get the flag
 	xtop cv eqz,
 	deflabel number_done
 	number_done !, cv bc,
 	\ while loop check
 	dup, c@,
-	0x2e #, lit, -, \ is it a decimal point?
+	0x2e #lit, -, \ is it a decimal point?
 	0,, 
 	deflabel number-not-error
 	swap,
@@ -912,32 +914,32 @@ s" expect" defmachineword _expect
 	deflabel-here expect_loop
 	key, \ key inlined
 	dup, \ make a copy
-	0x8 #, lit, \ load the ascii backspace code
+	0x8 #lit, \ load the ascii backspace code
 	=, \ is it a backspace?
 	deflabel expect_else0
 	deflabel expect_endif0
 	expect_else0 !, if,,
 		drop,
-		8 #, lit,
+		8 #lit,
 		over,
 		I, =,
 		dup, 
 		r>, 
-		2 #, lit, 
+		2 #lit, 
 		-, +, \ get the loop index. Decrement it by one. If it is
 			  \ the starting 
 		r>, -,
 		expect_endif0 !, b,
 		expect_else0 .label
 			dup, 
-			0xD #, lit,
+			0xD #lit,
 			=,
 		deflabel expect_else1
 		deflabel expect_endif1
 			expect_else1 !, if,,
 				leave, 
 				drop, 
-				bl #, lit, 
+				bl #lit, 
 				0,,
 				expect_endif1 !, b,
 			expect_else1 .label
@@ -969,11 +971,11 @@ s" expect" defmachineword _expect
 	next,
 
 s" word" defmachineword _word
-	&blk #, lit, @,
+	&blk #lit, @,
 	deflabel _word_else0
 	deflabel _word_endif0
 	_word_else0 !, if,,
-		&blk #, lit, @, 
+		&blk #lit, @, 
 		\ block,
 		deflabel _block_done0
 		( bid -- addr )
@@ -993,13 +995,13 @@ s" word" defmachineword _word
 		at0 xsp push,
 		_word_endif0 !, b,
 	_word_else0 .label
-		&tib !, lit, @, 
+		&tib !lit, @, 
 	_word_endif0 .label
-		&in !, lit, @, +, swap, 
+		&in !lit, @, +, swap, 
 	    enclose,
 		here,
-		0x22 #, lit,
-		bl #, lit,
+		0x22 #lit,
+		bl #lit,
     	3pop \ top - b
     	     \ lower - u
 			 \ third - addr
@@ -1011,7 +1013,7 @@ s" word" defmachineword _word
     	xlower 1-,
     	_blanks_loop0 !, b,
     	_blanks_done0 .label
-		&in !, lit, 
+		&in !lit, 
 		+!, 
 		over,
 		-, 
@@ -1025,12 +1027,12 @@ s" word" defmachineword _word
 		r>, 
 		next,
 s" create" defmachineword _create
-	bl #, lit,
-	&blk #, lit, @,
+	bl #lit,
+	&blk #lit, @,
 	deflabel _word_else1
 	deflabel _word_endif1
 	_word_else1 !, if,,
-		&blk #, lit, @, 
+		&blk #lit, @, 
 		\ block,
 		deflabel _block_done1
 		( bid -- addr )
@@ -1050,13 +1052,13 @@ s" create" defmachineword _create
 		at0 xsp push,
 		_word_endif1 !, b,
 	_word_else1 .label
-		&tib !, lit, @, 
+		&tib !lit, @, 
 	_word_endif1 .label
-		&in !, lit, @, +, swap, 
+		&in !lit, @, +, swap, 
 	    enclose,
 		here,
-		0x22 #, lit,
-		bl #, lit,
+		0x22 #lit,
+		bl #lit,
     	3pop \ top - b
     	     \ lower - u
 			 \ third - addr
@@ -1068,7 +1070,7 @@ s" create" defmachineword _create
     	xlower 1-,
     	_blanks_loop1 !, b,
     	_blanks_done1 .label
-		&in !, lit, 
+		&in !lit, 
 		+!, 
 		over,
 		-, 
@@ -1082,18 +1084,18 @@ s" create" defmachineword _create
 		r>, 
 	here,
 	dup, c@,
-	&width !, lit, @,
+	&width !lit, @,
 	min,
 	1+,, allot,
-	dup, 0xa0 #, lit, toggle,
-	here, 1-,, 0x80 #, lit, toggle,
+	dup, 0xa0 #lit, toggle,
+	here, 1-,, 0x80 #lit, toggle,
 	latest,,
-	&current #, lit, #, !, 
-	here, 2 #, lit, +, ,, next,
+	&current #lit, #, !, 
+	here, 2 #lit, +, ,, next,
 s" compile" defmachineword _compile
 	?comp, \ error if not compiling
 	r>,    \ top of return stack is pointing to the next word following compile
-	dup, 2 #, lit, +, >r,
+	dup, 2 #lit, +, >r,
 	@, ,, 
 	next,
 s" count" defmachineword _count dup, 1+,, swap, next,
@@ -1106,7 +1108,7 @@ s" count" defmachineword _count dup, 1+,, swap, next,
 	swap, \ get a1 to the top of the stack
 	deflabel-here execute-latest >r 
 	over, +, \ copy n and add to addr, pointing to the next character
-	0x7F #, lit, \ test number for the eighth bit of a character
+	0x7F #lit, \ test number for the eighth bit of a character
 	over, c@, \ fetch the character
 	<, \ if it is greater than 127, the end is reached
 	1pop \ flag
@@ -1119,17 +1121,17 @@ s" traverse" defmachineword _traverse
 	traverse, _traverse_body
 	next,
 s" nfa" defmachineword _nfa
-	5 #, lit, 
+	5 #lit, 
 	-,
-	0xFFFF #, lit,
+	0xFFFF #lit,
 	traverse, _nfa_traverse_body
 	next, 
 s" definitions" defmachineword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
   \ new definitions will be added to the cccc vocabulary
-	&context !, lit, @, 
-	&current !, lit, !, 
+	&context !lit, @, 
+	&current !lit, !, 
 	next,
 	
 &state s" state" defvariableword _state
