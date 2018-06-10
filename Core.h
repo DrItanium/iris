@@ -32,6 +32,7 @@
 #include <functional>
 #include <type_traits>
 #include <list>
+#include <iostream>
 #include "Types.h"
 #include "Problem.h"
 
@@ -125,7 +126,6 @@ namespace iris {
                 Count,
             };
 			using MemoryBlock16 = std::unique_ptr<Number[]>;
-			using MemoryBlock32 = std::unique_ptr<RawInstruction[]>;
 			using RegisterFile = std::unique_ptr<Register[]>;
 			struct InstallToRegister final { };
             struct InstallToMemory final { };
@@ -148,7 +148,8 @@ namespace iris {
 									_registers[address].setValue(value);
 								}
                             } else if constexpr (std::is_same_v<K, InstallToMemory>) {
-                                _memory[address].address = value;
+								std::cerr << "installation: " << std::hex << address << ": " << std::hex << value << std::endl;
+								store(address, value, true);
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 							}

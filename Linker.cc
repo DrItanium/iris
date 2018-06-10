@@ -113,6 +113,10 @@ int main(int argc, char** argv) {
         while (in) {
             iris::LinkerEntry::RawLinkerEntry v = 0;
             in >> std::hex >> v;
+			if (in.eof() && v == 0) {
+				// skip the last entry
+				break;
+			}
             iris::LinkerEntry entry(v);
             switch (entry.getKind()) {
                 case Kind::MemorySpace:
@@ -142,6 +146,7 @@ int main(int argc, char** argv) {
             return 1;
         }
         in.close();
+		std::cerr << "delayed instructions!" << std::endl;
         for (auto& e : _delayedInstructions) {
             if (auto kind = e.getKind() ; kind == Kind::IndirectInstruction) {
                 auto upperHalf = (e.getValue() >> 16) & 0xFFFF;

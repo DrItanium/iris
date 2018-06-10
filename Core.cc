@@ -478,6 +478,9 @@ namespace iris {
     void Core::dump(std::ostream& out) {
 		for (int i = 0; i < (Core::maxAddress + 1); ++i) {
 			auto value = load(i, true);
+			if (i < 0x10) {
+				std::cerr << std::hex << i << ": " << std::hex << value << std::endl;
+			}
 			out.put(decodeBits<Address, char, 0x00FF, 0>(value));
 			out.put(decodeBits<Address, char, 0xFF00, 8>(value));
 		}

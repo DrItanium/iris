@@ -8,7 +8,6 @@ s" figforth.o" {asm
 0xFF00 constant io-start
 0xF000 constant system-start
 0x0000 constant ram-start
-ram-start constant interpreter-start
 \ 0x0100 constant bootstrap-end
 0xF000 constant &LIMIT
 0xE000 constant &FIRST \ address of the first byte of the disk buffers
@@ -101,7 +100,6 @@ unused-start
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
 1+cconstant xfifth \ temporary storage register five
-1+cconstant cv2
 too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
@@ -1167,11 +1165,35 @@ s" terminate" defmachineword _terminate
 	zero xtaddr st,
 	next,
 base-dict-done .label \ always is the front address
+system-start .org \ system variables
+&state .label 0 #, .data16
+&base .label 0x10 #, .data16
+&tib  .label 0 #, .data16
+&s0   .label 0 #, .data16
+&r0   .label 0 #, .data16
+&warning   .label 0 #, .data16
+&fence .label 0 #, .data16
+&dp .label 0 #, .data16
+&voc-link .label 0 #, .data16
+&blk .label 0 #, .data16
+&in .label 0 #, .data16
+&out .label 0 #, .data16
+&current .label 0 #, .data16
+&dpl  .label 0 #, .data16
+&fld  .label 0 #, .data16
+&csp  .label 0 #, .data16
+&r#   .label 0 #, .data16
+&hld  .label 0 #, .data16
+&separator .label 0 #, .data16
+&terminator .label 0 #, .data16
+&context .label 0 #, .data16
+&width .label 0 #, .data16
+&porigin .label 0 #, .data16
 ram-start .org
 	_cold .label
-	\ zero xcoreid move, \ set to the zeroth core by default
-	\ /dev/core-load #, io set,
-	\ xcoreid io st, \ setup the zeroth core
+	zero xcoreid move, \ set to the zeroth core by default
+	/dev/core-load #, xtop set,
+	xcoreid xtop st, \ setup the zeroth core
 	base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
 	base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
 	0x10 #, &base ??, assign-variable,              \ setup the numeric base
@@ -1220,30 +1242,6 @@ _handle-error .label
 	_quit ??, b,
 
 
-system-start .org \ system variables
-&state .label 0 #, .data16
-&base .label 0x10 #, .data16
-&tib  .label 0 #, .data16
-&s0   .label 0 #, .data16
-&r0   .label 0 #, .data16
-&warning   .label 0 #, .data16
-&fence .label 0 #, .data16
-&dp .label 0 #, .data16
-&voc-link .label 0 #, .data16
-&blk .label 0 #, .data16
-&in .label 0 #, .data16
-&out .label 0 #, .data16
-&current .label 0 #, .data16
-&dpl  .label 0 #, .data16
-&fld  .label 0 #, .data16
-&csp  .label 0 #, .data16
-&r#   .label 0 #, .data16
-&hld  .label 0 #, .data16
-&separator .label 0 #, .data16
-&terminator .label 0 #, .data16
-&context .label 0 #, .data16
-&width .label 0 #, .data16
-&porigin .label 0 #, .data16
 asm}
 
 bye

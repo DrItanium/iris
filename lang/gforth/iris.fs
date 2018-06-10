@@ -138,7 +138,7 @@ opcode: #prok
 opcode: #digit
 opcode: #enclose
 opcode}
-
+#move .
 \ registers
 set-current \ go back
 
@@ -298,7 +298,7 @@ drop
 #add inst-3reg add, 
 #move inst-2reg move,
 
-: nop ( -- ) zero zero move, ;
+: nop, ( -- ) zero zero move, ;
 : -> ( src dest -- ) move, ;
 \ constant tagging version
 \ #, is a constant version
