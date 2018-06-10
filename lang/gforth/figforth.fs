@@ -181,18 +181,16 @@ deflabel-here _docolon
   embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
 : defword, ( v -- ) !, .data16 ;
-deflabel-here _;S
-\ _;S .label \ perform unnesting
-\ return execution to the calling definition. Unnest one level.
-    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
-    next,
-: ;s, ( -- ) _;S !, b, ;
 deflabel-here _push
 s" push" embed-name 
 0 #, .data16
 _push machine-code-execute
 _push last-word !
     xo xsp push, 
+    next,
+s" ;s" defmachineword _;s
+	\ return execution to the calling definition. Unnest one level.
+    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
     next,
 s" pop" defmachineword _pop
     xsp zero pop,
@@ -253,11 +251,16 @@ s" nand" defbinaryop _nand nand,
 s" nor" defbinaryop _nor nor,
 s" lshift" defbinaryop _lshift lshift,
 s" rshift" defbinaryop _rshift rshift,
+: rot, ( -- ) 
+	3pop ( a b c -- b c a )
+		 \ top - c
+		 \ lower - b
+		 \ third - a 
+	xlower xsp push,
+	xtop xsp push,
+	xthird xsp push, ;
 s" rot" defmachineword _rot ( a b c -- b c a )
-    3pop \ a (third) b (lower)  c (top)
-    xlower xsp push,
-    xtop xsp push,
-    xthird xsp push,
+	rot, 
     next,
 s" -dup" defmachineword _-dup \ duplicate if non zero
     deflabel _-dup_done
@@ -792,14 +795,6 @@ s" block" defmachineword _block
 	;
 : +, ( -- ) 2pop xlower xtop xtop add, xtop xsp push, ;
 : -, ( -- ) 2pop xlower xtop xtop sub, xtop xsp push, ;
-: rot, ( -- ) 
-	3pop ( a b c -- b c a )
-		 \ top - c
-		 \ lower - b
-		 \ third - a 
-	xlower xsp push,
-	xtop xsp push,
-	xthird xsp push, ;
 : 0,, ( -- ) 0 #lit, ;
 : r>, ( -- )
 	xrp xtop pop,
