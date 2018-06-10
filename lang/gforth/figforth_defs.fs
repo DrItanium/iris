@@ -91,6 +91,7 @@
   HLD ! \ hld is a user variable holding the address of last character in the output text string
   ;
 : erase ( addr u -- ) 0 fill ;
+: blanks ( addr u -- ) bl fill ;
 
 : -find ( -- [ pfa b tf ] or [ f ] )
   \ accept the next word delimited by blanks in the input stream to here, and

@@ -180,6 +180,7 @@ deflabel-here _docolon
   last-word !
   embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
+: defword, ( v -- ) !, .data16 ;
 deflabel-here _;S
 \ _;S .label \ perform unnesting
 \ return execution to the calling definition. Unnest one level.
@@ -471,32 +472,12 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_done .label
     next,
 
-s" blanks" defmachineword _blanks ( addr n -- ) 
-	\ fill u bytes in memory with b beginning at address
-	bl #lit,
-    3pop \ top - b
-         \ lower - u
-		 \ third - addr
-    deflabel _blanks_done
-    deflabel-here _blanks_loop
-    xlower cv eqz,
-    _blanks_done !, cv bc,
-    xtop xthird sttincr,
-    xlower 1-,
-    _blanks_loop !, b,
-    _blanks_done .label
-    next,
 s" bl" defmachineword _bl
     bl #, xsp pushi,
     next,
 s" 0" defmachineword _zero
     zero xsp push,
     next,
-: defword, ( v -- ) !, .data16 ;
-s" erase" defcolonword _erase
-	_zero defword,
-	_fill defword,
-	_;S defword,
 : here, ( -- ) 
 	&DP !, xtaddr set,
 	xtaddr xtop ld,
