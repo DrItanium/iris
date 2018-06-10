@@ -44,7 +44,6 @@ namespace iris {
         public:
             using RawLinkerEntry = uint64_t; // each entry is at most 64 bits wide
             enum class Kind : iris::byte {
-                RegisterValue,
                 MemorySpace,
                 Instruction,
                 LabelEntry,
@@ -116,9 +115,6 @@ int main(int argc, char** argv) {
             in >> std::hex >> v;
             iris::LinkerEntry entry(v);
             switch (entry.getKind()) {
-                case Kind::RegisterValue:
-                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToRegister());
-                    break;
                 case Kind::MemorySpace:
                     core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
                     break;

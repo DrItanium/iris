@@ -37,12 +37,11 @@ variable mloc \ current memory location
 
 : cconstant ( byte "name" -- ) create c, does> c@ ;
 : xop& ( n a -- k ) c@ or ;
-0 constant RegisterValueSpace
-1 constant MemorySpace
-2 constant InstructionSpace 
-3 constant LabelSpace
-4 constant IndirectInstructionSpace
-5 constant IndirectMemorySpace
+0 constant MemorySpace
+1 constant InstructionSpace 
+2 constant LabelSpace
+3 constant IndirectInstructionSpace
+4 constant IndirectMemorySpace
 
 
 : linker-entry ( kind address value -- n ) 

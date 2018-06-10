@@ -476,21 +476,11 @@ namespace iris {
     }
 
     void Core::dump(std::ostream& out) {
-        // start with registers
-        auto putAddress = [&out](Address v) {
-            out.put(decodeBits<Address, char, 0x00FF, 0>(v));
-            out.put(decodeBits<Address, char, 0xFF00, 8>(v));
-        };
-        auto putRegister = [putAddress](const Register& reg) { putAddress(reg.getValue().address); };
-        auto walkThroughSection = [](auto fn) {
-            for (int i = 0; i < Core::maxAddress; ++i) {
-                fn(i);
-            }
-        };
-        for (int i = 0; i < Core::registerCount; ++i) {
-            putRegister(_registers[i]);
-        }
-        walkThroughSection([this, putAddress](int i) { putAddress(_memory[i].get<Address>()); });
+		for (int i = 0; i < Core::maxAddress; ++i) {
+			auto value = load(i);
+			out.put(decodeBits<Address, char, 0x00FF, 0>(value));
+			out.put(decodeBits<Address, char, 0xFF00, 8>(value));
+		}
     }
     void Core::install(std::istream& in) {
         auto getByte = [&in]() {
@@ -506,15 +496,9 @@ namespace iris {
             auto upper = Address(getByte()) << 8;
             return lower | upper;
         };
-        for (int i = 0; i < Core::registerCount; ++i) {
-            _registers[i].setValue(Number(getAddress()));
-        }
-        auto walkThroughSection = [](auto fn) {
-            for (int i = 0; i < Core::maxAddress; ++i) {
-                fn(i);
-            }
-        };
-        walkThroughSection([this, getAddress](int i) { _memory[i].address = getAddress(); });
+		for (int i = 0 ; i < Core::maxAddress; ++i) {
+			store(i, getAddress());
+		}
     }
     Address Core::IODevice::read(Address addr) {
         if (_read) {
