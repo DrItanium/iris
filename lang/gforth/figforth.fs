@@ -108,13 +108,19 @@ too-many-vars-defined
 0x8 constant b/scr
 0x80 constant b/buf 
 variable last-word
-0 last-word !
+_origin last-word !
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
 deflabel-here _2push xlower xsp push,
 deflabel-here _1push xtop xsp push,
 \ jump to COLD most likely here
+	1 2+ 2+ 2+ \ machine-code temporary + three instruction shim
+	0x5 + \ header size
+	constant jump-over-target
+
 deflabel-here _next
+	\ okay this is different from how figforth designs things
+	\ when loading the address 
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
@@ -153,13 +159,30 @@ deflabel-here _next
 1 constant word/smudge
 2 constant word/imm
 word/imm word/smudge or constant word/all
+\ format:
+\ address 0 in this case is where the label is pointing to
+\ 0: control bits 
+\ 1: length 
+\ 2: char0,1
+\ 3: char2,3
+\ 4: next 
+\ 5: address (interpreter routine) 
+\ 6-n: body 
 : defword-base ( str length control-bits "name" -- )
   deflabel-here 
+  \ a shim to make next and docol unaware of encoding layout
+  \ it does slow things down but it can't be helped at this point
+  \ another revision will fix this but now I don't care
+  machine-code-execute
+  execute-latest ??, xtaddr set,
+  jump-over-target #, xtaddr xtaddr addi,
+  xtaddr br, \ then jump to the address we've computed which is over the
+	         \ current set of instructions relative to the label here
   #, .cell \ stash the control bits here
-  embed-name
-  last-word @ ??, .cell 
-  execute-latest
-  last-word ! ;
+  embed-name \ stash three more bits
+  last-word @ ??, .cell \ stash the next
+  execute-latest last-word ! ;
+\ this code must be there every single time
 
 : defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
@@ -608,6 +631,66 @@ s" space" defmachineword _space
     0x20 #, xtop set,
     xtop xlower st,
     next,
+s" -dup" defmachineword _-dup \ duplicate if non zero
+    deflabel _-dup_done
+    1pop 
+    xtop cv eqz, 
+    _-dup_done ??, cv bc,
+        xtop xsp push,
+    _-dup_done .label
+	1push,
+: traverse, ( -- )
+	\ move across the name field of a variable length name field.
+	\ a1 is the address of either the length byte or the last character
+	\ if n == 1, the motion is towards high memory; 
+	\ if n == -1, the motion is towards low memory
+	\ a2 is the address of the other end of the name field
+	swap, \ get a1 to the top of the stack
+	deflabel-here execute-latest >r 
+	over, +, \ copy n and add to addr, pointing to the next character
+	0x7F #lit, \ test number for the eighth bit of a character
+	over, c@, \ fetch the character
+	<, \ if it is greater than 127, the end is reached
+	1pop \ flag
+	zero xtop cv eq,
+	r> ??, cv bc, \ loop back if not the end
+	swap, drop,  \ discard n
+	;
+	
+s" traverse" defmachineword _traverse
+	traverse, _traverse_body
+	next,
+: latest,, ( -- )
+	&current ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xtop ld,
+	xtop xsp push, ;
+s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
+	&current ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xtop ld,
+	1push, 
+
+s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
+	1pop
+	4 #, xtop xtop subi, 
+	1push,
+s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
+	1pop
+	2 #, xtop xtop subi,
+	1push,
+s" nfa" defmachineword _nfa
+	5 #lit, 
+	-,
+	0xFFFF #lit,
+	traverse, _nfa_traverse_body
+	next, 
+s" pfa" defmachineword _pfa
+	1 #lit,
+	traverse, _pfa_traverse_body
+	5 #lit,
+	+,
+	next,
 
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
@@ -631,14 +714,6 @@ s" nand" defbinaryop _nand nand,
 s" nor" defbinaryop _nor nor,
 s" lshift" defbinaryop _lshift lshift,
 s" rshift" defbinaryop _rshift rshift,
-s" -dup" defmachineword _-dup \ duplicate if non zero
-    deflabel _-dup_done
-    1pop 
-    xtop cv eqz, 
-    _-dup_done ??, cv bc,
-        xtop xsp push,
-    _-dup_done .label
-	1push,
 : 1-,, ( -- )
 	1pop
 	xtop 1-,
@@ -719,24 +794,6 @@ s" ?comp" defmachineword _?comp
 	xtaddr xtop ld,
 	zero xtop xtop neq,
 	1push,
-s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
-	1pop
-	4 #, xtop xtop subi, 
-	1push,
-s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
-	1pop
-	2 #, xtop xtop subi,
-	1push,
-: latest,, ( -- )
-	&current ??, xtaddr set,
-	xtaddr xtop ld,
-	xtop xtop ld,
-	xtop xsp push, ;
-s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
-	&current ??, xtaddr set,
-	xtaddr xtop ld,
-	xtop xtop ld,
-	1push, 
 s" hex" defmachineword _hex \ set the base to 16
 	&base ??, xtaddr set,
 	0x10 #, at0 set,
@@ -1142,33 +1199,6 @@ s" compile" defmachineword _compile
 	@, ,, 
 	next,
 s" count" defmachineword _count dup, 1+,, swap, next,
-: traverse, ( -- )
-	\ move across the name field of a variable length name field.
-	\ a1 is the address of either the length byte or the last character
-	\ if n == 1, the motion is towards high memory; 
-	\ if n == -1, the motion is towards low memory
-	\ a2 is the address of the other end of the name field
-	swap, \ get a1 to the top of the stack
-	deflabel-here execute-latest >r 
-	over, +, \ copy n and add to addr, pointing to the next character
-	0x7F #lit, \ test number for the eighth bit of a character
-	over, c@, \ fetch the character
-	<, \ if it is greater than 127, the end is reached
-	1pop \ flag
-	zero xtop cv eq,
-	r> ??, cv bc, \ loop back if not the end
-	swap, drop,  \ discard n
-	;
-	
-s" traverse" defmachineword _traverse
-	traverse, _traverse_body
-	next,
-s" nfa" defmachineword _nfa
-	5 #lit, 
-	-,
-	0xFFFF #lit,
-	traverse, _nfa_traverse_body
-	next, 
 s" definitions" defmachineword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
@@ -1228,6 +1258,7 @@ system-start .org \ system variables
 &width .label 0 #, .cell
 &porigin .label 0 #, .cell
 ram-start .org
+	
 	_origin .label
 	_cold .label
 	zero xcoreid move, \ set to the zeroth core by default
