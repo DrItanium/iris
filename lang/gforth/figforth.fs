@@ -639,6 +639,61 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
         xtop xsp push,
     _-dup_done .label
 	1push,
+: push-zero, ( sp -- ) zero swap push, ;
+: begin, ( -- ) 
+	\ check and see if we are compiling
+	&state ??, xtaddr set,
+	xtaddr xtaddr ld, \ load the state
+	zero xtaddr cv eq, \ check and see if it is not equal to zero
+	_handle-error ??, cv bc,
+	&dp ??, xtaddr set,
+	xtaddr xtaddr ld, 
+    xtaddr xsp push,
+	0x1 #, xsp pushi, ;
+: =, ( -- )
+	2pop 
+	xlower xtop cv eq,
+	cv xsp push, ;
+: >r, ( -- )
+	1pop
+	xtop xrp push, ;
+: store, ( -- )
+	2pop \ top - address
+		 \ lower - thing to store
+	xlower xtop st,
+	;
+: +, ( -- ) 2pop xlower xtop xtop add, xtop xsp push, ;
+: -, ( -- ) 2pop xlower xtop xtop sub, xtop xsp push, ;
+: 0,, ( -- ) 0 #lit, ;
+: r>, ( -- )
+	xrp xtop pop,
+	xtop xsp push, ;
+: if,, ( jump type -- )
+	1pop
+	xtop cv eqz,
+	cv bc, ;
+: negate, ( -- )
+	1pop
+	xtop xtop not,
+	xtop xsp push, ;
+: base@, ( -- )
+	&base ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push,
+	;
+: dpl@, ( -- )
+	&dpl ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push, 
+	;
+: u*, ( -- )
+	2pop
+	xlower xtop xtop umul,
+	xtop xsp push, ;
+: <, ( -- ) 
+	2pop
+	xtop xlower xtop lt,
+	xtop xsp push, ;
 : traverse, ( -- )
 	\ move across the name field of a variable length name field.
 	\ a1 is the address of either the length byte or the last character
@@ -703,10 +758,6 @@ s" min" defbinaryop _min min,
 
 s" max" defbinaryop _max max,
 s" <"  defbinaryop _< lt,
-: <, ( -- ) 
-	2pop
-	xtop xlower xtop lt,
-	xtop xsp push, ;
 s" !=" defbinaryop _!= neq,
 s" >=" defbinaryop _>= ge,
 s" <=" defbinaryop _<= le,
@@ -880,57 +931,6 @@ s" block" defmachineword _block
 \ 	??, xtop set,
 \ 	xtop xsp push,
 \ 	next, ;
-: push-zero, ( sp -- ) zero swap push, ;
-: begin, ( -- ) 
-	\ check and see if we are compiling
-	&state ??, xtaddr set,
-	xtaddr xtaddr ld, \ load the state
-	zero xtaddr cv eq, \ check and see if it is not equal to zero
-	_handle-error ??, cv bc,
-	&dp ??, xtaddr set,
-	xtaddr xtaddr ld, 
-    xtaddr xsp push,
-	0x1 #, xsp pushi, ;
-: =, ( -- )
-	2pop 
-	xlower xtop cv eq,
-	cv xsp push, ;
-: >r, ( -- )
-	1pop
-	xtop xrp push, ;
-: store, ( -- )
-	2pop \ top - address
-		 \ lower - thing to store
-	xlower xtop st,
-	;
-: +, ( -- ) 2pop xlower xtop xtop add, xtop xsp push, ;
-: -, ( -- ) 2pop xlower xtop xtop sub, xtop xsp push, ;
-: 0,, ( -- ) 0 #lit, ;
-: r>, ( -- )
-	xrp xtop pop,
-	xtop xsp push, ;
-: if,, ( jump type -- )
-	1pop
-	xtop cv eqz,
-	cv bc, ;
-: negate, ( -- )
-	1pop
-	xtop xtop not,
-	xtop xsp push, ;
-: base@, ( -- )
-	&base ??, xtaddr set,
-	xtaddr xtop ld,
-	xtop xsp push,
-	;
-: dpl@, ( -- )
-	&dpl ??, xtaddr set,
-	xtaddr xtop ld,
-	xtop xsp push, 
-	;
-: u*, ( -- )
-	2pop
-	xlower xtop xtop umul,
-	xtop xsp push, ;
 
 s" number" defmachineword _number \ initial basic number routine for parsing
 	deflabel number_finish
