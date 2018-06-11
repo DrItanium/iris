@@ -707,3 +707,4 @@ push, ;
 #prok inst-no-reg prok,
 #digit inst-4reg digit, 
 #enclose inst-1reg enclose,
+: .cell ( addr id -- ) .data16 ;

@@ -110,8 +110,8 @@ variable last-word
 0 last-word !
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
-deflabel-here _1push
-	xtop xsp push,
+deflabel-here _2push xlower xsp push,
+deflabel-here _1push xtop xsp push,
 \ jump to COLD most likely here
 deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
@@ -122,29 +122,29 @@ deflabel-here _next
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
-: machine-code-execute ( -- ) loc@ 1+ #, .data16 ;
+: machine-code-execute ( -- ) loc@ 1+ #, .cell ;
 : machineword ( n -- ) .label machine-code-execute ;
 : machine-code-jump ( imm id -- ) 
   at0 set,
   at0 at0 ld,
   at0 br, ;
 : embed-name ( str length -- ) 
-  dup #, .data16 \ embed length into its own storage
+  dup #, .cell \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
-  	1 of 0xFF and #, .data16 
-	     0 #, .data16 
+  	1 of 0xFF and #, .cell 
+	     0 #, .cell 
 		 endof
-	2 of 0xFFFF and #, .data16 
-	     0 #, .data16 
+	2 of 0xFFFF and #, .cell 
+	     0 #, .cell 
 		 endof
-	3 of dup 0xFFFF and #, .data16
-	     0xFF0000 and 16 rshift #, .data16 endof
+	3 of dup 0xFFFF and #, .cell
+	     0xFF0000 and 16 rshift #, .cell endof
 	swap \ the length must be consumed by endcase :(
 	dup 
-	0xFFFF and #, .data16
+	0xFFFF and #, .cell
 	0xFFFF0000 and 
-	16 rshift #, .data16 
+	16 rshift #, .cell 
    endcase ;
 
 
@@ -155,71 +155,32 @@ word/imm word/smudge or constant word/all
 
 : defmachineword-base ( str length control-bits "name" -- ) 
   deflabel-here 
-  #, .data16 \ stash the control bits here
+  #, .cell \ stash the control bits here
   embed-name
-  last-word @ ??, .data16 
+  last-word @ ??, .cell 
   execute-latest
   last-word !
   machine-code-execute 
   ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
-: embed-string-length ( len -- ) #, .data16 ;
-deflabel-here _execute
-    \ execute the definition whose code field address cfa is on the data stack
-    xsp xw pop, \ pop the code field address into xw, the word pointer
-    xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
-    at0 br, 
+: embed-string-length ( len -- ) #, .cell ;
 deflabel-here _docolon 
 	\ runtime routine for all colon definitions
     xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     \ duplicate NEXT for now
     next,
-: embed-docolon ( -- ) _DOCOLON ??, .data16 ;
+: embed-docolon ( -- ) _DOCOLON ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) 
   deflabel-here 
-  #, .data16 \ stash the control bits here
+  #, .cell \ stash the control bits here
   embed-name
-  last-word @ ??, .data16
+  last-word @ ??, .cell
   execute-latest dup 
   last-word !
   embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
-: defword, ( v -- ) ??, .data16 ;
-deflabel-here _push
-s" push" #, .data16 \ embed length
-@
-dup 0xFFFF and #, .data16 \ lower characters
-0xFFFF0000 and 16 rshift #, .data16 \ rest of name
-0 #, .data16
-_push machine-code-execute last-word !
-    xtop xsp push, 
-    next,
-s" ;s" defmachineword _;s
-	\ return execution to the calling definition. Unnest one level.
-    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
-    next,
-s" pop" defmachineword _pop
-    xsp zero pop,
-    next,
-s" put" defmachineword _put
-    \ replace the top of data stack with the contents of the accumulator
-    xtop xsp st, 
-    next,
-s" lit" defmachineword _lit
-    \ push the next word to the data stack as a literal. Increment IP and skip this literal.
-    \ NEXT Return
-    \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
-    \ inline literal to the data stack to be used in computations
-	xip xtop ld,
-    xtop xsp push,
-    xip 1+,
-    next,
-: push-literal ( n -- )
-  \ compile the literal into the dictionary by putting the _LIT command followed by
-  \ the number itself
-  _LIT ??, .data16
-  #, .data16 ;
+: defword, ( v -- ) ??, .cell ;
 
 : 1pop ( -- )
   xsp xtop pop, ;
@@ -229,6 +190,43 @@ s" lit" defmachineword _lit
 : 3pop ( -- )
   2pop
   xsp xthird pop, ;
+s" lit" defmachineword _lit
+    \ push the next word to the data stack as a literal. Increment IP and skip this literal.
+    \ NEXT Return
+    \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
+    \ inline literal to the data stack to be used in computations
+	xip xtop ld,
+    xip 1+,
+	1push,
+: push-literal ( n -- )
+  \ compile the literal into the dictionary by putting the _LIT command followed by
+  \ the number itself
+  _lit ??, .cell
+  #, .cell ;
+s" execute" defmachineword _execute
+	\ execute the definition whose code field address cfa is on the data stack
+    xsp xw pop, \ pop the code field address into xw, the word pointer
+    xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
+    at0 br, 
+s" branch" defmachineword _branch
+	xip xtop ld,
+	xtop xip xip add,
+	next,
+s" 0branch" defmachineword _0branch
+	deflabel _zbra1
+	1pop \ flag
+	zero xtop cv neq,
+	_zbra1 ??, cv bc,
+	xip xlower ld,
+	xip xlower xip add,
+	next,
+	_zbra1 .label
+	0x2 #, xip xip addi,
+	next,
+s" ;s" defmachineword _;s
+	\ return execution to the calling definition. Unnest one level.
+    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
+    next,
 : defbinaryop ( str length "name" "op" -- )
   defmachineword 
   2pop
@@ -545,21 +543,6 @@ s" dodoes" defmachineword _dodoes_prime
     xw 1+,
 	xw xtop move,
 	1push,
-s" branch" defmachineword _branch
-	xip xtop ld,
-	xtop xip xip add,
-	next,
-s" 0branch" defmachineword _0branch
-	deflabel _zbra1
-	1pop \ flag
-	zero xtop cv neq,
-	_zbra1 ??, cv bc,
-	xip xlower ld,
-	xip xlower xip add,
-	next,
-	_zbra1 .label
-	0x2 #, xip xip addi,
-	next,
 : ?comp, ( -- )
 	&state ??, xtaddr set,
 	xtaddr xtop ld,
@@ -1166,29 +1149,29 @@ s" terminate" defmachineword _terminate
 	next,
 base-dict-done .label \ always is the front address
 system-start .org \ system variables
-&state .label 0 #, .data16
-&base .label 0x10 #, .data16
-&tib  .label 0 #, .data16
-&s0   .label 0 #, .data16
-&r0   .label 0 #, .data16
-&warning   .label 0 #, .data16
-&fence .label 0 #, .data16
-&dp .label 0 #, .data16
-&voc-link .label 0 #, .data16
-&blk .label 0 #, .data16
-&in .label 0 #, .data16
-&out .label 0 #, .data16
-&current .label 0 #, .data16
-&dpl  .label 0 #, .data16
-&fld  .label 0 #, .data16
-&csp  .label 0 #, .data16
-&r#   .label 0 #, .data16
-&hld  .label 0 #, .data16
-&separator .label 0 #, .data16
-&terminator .label 0 #, .data16
-&context .label 0 #, .data16
-&width .label 0 #, .data16
-&porigin .label 0 #, .data16
+&state .label 0 #, .cell
+&base .label 0x10 #, .cell
+&tib  .label 0 #, .cell
+&s0   .label 0 #, .cell
+&r0   .label 0 #, .cell
+&warning   .label 0 #, .cell
+&fence .label 0 #, .cell
+&dp .label 0 #, .cell
+&voc-link .label 0 #, .cell
+&blk .label 0 #, .cell
+&in .label 0 #, .cell
+&out .label 0 #, .cell
+&current .label 0 #, .cell
+&dpl  .label 0 #, .cell
+&fld  .label 0 #, .cell
+&csp  .label 0 #, .cell
+&r#   .label 0 #, .cell
+&hld  .label 0 #, .cell
+&separator .label 0 #, .cell
+&terminator .label 0 #, .cell
+&context .label 0 #, .cell
+&width .label 0 #, .cell
+&porigin .label 0 #, .cell
 ram-start .org
 	_cold .label
 	zero xcoreid move, \ set to the zeroth core by default
