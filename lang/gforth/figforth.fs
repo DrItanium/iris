@@ -453,9 +453,20 @@ s" xor" defbinaryop _xor xor,
 s" sp@" defmachineword _sp@
     xsp xsp push,
     next,
-\ TODO SP!
-\ TODO RP@
-\ TODO RP!
+s" sp!" defmachineword _sp!
+    \ initialize the stack pointer from S0
+    &S0 ??, xtaddr set,
+    xtaddr xsp ld,
+    next,
+s" rp@" defmachineword _rp@
+    \ push xrp onto xsp
+    xrp xsp push,
+    next,
+s" rp!" defmachineword _rp!
+    \ initialize the stack pointer from R0
+    &R0 ??, xtaddr set,
+    xtaddr xrp ld,
+    next,
 s" ;s" defmachineword _;s
 	\ return execution to the calling definition. Unnest one level.
     xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
