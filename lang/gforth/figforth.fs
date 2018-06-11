@@ -110,6 +110,8 @@ variable last-word
 0 last-word !
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
+deflabel-here _1push
+	xtop xsp push,
 \ jump to COLD most likely here
 deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
@@ -118,6 +120,7 @@ deflabel-here _next
                     \ this will make xw point to the parameter field of the word
     at0 br,         \ jump to the address found at that point
 : next, ( -- ) _next ??, b, ;
+: 1push, ( -- ) _1push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
 : machine-code-execute ( -- ) loc@ 1+ #, .data16 ;
 : machineword ( n -- ) .label machine-code-execute ;
@@ -137,8 +140,11 @@ deflabel-here _next
 		 endof
 	3 of dup 0xFFFF and #, .data16
 	     0xFF0000 and 16 rshift #, .data16 endof
-	dup 0xFFFF and #, .data16
-	0xFFFF0000 and 16 rshift #, .data16 
+	swap \ the length must be consumed by endcase :(
+	dup 
+	0xFFFF and #, .data16
+	0xFFFF0000 and 
+	16 rshift #, .data16 
    endcase ;
 
 
@@ -154,7 +160,8 @@ word/imm word/smudge or constant word/all
   last-word @ ??, .data16 
   execute-latest
   last-word !
-  machine-code-execute ;
+  machine-code-execute 
+  ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
 : embed-string-length ( len -- ) #, .data16 ;
 deflabel-here _execute
@@ -204,7 +211,8 @@ s" lit" defmachineword _lit
     \ NEXT Return
     \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
     \ inline literal to the data stack to be used in computations
-    xip xsp push,
+	xip xtop ld,
+    xtop xsp push,
     xip 1+,
     next,
 : push-literal ( n -- )
@@ -225,8 +233,7 @@ s" lit" defmachineword _lit
   defmachineword 
   2pop
   xtop xlower xtop ' execute 
-  xtop xsp push,
-  next, ;
+  1push, ;
 s" +" defbinaryop _+ add,
 s" -" defbinaryop _- sub, 
 s" *" defbinaryop _* mul,
@@ -274,39 +281,39 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
     _-dup_done ??, cv bc,
         xtop xsp push,
     _-dup_done .label
-    xtop xsp push,
-    next,
+	1push,
 s" >r" defmachineword _>r \ move top item to return stack
     1pop 
     xtop xrp push,
     next,
 s" r>" defmachineword _r> \ retrieve item from top of return stack
     xrp xtop pop,
-    xtop xsp push,
-    next,
+	1push,
 : r, ( -- ) 
 	xrp xtop ld,
 	xtop xsp push, 
 ;
 s" r" defmachineword _r \ copy top of return stack onto stack
-   r,
-   next,
+	xrp xtop ld,
+	1push,
 : 1+,, ( -- )
 	1pop
 	xtop 1+,
 	xtop xsp push, ;
 
 s" 1+" defmachineword _1+
-	1+,,
-	next,
+	1pop
+	xtop 1+,
+	1push,
 : 1-,, ( -- )
 	1pop
 	xtop 1-,
 	xtop xsp push, ;
 
 s" 1-" defmachineword _1-
-	1-,,
-	next,
+	1pop
+	xtop 1-,
+	1push,
 s" abs" defmachineword _abs
     deflabel _absDone
     1pop
@@ -314,26 +321,22 @@ s" abs" defmachineword _abs
     _absDone ??, cv bc,
     0xFFFF #, xtop xtop muli, \ multiply by negative one
     _absDone .label
-    xtop xsp push,
-    next,
+	1push,
 
 s" minus" defmachineword _minus
     deflabel _minusDone
     1pop
     0xFFFF #, xtop xtop muli, \ multiply by negative one
-    xtop xsp push,
-    next,
+	1push,
 
 s" 0<" defmachineword _0<
     1pop
     xtop xtop ltz,
-    xtop xsp push,
-    next,
+	1push,
 s" 0=" defmachineword _0=
     1pop
     xtop xtop eqz,
-    xtop xsp push,
-    next,
+	1push,
 
 : over, ( -- ) 
 	2pop 
@@ -344,11 +347,11 @@ s" over" defmachineword _over
 	over,
 	next,
 : dup, ( -- ) 
-	xsp at0 ld,
-	at0 xsp push, ;
+	xsp xtop ld,
+	xtop xsp push, ;
 s" dup" defmachineword _dup 
-	dup,
-    next,
+	xsp xtop ld,
+	1push,
 : drop, ( -- ) xsp zero pop, ;
 s" drop" defmachineword _drop 
 	drop,
@@ -390,15 +393,18 @@ s" c!" defmachineword _c!  ( value addr -- ) c!, next,
 	0xFF #, xtop xtop andi,
 	xtop xsp push, ;
 s" c@" defmachineword _c@
-	c@,
-    next,
+	1pop 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	1push,
 : @, ( -- )
     1pop
     xtop xtop ld,
     xtop xsp push, ;
 s" @" defmachineword _@
-	@,
-    next,
+    1pop
+    xtop xtop ld,
+	1push,
 s" ." defmachineword _.
    1pop
    /dev/console2 #, xlower set,
@@ -424,11 +430,12 @@ s" space" defmachineword _space
 	xtop xlower st, ;
 
 s" key" defmachineword _key 
-	key, 
-	next,
+	/dev/console0 #, xlower set,
+	xlower xtop ld,
+	1push,
 s" emit" defmachineword _emit 
 	emit, 
-next,
+	next,
 s" sp@" defmachineword _sp@
     xsp xsp push,
     next,
@@ -493,8 +500,9 @@ s" 0" defmachineword _zero
 	xtop xsp push, ;
 
 s" here" defmachineword _here
-	here,
-    next,
+	&DP ??, xtaddr set,
+	xtaddr xtop ld,
+	1push,
 : allot, ( -- )
 	1pop
 	&DP ??, xtaddr set,
@@ -508,8 +516,7 @@ s" pad" defmachineword _pad ( -- n )
 	&DP ??, xtaddr set,
 	xtaddr xtop ld, 
     0x44 #, xtop xtop addi,
-    xtop xsp push,
-    next,
+	1push,
 : ,, ( -- )
 	1pop 
 	&DP ??, xtaddr set,
@@ -536,8 +543,8 @@ s" dodoes" defmachineword _dodoes_prime
     xip xrp push,
     xw xip move,
     xw 1+,
-    xw xsp push,
-    next,
+	xw xtop move,
+	1push,
 s" branch" defmachineword _branch
 	xip xtop ld,
 	xtop xip xip add,
@@ -556,29 +563,31 @@ s" 0branch" defmachineword _0branch
 : ?comp, ( -- )
 	&state ??, xtaddr set,
 	xtaddr xtop ld,
-	zero xtop cv neq,
-	cv xsp push, ;
+	zero xtop xtop neq,
+	xtop xsp push, ;
 s" ?comp" defmachineword _?comp
-	?comp,
-	next,
+	&state ??, xtaddr set,
+	xtaddr xtop ld,
+	zero xtop xtop neq,
+	1push,
 s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
 	1pop
 	4 #, xtop xtop subi, 
-	xtop xsp push,
-	next,
+	1push,
 s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
 	1pop
 	2 #, xtop xtop subi,
-	xtop xsp push,
-	next,
+	1push,
 : latest,, ( -- )
 	&current ??, xtaddr set,
 	xtaddr xtop ld,
 	xtop xtop ld,
 	xtop xsp push, ;
 s" latest" defmachineword _latest \ leave the name field address of the last word defined in the current vocabulary
-	latest,,
-	next,
+	&current ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xtop ld,
+	1push, 
 s" hex" defmachineword _hex \ set the base to 16
 	&base ??, xtaddr set,
 	0x10 #, at0 set,
@@ -595,16 +604,13 @@ s" octal" defmachineword _octal \ set the base to 8
 	at0 xtaddr st,
 	next,
 s" c/l" defmachineword _c/l 
-	0x40 #, xtop set,
-	xtop xsp push,
+	0x40 #, xsp pushi,
 	next,
 s" b/buf" defmachineword _b/buf
-	b/buf #, xtop set,
-	xtop xsp push,
+	b/buf #, xsp pushi,
 	next,
 s" b/scr" defmachineword _b/scr
-	b/scr #, xtop set,
-	xtop xsp push,
+	b/scr #, xsp pushi,
 	next,
 s" immediate" defmachineword _immediate
 	\ mark the current dictionary entry as immediate
@@ -626,8 +632,8 @@ s" (do)" defmachineword _(do)
 	;
 
 s" I" defmachineword _I
-	I,
-	next,
+	xrp xtop ld, \ load the top loop element
+	1push,
 : leave, ( -- ) 
 		xrp xtop pop,
 		xrp zero pop,
@@ -772,8 +778,7 @@ s" block" defmachineword _block
 	xtop io st,
 	xtop xcoreid move, 
 	_block_done .label
-	&FIRST #, at0 set,
-	at0 xsp push,
+	&FIRST #, xsp pushi,
 	next,
 : defvariableword ( label str-addr len "name" -- )
 	defmachineword
@@ -788,8 +793,8 @@ s" block" defmachineword _block
 	zero xtaddr cv eq, \ check and see if it is not equal to zero
 	_handle-error ??, cv bc,
 	&dp ??, xtaddr set,
-	xtaddr at0 ld, 
-    at0 xsp push,
+	xtaddr xtaddr ld, 
+    xtaddr xsp push,
 	0x1 #, xsp pushi, ;
 : =, ( -- )
 	2pop 

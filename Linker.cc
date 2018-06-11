@@ -146,7 +146,6 @@ int main(int argc, char** argv) {
             return 1;
         }
         in.close();
-		std::cerr << "delayed instructions!" << std::endl;
         for (auto& e : _delayedInstructions) {
             if (auto kind = e.getKind() ; kind == Kind::IndirectInstruction) {
                 auto upperHalf = (e.getValue() >> 16) & 0xFFFF;

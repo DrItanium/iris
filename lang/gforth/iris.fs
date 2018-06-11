@@ -138,7 +138,6 @@ opcode: #prok
 opcode: #digit
 opcode: #enclose
 opcode}
-#move .
 \ registers
 set-current \ go back
 

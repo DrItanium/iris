@@ -148,7 +148,6 @@ namespace iris {
 									_registers[address].setValue(value);
 								}
                             } else if constexpr (std::is_same_v<K, InstallToMemory>) {
-								std::cerr << "installation: " << std::hex << address << ": " << std::hex << value << std::endl;
 								store(address, value, true);
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
