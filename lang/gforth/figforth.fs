@@ -108,19 +108,12 @@ too-many-vars-defined
 0x8 constant b/scr
 0x80 constant b/buf 
 variable last-word
-_origin last-word !
+0 last-word !
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
 deflabel-here _2push xlower xsp push,
 deflabel-here _1push xtop xsp push,
-\ jump to COLD most likely here
-	1 2+ 2+ 2+ \ machine-code temporary + three instruction shim
-	0x5 + \ header size
-	constant jump-over-target
-
 deflabel-here _next
-	\ okay this is different from how figforth designs things
-	\ when loading the address 
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
@@ -160,7 +153,7 @@ deflabel-here _next
 2 constant word/imm
 word/imm word/smudge or constant word/all
 \ format:
-\ address 0 in this case is where the label is pointing to
+\ address 5 in this case is where the label is pointing to
 \ 0: control bits 
 \ 1: length 
 \ 2: char0,1
@@ -169,20 +162,16 @@ word/imm word/smudge or constant word/all
 \ 5: address (interpreter routine) 
 \ 6-n: body 
 : defword-base ( str length control-bits "name" -- )
-  deflabel-here 
+  loc@ >r \ stash a copy of the current location here!
   \ a shim to make next and docol unaware of encoding layout
   \ it does slow things down but it can't be helped at this point
   \ another revision will fix this but now I don't care
-  machine-code-execute
-  execute-latest ??, xtaddr set,
-  jump-over-target #, xtaddr xtaddr addi,
-  xtaddr br, \ then jump to the address we've computed which is over the
-	         \ current set of instructions relative to the label here
   #, .cell \ stash the control bits here
-  embed-name \ stash three more bits
-  last-word @ ??, .cell \ stash the next
-  execute-latest last-word ! ;
-\ this code must be there every single time
+  embed-name \ stash three more bytes
+  last-word @ #, .cell \ stash the previous word here
+  r> last-word ! \ stash the top of this dictionary entry to last word
+  deflabel-here \ then define the label to point at here
+  ;
 
 : defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
