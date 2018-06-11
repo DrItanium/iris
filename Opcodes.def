@@ -84,9 +84,9 @@ X(Enclose, OneRegister, enclose)
 	// ( addr c -- addr nl n2 n3 )
 X(PrimitiveFind, OneRegister, pfind) 
     // searches the dictionary starting at the name field address addr2
-    // matching to the text at addr1. Returns parameter field address, 
-    // length byte of name field and boolean true for a good match.
+    // matching to the text at addr1. Returns parameter field address and
+    // boolean true for a good match
     //
     // No match only pushes false to the stack
-    // ( addr1 addr2 -- pfa b tf ) ( ok )
+    // ( addr1 addr2 -- pfa tf ) ( ok )
     // ( addr1 addr2 -- ff ) ( bad )

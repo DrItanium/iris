@@ -458,11 +458,56 @@ namespace iris {
         // 3: char 1
         // 4: char 2
         // 5: char 3
+        // 6: link field
+        // 7: code field
+        // 8: parameter field
         auto nfa = popDestination(op);
         auto stringAddr = popDestination(op);
         // take the string and generate a compressed format from it
+        auto stringLength = load(stringAddr.address);
         auto nfaLength = load(nfa.address + 1);
-        
+        if (stringLength == nfaLength) {
+            auto nfaStringStart = nfa.address + 2;
+            auto stringStart = stringAddr.address + 1;
+            // now check the lengths (maximum of four characters)
+            auto numCharacters = stringLength > 4 ? 4 : stringLength ;
+            auto mismatchFound = false;
+            for (Address i = 0; i < numCharacters; ++i) {
+                auto nw = load(nfaStringStart + i);
+                auto sw = load(stringStart + i);
+                if (nw != sw) {
+                    mismatchFound = true;
+                    break;
+                }
+            }
+            if (mismatchFound) {
+                // recursively call this routine for the next entry if we have one
+                auto linkField = load(nfa.address + 6);
+                if (linkField == 0) {
+                    pushDestination(op, false);
+                } else {
+                    // recursively call this because I'm super lazy
+                    pushDestination(op, stringAddr);
+                    pushDestination(op, linkField);
+                    perform(op);
+                }
+            } else {
+                // we found a match
+                pushDestination(op, nfa.address + 8);
+                pushDestination(op, true);
+            }
+        } else {
+            // recursively call this routine for the next entry if we have one
+            auto linkField = load(nfa.address + 6);
+            if (linkField == 0) {
+                pushDestination(op, false);
+            } else {
+                // recursively call this because I'm super lazy
+                pushDestination(op, stringAddr);
+                pushDestination(op, linkField);
+                perform(op);
+            }
+        }
     }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

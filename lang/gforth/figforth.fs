@@ -404,7 +404,7 @@ s" digit" defmachineword _digit
 	xsp digit, 
 	next,
 s" (find)" defmachineword _(find)
-    \ TODO find
+    xsp pfind,
 	next,
 s" enclose" defmachineword _enclose
 	enclose,,

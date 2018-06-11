@@ -137,6 +137,7 @@ opcode: #rltm
 opcode: #prok
 opcode: #digit
 opcode: #enclose
+opcode: #pfind
 opcode}
 \ registers
 set-current \ go back
@@ -707,4 +708,5 @@ push, ;
 #prok inst-no-reg prok,
 #digit inst-1reg digit, 
 #enclose inst-1reg enclose,
+#pfind inst-1reg pfind,
 : .cell ( addr id -- ) .data16 ;
