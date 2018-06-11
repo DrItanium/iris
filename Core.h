@@ -291,6 +291,14 @@ namespace iris {
 			}
 			Number pop(RegisterIndex reg) noexcept;
 			void push(RegisterIndex reg, Number value) noexcept;
+            template<typename T>
+            void pushDestination(const T& value, Number n) noexcept {
+                push(value._args.dest, n);
+            }
+            template<typename T>
+            Number popDestination(const T& value) noexcept {
+                return pop(value._args.dest);
+            }
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
 			void store(Address addr, Number value, bool unmapIOSpace = false) noexcept;

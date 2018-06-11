@@ -119,6 +119,7 @@ deflabel-here _next
     xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
     at0 br,         \ jump to the address found at that point
+: .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
@@ -132,19 +133,25 @@ deflabel-here _next
   dup #, .cell \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
-  	1 of 0xFF and #, .cell 
-	     0 #, .cell 
-		 endof
-	2 of 0xFFFF and #, .cell 
-	     0 #, .cell 
-		 endof
-	3 of dup 0xFFFF and #, .cell
-	     0xFF0000 and 16 rshift #, .cell endof
+  	1 of dup dup dup 
+         0xFF and #, .cell 
+         .skip .skip .skip endof
+    2 of dup dup dup 
+         0xFF and #, .cell 
+         0xFF00 and 8 rshift #, .cell
+         .skip
+         .skip endof
+	3 of dup dup dup
+         0xFF and #, .cell 
+         0xFF00 and 8 rshift #, .cell
+         0xFF0000 and 16 rshift #, .cell 
+         .skip endof
 	swap \ the length must be consumed by endcase :(
-	dup 
-	0xFFFF and #, .cell
-	0xFFFF0000 and 
-	16 rshift #, .cell 
+	dup dup dup
+    0xFF and #, .cell
+    0xFF00 and 8 rshift #, .cell
+    0xFF0000 and 16 rshift #, .cell
+    0xFF000000 and 24 rshift #, .cell
    endcase ;
 
 
@@ -153,18 +160,20 @@ deflabel-here _next
 2 constant word/imm
 word/imm word/smudge or constant word/all
 \ format:
-\ [0-3]: name field
-\ 4: link field
-\ 5: code field
+\ [0-5]: name field
+\ 6: link field
+\ 7: code field
 \ 6-n: parameter field
 \ address 5 in this case is where the label is pointing to
 \ 0: control bits 
 \ 1: length 
-\ 2: char0,1
-\ 3: char2,3
-\ 4: next 
-\ 5: address (interpreter routine) 
-\ 6-n: body 
+\ 2: char0
+\ 3: char1
+\ 4: char2
+\ 5: char3
+\ 6: next 
+\ 7: address (interpreter routine) 
+\ 8-n: body 
 : defword-base ( str length control-bits "name" -- )
   loc@ >r \ stash a copy of the current location here!
   \ a shim to make next and docol unaware of encoding layout
@@ -395,6 +404,7 @@ s" digit" defmachineword _digit
 	xsp digit, 
 	next,
 s" (find)" defmachineword _(find)
+    \ TODO find
 	next,
 s" enclose" defmachineword _enclose
 	enclose,,
@@ -708,11 +718,11 @@ s" cfa" defmachineword _cfa \ convert the parameter field address to code field 
 	1push,
 s" nfa" defmachineword _nfa \ convert the parameter field address to name field address
     1pop
-    6 #, xtop xtop subi,
+    7 #, xtop xtop subi,
     1push,
 s" pfa" defmachineword _pfa \ convert the name field address to its corresponding pfa
     1pop
-    5 #, xtop xtop addi,
+    8 #, xtop xtop addi,
     1push,
 
 s" *" defbinaryop _* mul,

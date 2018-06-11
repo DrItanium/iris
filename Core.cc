@@ -383,37 +383,37 @@ namespace iris {
 		// src - number
 		// dest - success flag
 		constexpr unsigned char normalizationValue = '0';
-		auto numBase = pop(op._args.dest).get<unsigned char>();
-		auto character = pop(op._args.dest).get<unsigned char>();
+		auto numBase = popDestination(op).get<unsigned char>();
+		auto character = popDestination(op).get<unsigned char>();
 		character -= normalizationValue;
 		if (character < normalizationValue) {
-			push(op._args.dest, false);
+			pushDestination(op, false);
 			return;
 		} else if (character == normalizationValue) {
-			push(op._args.dest, 0);
-			push(op._args.dest, true);
+			pushDestination(op, 0);
+			pushDestination(op, true);
 			return;
 		} 
 		auto value = character - normalizationValue;
 		if (value > 0x9) {
 			value -= 0x7;
 			if (value < 0xa) {
-				push(op._args.dest, false);
+				pushDestination(op, false);
 				return;
 			}
 		} 
 		if (value >= numBase) {
-			push(op._args.dest, false);
+			pushDestination(op, false);
 			return;
 		}
-		push(op._args.dest, Address(value));
-		push(op._args.dest, true);
+		pushDestination(op, Address(value));
+		pushDestination(op, true);
 	}
 	DefExec(Enclose) {
 		// taken from the 8086 figforth impl
-		auto terminator = pop(op._args.dest).address;
-		auto addr = pop(op._args.dest).address;
-		push(op._args.dest, addr);
+		auto terminator = popDestination(op).address;
+		auto addr = popDestination(op).address;
+		pushDestination(op, addr);
 		//terminator &= 0x00FF; // clear the upper half
 		Integer offsetCounter = -1;
 		--addr;
@@ -423,11 +423,10 @@ namespace iris {
 			++offsetCounter;
 			// wait for non terminator
 		} while (load(addr) == terminator);
-		push(op._args.dest, offsetCounter);
 		if (load(addr) == 0) {
 			// found null before first terminator
-			push(op._args.dest, offsetCounter + 1);
-			push(op._args.dest, offsetCounter);
+			pushDestination(op, offsetCounter + 1);
+			pushDestination(op, offsetCounter);
 			return;
 		}
 		// found first text character, count the characters
@@ -441,15 +440,30 @@ namespace iris {
 			}
 		}  while(load(addr) != 0);
 		if (foundTerminatorAtEnd) {
-			push(op._args.dest, offsetCounter);
-			push(op._args.dest, offsetCounter+1);
+			pushDestination(op, offsetCounter);
+			pushDestination(op, offsetCounter+1);
 		} else {
 			// found null at end of text
 			// counters are equal
-			push(op._args.dest, offsetCounter);
-			push(op._args.dest, offsetCounter);
+			pushDestination(op, offsetCounter);
+			pushDestination(op, offsetCounter);
 		}
 	}
+    DefExec(PrimitiveFind) {
+        // we are loading from the front of a dictionary entry of the format
+        // [0-5]: name field address
+        // 0: control bits
+        // 1: length
+        // 2: char 0 
+        // 3: char 1
+        // 4: char 2
+        // 5: char 3
+        auto nfa = popDestination(op);
+        auto stringAddr = popDestination(op);
+        // take the string and generate a compressed format from it
+        auto nfaLength = load(nfa.address + 1);
+        
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
