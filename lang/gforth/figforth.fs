@@ -153,16 +153,15 @@ deflabel-here _next
 1 constant word/smudge
 2 constant word/imm
 word/imm word/smudge or constant word/all
-
-: defmachineword-base ( str length control-bits "name" -- ) 
+: defword-base ( str length control-bits "name" -- )
   deflabel-here 
   #, .cell \ stash the control bits here
   embed-name
   last-word @ ??, .cell 
   execute-latest
   last-word !
-  machine-code-execute 
-  ;
+
+: defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
 : embed-string-length ( len -- ) #, .cell ;
 deflabel-here _docolon 
@@ -171,16 +170,25 @@ deflabel-here _docolon
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     \ duplicate NEXT for now
     next,
-: embed-docolon ( -- ) _DOCOLON ??, .cell ;
-: defcolonword-base ( str length control-bits "name" -- ) 
-  deflabel-here 
-  #, .cell \ stash the control bits here
-  embed-name
-  last-word @ ??, .cell
-  execute-latest dup 
-  last-word !
-  embed-docolon ;
+: embed-docolon ( -- ) _docolon ??, .cell ;
+: defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
+deflabel-here _doconstant 
+	next,
+: embed-doconstant ( -- ) _doconstant ??, .cell ;
+: defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
+: defconstantword ( n -- ) word/none defconstantword-base ;
+deflabel-here _douser 
+	next,
+: embed-douser ( -- ) _douser ??, .cell ;
+: defuserword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
+: defuserword ( n -- ) word/none defuserword-base ;
+deflabel-here _dovariable 
+	next,
+: embed-dovariable ( -- ) _dovariable ??, .cell ;
+: defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
+: defvariableword ( n -- ) word/none defvariableword-base ;
+
 : defword, ( v -- ) ??, .cell ;
 
 : 1pop ( -- )
@@ -253,6 +261,23 @@ deflabel-here _docolon
     1pop
     xtop xtop ld,
     xtop xsp push, ;
+: here, ( -- ) 
+	&DP ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xsp push, ;
+: allot, ( -- )
+	1pop
+	&DP ??, xtaddr set,
+	xtaddr xlower ld, 
+    xlower xtop xlower add,
+	xlower xtaddr st, ;
+: ,, ( -- )
+	1pop 
+	&DP ??, xtaddr set,
+	xtaddr xlower ld, 
+    xtop xlower st, \ save it to the current dict pointer front
+    xlower 1+, \ move ahead by one
+	xlower xtaddr st, ;
 s" lit" defmachineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
     \ NEXT Return
@@ -520,7 +545,67 @@ s" +origin" defmachineword _+origin
 	1pop
 	xtop xtaddr xtop add,
 	1push,
+\ s" s0" defuserword _s0 0x6 #, .cell
+\ s" r0" defuserword _r0 0x8 #, .cell
+\ s" tib" defuserword _tib 0
+\ TODO WIDTH
+\ TODO WARNING
+\ TODO more user variables
+
+s" 1+" defmachineword _1+
+	1pop
+	xtop 1+,
+	1push,
+s" 2+" defmachineword _2+
+	1pop
+	2 #, xtop xtop addi,
+	push,
+
+s" here" defmachineword _here
+	&DP ??, xtaddr set,
+	xtaddr xtop ld,
+	1push,
+s" allot" defmachineword _allot ( n -- )
+	allot,
+    next,
+
+s" ," defmachineword _, ( n -- )
+    \ store n into the next available cell above dictionary and advance DP by 2 thus
+    \ compiling into the dictionary
+	,,
+    next,
+s" c," defmachineword _c,
+	1pop
+    0xFF #, xtop xtop andi, 
+	&DP ??, xtaddr set,
+	xtaddr xlower ld, 
+    xtop xlower st, \ save it to the current dict pointer front
+    xlower 1+, \ move ahead by one
+	xlower xtaddr st,
+    next,
+
 s" -" defbinaryop _- sub, 
+s" =" defbinaryop _= eq,
+s" u<" defbinaryop _u< ult,
+s" >" defbinaryop _> gt,
+: rot, ( -- ) 
+	3pop ( a b c -- b c a )
+		 \ top - c
+		 \ lower - b
+		 \ third - a 
+	xlower xsp push,
+	xtop xsp push,
+	xthird xsp push, ;
+s" rot" defmachineword _rot ( a b c -- b c a )
+	rot, 
+    next,
+
+s" space" defmachineword _space
+    /dev/console0 #, xlower set,
+    0x20 #, xtop set,
+    xtop xlower st,
+    next,
+
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
 s" mod" defbinaryop _mod rem,
@@ -536,8 +621,6 @@ s" <"  defbinaryop _< lt,
 	2pop
 	xtop xlower xtop lt,
 	xtop xsp push, ;
-s" >" defbinaryop _> gt,
-s" =" defbinaryop _= eq,
 s" !=" defbinaryop _!= neq,
 s" >=" defbinaryop _>= ge,
 s" <=" defbinaryop _<= le,
@@ -545,17 +628,6 @@ s" nand" defbinaryop _nand nand,
 s" nor" defbinaryop _nor nor,
 s" lshift" defbinaryop _lshift lshift,
 s" rshift" defbinaryop _rshift rshift,
-: rot, ( -- ) 
-	3pop ( a b c -- b c a )
-		 \ top - c
-		 \ lower - b
-		 \ third - a 
-	xlower xsp push,
-	xtop xsp push,
-	xthird xsp push, ;
-s" rot" defmachineword _rot ( a b c -- b c a )
-	rot, 
-    next,
 s" -dup" defmachineword _-dup \ duplicate if non zero
     deflabel _-dup_done
     1pop 
@@ -563,15 +635,6 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
     _-dup_done ??, cv bc,
         xtop xsp push,
     _-dup_done .label
-	1push,
-: 1+,, ( -- )
-	1pop
-	xtop 1+,
-	xtop xsp push, ;
-
-s" 1+" defmachineword _1+
-	1pop
-	xtop 1+,
 	1push,
 : 1-,, ( -- )
 	1pop
@@ -594,25 +657,11 @@ s" abs" defmachineword _abs
 
 
 
-s" c," defmachineword _c,
-	1pop
-    0xFF #, xtop xtop andi, 
-	&DP ??, xtaddr set,
-	xtaddr xlower ld, 
-    xtop xlower st, \ save it to the current dict pointer front
-    xlower 1+, \ move ahead by one
-	xlower xtaddr st,
-    next,
 s" ." defmachineword _.
    1pop
    /dev/console2 #, xlower set,
    xtop xlower st,
    next,
-s" space" defmachineword _space
-    /dev/console0 #, xlower set,
-    0x20 #, xtop set,
-    xtop xlower st,
-    next,
 
 s" ?" defmachineword _?
     1pop 
@@ -636,41 +685,11 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_done .label
     next,
 
-: here, ( -- ) 
-	&DP ??, xtaddr set,
-	xtaddr xtop ld,
-	xtop xsp push, ;
-
-s" here" defmachineword _here
-	&DP ??, xtaddr set,
-	xtaddr xtop ld,
-	1push,
-: allot, ( -- )
-	1pop
-	&DP ??, xtaddr set,
-	xtaddr xlower ld, 
-    xlower xtop xlower add,
-	xlower xtaddr st, ;
-s" allot" defmachineword _allot ( n -- )
-	allot,
-    next,
 s" pad" defmachineword _pad ( -- n )
 	&DP ??, xtaddr set,
 	xtaddr xtop ld, 
     0x44 #, xtop xtop addi,
 	1push,
-: ,, ( -- )
-	1pop 
-	&DP ??, xtaddr set,
-	xtaddr xlower ld, 
-    xtop xlower st, \ save it to the current dict pointer front
-    xlower 1+, \ move ahead by one
-	xlower xtaddr st, ;
-s" ," defmachineword _, ( n -- )
-    \ store n into the next available cell above dictionary and advance DP by 2 thus
-    \ compiling into the dictionary
-	,,
-    next,
 s" [" word/imm defmachineword-base _leftbracket
 	&state ??, xtaddr set,
 	zero xtaddr st,
