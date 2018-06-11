@@ -153,6 +153,10 @@ deflabel-here _next
 2 constant word/imm
 word/imm word/smudge or constant word/all
 \ format:
+\ [0-3]: name field
+\ 4: link field
+\ 5: code field
+\ 6-n: parameter field
 \ address 5 in this case is where the label is pointing to
 \ 0: control bits 
 \ 1: length 
@@ -683,27 +687,6 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
 	2pop
 	xtop xlower xtop lt,
 	xtop xsp push, ;
-: traverse, ( -- )
-	\ move across the name field of a variable length name field.
-	\ a1 is the address of either the length byte or the last character
-	\ if n == 1, the motion is towards high memory; 
-	\ if n == -1, the motion is towards low memory
-	\ a2 is the address of the other end of the name field
-	swap, \ get a1 to the top of the stack
-	deflabel-here execute-latest >r 
-	over, +, \ copy n and add to addr, pointing to the next character
-	0x7F #lit, \ test number for the eighth bit of a character
-	over, c@, \ fetch the character
-	<, \ if it is greater than 127, the end is reached
-	1pop \ flag
-	zero xtop cv eq,
-	r> ??, cv bc, \ loop back if not the end
-	swap, drop,  \ discard n
-	;
-	
-s" traverse" defmachineword _traverse
-	traverse, _traverse_body
-	next,
 : latest,, ( -- )
 	&current ??, xtaddr set,
 	xtaddr xtop ld,
@@ -717,24 +700,20 @@ s" latest" defmachineword _latest \ leave the name field address of the last wor
 
 s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
 	1pop
-	4 #, xtop xtop subi, 
+	2 #, xtop xtop subi, 
 	1push,
 s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
 	1pop
-	2 #, xtop xtop subi,
+	1 #, xtop xtop subi,
 	1push,
-s" nfa" defmachineword _nfa
-	5 #lit, 
-	-,
-	0xFFFF #lit,
-	traverse, _nfa_traverse_body
-	next, 
-s" pfa" defmachineword _pfa
-	1 #lit,
-	traverse, _pfa_traverse_body
-	5 #lit,
-	+,
-	next,
+s" nfa" defmachineword _nfa \ convert the parameter field address to name field address
+    1pop
+    6 #, xtop xtop subi,
+    1push,
+s" pfa" defmachineword _pfa \ convert the name field address to its corresponding pfa
+    1pop
+    5 #, xtop xtop addi,
+    1push,
 
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
