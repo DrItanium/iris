@@ -159,7 +159,7 @@ word/imm word/smudge or constant word/all
   embed-name
   last-word @ ??, .cell 
   execute-latest
-  last-word !
+  last-word ! ;
 
 : defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
@@ -551,7 +551,10 @@ s" +origin" defmachineword _+origin
 \ TODO WIDTH
 \ TODO WARNING
 \ TODO more user variables
-
+: 1+,, ( -- ) 
+	1pop
+	xtop 1+,
+	xtop xsp push, ;
 s" 1+" defmachineword _1+
 	1pop
 	xtop 1+,
@@ -559,7 +562,7 @@ s" 1+" defmachineword _1+
 s" 2+" defmachineword _2+
 	1pop
 	2 #, xtop xtop addi,
-	push,
+	1push,
 
 s" here" defmachineword _here
 	&DP ??, xtaddr set,
@@ -815,11 +818,11 @@ s" block" defmachineword _block
 	_block_done .label
 	&FIRST #, xsp pushi,
 	next,
-: defvariableword ( label str-addr len "name" -- )
-	defmachineword
-	??, xtop set,
-	xtop xsp push,
-	next, ;
+\ : defvariableword ( label str-addr len "name" -- )
+\ 	defmachineword
+\ 	??, xtop set,
+\ 	xtop xsp push,
+\ 	next, ;
 : push-zero, ( sp -- ) zero swap push, ;
 : begin, ( -- ) 
 	\ check and see if we are compiling
@@ -1174,26 +1177,26 @@ s" definitions" defmachineword _definitions
 	&current ??lit, !,,
 	next,
 	
-&state s" state" defvariableword _state
-&base s" base" defvariableword _base
-&current s" current" defvariableword _current
-&tib s" tib" defvariableword _tib
-&s0 s" s0" defvariableword _s0
-&r0 s" r0" defvariableword _r0
-&warning s" warning" defvariableword _warning
-&dp s" dp" defvariableword _dp
-&fence s" fence" defvariableword _fence
-&voc-link s" voc-link" defvariableword _voc-link
-&blk s" blk" defvariableword _blk
-&in s" in" defvariableword _in
-&out s" out" defvariableword _out
-&dpl s" dpl" defvariableword _dpl
-&fld s" fld" defvariableword _fld
-&csp s" csp" defvariableword _csp
-&r#  s" r#" defvariableword _r#
-&hld s" hld" defvariableword _hld
-&separator s" separator" defvariableword _separator
-&terminator s" terminator" defvariableword _terminator
+\ &state s" state" defvariableword _state
+\ &base s" base" defvariableword _base
+\ &current s" current" defvariableword _current
+\ &tib s" tib" defvariableword _tib
+\ &s0 s" s0" defvariableword _s0
+\ &r0 s" r0" defvariableword _r0
+\ &warning s" warning" defvariableword _warning
+\ &dp s" dp" defvariableword _dp
+\ &fence s" fence" defvariableword _fence
+\ &voc-link s" voc-link" defvariableword _voc-link
+\ &blk s" blk" defvariableword _blk
+\ &in s" in" defvariableword _in
+\ &out s" out" defvariableword _out
+\ &dpl s" dpl" defvariableword _dpl
+\ &fld s" fld" defvariableword _fld
+\ &csp s" csp" defvariableword _csp
+\ &r#  s" r#" defvariableword _r#
+\ &hld s" hld" defvariableword _hld
+\ &separator s" separator" defvariableword _separator
+\ &terminator s" terminator" defvariableword _terminator
 forth_vocabulary_start .label 
 s" terminate" defmachineword _terminate
 	/dev/terminate-vm #, xtaddr set,
