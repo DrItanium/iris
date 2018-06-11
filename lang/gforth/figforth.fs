@@ -32,6 +32,7 @@ output-buffer-start 0x100 + constant output-buffer-end
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
+deflabel _origin
 deflabel forth_vocabulary_start
 deflabel _cold
 deflabel _abort
@@ -190,6 +191,68 @@ deflabel-here _docolon
 : 3pop ( -- )
   2pop
   xsp xthird pop, ;
+: I, ( -- )
+	xrp xtop ld, \ load the top loop element
+	xtop xsp push, \ put it onto the data stack
+	;
+: enclose,, ( -- ) xsp enclose, ;
+: key, ( -- )
+	/dev/console0 #, xlower set,
+	xlower xtop ld,
+	xtop xsp push, ;
+: emit, ( -- )
+	/dev/console0 #, xlower set,
+	1pop
+	xtop xlower st, ;
+: leave, ( -- ) 
+		xrp xtop pop,
+		xrp zero pop,
+		xtop xrp push,
+		xtop xrp push, ;
+: r, ( -- ) 
+	xrp xtop ld,
+	xtop xsp push, 
+;
+: over, ( -- ) 
+	2pop 
+	xlower xsp push,
+	xtop xsp push,
+	xlower xsp push, ;
+: drop, ( -- ) xsp zero pop, ;
+: swap, ( -- )
+	2pop \ top -- b
+		 \ lower -- a
+	xtop xsp push,
+	xlower xsp push, ;
+: dup, ( -- ) 
+	xsp xtop ld,
+	xtop xsp push, ;
+: toggle, ( -- )
+	2pop  \ top - addr
+		  \ lower - pattern
+	xtop xthird ld,
+	xthird xlower xthird xor,
+	xtop xthird st, ;
+: !,, ( -- )
+   2pop \ top - addr
+   		\ lower - value
+   xlower xtop st, \ perform the store
+	;
+: c!, ( -- )
+	2pop \ top - addr
+		 \ lower - value
+    0xFF #, xlower xlower andi,
+    xlower xtop st, \ save it to memory with the upper 8 bits masked
+		;
+: c@, ( -- )
+	1pop 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	xtop xsp push, ;
+: @, ( -- )
+    1pop
+    xtop xtop ld,
+    xtop xsp push, ;
 s" lit" defmachineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
     \ NEXT Return
@@ -283,24 +346,180 @@ s" (do)" defmachineword _(do)
 	xlower xrp push,
 	xtop xrp push,
 	next,
-: I, ( -- )
-	xrp xtop ld, \ load the top loop element
-	xtop xsp push, \ put it onto the data stack
-	;
 
 s" I" defmachineword _I
 	xrp xtop ld, \ load the top loop element
 	1push,
-s" ;s" defmachineword _;s
-	\ return execution to the calling definition. Unnest one level.
-    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
+s" digit" defmachineword _digit
+	xsp digit, 
+	next,
+s" (find)" defmachineword _(find)
+	next,
+s" enclose" defmachineword _enclose
+	enclose,,
+	next,
+
+s" emit" defmachineword _emit 
+	emit, 
+	next,
+s" key" defmachineword _key 
+	/dev/console0 #, xlower set,
+	xlower xtop ld,
+	1push,
+\ ?TERMINAL goes here
+s" cr" defmachineword _cr
+    /dev/console0 #, xlower set,
+    0xA #, xtop set,
+    xtop xlower st,
+    next,
+s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory 
+    3pop \ top - u
+         \ lower - to
+         \ third - from
+    deflabel _cmove_loop 
+    deflabel _cmove_done
+    _cmove_loop .label
+    xtop cv ltz,
+    _cmove_done ??, cv bc,
+    xlower at0 ldtincr,
+    at0 xthird sttincr,
+    xtop 1-,
+    xlower 1+,
+    xthird 1+,
+    _cmove_loop ??, b,
+    _cmove_done .label
     next,
 : defbinaryop ( str length "name" "op" -- )
   defmachineword 
   2pop
   xtop xlower xtop ' execute 
   1push, ;
+s" u*" defbinaryop _u* umul,
+s" u/" defbinaryop _u/ udiv,
+s" and" defbinaryop _and and,
+s" or"  defbinaryop _or or,
+s" xor" defbinaryop _xor xor,
+s" sp@" defmachineword _sp@
+    xsp xsp push,
+    next,
+\ TODO SP!
+\ TODO RP@
+\ TODO RP!
+s" ;s" defmachineword _;s
+	\ return execution to the calling definition. Unnest one level.
+    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
+    next,
+s" leave" defmachineword _leave
+	\ make the loop limit equal to the loop count and force the loop to
+	\ terminate at loop or +loop
+	\ copy loop count to loop limit on return stack
+	leave,
+	next,
+s" >r" defmachineword _>r \ move top item to return stack
+    1pop 
+    xtop xrp push,
+    next,
+s" r>" defmachineword _r> \ retrieve item from top of return stack
+    xrp xtop pop,
+	1push,
+s" r" defmachineword _r \ copy top of return stack onto stack
+	xrp xtop ld,
+	1push,
+s" 0=" defmachineword _0=
+    1pop
+    xtop xtop eqz,
+	1push,
+s" 0<" defmachineword _0<
+    1pop
+    xtop xtop ltz,
+	1push,
 s" +" defbinaryop _+ add,
+\ TODO D+ ?
+s" minus" defmachineword _minus
+    deflabel _minusDone
+    1pop
+    0xFFFF #, xtop xtop muli, \ multiply by negative one
+	1push,
+\ TODO DMINUS ?
+s" over" defmachineword _over 
+	over,
+	next,
+s" drop" defmachineword _drop 
+	drop,
+    next,
+s" swap" defmachineword _swap
+	swap,
+    next,
+s" dup" defmachineword _dup 
+	xsp xtop ld,
+	1push,
+s" 2dup" defmachineword _2dup ( a b -- a b a b ) 
+	xsp xtaddr move,
+	xtaddr xtop ld,
+	xtaddr 1+,
+	xtaddr xlower ld,
+	xlower xsp push,
+	xtop xsp push,
+	next,
+: +!, ( -- )
+    2pop \ top - addr 
+         \ lower - n
+    xtop at0 ld,
+    xlower at0 xlower add, 
+    xlower xtop st, ;
+s" +!" defmachineword _+!
+	+!,
+    next,
+s" toggle" defmachineword _toggle ( p addr -- )
+	toggle,
+	next,
+s" @" defmachineword _@
+    1pop
+    xtop xtop ld,
+	1push,
+s" c@" defmachineword _c@
+	1pop 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	1push,
+s" !" defmachineword _! ( v a -- ) !,, next,
+s" c!" defmachineword _c!  ( value addr -- ) c!, next,
+\ TODO :
+\ TODO implement ; 
+s" noop" defmachineword _noop next,
+\ TODO implement constant
+\ TODO implement variable
+\ TODO implement user
+s" 0" defmachineword _0 zero xsp push, next,
+s" 1" defmachineword _1 
+	0x1 #, xtop pushi,
+	1push,
+s" 2" defmachineword _2 
+	0x2 #, xsp pushi, 
+	next,
+s" 3" defmachineword _3 
+	0x3 #, xsp pushi,
+	next,
+s" bl" defmachineword _bl 
+	bl #, xsp pushi, 
+	next,
+s" c/l" defmachineword _c/l 
+	0x40 #, xsp pushi, 
+	next,
+s" first" defmachineword _first
+	&FIRST #, xsp pushi,
+	next,
+s" b/buf" defmachineword _b/buf
+	b/buf #, xsp pushi,
+	next,
+s" b/scr" defmachineword _b/scr
+	b/scr #, xsp pushi,
+	next,
+s" +origin" defmachineword _+origin
+	_origin ??, xtaddr set,
+	1pop
+	xtop xtaddr xtop add,
+	1push,
 s" -" defbinaryop _- sub, 
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
@@ -312,9 +531,6 @@ s" min" defbinaryop _min min,
 	xtop xsp push, ;
 
 s" max" defbinaryop _max max,
-s" and" defbinaryop _and and,
-s" or"  defbinaryop _or or,
-s" xor" defbinaryop _xor xor,
 s" <"  defbinaryop _< lt,
 : <, ( -- ) 
 	2pop
@@ -348,20 +564,6 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
         xtop xsp push,
     _-dup_done .label
 	1push,
-s" >r" defmachineword _>r \ move top item to return stack
-    1pop 
-    xtop xrp push,
-    next,
-s" r>" defmachineword _r> \ retrieve item from top of return stack
-    xrp xtop pop,
-	1push,
-: r, ( -- ) 
-	xrp xtop ld,
-	xtop xsp push, 
-;
-s" r" defmachineword _r \ copy top of return stack onto stack
-	xrp xtop ld,
-	1push,
 : 1+,, ( -- )
 	1pop
 	xtop 1+,
@@ -389,53 +591,8 @@ s" abs" defmachineword _abs
     _absDone .label
 	1push,
 
-s" minus" defmachineword _minus
-    deflabel _minusDone
-    1pop
-    0xFFFF #, xtop xtop muli, \ multiply by negative one
-	1push,
 
-s" 0<" defmachineword _0<
-    1pop
-    xtop xtop ltz,
-	1push,
-s" 0=" defmachineword _0=
-    1pop
-    xtop xtop eqz,
-	1push,
 
-: over, ( -- ) 
-	2pop 
-	xlower xsp push,
-	xtop xsp push,
-	xlower xsp push, ;
-s" over" defmachineword _over 
-	over,
-	next,
-: dup, ( -- ) 
-	xsp xtop ld,
-	xtop xsp push, ;
-s" dup" defmachineword _dup 
-	xsp xtop ld,
-	1push,
-: drop, ( -- ) xsp zero pop, ;
-s" drop" defmachineword _drop 
-	drop,
-    next,
-: swap, ( -- )
-	2pop \ top -- b
-		 \ lower -- a
-	xtop xsp push,
-	xlower xsp push, ;
-s" swap" defmachineword _swap
-	swap,
-    next,
-: !,, ( -- )
-   2pop \ top - addr
-   		\ lower - value
-   xlower xtop st, \ perform the store
-	;
-s" !" defmachineword _! ( v a -- ) !,, next,
 
 s" c," defmachineword _c,
 	1pop
@@ -446,64 +603,15 @@ s" c," defmachineword _c,
     xlower 1+, \ move ahead by one
 	xlower xtaddr st,
     next,
-: c!, ( -- )
-	2pop \ top - addr
-		 \ lower - value
-    0xFF #, xlower xlower andi,
-    xlower xtop st, \ save it to memory with the upper 8 bits masked
-		;
-s" c!" defmachineword _c!  ( value addr -- ) c!, next,
-: c@, ( -- )
-	1pop 
-	xtop xtop ld,
-	0xFF #, xtop xtop andi,
-	xtop xsp push, ;
-s" c@" defmachineword _c@
-	1pop 
-	xtop xtop ld,
-	0xFF #, xtop xtop andi,
-	1push,
-: @, ( -- )
-    1pop
-    xtop xtop ld,
-    xtop xsp push, ;
-s" @" defmachineword _@
-    1pop
-    xtop xtop ld,
-	1push,
 s" ." defmachineword _.
    1pop
    /dev/console2 #, xlower set,
    xtop xlower st,
    next,
-s" cr" defmachineword _cr
-    /dev/console0 #, xlower set,
-    0xA #, xtop set,
-    xtop xlower st,
-    next,
 s" space" defmachineword _space
     /dev/console0 #, xlower set,
     0x20 #, xtop set,
     xtop xlower st,
-    next,
-: key, ( -- )
-	/dev/console0 #, xlower set,
-	xlower xtop ld,
-	xtop xsp push, ;
-: emit, ( -- )
-	/dev/console0 #, xlower set,
-	1pop
-	xtop xlower st, ;
-
-s" key" defmachineword _key 
-	/dev/console0 #, xlower set,
-	xlower xtop ld,
-	1push,
-s" emit" defmachineword _emit 
-	emit, 
-	next,
-s" sp@" defmachineword _sp@
-    xsp xsp push,
     next,
 
 s" ?" defmachineword _?
@@ -511,32 +619,6 @@ s" ?" defmachineword _?
     xtop xtop ld,
     /dev/console0 #, xlower set,
     xtop xlower st,
-    next,
-: +!, ( -- )
-    2pop \ top - addr 
-         \ lower - n
-    xtop at0 ld,
-    xlower at0 xlower add, 
-    xlower xtop st, ;
-s" +!" defmachineword _+!
-	+!,
-    next,
-s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory 
-    3pop \ top - u
-         \ lower - to
-         \ third - from
-    deflabel _cmove_loop 
-    deflabel _cmove_done
-    _cmove_loop .label
-    xtop cv ltz,
-    _cmove_done ??, cv bc,
-    xlower at0 ldtincr,
-    at0 xthird sttincr,
-    xtop 1-,
-    xlower 1+,
-    xthird 1+,
-    _cmove_loop ??, b,
-    _cmove_done .label
     next,
 s" fill" defmachineword _fill ( addr n b -- ) 
 	\ fill u bytes in memory with b beginning at address
@@ -554,12 +636,6 @@ s" fill" defmachineword _fill ( addr n b -- )
     _fill_done .label
     next,
 
-s" bl" defmachineword _bl
-    bl #, xsp pushi,
-    next,
-s" 0" defmachineword _zero
-    zero xsp push,
-    next,
 : here, ( -- ) 
 	&DP ??, xtaddr set,
 	xtaddr xtop ld,
@@ -654,15 +730,6 @@ s" octal" defmachineword _octal \ set the base to 8
 	0x8 #, at0 set,
 	at0 xtaddr st,
 	next,
-s" c/l" defmachineword _c/l 
-	0x40 #, xsp pushi,
-	next,
-s" b/buf" defmachineword _b/buf
-	b/buf #, xsp pushi,
-	next,
-s" b/scr" defmachineword _b/scr
-	b/scr #, xsp pushi,
-	next,
 s" immediate" defmachineword _immediate
 	\ mark the current dictionary entry as immediate
 	&dp ??, xtaddr set,
@@ -672,42 +739,8 @@ s" immediate" defmachineword _immediate
 	xlower at0 xlower or,
 	xlower xtop st,
 	next,
-: leave, ( -- ) 
-		xrp xtop pop,
-		xrp zero pop,
-		xtop xrp push,
-		xtop xrp push, ;
-s" leave" defmachineword _leave
-	\ make the loop limit equal to the loop count and force the loop to
-	\ terminate at loop or +loop
-	\ copy loop count to loop limit on return stack
-	leave,
-	next,
-: enclose,, ( -- ) xsp enclose, ;
-s" enclose" defmachineword _enclose
-	enclose,,
-	next,
-: toggle, ( -- )
-	2pop  \ top - addr
-		  \ lower - pattern
-	xtop xthird ld,
-	xthird xlower xthird xor,
-	xtop xthird st, ;
-
-
-s" toggle" defmachineword _toggle ( p addr -- )
-	toggle,
-	next,
 	
 s" 2drop" defmachineword _2drop ( a b -- ) 2pop next,
-s" 2dup" defmachineword _2dup ( a b -- a b a b ) 
-	xsp xtaddr move,
-	xtaddr xtop ld,
-	xtaddr 1+,
-	xtaddr xlower ld,
-	xlower xsp push,
-	xtop xsp push,
-	next,
 s" 2swap" defmachineword _2swap ( a b c d -- c d a b ) 
 	3pop \ d - top
 		 \ c - lower
@@ -847,7 +880,7 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	base@,
 	2pop \ top - n1
 		 \ lower - c
-	xlower xtop xthird xfourth digit, \ parse the digit using the CPU
+	xsp digit, \ parse the digit using the CPU
 	zero xfourth cv eq, \ did we hit a non digit
 	deflabel (number)_done
 	(number)_done ??, cv bc,
@@ -1173,6 +1206,7 @@ system-start .org \ system variables
 &width .label 0 #, .cell
 &porigin .label 0 #, .cell
 ram-start .org
+	_origin .label
 	_cold .label
 	zero xcoreid move, \ set to the zeroth core by default
 	/dev/core-load #, xtop set,

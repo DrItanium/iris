@@ -377,38 +377,37 @@ namespace iris {
 		std::cout << "  ok" << std::endl;
 	}
 	DefExec(Digit) {
+		// dest - stack pointer to manipulate
 		// src3 - character to convert
 		// src2 - number base
 		// src - number
 		// dest - success flag
-		auto numBase = getSource2(op).get<unsigned char>();
 		constexpr unsigned char normalizationValue = '0';
-		auto character = getSource3(op).get<unsigned char>();
+		auto numBase = pop(op._args.dest).get<unsigned char>();
+		auto character = pop(op._args.dest).get<unsigned char>();
+		character -= normalizationValue;
 		if (character < normalizationValue) {
-			setDestination(op, false);
-			setSource(op, 0);
+			push(op._args.dest, false);
 			return;
 		} else if (character == normalizationValue) {
-			setDestination(op, true);
-			setSource(op, 0);
+			push(op._args.dest, 0);
+			push(op._args.dest, true);
 			return;
 		} 
 		auto value = character - normalizationValue;
 		if (value > 0x9) {
 			value -= 0x7;
 			if (value < 0xa) {
-				setDestination(op, false);
-				setSource(op, 0);
+				push(op._args.dest, false);
 				return;
 			}
 		} 
 		if (value >= numBase) {
-			setDestination(op, false);
-			setSource(op, 0);
+			push(op._args.dest, false);
 			return;
 		}
-		setDestination(op, true);
-		setSource(op, Address(value));
+		push(op._args.dest, Address(value));
+		push(op._args.dest, true);
 	}
 	DefExec(Enclose) {
 		// taken from the 8086 figforth impl

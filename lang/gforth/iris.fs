@@ -705,6 +705,6 @@ push, ;
 #sttincr inst-2reg sttincr,
 #rltm inst-2reg rltm,
 #prok inst-no-reg prok,
-#digit inst-4reg digit, 
+#digit inst-1reg digit, 
 #enclose inst-1reg enclose,
 : .cell ( addr id -- ) .data16 ;
