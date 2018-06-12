@@ -40,6 +40,7 @@ deflabel _quit
 deflabel base-dict-done
 deflabel _handle-error
 deflabel _interpret
+deflabel &up
 deflabel &porigin
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
@@ -199,17 +200,28 @@ deflabel-here _docolon
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword ( n -- ) word/none defcolonword-base ;
 deflabel-here _doconstant 
-	next,
+    xw 1+,
+    xw xtop move,
+    xtop xtop ld, 
+    1push,
 : embed-doconstant ( -- ) _doconstant ??, .cell ;
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
 deflabel-here _douser 
-	next,
+    xw 1+,
+    xw xtop move,
+    xtop xtop ld,
+    0xFF #, xtop xtop andi,
+    &up ??, xlower set, \ user variable addr
+    xlower xtop xtop add, \ address of variable
+    1push,
 : embed-douser ( -- ) _douser ??, .cell ;
 : defuserword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
 : defuserword ( n -- ) word/none defuserword-base ;
 deflabel-here _dovariable 
-	next,
+    xw 1+,
+    xw xsp push,
+    next,
 : embed-dovariable ( -- ) _dovariable ??, .cell ;
 : defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
 : defvariableword ( n -- ) word/none defvariableword-base ;
@@ -311,11 +323,10 @@ s" lit" defmachineword _lit
 	xip xtop ld,
     xip 1+,
 	1push,
-: push-literal ( n -- )
+: push-literal ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
-  _lit ??, .cell
-  #, .cell ;
+  _lit ??, .cell .cell ;
 s" execute" defmachineword _execute
 	\ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
@@ -417,7 +428,7 @@ s" key" defmachineword _key
 	/dev/console0 #, xlower set,
 	xlower xtop ld,
 	1push,
-\ ?TERMINAL goes here
+\ TODO ?TERMINAL goes here
 s" cr" defmachineword _cr
     /dev/console0 #, xlower set,
     0xA #, xtop set,
