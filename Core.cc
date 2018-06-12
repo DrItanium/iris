@@ -515,6 +515,34 @@ namespace iris {
         auto n1 = getRegisterPair(op._args.src2);
         setRegisterPair(op._args.dest, n0.integer + n1.integer);
     }
+    DefExec(Sub32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        setRegisterPair(op._args.dest, n0.integer - n1.integer);
+    }
+    DefExec(Mul32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        setRegisterPair(op._args.dest, n0.integer * n1.integer);
+    }
+    DefExec(Div32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        if (n1.integer == 0) {
+            setRegisterPair(op._args.dest, 0);
+        } else {
+            setRegisterPair(op._args.dest, n0.integer / n1.integer);
+        }
+    }
+    DefExec(Rem32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        if (n1.integer == 0) {
+            setRegisterPair(op._args.dest, 0);
+        } else {
+            setRegisterPair(op._args.dest, n0.integer % n1.integer);
+        }
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

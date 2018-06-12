@@ -92,3 +92,7 @@ X(PrimitiveFind, OneRegister)
     // ( addr1 addr2 -- ff ) ( bad )
 // double wide operations
 X(Add32, DoubleWideThreeRegister)
+X(Sub32, DoubleWideThreeRegister)
+X(Mul32, DoubleWideThreeRegister)
+X(Div32, DoubleWideThreeRegister)
+X(Rem32, DoubleWideThreeRegister)
