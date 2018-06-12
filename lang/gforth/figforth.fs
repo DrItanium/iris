@@ -85,18 +85,21 @@ deflabel &width 	\ width of some kind
 unused-start 
 \ constants
 \ user variables
-1+cconstant xsp \ data stack pointer
-1+cconstant xrp \ return stack pointer
-1+cconstant xip \ interpretive pointer
-1+cconstant xw \ current word pointer
+\ w3
 1+cconstant xtop \  contents of the top of stack when a pop is called
 1+cconstant xlower \ contents of the second stack item when a pop is called
 1+cconstant xthird \ contents of the third stack item
 1+cconstant xfourth \ contents of the fourth stack item
+1+cconstant xsp \ data stack pointer
+1+cconstant xrp \ return stack pointer
+1+cconstant xip \ interpretive pointer
+1+cconstant xw \ current word pointer
 1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
 too-many-vars-defined
+w3 cconstant wtop \ wide top
+w4 cconstant wlower \ wide lower
 
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;

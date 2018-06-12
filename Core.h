@@ -152,6 +152,7 @@ namespace iris {
 			static constexpr Address coreCacheEnd = 0xF000;
 			static constexpr Address32 addressSize = 0x10000;
             static constexpr RegisterIndex registerZero = 0;
+            static constexpr RegisterIndex registerOne = 1;
             // the error codes that the processor will raise as part of an
             // error happening
             enum class ErrorCodes : Address {

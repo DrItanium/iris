@@ -262,14 +262,49 @@ register: x61
 register: x62
 register: x63
 registers}
+{registers
+register: w0
+register: w1
+register: w2
+register: w3
+register: w4
+register: w5
+register: w6
+register: w7
+register: w8
+register: w9
+register: w10
+register: w11
+register: w12
+register: w13
+register: w14
+register: w15
+register: w16
+register: w17
+register: w18
+register: w19
+register: w20
+register: w21
+register: w22
+register: w23
+register: w24
+register: w25
+register: w26
+register: w27
+register: w28
+register: w29
+register: w30
+register: w31
+registers}
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 x0 1+cconstant zero
+1+cconstant one
 1+cconstant cv
+1+cconstant io
 1+cconstant at0
 1+cconstant at1
-1+cconstant io
 1+cconstant unused-start
-drop
+drop 
 : inst-no-reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> @ <<inst ;

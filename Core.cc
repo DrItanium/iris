@@ -543,6 +543,16 @@ namespace iris {
             setRegisterPair(op._args.dest, n0.integer % n1.integer);
         }
     }
+    DefExec(RightShift32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        setRegisterPair(op._args.dest, n0.integer >> n1.integer);
+    }
+    DefExec(LeftShift32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        setRegisterPair(op._args.dest, n0.integer << n1.integer);
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
@@ -640,6 +650,8 @@ namespace iris {
         // disable writing to register 0
         _registers[registerZero].setValue(0);
         _registers[registerZero].disableWrites();
+        _registers[registerOne].setValue(1);
+        _registers[registerOne].disableWrites();
         // setup the basic IO device for console input output
         auto selectCore = [this](auto index, auto value) {
             // we use the index to determine what action to perform
