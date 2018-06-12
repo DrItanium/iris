@@ -69,6 +69,31 @@ namespace iris {
 		Address address;
 		byte bytes[sizeof(Address)];
 	};
+    union DoubleNumber {
+        DoubleNumber(DoubleAddress a = 0) : address(a) { }
+        DoubleNumber(bool value) : integer(value ? -1 : 0) { }
+        DoubleNumber(byte b) : DoubleNumber(DoubleAddress(b) & 0xFF) { }
+        DoubleNumber(DoubleInteger a ) : integer(a) { }
+        DoubleNumber(const DoubleNumber& other) : address(other.address) { }
+        bool getTruth() const noexcept { return address != 0; }
+        template<typename T>
+        T get() const noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, DoubleInteger>) {
+                return integer;
+            } else if constexpr (std::is_same_v<K, DoubleAddress>) {
+                return address;
+            } else if constexpr (std::is_same_v<K, bool>) {
+                return getTruth();
+            } else {
+                static_assert(AlwaysFalse<T>::value, "DoubleNumber type does not store this kind of value!");
+            }
+        }
+
+        DoubleInteger integer;
+        DoubleAddress address;
+        byte bytes[sizeof(DoubleAddress)];
+    };
 	class Register {
 		public:
 			Register();
@@ -90,9 +115,19 @@ namespace iris {
 	using RegisterIndex = byte;
 	using DestinationRegister = RegisterIndex;
 	using SourceRegister = RegisterIndex;
+    struct RegisterPair {
+        RegisterPair() = default;
+        ~RegisterPair() = default;
+        void set(RegisterIndex l) noexcept {
+            _lower = l;
+            _upper = l + 1;
+        }
+        RegisterIndex _lower;
+        RegisterIndex _upper;
+    };
 	enum class Opcode : Address {
-#define X(title, style, z) title, 
-#define FirstX(title, style, z) X(title, style, z)
+#define X(title, style) title, 
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef FirstX
 #undef X
@@ -218,19 +253,26 @@ namespace iris {
                     Integer imm;
                 };
 			};
-#define X(title, style, z) \
+            struct DoubleWideThreeRegister final {
+                DoubleWideThreeRegister() = default;
+                ~DoubleWideThreeRegister() = default;
+                RegisterPair dest;
+                RegisterPair src;
+                RegisterPair src2;
+            };
+#define X(title, style) \
 			struct title final { \
 				title ( ) { } \
 				title (const style & v) : _args(v) { } \
 				constexpr Opcode opcode() const noexcept { return Opcode :: title ; } \
 				style _args ; } ; 
-#define FirstX(title, style, z) X(title, style, z)
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef FirstX
 #undef X
 			using DecodedInstruction = std::variant<
-#define FirstX(title, style, z) title
-#define X(title, style, z) ,title
+#define FirstX(title, style) title
+#define X(title, style) ,title
 #include "Opcodes.def"
 #undef X
 #undef FirstX
@@ -239,8 +281,8 @@ namespace iris {
 			// functions to contain the logic for each opcode
 			void dispatchInstruction(const DecodedInstruction& inst);
 			RawInstruction extractInstruction() noexcept;
-#define X(title, style, z) void perform ( const title & value );
-#define FirstX(title, style, z) X(title, style, z)
+#define X(title, style) void perform ( const title & value );
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
@@ -252,10 +294,13 @@ namespace iris {
 			void decodeArguments(RawInstruction, FourRegister&) noexcept;
 			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
 			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
+            void decodeArguments(RawInstruction, DoubleWideThreeRegister&) noexcept;
 			DecodedInstruction decodeInstruction(RawInstruction val);
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
 			inline Number getRegisterValue(RegisterIndex reg) const noexcept { return getRegister(reg).getValue(); }
+            DoubleNumber getRegisterPair(const RegisterPair& pair) const noexcept;
+            void setRegisterPair(const RegisterPair& pair, DoubleNumber value) noexcept;
 			void setRegister(RegisterIndex reg, Number value) noexcept;
 			template<typename T>
 			void setDestination(const T& value, Number n) noexcept {

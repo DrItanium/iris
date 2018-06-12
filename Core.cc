@@ -99,15 +99,24 @@ namespace iris {
         a.dest = getDestinationIndex(i);
         a.src = getSourceIndex(i);
     }
+    constexpr RegisterIndex doubleToSingleIndexConversion(RegisterIndex i) noexcept {
+        return 0x40 & (i << 1);
+    }
+    void Core::decodeArguments(RawInstruction i, Core::DoubleWideThreeRegister& a) noexcept {
+        // upper most bit is ignored in this design 
+        a.dest.set(doubleToSingleIndexConversion(getDestinationIndex(i)));
+        a.src.set(doubleToSingleIndexConversion(getSourceIndex(i)));
+        a.src2.set(doubleToSingleIndexConversion(getSource2Index(i)));
+    }
     Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
         Core::DecodedInstruction tmp;
         auto op = getOpcode(i);
         switch (op) {
-#define X(title, style, z) \
+#define X(title, style) \
             case Opcode :: title : \
                                    tmp = Core::title () ; \
             break;
-#define FirstX(title, style, z) X(title, style, z)
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
@@ -501,6 +510,11 @@ namespace iris {
             checkNext();
         }
     }
+    DefExec(Add32) {
+        auto n0 = getRegisterPair(op._args.src);
+        auto n1 = getRegisterPair(op._args.src2);
+        setRegisterPair(op._args.dest, n0.integer + n1.integer);
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
@@ -685,5 +699,15 @@ namespace iris {
     }
     void Core::shutdown() {
 
+    }
+    DoubleNumber Core::getRegisterPair(const RegisterPair& pair) const noexcept {
+        DoubleNumber n;
+        n.address = getRegisterValue(pair._lower).address;
+        n.address |= (static_cast<DoubleAddress>(getRegisterValue(pair._upper).address) << 16);
+        return n;
+    }
+    void Core::setRegisterPair(const RegisterPair& pair, DoubleNumber value) noexcept {
+        setRegister(pair._lower, static_cast<Address>(value.address));
+        setRegister(pair._upper, static_cast<Address>(value.address >> 16));
     }
 } // end namespace iris

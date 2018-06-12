@@ -34,9 +34,12 @@ namespace iris {
 	using byte = uint8_t;
 	using Integer = int16_t;
 	using Address = uint16_t;
+    using DoubleInteger = int32_t;
+    using DoubleAddress = uint32_t;
 	using Word = Address;
-	using RawInstruction = uint32_t;
-	using Address32 = uint32_t;
+    using DoubleWord = DoubleAddress;
+	using RawInstruction = DoubleWord;
+	using Address32 = DoubleWord;
 
 	template<typename T, typename R, T mask, T shift = 0>
 	constexpr T encodeBits(T value, R newValue) noexcept {
