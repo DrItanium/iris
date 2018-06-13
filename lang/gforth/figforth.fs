@@ -194,39 +194,33 @@ deflabel _(;code)
 : defmachineword-predef ( label str length -- ) word/none defmachineword-base-predef ;
 : embed-string-length ( len -- ) #, .cell ;
 deflabel _docolon
-\ deflabel-here _docolon 
+deflabel _?exec
+deflabel _?csp
+deflabel _!csp
+deflabel _&current
+deflabel _&context
+deflabel _create
+deflabel _leftbracket
+deflabel _rightbracket
+deflabel _compile
+deflabel _smudge
+deflabel _doconstant
+deflabel _douser
+deflabel _dovariable
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
 : defcolonword ( str length "name"  -- ) word/none defcolonword-base ;
 : defcolonword-predef ( label str length -- ) word/none defcolonword-base-predef ;
-deflabel-here _doconstant 
-    xw 1+,
-    xw xtop move,
-    xtop xtop ld, 
-    1push,
 : embed-doconstant ( -- ) _doconstant ??, .cell ;
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
-deflabel-here _douser 
-    xw 1+,
-    xw xtop move,
-    xtop xtop ld,
-    0xFF #, xtop xtop andi,
-    &up ??, xlower set, \ user variable addr
-    xlower xtop xtop add, \ address of variable
-    1push,
 : embed-douser ( -- ) _douser ??, .cell ;
 : defuserword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
 : defuserword ( n -- ) word/none defuserword-base ;
-deflabel-here _dovariable 
-    xw 1+,
-    xw xsp push,
-    next,
 : embed-dovariable ( -- ) _dovariable ??, .cell ;
 : defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
 : defvariableword ( n -- ) word/none defvariableword-base ;
-
 : word, ( v -- ) ??, .cell ;
 
 : 1pop ( -- )
@@ -562,14 +556,6 @@ s" c@" defmachineword _c@
 	1push,
 s" !" defmachineword _! ( v a -- ) !,, next,
 s" c!" defmachineword _c!  ( value addr -- ) c!, next,
-\ TODO :
-deflabel _?exec
-deflabel _!csp
-deflabel _&current
-deflabel _&context
-deflabel _create
-deflabel _leftbracket
-deflabel _rightbracket
 s" :" word/imm defmachineword-base _colon
     _?exec word,
     _!csp word,
@@ -586,31 +572,53 @@ _docolon .label
     xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     next,
-\ TODO implement ; 
+s" ;" defcolonword _semi
+    _?csp word,
+    _compile word,
+    _;s word,
+    _smudge word,
+    _leftbracket word,
+    _;s word,
 
 
 s" noop" defmachineword _noop next,
-\ TODO implement constant
-\ TODO implement variable
+s" constant" defcolonword _constant
+    _create word,
+    _smudge word,
+    _, word,
+    _(;code) word,
+_doconstant .label
+    xw 1+,
+    xw xtop move,
+    xtop xtop ld, \ get data
+    1push,
+s" variable" defcolonword _variable
+    _constant word,
+    _(;code) word,
+    _dovariable .label
+        xw 1+, 
+        xw xsp push, 
+        next,
+s" user" defcolonword _user
+    _constant word,
+    _(;code) word,
+_douser .label
+    xw 1+,
+    xw xtop move,
+    xtop xtop ld,
+    0xFF #, xtop xtop andi,
+    &up ??, xlower set, \ user variable addr
+    xlower xtop xtop add, \ address of variable
+    1push,
+    
+
 \ TODO implement user
-s" 0" defmachineword _0 
-    zero xsp push, 
-    next,
-s" 1" defmachineword _1 
-	0x1 #, xtop pushi,
-    next,
-s" 2" defmachineword _2 
-	0x2 #, xsp pushi, 
-	next,
-s" 3" defmachineword _3 
-	0x3 #, xsp pushi,
-	next,
-s" bl" defmachineword _bl 
-	bl #, xsp pushi, 
-	next,
-s" c/l" defmachineword _c/l 
-	0x40 #, xsp pushi, 
-	next,
+s" 0" defconstantword _0 0x0 #, .cell 
+s" 1" defconstantword _1 0x1 #, .cell
+s" 2" defconstantword _2 0x2 #, .cell
+s" 3" defconstantword _3 0x3 #, .cell
+s" bl" defconstantword _bl bl #, .cell
+s" c/l" defconstantword _c/l 0x40 #, .cell
 s" first" defmachineword _first
 	&FIRST #, xsp pushi,
 	next,
@@ -816,7 +824,7 @@ s" ?pairs" defmachineword _?pairs
     0x13 #lit,
     ?err, _?pairs_?err_else _?pairs_?err_endif
     next,
-s" ?csp" defmachineword _?csp
+_?csp s" ?csp" defmachineword-predef 
     xsp xsp push,
     &csp ??, lit,
     @, 
@@ -831,7 +839,7 @@ s" ?loading" defmachineword _?loading
     0x16 #lit,
     ?err, _?loading_?err_else _?loading_?err_endif
     next,
-s" compile" defcolonword _compile
+_compile s" compile" defcolonword-predef
     _?comp word,
     _r> word,
     _dup word,
@@ -839,9 +847,8 @@ s" compile" defcolonword _compile
     _>r word,
     _@ word,
     _, word,
-    _; word,
-
-s" smudge" defmachineword _smudge
+    _;s word,
+_smudge s" smudge" defmachineword 
 	\ mark the current dictionary entry as smudge
 	&dp ??, xtaddr set,
 	xtaddr xtop ld,
@@ -857,18 +864,18 @@ _(;code) s" (;code)" defcolonword-predef
     _pfa word,
     _cfa word,
     _@ word,
-    _; word,
+    _;s word,
 s" ;code" defcolonword _;code
     _?csp word,
     _compile word,
     _(;code) word,
     _leftbracket word,
     _noop word,
-    _; word,
+    _;s word,
 s" <builds" defcolonword _<builds
     _0 word,
     _constant word,
-    _; word,
+    _;s word,
 s" does>" defcolonword _does>
     deflabel _dodoes
     _r> word,
@@ -889,13 +896,13 @@ s" count" defcolonword _count
     _1+ word,
     _swap word,
     _c@ word,
-    _; word,
+    _;s word,
 s" type" defcolonword _type
     \ TODO type body
-    _; word,
+    _;s word,
 s" trailing" defcolonword _trailing
     \ TODO trailing body
-    _; word,
+    _;s word,
 s\" (.\")" 
 defcolonword _pdotq
     _r word,
