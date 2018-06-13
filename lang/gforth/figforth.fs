@@ -207,6 +207,7 @@ deflabel _smudge
 deflabel _doconstant
 deflabel _douser
 deflabel _dovariable
+deflabel _,
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
@@ -493,7 +494,7 @@ s" r>" defmachineword _r> \ retrieve item from top of return stack
 s" r" defmachineword _r \ copy top of return stack onto stack
 	xrp xtop ld,
 	1push,
-: 0= ( -- ) 
+: 0=, ( -- ) 
   1pop
   xtop xtop eqz,
   xtop xsp push, ;
@@ -660,7 +661,7 @@ s" allot" defmachineword _allot ( n -- )
 	allot,
     next,
 
-s" ," defmachineword _, ( n -- )
+_, s" ," defmachineword-predef ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
 	,,
@@ -797,7 +798,7 @@ _!csp s" !csp" defmachineword-predef
     swap over over 
     swap,
     ??, if,,
-    _handle_error ??, b,
+    _handle-error ??, b,
     ??, b, \ dead code
     .label
     drop,
@@ -806,7 +807,7 @@ _!csp s" !csp" defmachineword-predef
 s" ?error" defmachineword _?error
     ?err, _?error_else _?error_endif
     next,
-s" ?comp" defmachineword _?comp
+s" ?comp" defmachineword _?comp 
     &state ??lit,
     @,
     0=,
@@ -848,7 +849,7 @@ _compile s" compile" defcolonword-predef
     _@ word,
     _, word,
     _;s word,
-_smudge s" smudge" defmachineword 
+_smudge s" smudge" defmachineword-predef
 	\ mark the current dictionary entry as smudge
 	&dp ??, xtaddr set,
 	xtaddr xtop ld,
@@ -913,12 +914,12 @@ defcolonword _pdotq
     _+ word,
     _>r word,
     \ _types word,
-    _; word,
+    _;s word,
 
 s\" .\"" 
 defcolonword _dotq
 \ TODO dotq body
-    _; word,
+    _;s word,
 
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
@@ -1007,11 +1008,6 @@ _rightbracket s" ]" defmachineword-predef
 	xtaddr xtop ld,
 	zero xtop xtop neq,
 	xtop xsp push, ;
-s" ?comp" defmachineword _?comp
-	&state ??, xtaddr set,
-	xtaddr xtop ld,
-	zero xtop xtop neq,
-	1push,
 s" hex" defmachineword _hex \ set the base to 16
 	&base ??, xtaddr set,
 	0x10 #, at0 set,
@@ -1293,7 +1289,7 @@ s" word" defmachineword _word
 		+!,
 		r>, 
 		next,
-s" create" defmachineword _create
+_create s" create" defmachineword-predef
 	bl #lit,
 	&blk ??lit, @,
 	deflabel _word_else1
@@ -1359,13 +1355,13 @@ s" create" defmachineword _create
 	latest,,
 	&current ??lit, @, !,,
 	here, 2 #lit, +, ,, next,
-s" compile" defmachineword _compile
-	?comp, \ error if not compiling
-	r>,    \ top of return stack is pointing to the next word following compile
-	dup, 2 #lit, +, >r,
-	@, ,, 
-	next,
-s" count" defmachineword _count dup, 1+,, swap, next,
+\ s" compile" defmachineword _compile
+\ 	?comp, \ error if not compiling
+\ 	r>,    \ top of return stack is pointing to the next word following compile
+\ 	dup, 2 #lit, +, >r,
+\ 	@, ,, 
+\ 	next,
+\ s" count" defmachineword _count dup, 1+,, swap, next,
 s" definitions" defmachineword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
