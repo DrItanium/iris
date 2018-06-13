@@ -175,7 +175,7 @@ word/imm word/smudge or constant word/all
 \ 6: next 
 \ 7: address (interpreter routine) 
 \ 8-n: body 
-: defword-base ( str length control-bits "name" -- )
+: defword-header ( str length control-bits "name" -- )
   loc@ >r \ stash a copy of the current location here!
   \ a shim to make next and docol unaware of encoding layout
   \ it does slow things down but it can't be helped at this point
@@ -184,11 +184,14 @@ word/imm word/smudge or constant word/all
   embed-name \ stash three more bytes
   last-word @ #, .cell \ stash the previous word here
   r> last-word ! \ stash the top of this dictionary entry to last word
-  deflabel-here \ then define the label to point at here
   ;
-
+deflabel _(;code)
+: defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
+: defword-base-predef ( label str length control-bits -- ) defword-header .label ;
 : defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
+: defmachineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
+: defmachineword-predef ( label str length -- ) word/none defmachineword-base-predef ;
 : embed-string-length ( len -- ) #, .cell ;
 deflabel-here _docolon 
 	\ runtime routine for all colon definitions
@@ -198,7 +201,9 @@ deflabel-here _docolon
     next,
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
-: defcolonword ( n -- ) word/none defcolonword-base ;
+: defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
+: defcolonword ( str length "name"  -- ) word/none defcolonword-base ;
+: defcolonword-predef ( label str length -- ) word/none defcolonword-base-predef ;
 deflabel-here _doconstant 
     xw 1+,
     xw xtop move,
@@ -226,7 +231,7 @@ deflabel-here _dovariable
 : defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
 : defvariableword ( n -- ) word/none defvariableword-base ;
 
-: defword, ( v -- ) ??, .cell ;
+: word, ( v -- ) ??, .cell ;
 
 : 1pop ( -- )
   xsp xtop pop, ;
@@ -326,7 +331,7 @@ s" lit" defmachineword _lit
 : push-literal ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
-  _lit ??, .cell .cell ;
+  _lit word, .cell ;
 s" execute" defmachineword _execute
 	\ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
@@ -498,6 +503,10 @@ s" r>" defmachineword _r> \ retrieve item from top of return stack
 s" r" defmachineword _r \ copy top of return stack onto stack
 	xrp xtop ld,
 	1push,
+: 0= ( -- ) 
+  1pop
+  xtop xtop eqz,
+  xtop xsp push, ;
 s" 0=" defmachineword _0=
     1pop
     xtop xtop eqz,
@@ -563,10 +572,12 @@ s" noop" defmachineword _noop next,
 \ TODO implement constant
 \ TODO implement variable
 \ TODO implement user
-s" 0" defmachineword _0 zero xsp push, next,
+s" 0" defmachineword _0 
+    zero xsp push, 
+    next,
 s" 1" defmachineword _1 
 	0x1 #, xtop pushi,
-	1push,
+    next,
 s" 2" defmachineword _2 
 	0x2 #, xsp pushi, 
 	next,
@@ -746,6 +757,139 @@ s" pfa" defmachineword _pfa \ convert the name field address to its correspondin
     1pop
     8 #, xtop xtop addi,
     1push,
+s" !csp" defmachineword _!csp
+    xsp xtop move,
+    &csp ??, xlower set,
+    xtop xlower st,
+    next,
+: ?err, ( "name0" "name1" -- )
+    deflabel execute-latest  \ else
+    deflabel execute-latest \ endif
+    swap over over 
+    swap,
+    ??, if,,
+    _handle_error ??, b,
+    ??, b, \ dead code
+    .label
+    drop,
+    .label ;
+
+s" ?error" defmachineword _?error
+    ?err, _?error_else _?error_endif
+    next,
+s" ?comp" defmachineword _?comp
+    &state ??lit,
+    @,
+    0=,
+    0x11 #lit,
+    ?err, _?comp_?err_else _?comp_?err_endif
+    next,
+s" ?exec" defmachineword _?exec
+    &state ??lit,
+    @,
+    0x12 #lit,
+    ?err, _?exec_?err_else _?exec_?err_endif
+    next,
+s" ?pairs" defmachineword _?pairs
+    -,
+    0x13 #lit,
+    ?err, _?pairs_?err_else _?pairs_?err_endif
+    next,
+s" ?csp" defmachineword _?csp
+    xsp xsp push,
+    &csp ??, lit,
+    @, 
+    -,
+    0x14 #lit,
+    ?err, _?csp_?err_else _?csp_?err_endif
+    next,
+s" ?loading" defmachineword _?loading
+    &blk ??, lit,
+    @, 
+    0=,
+    0x16 #lit,
+    ?err, _?loading_?err_else _?loading_?err_endif
+    next,
+s" compile" defcolonword _compile
+    _?comp word,
+    _r> word,
+    _dup word,
+    _2+ word,
+    _>r word,
+    _@ word,
+    _, word,
+    _; word,
+
+s" smudge" defmachineword _smudge
+	\ mark the current dictionary entry as smudge
+	&dp ??, xtaddr set,
+	xtaddr xtop ld,
+	xtop xlower ld,
+	word/smudge #, at0 set,
+	xlower at0 xlower or,
+	xlower xtop st,
+	next,
+
+_(;code) s" (;code)" defcolonword-predef
+    _r> word,
+    _latest word,
+    _pfa word,
+    _cfa word,
+    _@ word,
+    _; word,
+s" ;code" defcolonword _;code
+    _?csp word,
+    _compile word,
+    _(;code) word,
+    _leftbracket word,
+    _noop word,
+    _; word,
+s" <builds" defcolonword _<builds
+    _0 word,
+    _constant word,
+    _; word,
+s" does>" defcolonword _does>
+    deflabel _dodoes
+    _r> word,
+    _latest word,
+    _pfa word,
+    _@ word,
+    _(;code) word,
+    _dodoes .label 
+    xip xrp push,
+    xw 1+,      \ pfa
+    xw xtop move, 
+    xtop xip ld, \ new cfa
+    xw 1+, 
+    xw xsp push, \ pfa
+    next,
+s" count" defcolonword _count
+    _dup word,
+    _1+ word,
+    _swap word,
+    _c@ word,
+    _; word,
+s" type" defcolonword _type
+    \ TODO type body
+    _; word,
+s" trailing" defcolonword _trailing
+    \ TODO trailing body
+    _; word,
+s\" (.\")" 
+defcolonword _pdotq
+    _r word,
+    _count word,
+    _dup word,
+    _1+ word,
+    _r> word,
+    _+ word,
+    _>r word,
+    \ _types word,
+    _; word,
+
+s\" .\"" 
+defcolonword _dotq
+    _; word,
 
 s" *" defbinaryop _* mul,
 s" /" defbinaryop _/ div, 
@@ -829,12 +973,6 @@ s" ]" defmachineword _rightbracket
 	xtop xtaddr st,
     next,
 
-s" dodoes" defmachineword _dodoes_prime
-    xip xrp push,
-    xw xip move,
-    xw 1+,
-	xw xtop move,
-	1push,
 : ?comp, ( -- )
 	&state ??, xtaddr set,
 	xtaddr xtop ld,
