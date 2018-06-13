@@ -193,12 +193,8 @@ deflabel _(;code)
 : defmachineword ( str length "name" -- ) word/none defmachineword-base ;
 : defmachineword-predef ( label str length -- ) word/none defmachineword-base-predef ;
 : embed-string-length ( len -- ) #, .cell ;
-deflabel-here _docolon 
-	\ runtime routine for all colon definitions
-    xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
-    xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
-    \ duplicate NEXT for now
-    next,
+deflabel _docolon
+\ deflabel-here _docolon 
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
@@ -567,7 +563,32 @@ s" c@" defmachineword _c@
 s" !" defmachineword _! ( v a -- ) !,, next,
 s" c!" defmachineword _c!  ( value addr -- ) c!, next,
 \ TODO :
+deflabel _?exec
+deflabel _!csp
+deflabel _&current
+deflabel _&context
+deflabel _create
+deflabel _leftbracket
+deflabel _rightbracket
+s" :" word/imm defmachineword-base _colon
+    _?exec word,
+    _!csp word,
+    _&current word,
+    _@ word,
+    _&context word,
+    _! word,
+    _create word,
+    _rightbracket word,
+    _(;code) word,
+_docolon .label
+    xw 1+,
+	\ runtime routine for all colon definitions
+    xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
+    xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
+    next,
 \ TODO implement ; 
+
+
 s" noop" defmachineword _noop next,
 \ TODO implement constant
 \ TODO implement variable
@@ -757,7 +778,7 @@ s" pfa" defmachineword _pfa \ convert the name field address to its correspondin
     1pop
     8 #, xtop xtop addi,
     1push,
-s" !csp" defmachineword _!csp
+_!csp s" !csp" defmachineword-predef
     xsp xtop move,
     &csp ??, xlower set,
     xtop xlower st,
@@ -784,7 +805,7 @@ s" ?comp" defmachineword _?comp
     0x11 #lit,
     ?err, _?comp_?err_else _?comp_?err_endif
     next,
-s" ?exec" defmachineword _?exec
+_?exec s" ?exec" defmachineword-predef
     &state ??lit,
     @,
     0x12 #lit,
@@ -889,6 +910,7 @@ defcolonword _pdotq
 
 s\" .\"" 
 defcolonword _dotq
+\ TODO dotq body
     _; word,
 
 s" *" defbinaryop _* mul,
@@ -963,11 +985,11 @@ s" pad" defmachineword _pad ( -- n )
 	xtaddr xtop ld, 
     0x44 #, xtop xtop addi,
 	1push,
-s" [" word/imm defmachineword-base _leftbracket
+_leftbracket s" [" word/imm defmachineword-base-predef
 	&state ??, xtaddr set,
 	zero xtaddr st,
     next,
-s" ]" defmachineword _rightbracket
+_rightbracket s" ]" defmachineword-predef
 	&state ??, xtaddr set,
     0xFFFF #, xtop set,
 	xtop xtaddr st,
