@@ -27,6 +27,20 @@ input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
 
+\ ascii characters used
+0x20 constant aspace \ ascii space
+0x0d constant acr \ carriage return
+0x2e constant adot \ period
+0x7 constant abell \ bell
+0x5f constant absin  \ input delete char
+0x08 constant absout  \ output backspace 
+0x10 constant adle \ (^p)
+0x0a constant alf \ line feed
+0x0c constant aff \ form feed
+
+\ memory allocation
+ram-end 1+ constant EM \ end of memory
+
 
 \ bootstrap-end constant dictionary-start
 
@@ -333,14 +347,14 @@ s" branch" defmachineword _branch
 	xtop xip xip add,
 	next,
 s" 0branch" defmachineword _0branch
-	deflabel _zbra1
+deflabel _zbra1
 	1pop \ flag
 	zero xtop cv neq,
 	_zbra1 ??, cv bc,
 	xip xlower ld,
 	xip xlower xip add,
 	next,
-	_zbra1 .label
+_zbra1 .label
 	0x2 #, xip xip addi,
 	next,
 s" (loop)" defmachineword _(loop)
@@ -357,7 +371,7 @@ s" (loop)" defmachineword _(loop)
 	xip at0 ld, \ add backwards branch offset to IP and branch back to the DO-LOOP
 	at0 xip xip add, 
 	next,
-	loop_1 .label
+loop_1 .label
 	\ discard the loop parameters off the return stack
 	xrp zero pop,
 	xrp zero pop,
@@ -384,12 +398,12 @@ s" (+loop)" defmachineword _(+loop)
 	xip at0 ld,
 	at0 xip xip add,
 	next,
-	loop_2 .label
-		xrp zero pop,
-		xrp zero pop,
-		2 #, xip xip addi,
-		next,
-	loop_3 .label
+loop_2 .label
+	xrp zero pop,
+	xrp zero pop,
+	2 #, xip xip addi,
+	next,
+loop_3 .label
 	xtaddr at0 ld, \ loop count
 	xtaddr 1+,
 	xtaddr at1 ld, \ loop limit
@@ -436,7 +450,7 @@ s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory
          \ third - from
     deflabel _cmove_loop 
     deflabel _cmove_done
-    _cmove_loop .label
+_cmove_loop .label
     xtop cv ltz,
     _cmove_done ??, cv bc,
     xlower at0 ldtincr,
@@ -445,7 +459,7 @@ s" cmove" defmachineword _cmove ( from to u -- ) \ move u bytes in memory
     xlower 1+,
     xthird 1+,
     _cmove_loop ??, b,
-    _cmove_done .label
+_cmove_done .label
     next,
 : defbinaryop ( str length "name" "op" -- )
   defmachineword 
@@ -703,7 +717,7 @@ s" -dup" defmachineword _-dup \ duplicate if non zero
     xtop cv eqz, 
     _-dup_done ??, cv bc,
         xtop xsp push,
-    _-dup_done .label
+_-dup_done .label
 	1push,
 : push-zero, ( sp -- ) zero swap push, ;
 : begin, ( -- ) 
@@ -884,7 +898,7 @@ s" does>" defcolonword _does>
     _pfa word,
     _@ word,
     _(;code) word,
-    _dodoes .label 
+_dodoes .label 
     xip xrp push,
     xw 1+,      \ pfa
     xw xtop move, 
@@ -904,6 +918,7 @@ s" type" defcolonword _type
 s" trailing" defcolonword _trailing
     \ TODO trailing body
     _;s word,
+s" print-ok" defmachineword _printok prok, next,
 s\" (.\")" 
 defcolonword _pdotq
     _r word,
@@ -954,7 +969,7 @@ s" abs" defmachineword _abs
     xtop cv gez,
     _absDone ??, cv bc,
     0xFFFF #, xtop xtop muli, \ multiply by negative one
-    _absDone .label
+_absDone .label
 	1push,
 
 
@@ -979,13 +994,13 @@ s" fill" defmachineword _fill ( addr n b -- )
          \ third - addr
     deflabel _fill_loop
     deflabel _fill_done
-    _fill_loop .label
+_fill_loop .label
     xlower cv eqz,
     _fill_done ??, cv bc,
     xtop xthird sttincr,
     xlower 1-,
     _fill_loop ??, b,
-    _fill_done .label
+_fill_done .label
     next,
 
 s" pad" defmachineword _pad ( -- n )
@@ -1069,9 +1084,7 @@ s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start ??, &context ??, assign-variable,
 	next,
-s" abort" defmachineword __abort _abort ??, b,
 s" cold" defmachineword __cold _cold ??, b,
-s" quit" defmachineword __quit _quit ??, b,
 s" block" defmachineword _block 
 	deflabel _block_done
 	( bid -- addr )
@@ -1086,7 +1099,7 @@ s" block" defmachineword _block
 	/dev/core-load #, io set,
 	xtop io st,
 	xtop xcoreid move, 
-	_block_done .label
+_block_done .label
 	&FIRST #, xsp pushi,
 	next,
 \ : defvariableword ( label str-addr len "name" -- )
@@ -1141,10 +1154,10 @@ s" number" defmachineword _number \ initial basic number routine for parsing
     xtop xthird ld,
     xlower xthird xlower add, 
     xlower xtop st,
-	(number)_noincr .label
+(number)_noincr .label
 	r>,
 	(number)_begin ??, b,
-	(number)_done .label
+(number)_done .label
 	r>,
 	dup, c@,
 	bl #lit, -,
@@ -1160,27 +1173,29 @@ s" number" defmachineword _number \ initial basic number routine for parsing
 	swap,
 	number-not-error ??, if,, 
 	_handle-error ??, b,
-	number-not-error .label
+number-not-error .label
 	drop,
 	0,, \ a decimal point was found. set DPL to 0 the next time
 	number_begin ??, b,
-	number_done .label
+number_done .label
 	drop,
 	r>,
 	number_finish ??, if,, 
 	negate,
-	number_finish .label
+number_finish .label
 	next,
 s" (abort)" defmachineword __abort_ _abort ??, b,
 s" expect" defmachineword _expect
+deflabel-here expect_loop
+deflabel expect_else0
+deflabel expect_endif0
+deflabel expect_else1
+deflabel expect_endif1
 	over, +, over, 
-	deflabel-here expect_loop
 	key, \ key inlined
 	dup, \ make a copy
 	0x8 #lit, \ load the ascii backspace code
 	=, \ is it a backspace?
-	deflabel expect_else0
-	deflabel expect_endif0
 	expect_else0 ??, if,,
 		drop,
 		8 #lit,
@@ -1193,29 +1208,27 @@ s" expect" defmachineword _expect
 			  \ the starting 
 		r>, -,
 		expect_endif0 ??, b,
-		expect_else0 .label
+expect_else0 .label
 			dup, 
 			0xD #lit,
 			=,
-		deflabel expect_else1
-		deflabel expect_endif1
 			expect_else1 ??, if,,
 				leave, 
 				drop, 
 				bl #lit, 
 				0,,
 				expect_endif1 ??, b,
-			expect_else1 .label
+expect_else1 .label
 				dup,
-			expect_endif1 .label
+expect_endif1 .label
 				I,
 				c!, 
 				0,,
 				1+,,
 				!,,
-	expect_endif0 .label
+expect_endif0 .label
 	emit,
-	deflabel compile_loop_1
+deflabel compile_loop_1
 	\ runtime routine of loop
 	xrp xtaddr move,
 	xtaddr xtop ld,
@@ -1226,7 +1239,7 @@ s" expect" defmachineword _expect
 	xtop xlower cv ge, 
 	compile_loop_1 ??, cv bc,
 	expect_loop ??, b,
-	compile_loop_1 .label
+compile_loop_1 .label
 	\ discard the loop parameters off the return stack
 	xrp zero pop,
 	xrp zero pop,
@@ -1253,13 +1266,13 @@ s" word" defmachineword _word
 		/dev/core-load #, io set,
 		xtop io st,
 		xtop xcoreid move, 
-		_block_done0 .label
+_block_done0 .label
 		&FIRST #, at0 set,
 		at0 xsp push,
 		_word_endif0 ??, b,
-	_word_else0 .label
+_word_else0 .label
 		&tib ??lit, @, 
-	_word_endif0 .label
+_word_endif0 .label
 		&in ??lit, @, +, swap, 
 	    enclose,,
 		here,
@@ -1275,7 +1288,7 @@ s" word" defmachineword _word
     	xtop xthird sttincr,
     	xlower 1-,
     	_blanks_loop0 ??, b,
-    	_blanks_done0 .label
+_blanks_done0 .label
 		&in ??lit, 
 		+!, 
 		over,
@@ -1310,13 +1323,13 @@ _create s" create" defmachineword-predef
 		/dev/core-load #, io set,
 		xtop io st,
 		xtop xcoreid move, 
-		_block_done1 .label
+_block_done1 .label
 		&FIRST #, at0 set,
 		at0 xsp push,
 		_word_endif1 ??, b,
-	_word_else1 .label
+_word_else1 .label
 		&tib ??lit, @, 
-	_word_endif1 .label
+_word_endif1 .label
 		&in ??lit, @, +, swap, 
 	    enclose,,
 		here,
@@ -1332,7 +1345,7 @@ _create s" create" defmachineword-predef
     	xtop xthird sttincr,
     	xlower 1-,
     	_blanks_loop1 ??, b,
-    	_blanks_done1 .label
+_blanks_done1 .label
 		&in ??lit, 
 		+!, 
 		over,
@@ -1369,6 +1382,47 @@ s" definitions" defmachineword _definitions
 	&context ??lit, @, 
 	&current ??lit, !,,
 	next,
+s" (" defcolonword _paren
+    0x29 #, push-literal
+    _words word,
+    _;s word,
+s" quit" defcolonword _quit
+deflabel _quit1
+deflabel _quit2
+    _0 word,
+    &blk word,
+    @,
+    _leftbracket word,
+_quit1 .label
+    _rp! word,
+    _cr word,
+    _query word,
+    _inter word,
+    &state word,
+    @,
+    0=,
+    _0branch word, \ if
+    _quit2 word,
+    _printok word,
+    \ endif 
+_quit2 .label
+    _branch word, \ again
+    _quit1 word,
+s" abort" defcolonword _abort
+    _sp! word,
+    _decimal word,
+    \ qstac
+    _cr word,
+    \ TODO print information out here at some point
+    \ _dotcpu word,
+    \ _pdotq word,
+    \ 0xD #, cell,
+    \ s" fig-forth" string,
+    \ version information embedded here too
+    _forth word,
+    _defin word,
+    _quit word,
+    
 	
 \ &state s" state" defvariableword _state
 \ &base s" base" defvariableword _base
@@ -1421,16 +1475,15 @@ system-start .org \ system variables
 &width .label 0 #, .cell
 &porigin .label 0 #, .cell
 ram-start .org
-	
-	_origin .label
-	_cold .label
+_origin .label
+_cold .label
 	zero xcoreid move, \ set to the zeroth core by default
 	/dev/core-load #, xtop set,
 	xcoreid xtop st, \ setup the zeroth core
 	base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
 	base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
 	0x10 #, &base ??, assign-variable,              \ setup the numeric base
-	_abort .label
+_abort .label
 	forth_vocabulary_start ??, &context ??, assign-variable,      \ setup the context variable
 	\ setup the data stack pointer
 	data-stack-start #, &S0 ??, assign-variable,
@@ -1439,7 +1492,7 @@ ram-start .org
 	return-stack-start #, &R0 ??, assign-variable,
 	xtop xrp move,
 	0xFFFF #, &warning ??, assign-variable, \ always skip error messages for now
-	_quit .label
+_quit .label
 	input-buffer-start #, &tib ??, assign-variable, \ setup the terminal input buffer
 	&state ??, zero-variable, 
 	deflabel-here _quit_loop_start
@@ -1462,7 +1515,7 @@ _handle-error .label
 	at1 at0 cv neq, \ equal negative one?
 	_handle-error0 ??, cv bc,
 	_abort ??, b,
-	_handle-error0 .label
+_handle-error0 .label
 	\ print text string under interpretation
 	\ perform checks to see what kind of warning message we should print
 	\ TODO add support for printing more information
@@ -1473,8 +1526,6 @@ _handle-error .label
 	&blk ??, xtaddr set,
 	xtaddr xsp push,
 	_quit ??, b,
-
-
 asm}
 
 bye
