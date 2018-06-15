@@ -1084,7 +1084,6 @@ s" forth" defmachineword _forth
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start ??, &context ??, assign-variable,
 	next,
-s" cold" defmachineword __cold _cold ??, b,
 s" block" defmachineword _block 
 	deflabel _block_done
 	( bid -- addr )
@@ -1386,12 +1385,12 @@ s" (" defcolonword _paren
     0x29 #, push-literal
     _words word,
     _;s word,
-s" quit" defcolonword _quit
+s" quit" defcolonword-predef _quit
 deflabel _quit1
 deflabel _quit2
     _0 word,
     &blk word,
-    @,
+    _! word,
     _leftbracket word,
 _quit1 .label
     _rp! word,
@@ -1399,8 +1398,8 @@ _quit1 .label
     _query word,
     _inter word,
     &state word,
-    @,
-    0=,
+    _@ word,
+    _0= word,
     _0branch word, \ if
     _quit2 word,
     _printok word,
@@ -1408,7 +1407,7 @@ _quit1 .label
 _quit2 .label
     _branch word, \ again
     _quit1 word,
-s" abort" defcolonword _abort
+s" abort" defcolonword-predef _abort
     _sp! word,
     _decimal word,
     \ qstac
@@ -1422,28 +1421,61 @@ s" abort" defcolonword _abort
     _forth word,
     _defin word,
     _quit word,
-    
-	
-\ &state s" state" defvariableword _state
-\ &base s" base" defvariableword _base
-\ &current s" current" defvariableword _current
-\ &tib s" tib" defvariableword _tib
-\ &s0 s" s0" defvariableword _s0
-\ &r0 s" r0" defvariableword _r0
-\ &warning s" warning" defvariableword _warning
-\ &dp s" dp" defvariableword _dp
-\ &fence s" fence" defvariableword _fence
-\ &voc-link s" voc-link" defvariableword _voc-link
-\ &blk s" blk" defvariableword _blk
-\ &in s" in" defvariableword _in
-\ &out s" out" defvariableword _out
-\ &dpl s" dpl" defvariableword _dpl
-\ &fld s" fld" defvariableword _fld
-\ &csp s" csp" defvariableword _csp
-\ &r#  s" r#" defvariableword _r#
-\ &hld s" hld" defvariableword _hld
-\ &separator s" separator" defvariableword _separator
-\ &terminator s" terminator" defvariableword _terminator
+deflabel _wrm
+deflabel _wrm1
+deflabel _warm
+\ warm start vector comes here
+_wrm .label
+    _wrm1 ??, xip set,
+    next,
+_wrm1 .label 
+    _warm word,
+s" warm" defcolonword-predef _warm
+    _mtbuf word,
+    _abort word,
+\ cold start vector comes here
+deflabel _cld
+deflabel _cld1
+_cld .label
+    _cld1 ??, xip set,
+    \ setup the data and return stacks
+    data-stack-start #, xsp set,
+    return-stack-start #, xrp set,
+	zero xcoreid move, \ set to the zeroth core by default
+	/dev/core-load #, xtop set,
+	xcoreid xtop st, \ setup the zeroth core
+	\ base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
+	\ base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
+	\ 0x10 #, &base ??, assign-variable,              \ setup the numeric base
+    \ setup the core load routines
+    next,
+_cld1 .label
+    _cold word,
+s" cold" defcolonword-predef _cold
+    _mtbuf word,
+    \ TODO set density
+    \ _0 word,
+    \ _density word,
+    \ _! word,
+    \ TODO set _use
+    \ TODO set _prev
+    \ _first word,
+    \ _prev word,
+    \ _! word,
+    _drzer word,
+    0 #, push-literal
+    _eprint ??, push-literal
+    _! word,
+    \ orig + 12H 
+    _origin ??, push-literal
+    0x12 #, push-literal
+    _+ word,
+    _up ??, push-literal
+    _@ word,
+    _forth ??, push-literal
+    0x6 #, push-literal
+    _! word,
+    _abort word, \ last
 forth_vocabulary_start .label 
 s" terminate" defmachineword _terminate
 	/dev/terminate-vm #, xtaddr set,
@@ -1476,37 +1508,31 @@ system-start .org \ system variables
 &porigin .label 0 #, .cell
 ram-start .org
 _origin .label
-_cold .label
-	zero xcoreid move, \ set to the zeroth core by default
-	/dev/core-load #, xtop set,
-	xcoreid xtop st, \ setup the zeroth core
-	base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
-	base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
-	0x10 #, &base ??, assign-variable,              \ setup the numeric base
-_abort .label
-	forth_vocabulary_start ??, &context ??, assign-variable,      \ setup the context variable
-	\ setup the data stack pointer
-	data-stack-start #, &S0 ??, assign-variable,
-	xtop xsp move,
-	\ setup the return stack pointer
-	return-stack-start #, &R0 ??, assign-variable,
-	xtop xrp move,
-	0xFFFF #, &warning ??, assign-variable, \ always skip error messages for now
-_quit .label
-	input-buffer-start #, &tib ??, assign-variable, \ setup the terminal input buffer
-	&state ??, zero-variable, 
-	deflabel-here _quit_loop_start
-	return-stack-start #, xrp set, \ clear return stack
-	input-buffer-start #, at0 set, \ set where to write to
-	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
-	at1 at0 rltm, \ input a line of text
-	\ perform interpretation
-	\ at the end check and see if we are looking at 
-	zero xerror cv neq, 
-	_handle-error ??, cv bc,
-	_quit_loop_start ?compiling,
-	prok, \ type OK on terminal
-	_quit_loop_start ??, b,
+\ _cold .label
+\ _abort .label
+\ 	forth_vocabulary_start ??, &context ??, assign-variable,      \ setup the context variable
+\ 	\ setup the data stack pointer
+\ 	data-stack-start #, &S0 ??, assign-variable,
+\ 	xtop xsp move,
+\ 	\ setup the return stack pointer
+\ 	return-stack-start #, &R0 ??, assign-variable,
+\ 	xtop xrp move,
+\ 	0xFFFF #, &warning ??, assign-variable, \ always skip error messages for now
+\ _quit .label
+\ 	input-buffer-start #, &tib ??, assign-variable, \ setup the terminal input buffer
+\ 	&state ??, zero-variable, 
+\ 	deflabel-here _quit_loop_start
+\ 	return-stack-start #, xrp set, \ clear return stack
+\ 	input-buffer-start #, at0 set, \ set where to write to
+\ 	input-buffer-end input-buffer-start - #, at1 set, \ set the maximum length
+\ 	at1 at0 rltm, \ input a line of text
+\ 	\ perform interpretation
+\ 	\ at the end check and see if we are looking at 
+\ 	zero xerror cv neq, 
+\ 	_handle-error ??, cv bc,
+\ 	_quit_loop_start ?compiling,
+\ 	prok, \ type OK on terminal
+\ 	_quit_loop_start ??, b,
 _handle-error .label
 	deflabel _handle-error0
 	&warning ??, xtaddr set,
