@@ -528,10 +528,12 @@ s" 0=" defmachineword _0=
     1pop
     xtop xtop eqz,
 	1push,
+: 0=; ( -- ) _0= word, ;
 s" 0<" defmachineword _0<
     1pop
     xtop xtop ltz,
 	1push,
+: 0<; ( -- ) _0< word, ;
 s" +" defbinaryop _+ add,
 : +; ( -- ) _+ word, ;
 s" d+" defmachineword _dplus
@@ -610,6 +612,7 @@ s" +!" defmachineword _+!
 s" toggle" defmachineword _toggle ( p addr -- )
 	toggle,
 	next,
+: toggle; ( -- ) _toggle word, ;
 s" @" defmachineword _@
     1pop
     xtop xtop ld,
@@ -622,9 +625,11 @@ s" c@" defmachineword _c@
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
 	1push,
+: c@; ( -- ) _c@ word, ;
 s" !" defmachineword _! ( v a -- ) !,, next,
 : !; ( -- ) _! word, ;
 s" c!" defmachineword _c!  ( value addr -- ) c!, next,
+: c!; ( -- ) _c! word, ;
 s" :" word/imm defmachineword-base _colon
     _?exec word,
     _!csp word,
@@ -682,9 +687,13 @@ _douser .label
 
 \ TODO implement user
 s" 0" defconstantword _0 0x0 #, .cell 
+: 0; ( -- ) _0 word, ;
 s" 1" defconstantword _1 0x1 #, .cell
+: 1; ( -- ) _1 word, ;
 s" 2" defconstantword _2 0x2 #, .cell
+: 2; ( -- ) _2 word, ;
 s" 3" defconstantword _3 0x3 #, .cell
+: 3; ( -- ) _3 word, ;
 s" bl" defconstantword _bl bl #, .cell
 s" c/l" defconstantword _c/l 0x40 #, .cell
 s" first" defmachineword _first
@@ -944,7 +953,7 @@ s" ;code" defcolonword _;code
     _noop word,
     ;;s
 s" <builds" defcolonword _<builds
-    _0 word,
+    0;
     _constant word,
     ;;s
 s" does>" defcolonword _does>
@@ -962,12 +971,7 @@ _dodoes .label
     xw 1+, 
     xw xsp push, \ pfa
     next,
-s" count" defcolonword _count
-    dup;
-    1+;
-    swap;
-    _c@ word,
-    ;;s
+s" count" defcolonword _count dup; 1+; swap; c@; ;;s
 s" type" defcolonword _type
     \ TODO type body
     ;;s
@@ -1142,7 +1146,7 @@ s" query" defcolonword _query
     _tib word-then@
     0x50 #, push-literal
     _expect word,
-    _0 word,
+    0;
     _inn word,
     !;
     ;;s
@@ -1152,27 +1156,27 @@ deflabel _null2
 deflabel _null3
     _&blk word-then@
     _null1 ??, zbranch, \ if
-    _1 word,
+    1;
     &blk word,
     +!;
-    _0 word,
+    0;
     _inn word,
     !;
     _&blk word-then@
     &bscr word,
-    _1 word,
+    1;
     -;
     _and word,
-    _0= word,
+    0=; 
     _null2 ??, zbranch, \ if
     _?exec word,
-    _r> word, 
-    _drop word, \ endif
+    r>;
+    drop; \ endif
 _null2 .label   \ else
     _null3 ??, branch,
-    _r> word,
+    r>;
 _null1 .label
-    _drop word, \ endif
+    drop; \ endif
 _null3 .label
     ;;s
 
@@ -1193,7 +1197,7 @@ _fill_done .label
     next,
 : fill; ( -- ) _fill word, ;
 s" erase" defcolonword _erase
-    _0 word,
+    0;
     fill;
     ;;s
 s" blanks" defcolonword _blanks
@@ -1205,7 +1209,7 @@ s" hold" defcolonword _hold
     _HLD word,
     +!;
     _HLD word-then@
-    _c@ word,
+    c@;
     ;;s
 
 s" pad" defcolonword _pad ( -- n )
@@ -1247,7 +1251,7 @@ deflabel _pnum3
     1+; \ begin
     dup;
     >r;
-    _c@ word,
+    c@;
     _base word-then@
     _digit word,
     _pnum2 ??, zbranch, \ while
@@ -1268,9 +1272,14 @@ _pnum2 .label
     r>;
     ;;s
 s" number" defcolonword _number
-    _0 word,
-    _0 word,
-    rot;
+    0; 0; rot;
+    dup; 1+;
+    c@;
+    0x2D #, push-literal
+    _= word,
+    dup; >r;
+
+
 
 
 
@@ -1296,7 +1305,7 @@ s" (" defcolonword _paren
 s" quit" defcolonword-predef _quit
 deflabel _quit1
 deflabel _quit2
-    _0 word,
+    0;
     &blk word,
     !;
     _leftbracket word,
@@ -1307,7 +1316,7 @@ _quit1 .label
     _inter word,
     &state word,
     @;
-    _0= word,
+    0=;
     _quit2 ??, zbranch, \ if
     _printok word,
     \ endif 
@@ -1360,7 +1369,7 @@ _cld1 .label
 s" cold" defcolonword-predef _cold
     _mtbuf word,
     \ TODO set density
-    \ _0 word,
+    \ 0;
     \ _density word,
     \ !;
     \ TODO set _use
