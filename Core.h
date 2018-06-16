@@ -91,8 +91,8 @@ namespace iris {
 	using DestinationRegister = RegisterIndex;
 	using SourceRegister = RegisterIndex;
 	enum class Opcode : Address {
-#define X(title, style, z) title, 
-#define FirstX(title, style, z) X(title, style, z)
+#define X(title, style) title, 
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef FirstX
 #undef X
@@ -218,19 +218,19 @@ namespace iris {
                     Integer imm;
                 };
 			};
-#define X(title, style, z) \
+#define X(title, style) \
 			struct title final { \
 				title ( ) { } \
 				title (const style & v) : _args(v) { } \
 				constexpr Opcode opcode() const noexcept { return Opcode :: title ; } \
 				style _args ; } ; 
-#define FirstX(title, style, z) X(title, style, z)
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef FirstX
 #undef X
 			using DecodedInstruction = std::variant<
-#define FirstX(title, style, z) title
-#define X(title, style, z) ,title
+#define FirstX(title, style) title
+#define X(title, style) ,title
 #include "Opcodes.def"
 #undef X
 #undef FirstX
@@ -239,8 +239,8 @@ namespace iris {
 			// functions to contain the logic for each opcode
 			void dispatchInstruction(const DecodedInstruction& inst);
 			RawInstruction extractInstruction() noexcept;
-#define X(title, style, z) void perform ( const title & value );
-#define FirstX(title, style, z) X(title, style, z)
+#define X(title, style) void perform ( const title & value );
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX

@@ -138,6 +138,10 @@ opcode: #prok
 opcode: #digit
 opcode: #enclose
 opcode: #pfind
+opcode: #addw
+opcode: #subw
+opcode: #pushw
+opcode: #popw
 opcode}
 \ registers
 set-current \ go back
@@ -710,3 +714,7 @@ push, ;
 #enclose inst-1reg enclose,
 #pfind inst-1reg pfind,
 : .cell ( addr id -- ) .data16 ;
+#addw inst-3reg addw,
+#subw inst-3reg subw,
+#pushw inst-2reg pushw,
+#popw inst-2reg popw,

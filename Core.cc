@@ -56,6 +56,11 @@ namespace iris {
     constexpr Address getImmediate12(RawInstruction i) noexcept {
         return decodeBits<decltype(i), Address, 0xFFF0'0000, 20>(i);
     }
+    constexpr DoubleWideInteger makeDoubleWideInteger(Integer lower, Integer upper) noexcept {
+        return ((static_cast<DoubleWideInteger>(upper) << 16) & 0xFFFF0000) | 
+               ((static_cast<DoubleWideInteger>(lower) & 0x0000FFFF));
+    }
+
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
     Register::~Register() {
@@ -103,11 +108,11 @@ namespace iris {
         Core::DecodedInstruction tmp;
         auto op = getOpcode(i);
         switch (op) {
-#define X(title, style, z) \
+#define X(title, style) \
             case Opcode :: title : \
                                    tmp = Core::title () ; \
             break;
-#define FirstX(title, style, z) X(title, style, z)
+#define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
@@ -500,6 +505,36 @@ namespace iris {
         } else {
             checkNext();
         }
+    }
+    DefExec(WideAdd) {
+        // the design means that x255 will couple with zero
+        auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op._args.src + 1).getValue().integer);
+        auto src2 = makeDoubleWideInteger(getSource2(op).integer, getRegister(op._args.src2 + 1).getValue().integer);
+        auto result = src + src2;
+        setDestination(op, Integer(result));
+        setRegister(op._args.dest + 1, Integer(result >> 16));
+    }
+    DefExec(WideSubtract) {
+        // the design means that x255 will couple with zero
+        auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op._args.src + 1).getValue().integer);
+        auto src2 = makeDoubleWideInteger(getSource2(op).integer, getRegister(op._args.src2 + 1).getValue().integer);
+        auto result = src - src2;
+        setDestination(op, Integer(result));
+        setRegister(op._args.dest + 1, Integer(result >> 16));
+    }
+    DefExec(WidePush) {
+        // L SP -> ( -- L H ) 
+        auto lower = getSource(op);
+        auto upper = getRegister(op._args.src + 1).getValue();
+        push(op._args.dest, lower);
+        push(op._args.dest, upper);
+    }
+    DefExec(WidePop) {
+        // SP X ( L H -- ) L -> X, H -> (X + 1 | Y)
+        auto upper = this->pop(op._args.src);
+        auto lower = this->pop(op._args.src);
+        setDestination(op, lower);
+        setRegister(op._args.dest + 1, upper);
     }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

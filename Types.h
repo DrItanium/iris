@@ -33,8 +33,10 @@
 namespace iris {
 	using byte = uint8_t;
 	using Integer = int16_t;
+    using DoubleWideInteger = int32_t;
 	using Address = uint16_t;
 	using Word = Address;
+    using DoubleWord = uint32_t;
 	using RawInstruction = uint32_t;
 	using Address32 = uint32_t;
 
