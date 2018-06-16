@@ -761,7 +761,7 @@ s" >" defbinaryop _> gt,
 s" rot" defmachineword _rot ( a b c -- b c a )
 	rot, 
     next,
-
+: rot; ( -- ) _rot word, ;
 s" space" defmachineword _space
     /dev/console0 #, xlower set,
     0x20 #, xtop set,
@@ -1137,149 +1137,7 @@ s" block" defmachineword _block
 _block_done .label
 	&FIRST #, xsp pushi,
 	next,
-\ : defvariableword ( label str-addr len "name" -- )
-\ 	defmachineword
-\ 	??, xtop set,
-\ 	xtop xsp push,
-\ 	next, ;
 
-s" number" defmachineword _number \ initial basic number routine for parsing
-	deflabel number_finish
-	\ assembler version of the forth logic, is not optimized in anyway, only
-	\ designed to streamline conversion
-	0,, 0,, rot, 
-	dup, 
-	1+,,
-	c@,
-	0x2D #lit, 
-	=,
-	dup,
-	>r, \ stash a copy
-	1pop
-	0x1 #, xtop xtop andi, \ make sure that the flag is just one before adding
-	xtop xsp push,
-	+,
-	0xFFFF #lit,
-	deflabel-here number_begin
-	&dpl ??lit,
-	store,
-	\ (number)
-	deflabel-here (number)_begin
-	1+,, dup, >r,
-	c@,
-	base@,
-	2pop \ top - n1
-		 \ lower - c
-	xsp digit, \ parse the digit using the CPU
-	zero xfourth cv eq, \ did we hit a non digit
-	deflabel (number)_done
-	(number)_done ??, cv bc,
-	xthird xsp push,
-	base@, u*,
-	rot,
-	base@, u*,
-	+,
-	dpl@, 1+,,
-	deflabel (number)_noincr
-	(number)_noincr ??, if,,
-	1 #lit,
-	&dpl ??lit,
-    2pop \ top - addr 
-         \ lower - n
-    xtop xthird ld,
-    xlower xthird xlower add, 
-    xlower xtop st,
-(number)_noincr .label
-	r>,
-	(number)_begin ??, b,
-(number)_done .label
-	r>,
-	dup, c@,
-	bl #lit, -,
-	1pop \ get the flag
-	xtop cv eqz,
-	deflabel number_done
-	number_done ??, cv bc,
-	\ while loop check
-	dup, c@,
-	0x2e #lit, -, \ is it a decimal point?
-	0,, 
-	deflabel number-not-error
-	swap,
-	number-not-error ??, if,, 
-	_handle-error ??, b,
-number-not-error .label
-	drop,
-	0,, \ a decimal point was found. set DPL to 0 the next time
-	number_begin ??, b,
-number_done .label
-	drop,
-	r>,
-	number_finish ??, if,, 
-	negate,
-number_finish .label
-	next,
-s" (abort)" defmachineword __abort_ _abort ??, b,
-s" expect" defmachineword _expect
-deflabel-here expect_loop
-deflabel expect_else0
-deflabel expect_endif0
-deflabel expect_else1
-deflabel expect_endif1
-	over, +, over, 
-	key, \ key inlined
-	dup, \ make a copy
-	0x8 #lit, \ load the ascii backspace code
-	=, \ is it a backspace?
-	expect_else0 ??, if,,
-		drop,
-		8 #lit,
-		over,
-		I, =,
-		dup, 
-		r>, 
-		2 #lit, 
-		-, +, \ get the loop index. Decrement it by one. If it is
-			  \ the starting 
-		r>, -,
-		expect_endif0 ??, b,
-expect_else0 .label
-			dup, 
-			0xD #lit,
-			=,
-			expect_else1 ??, if,,
-				leave, 
-				drop, 
-				bl #lit, 
-				0,,
-				expect_endif1 ??, b,
-expect_else1 .label
-				dup,
-expect_endif1 .label
-				I,
-				c!, 
-				0,,
-				1+,,
-				!,,
-expect_endif0 .label
-	emit,
-deflabel compile_loop_1
-	\ runtime routine of loop
-	xrp xtaddr move,
-	xtaddr xtop ld,
-	xtop 1+,
-	xtop xtaddr st,
-	2 #, xtaddr xtaddr addi,
-	xtaddr xlower ld,
-	xtop xlower cv ge, 
-	compile_loop_1 ??, cv bc,
-	expect_loop ??, b,
-compile_loop_1 .label
-	\ discard the loop parameters off the return stack
-	xrp zero pop,
-	xrp zero pop,
-	drop,
-	next,
 s" query" defcolonword _query
     _tib word-then@
     0x50 #, push-literal
@@ -1383,20 +1241,37 @@ _word2 .label
     _cmove word,
     ;;s
 s" (number)" defcolonword _pnum
-    deflabel-here _pnum1
-    deflabel _pnum2
-    deflabel _pnum3
-        1+; \ begin
-        dup;
-        >r;
-        _c@ word,
-        _base word-then@
-        _digit word,
-        _pnum2 ??, zbranch,
-        swap;
-        _base word-then@
-        _u* word,
-        _dplus 
+deflabel-here _pnum1
+deflabel _pnum2
+deflabel _pnum3
+    1+; \ begin
+    dup;
+    >r;
+    _c@ word,
+    _base word-then@
+    _digit word,
+    _pnum2 ??, zbranch, \ while
+    swap;
+    _base word-then@
+    _u* word,
+    d+; 
+    _dpl word-then@
+    1+;
+    _pnum3 ??, zbranch, \ if
+    _1 word,
+    _dpl word,
+    +!; \ endif
+_pnum3 .label
+    r>;
+    _pnum1 ??, branch, \ repeat
+_pnum2 .label
+    r>;
+    ;;s
+s" number" defcolonword _number
+    _0 word,
+    _0 word,
+    rot;
+
 
 
 
