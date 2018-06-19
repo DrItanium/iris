@@ -4,6 +4,7 @@ include iris.fs
 s" figforth.o" {asm
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
+: word, ( v -- ) ??, .cell ;
 0xFFFF constant ram-end
 0xFF00 constant io-start
 0xF000 constant system-start
@@ -48,12 +49,19 @@ ram-end 1+ constant EM \ end of memory
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 deflabel _origin
 deflabel forth_vocabulary_start
-deflabel _cold
-deflabel _abort
-deflabel _quit
 deflabel base-dict-done
+deflabel _cold
+: cold; ( -- ) _cold word, ;
+deflabel _abort
+: abort; ( -- ) _abort word, ;
+deflabel _quit
+: quit; ( -- ) _quit word, ;
 deflabel _handle-error
+: handle-error; ( -- ) _handle-error word, ;
 deflabel _interpret
+: interpret; ( -- ) _interpret word, ;
+deflabel _message \ message routine
+: message; ( -- ) _message word, ;
 deflabel &up
 deflabel &porigin
 deflabel &S0 \ initial value of the data stack pointer
@@ -200,6 +208,7 @@ word/imm word/smudge or constant word/all
   r> last-word ! \ stash the top of this dictionary entry to last word
   ;
 deflabel _(;code)
+: (;code); ( -- ) _(;code) word, ;
 : defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
 : defmachineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
@@ -210,18 +219,28 @@ deflabel _(;code)
 deflabel _docolon
 deflabel _?exec
 deflabel _?csp
+: ?csp; ( -- ) _?csp word, ;
 deflabel _!csp
+: !csp; ( -- ) _!csp word, ;
 deflabel _&current
 deflabel _&context
 deflabel _create
+: create; ( -- ) _create word, ;
 deflabel _leftbracket
+: leftbracket; ( -- ) _leftbracket word, ;
 deflabel _rightbracket
+: rightbracket; ( -- ) _rightbracket word, ;
 deflabel _compile
+: compile; ( -- ) _compile word, ;
 deflabel _smudge
+: smudge; ( -- ) _smudge word, ;
 deflabel _doconstant
 deflabel _douser
 deflabel _dovariable
 deflabel _,
+: smudge; ( -- ) _smudge word, ;
+: dovariable; ( -- ) _dovariable word, ;
+: ,; ( -- ) _, word, ;
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
@@ -236,7 +255,6 @@ deflabel _,
 : embed-dovariable ( -- ) _dovariable ??, .cell ;
 : defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
 : defvariableword ( n -- ) word/none defvariableword-base ;
-: word, ( v -- ) ??, .cell ;
 
 : 1pop ( -- )
   xsp xtop pop, ;
@@ -341,6 +359,7 @@ s" lit" defmachineword _lit
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
   _lit two-cell-op ;
+: lit; ( -- ) _lit word, ;
 s" execute" defmachineword _execute
 	\ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
@@ -433,6 +452,7 @@ s" digit" defmachineword _digit
 s" (find)" defmachineword _(find)
     xsp pfind,
 	next,
+: (find); ( -- ) _(find) word, ;
 s" enclose" defmachineword _enclose
 	enclose,,
 	next,
@@ -440,6 +460,7 @@ s" enclose" defmachineword _enclose
 s" emit" defmachineword _emit 
 	emit, 
 	next,
+: emit; ( -- ) _emit word, ;
 s" key" defmachineword _key 
 	/dev/console0 #, xlower set,
 	xlower xtop ld,
@@ -467,6 +488,7 @@ _cmove_loop .label
     _cmove_loop ??, b,
 _cmove_done .label
     next,
+: cmove; ( -- ) _cmove word, ;
 : defbinaryop ( str length "name" "op" -- )
   defmachineword 
   2pop
@@ -599,6 +621,7 @@ s" 2dup" defmachineword _2dup ( a b -- a b a b )
 	xlower xsp push,
 	xtop xsp push,
 	next,
+: 2dup; ( -- ) _2dup word, ;
 : +!, ( -- )
     2pop \ top - addr 
          \ lower - n
@@ -621,24 +644,24 @@ s" @" defmachineword _@
 : word-then@ ( word -- ) word, @; ;
 
 s" c@" defmachineword _c@
+: c@; ( -- ) _c@ word, ;
 	1pop 
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
 	1push,
-: c@; ( -- ) _c@ word, ;
 s" !" defmachineword _! ( v a -- ) !,, next,
 : !; ( -- ) _! word, ;
 s" c!" defmachineword _c!  ( value addr -- ) c!, next,
 : c!; ( -- ) _c! word, ;
 s" :" word/imm defmachineword-base _colon
-    _?exec word,
-    _!csp word,
+    ?exec;
+    !csp;
     _&current word-then@
     _&context word,
     !;
-    _create word,
-    _rightbracket word,
-    _(;code) word,
+    create;
+    rightbracket;
+    (;code);
 _docolon .label
     xw 1+,
 	\ runtime routine for all colon definitions
@@ -646,35 +669,39 @@ _docolon .label
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     next,
 s" ;" defcolonword _semi
-    _?csp word,
-    _compile word,
+    ?csp;
+    compile;
     ;;s
-    _smudge word,
-    _leftbracket word,
+    smudge;
+    leftbracket;
     ;;s
 
 
 s" noop" defmachineword _noop next,
+: noop; ( -- ) _noop word, ;
 s" constant" defcolonword _constant
-    _create word,
-    _smudge word,
-    _, word,
-    _(;code) word,
+: constant; ( -- ) _constant word, ;
+    create;
+    smudge;
+    ,;
+    (;code);
 _doconstant .label
     xw 1+,
     xw xtop move,
     xtop xtop ld, \ get data
     1push,
 s" variable" defcolonword _variable
-    _constant word,
-    _(;code) word,
+: variable; ( -- ) _variable word, ;
+    constant;
+    (;code);
     _dovariable .label
         xw 1+, 
         xw xsp push, 
         next,
 s" user" defcolonword _user
-    _constant word,
-    _(;code) word,
+: user; ( -- ) _user word, ;
+    constant;
+    (;code);
 _douser .label
     xw 1+,
     xw xtop move,
@@ -683,9 +710,6 @@ _douser .label
     &up ??, xlower set, \ user variable addr
     xlower xtop xtop add, \ address of variable
     1push,
-    
-
-\ TODO implement user
 s" 0" defconstantword _0 0x0 #, .cell 
 : 0; ( -- ) _0 word, ;
 s" 1" defconstantword _1 0x1 #, .cell
@@ -729,7 +753,7 @@ s" 2+" defmachineword _2+
 	1pop
 	2 #, xtop xtop addi,
 	1push,
-
+: 2+; ( -- ) _2+ word, ;
 s" here" defmachineword _here
 	&DP ??, xtaddr set,
 	xtaddr xtop ld,
@@ -849,28 +873,34 @@ s" latest" defmachineword _latest \ leave the name field address of the last wor
 	xtaddr xtop ld,
 	xtop xtop ld,
 	1push, 
+: latest; ( -- ) _latest word, ;
 
 s" lfa" defmachineword _lfa \ convert the parameter field address to link field address
 	1pop
 	2 #, xtop xtop subi, 
 	1push,
+: lfa; ( -- ) _lfa word, ;
 s" cfa" defmachineword _cfa \ convert the parameter field address to code field address
 	1pop
 	1 #, xtop xtop subi,
 	1push,
+: cfa; ( -- ) _cfa word, ;
 s" nfa" defmachineword _nfa \ convert the parameter field address to name field address
     1pop
     7 #, xtop xtop subi,
     1push,
+: nfa; ( -- ) _nfa word, ;
 s" pfa" defmachineword _pfa \ convert the name field address to its corresponding pfa
     1pop
     8 #, xtop xtop addi,
     1push,
+: pfa; ( -- ) _pfa word, ;
 _!csp s" !csp" defmachineword-predef
     xsp xtop move,
     &csp ??, xlower set,
     xtop xlower st,
     next,
+: !csp; ( -- ) _!csp word, ;
 : ?err, ( "name0" "name1" -- )
     deflabel execute-latest  \ else
     deflabel execute-latest \ endif
@@ -886,6 +916,7 @@ _!csp s" !csp" defmachineword-predef
 s" ?error" defmachineword _?error
     ?err, _?error_else _?error_endif
     next,
+: ?error; ( -- ) _?error word, ;
 s" ?comp" defmachineword _?comp 
     &state ??lit,
     @,
@@ -893,12 +924,14 @@ s" ?comp" defmachineword _?comp
     0x11 #lit,
     ?err, _?comp_?err_else _?comp_?err_endif
     next,
+: ?comp; ( -- ) _?comp word, ;
 _?exec s" ?exec" defmachineword-predef
     &state ??lit,
     @,
     0x12 #lit,
     ?err, _?exec_?err_else _?exec_?err_endif
     next,
+: ?exec; ( -- ) _?exec word, ;
 s" ?pairs" defmachineword _?pairs
     -,
     0x13 #lit,
@@ -919,14 +952,15 @@ s" ?loading" defmachineword _?loading
     0x16 #lit,
     ?err, _?loading_?err_else _?loading_?err_endif
     next,
+: ?loading; ( -- ) _?loading word, ;
 _compile s" compile" defcolonword-predef
-    _?comp word,
+    ?comp;
     r>;
     dup; 
-    _2+ word,
+    2+;
     >r;
     @;
-    _, word,
+    ,;
     ;;s
 _smudge s" smudge" defmachineword-predef
 	\ mark the current dictionary entry as smudge
@@ -940,29 +974,26 @@ _smudge s" smudge" defmachineword-predef
 
 _(;code) s" (;code)" defcolonword-predef
     _r> word,
-    _latest word,
+    latest;
     _pfa word,
     _cfa word,
     @;
     ;;s
 s" ;code" defcolonword _;code
-    _?csp word,
-    _compile word,
-    _(;code) word,
-    _leftbracket word,
-    _noop word,
+    ?csp;
+    compile;
+    (;code); 
+    leftbracket;
+    noop;
     ;;s
-s" <builds" defcolonword _<builds
-    0;
-    _constant word,
-    ;;s
+s" <builds" defcolonword _<builds 0; constant; ;;s
 s" does>" defcolonword _does>
     deflabel _dodoes
-    _r> word,
-    _latest word,
-    _pfa word,
+    r>;
+    latest;
+    pfa;
     @;
-    _(;code) word,
+    (;code);
 _dodoes .label 
     xip xrp push,
     xw 1+,      \ pfa
@@ -972,42 +1003,48 @@ _dodoes .label
     xw xsp push, \ pfa
     next,
 s" count" defcolonword _count dup; 1+; swap; c@; ;;s
+: count; ( -- ) _count word, ;
 s" type" defcolonword _type
     \ TODO type body
     ;;s
+: type; ( -- ) _type word, ;
 s" trailing" defcolonword _trailing
     \ TODO trailing body
     ;;s
+: trailing; ( -- ) _trailing word, ;
 s" print-ok" defmachineword _printok prok, next,
+: print-ok; ( -- ) _printok word, ;
 s\" (.\")" 
 defcolonword _pdotq
-    _r word,
-    _count word,
+    r; 
+    count;
     dup;
     1+; 
     r>;
     +;
     >r;
-    \ _types word,
+    types;
     ;;s
-
+: pdotq; ( -- ) _pdotq word, ;
 s\" .\"" 
 defcolonword _dotq
 \ TODO dotq body
     ;;s
-
+: dotq; ( -- ) _dotq word, ;
 s" *" defbinaryop _* mul,
+: *; ( -- ) _* word, ;
 s" /" defbinaryop _/ div, 
+: /; ( -- ) _/ word, ;
 s" mod" defbinaryop _mod rem,
+: mod; ( -- ) _mod word, ;
 s" min" defbinaryop _min min,
-: min,, ( -- )
-	2pop
-	xtop xlower xtop min,
-	xtop xsp push, ;
-
+: min; ( -- ) _min word, ;
 s" max" defbinaryop _max max,
+: max; ( -- ) _max word, ;
 s" <"  defbinaryop _< lt,
+: <; ( -- ) _< word, ;
 s" !=" defbinaryop _!= neq,
+: !=; ( -- ) _!= word, ;
 s" >=" defbinaryop _>= ge,
 s" <=" defbinaryop _<= le,
 s" nand" defbinaryop _nand nand,
@@ -1023,6 +1060,7 @@ s" 1-" defmachineword _1-
 	1pop
 	xtop 1-,
 	1push,
+: 1-; ( -- ) _1- word, ;
 s" abs" defmachineword _abs
     deflabel _absDone
     1pop
@@ -1031,9 +1069,6 @@ s" abs" defmachineword _abs
     0xFFFF #, xtop xtop muli, \ multiply by negative one
 _absDone .label
 	1push,
-
-
-
 
 s" ." defmachineword _.
    1pop
@@ -1058,11 +1093,6 @@ _rightbracket s" ]" defmachineword-predef
 	xtop xtaddr st,
     next,
 
-: ?comp, ( -- )
-	&state ??, xtaddr set,
-	xtaddr xtop ld,
-	zero xtop xtop neq,
-	xtop xsp push, ;
 s" hex" defmachineword _hex \ set the base to 16
 	&base ??, xtaddr set,
 	0x10 #, at0 set,
@@ -1079,6 +1109,7 @@ s" octal" defmachineword _octal \ set the base to 8
 	at0 xtaddr st,
 	next,
 s" immediate" defmachineword _immediate
+: immediate; ( -- ) _immediate word, ;
 	\ mark the current dictionary entry as immediate
 	&dp ??, xtaddr set,
 	xtaddr xtop ld,
@@ -1089,7 +1120,9 @@ s" immediate" defmachineword _immediate
 	next,
 	
 s" 2drop" defmachineword _2drop ( a b -- ) 2pop next,
+: 2drop; ( -- ) _2drop word, ;
 s" 2swap" defmachineword _2swap ( a b c d -- c d a b ) 
+: 2swap; ( -- ) _2swap word, ;
 	3pop \ d - top
 		 \ c - lower
 		 \ b - third
@@ -1109,22 +1142,13 @@ s" 2swap" defmachineword _2swap ( a b c d -- c d a b )
 	r> 
 	xtaddr swap ld, ;
 : zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
-: ?compiling, ( label -- ) 
-	&state ??, xtaddr set,
-	xtaddr xtop ld, \ load the state
-	zero xtop cv neq, \ check and see if it is not equal to zero
-	??, cv bc,
-	;
-: ?interpreting, ( label -- )
-	&state ??, xtaddr set,
-	xtaddr xtop ld, \ load the state
-	zero xtop cv eq, \ check and see if it is equal to zero
-	??, cv bc, ;
 s" forth" defmachineword _forth
+: forth; ( -- ) _forth word, ;
 	\ set the context to the forth base vocabulary
 	forth_vocabulary_start ??, &context ??, assign-variable,
 	next,
 s" block" defmachineword _block 
+: block; ( -- ) _block word, ;
 	deflabel _block_done
 	( bid -- addr )
 	1pop \ xtop - block number to select
@@ -1143,6 +1167,7 @@ _block_done .label
 	next,
 
 s" query" defcolonword _query
+: query; ( -- ) _query word, ;
     _tib word-then@
     0x50 #, push-literal
     _expect word,
@@ -1151,6 +1176,7 @@ s" query" defcolonword _query
     !;
     ;;s
 s" " defcolonword _null
+: null; ( -- ) _null word, ;
 deflabel _null1
 deflabel _null2
 deflabel _null3
@@ -1181,6 +1207,7 @@ _null3 .label
     ;;s
 
 s" fill" defmachineword _fill ( addr n b -- ) 
+: fill; ( -- ) _fill word, ;
 	\ fill u bytes in memory with b beginning at address
     3pop \ top - b
          \ lower - u
@@ -1197,14 +1224,17 @@ _fill_done .label
     next,
 : fill; ( -- ) _fill word, ;
 s" erase" defcolonword _erase
+: erase; ( -- ) _erase word, ;
     0;
     fill;
     ;;s
 s" blanks" defcolonword _blanks
+: blanks; ( -- ) _blanks word, ;
     _bls word,
     fill;
     ;;s
 s" hold" defcolonword _hold
+: hold; ( -- ) _hold word, ;
     -1 #, push-literal
     _HLD word,
     +!;
@@ -1213,13 +1243,15 @@ s" hold" defcolonword _hold
     ;;s
 
 s" pad" defcolonword _pad ( -- n )
+: pad; ( -- ) _pad word, ;
     here;
     0x44 #, push-literal
     +;
     ;;s
 s" word" defcolonword _word
-deflabel word1
-deflabel word2
+: word; ( -- ) _word word, ;
+deflabel _word1
+deflabel _word2
     _blk word-then@
     _word1 ??, zbranch,
     _blk word-then@
@@ -1230,7 +1262,7 @@ _word1 .label
 _word2 .label
     _inn word-then@ 
     +;
-    _swap word,
+    swap;
     _enclose word,
     here;
     0x22 #, push-literal
@@ -1239,12 +1271,13 @@ _word2 .label
     +!;
     over; -;
     >r; r; here;
-    _C! word,
-    _1+ word,
+    c!;
+    1+;
     r>;
-    _cmove word,
+    cmove;
     ;;s
 s" (number)" defcolonword _pnum
+: (number); ( -- ) _pnum word, ;
 deflabel-here _pnum1
 deflabel _pnum2
 deflabel _pnum3
@@ -1272,9 +1305,9 @@ _pnum2 .label
     r>;
     ;;s
 s" number" defcolonword _number
-    deflabel _number1
-    deflabel _number2
-    deflabel _number3
+deflabel _number1
+deflabel _number2
+deflabel _number3
     0; 0; rot;
     dup; 1+;
     c@;
@@ -1289,7 +1322,7 @@ _number1 .label
     _pnum word,
     dup;
     c@;
-    &bls ??, push-literal 
+    _bls ??, push-literal 
     -;
     _number2 ??, zbranch, \ while
     dup;
@@ -1307,18 +1340,158 @@ _number2 .label
     d-; \ endif
 _number3 .label
     ;;s
+: number; ( -- ) _number word, ;
+s" -find" defcolonword _dfind
+deflabel _dfind1
+    bls;
+    word;
+    here;
+    (find);
+    dup;
+    0=;
+    _dfind1 ??, zbranch, \ if
+    drop;
+    here;
+    latest;
+    (find);
+_dfind1 .label \ endif
+    ;;s
+: -find; ( -- ) _dfind word, ;
+s" (abort)" defcolonword _pabort
+    _abort word,
+    ;;s
+: (abort); ( -- ) _pabort word, ;
+
+s" error" defcolonword _error
+deflabel _error1
+deflabel _error2
+    _warn word,
+    @;
+    0<;
+    _error1 ??, zbranch, \ if
+    (abort); \ endif
+_error1 .label
+    here;
+    count;
+    types;
+    pdotq;
+    2;
+    _questionMarkString word, \ "? "
+    message; 
+    sp!;
+    \ change from the fig model
+    \ inn @ blk @
+    blk;
+    @;
+    2dup;
+    _error2 ??, zbranch, \ if
+    inn;
+    @;
+    swap; \ endif
+    _error2 .label
+    quit;
+
+s" id." defcolonword _iddot
+    pad;
+    0x20 #, push-literal
+    0x5f #, push-literal
+    fill;
+    dup;
+    pfa;
+    lfa;
+    over;
+    -;
+    pad;
+    swap;
+    cmove;
+    pad;
+    count;
+    0x1f #, push-literal
+    and;
+    types;
+    space;
+    ;;s
+: id.; ( -- ) _iddot word, ;
+_create s" create" defcolonword-predef 
+deflabel _create1
+    -find;
+    _create1 ??, zbranch, \ if
+    drop;
+    nfa;
+    id.;
+    4 #, push-literal
+    message;
+    space; \ endif
+    _create1 .label
+    here;
+    dup;
+    c@;
+    width;
+    @;
+    min;
+    1+;
+    allot;
+    dup;
+    0x0a0 #, push-literal
+    toggle;
+    here;
+    1;
+    -;
+    0x80 #, push-literal
+    toggle;
+    latest;
+    ,;
+    current;
+    @;
+    !;
+    here;
+    2+;
+    ,;
+    ;;s
+s" [compile]" defcolonword _bcompilep
+: [compile]; ( -- ) _bcompilep word, ; 
+    -find;
+    0=;
+    0;
+    ?error;
+    drop;
+    cfa;
+    ,;
+    ;;s
+s" literal" defcolonword _literal
+deflabel _literal1
+    state;
+    @;
+    _literal1 ??, 0branch \ if
+    compile;
+    lit;
+    ,; \ endif
+    _literal1 .label
+    ;;s
+s" dliteral" defcolonword _dliteral
+: dliteral; ( -- ) _dliteral word, ;
+\ TODO implement
+    ;;s
+s" ?stack" defcolonword _?stack
+: ?stack; ( -- ) _?stack word, ;
+    sp@;
+    s0;
+    @;
+    swap;
+    u<;
+    1;
+    ?error;
+    sp@;
+    here;
+    0x80 #, push-literal
+    +;
+    u<;
+    7 #, push-literal
+    ?error;
+    ;;s
 
 
 
-
-
-\ s" compile" defmachineword _compile
-\ 	?comp, \ error if not compiling
-\ 	r>,    \ top of return stack is pointing to the next word following compile
-\ 	dup, 2 #lit, +, >r,
-\ 	@, ,, 
-\ 	next,
-\ s" count" defmachineword _count dup, 1+,, swap, next,
 s" definitions" defmachineword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
@@ -1328,42 +1501,42 @@ s" definitions" defmachineword _definitions
 	next,
 s" (" defcolonword _paren
     0x29 #, push-literal
-    _word word,
+    word;
     ;;s
-s" quit" defcolonword-predef _quit
+_quit s" quit" defcolonword-predef
 deflabel _quit1
 deflabel _quit2
     0;
     &blk word,
     !;
-    _leftbracket word,
+    leftbracket;
 _quit1 .label
     _rp! word,
     _cr word,
-    _query word,
-    _inter word,
+    query;
+    interpret;
     &state word,
     @;
     0=;
     _quit2 ??, zbranch, \ if
-    _printok word,
+    print-ok;
     \ endif 
 _quit2 .label
     _quit1 ??, branch, \ again
-s" abort" defcolonword-predef _abort
-    _sp! word,
-    _decimal word,
+_abort s" abort" defcolonword-predef
+    sp!;
+    decimal;
     \ qstac
-    _cr word,
+    cr;
     \ TODO print information out here at some point
     \ _dotcpu word,
     \ _pdotq word,
     \ 0xD #, cell,
     \ s" fig-forth" string,
     \ version information embedded here too
-    _forth word,
-    _defin word,
-    _quit word,
+    forth;
+    definitions;
+    quit;
 deflabel _wrm
 deflabel _wrm1
 deflabel _warm
@@ -1373,7 +1546,7 @@ _wrm .label
     next,
 _wrm1 .label 
     _warm word,
-s" warm" defcolonword-predef _warm
+_warm s" warm" defcolonword-predef 
     _mtbuf word,
     _abort word,
 \ cold start vector comes here
@@ -1394,7 +1567,7 @@ _cld .label
     next,
 _cld1 .label
     _cold word,
-s" cold" defcolonword-predef _cold
+_cold s" cold" defcolonword-predef 
     _mtbuf word,
     \ TODO set density
     \ 0;
