@@ -1002,7 +1002,7 @@ defcolonword _pdotq
     r>;
     +;
     >r;
-    types;
+    type;
     ;;s
 : pdotq; ( -- ) _pdotq word, ;
 s\" .\"" 
@@ -1350,7 +1350,7 @@ deflabel _error2
 _error1 .label
     here;
     count;
-    types;
+    type;
     pdotq;
     2;
     _questionMarkString word, \ "? "
@@ -1385,7 +1385,7 @@ s" id." defcolonword _iddot
     count;
     0x1f #, push-literal;
     and;
-    types;
+    type;
     space;
     ;;s
 : id.; ( -- ) _iddot word, ;
@@ -1656,13 +1656,58 @@ deflabel _pm1
 s" d+-" defcolonword _dpm
     \ TODO implement
     ;;s
-\ TODO implement dabs
-\ TODO implement m*
+s" dabs" defcolonword _dabs
+: dabs; ( -- ) _dabs word, ;
+\ TODO implement 
+;;s
+s" m*" defcolonword _mstar
+: m*; ( -- ) _mstar word, ;
+\ TODO implement 
+;;s
+s" m/" defcolonword _mslas
+: m/; ( -- ) _mslas word, ;
 \ todo implement m/
+;;s
+s" /mod" defcolonword _slmod
+: /mod; ( -- ) _slmod word, ;
 \ todo implement /mod
-\ todo implement */mod
+;;s
+s" */mod" defcolonword _ssmod
+: */mod; ( -- ) _ssmod word, ;
+    >r;
+    m*;
+    r>;
+    m/;
+    ;;s
+
+s" */" defcolonword _ssla
+: */; ( -- ) _ssla word, ;
 \ todo implement */
+;;s
+s" m/mod" defcolonword _msmod
+: m/mod; ( -- ) _msmod word, ;
 \ todo implement m/mod
+;;s
+s" (line)" defcolonword _(line)
+: (line); ( -- ) _(line) word, ;
+    >r;
+    0x40 #, push-literal;
+    bbuf;
+    */mod;
+    r>;
+    bscr;
+    *;
+    +;
+    block;
+    +;
+    0x40 #, push-literal;
+    ;;s
+s" .line" defcolonword _dline
+: .line; ( -- ) _dline word, ;
+    (line);
+    -trailing;
+    type;
+    ;;s
 ram-start .org
 _origin .label
 \ TODO code to startup goes here
