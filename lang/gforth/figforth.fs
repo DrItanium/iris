@@ -1262,7 +1262,7 @@ deflabel _pnum3
     _dpl word-then@
     1+;
     _pnum3 ??, zbranch, \ if
-    _1 word,
+    1;
     _dpl word,
     +!; \ endif
 _pnum3 .label
@@ -1272,13 +1272,41 @@ _pnum2 .label
     r>;
     ;;s
 s" number" defcolonword _number
+    deflabel _number1
+    deflabel _number2
+    deflabel _number3
     0; 0; rot;
     dup; 1+;
     c@;
     0x2D #, push-literal
     _= word,
     dup; >r;
-
+    +;
+    -1 #, push-literal
+_number1 .label 
+    _dpl ??, push-literal \ begin 
+    !;
+    _pnum word,
+    dup;
+    c@;
+    &bls ??, push-literal 
+    -;
+    _number2 ??, zbranch, \ while
+    dup;
+    c@;
+    0x2E #, push-literal
+    -;
+    0;
+    _?error word,
+    0;
+    _number1 ??, branch, \ repeat
+_number2 .label
+    drop;
+    r>;
+    _number3 ??, zbranch, \ if
+    d-; \ endif
+_number3 .label
+    ;;s
 
 
 
