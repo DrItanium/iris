@@ -657,7 +657,11 @@ namespace iris {
                 std::ifstream inputFile(path);
                 if (inputFile.is_open()) {
                     for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
-                        inputFile >> std::hex >> _memory[i].address;
+                        if (inputFile.eof()) {
+                            _memory[i].address = 0;
+                        } else {
+                            inputFile >> std::hex >> _memory[i].address;
+                        }
                     }
                 } else {
                     for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
