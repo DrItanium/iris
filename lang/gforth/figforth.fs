@@ -53,13 +53,19 @@ ram-end 1+ constant EM \ end of memory
 \ is defined to access 8 inch magnetic disks with 128 bytes per sector and 
 \ 26 or 52 sectors per track depending on the density. In our case, a track
 \ is divided up into 8 sectors of 128 words each.
-0x100 constant words-per-sector
-0x400 constant words-per-track
-0xFFFF 1+ constant tracks-per-disk
-words-per-track words-per-sector / constant sectors-per-track
-sectors-per-track tracks-per-disk * constant sectors-per-disk
-0x80 constant words-per-disk-buffer 
+0x400 constant words/block
+0x80 constant words/sector
+0x400 constant words/track
+0xFFFF 1+ constant tracks/disk
+words/track words/sector / constant sectors/track
+sectors/track tracks/disk * constant sectors/disk
+sectors/track tracks/disk 2* * constant sectors/double-disk \ double density, double the number of tracks per disk
+0x80 constant words/disk-buffer 
 1 constant max-drive-count \ this could change in the future
+words/block words/sector constant sectors/block
+1 constant num-buffers
+words/sector constant keyboard-buffer
+keyboard-buffer 4 + constant co
 
 \ bootstrap-end constant dictionary-start
 
@@ -1746,8 +1752,120 @@ s" use" defvariableword _next_use
 s" prev" defvariableword _prev_use
 : prev; ( -- ) _prev_use word, ;
     &FIRST #, .cell
-s" sec/blk" defconstantword _sectors_per_block
-    
+s" sec/blk" defconstantword _sectors/block
+: sec/blk; ( -- ) _sectors/block word, ;
+    sectors-per-block #, .cell
+s" #buff" defconstantword _numbuff
+: #buff; ( -- ) _numbuff word, ;
+    num-buffers #, .cell 
+s" density" defvariableword _density
+: density; ( -- ) _density word, ;
+    0 #, .cell
+s" disk-error" defvariableword _disk_error
+: disk-error; ( -- ) _disk_error word, ;
+    0 #, .cell
+s" +buf" defcolonword _pbuf
+deflabel pbuf1
+: +buf; ( -- ) _pbuf word, ;
+    co #, push-literal;
+    +; dup;
+    limit; =;
+    pbuf1 ??, zbranch;
+    drop; first;
+    pbuf1 .label 
+    dup; pref;
+    @; -;
+    ;;s
+s" update" defcolonword _update
+: update; ( -- ) _update word, ;
+    @; @;
+    0x8000 #, push-literal;
+    or;
+    prev; @;
+    !;
+    ;;s
+s" empty-buffers" defcolonword _empty-bufs
+: empty-buffers; ( -- ) _empty-bufs word, ;
+    first;
+    limit; 
+    over;
+    -;
+    erase;
+    ;;s
+s" dr0" defcolonword _dr0
+: dr0; ( -- ) _dr0 word, ;
+    0; offset; !;
+    ;;s
+s" dr1" defcolonword _dr1
+: dr1; ( -- ) _dr1 word, ;
+deflabel dr11
+deflabel dr12
+    density; @; 
+    dr11 ??, zbranch;
+    sectors/double-disk #, push-literal;
+    dr12 ??, branch;
+    dr11 .label
+    sectors/disk #, push-literal;
+    dr12 .label
+    offset; @;
+    ;;s
+\ note: won't work if only using a single buffer
+deflabel _rslw
+: r/w; ( -- ) _rslw word, ;
+s" buffer" defcolonword _buffer
+: buffer; ( -- ) _buffer word, ;
+deflabel buff1
+deflabel buff2
+    use; @; dup;
+    >r; 
+    buff1 .label
+    +buf;
+    buff1 ??, zbranch;
+    use; !;
+    r; @;
+    0<; 
+    buff2 ??, zbranch;
+    r; 2+;
+    r; @;
+    0x7FFF #, push-literal;
+    and; 0;
+    r/w;
+    buff2 .label
+    r; !;
+    r; prev;
+    !; r>;
+    2+; ;;s
+s" block" defcolonword _block
+deflabel blk1
+deflabel blk3
+    offset;
+    @; +;
+    >r; prev;
+    @; dup;
+    @; r;
+    -;
+    dup; +;
+    blk1 ??, zbranch;
+deflabel-here blk2
+    +buf; 0=;
+    blk3 ??, zbranch;
+    drop; r;
+    buffer; dup;
+    r; 1;
+    r/w;
+    2; -;
+blk3 .label
+    dup; @;
+    r; -;
+    dup; +;
+    0=;
+    blk2 ??, zbranch;
+    dup; prev;
+    !;
+blk1 .label
+    r>; drop;
+    2+; ;;s
+
 ram-start .org
 _origin .label
 \ TODO code to startup goes here
