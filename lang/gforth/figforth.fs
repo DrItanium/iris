@@ -1708,6 +1708,17 @@ s" .line" defcolonword _dline
     -trailing;
     type;
     ;;s
+_message s" message" defcolonword-predef
+    deflabel mess1
+    deflabel mess2
+    deflabel mess3
+    mess2 .label 
+        mess3 ??, branch;
+    mess1 .label
+        pdotq;
+        \ encode string of length 
+    mess3 .label ;;s
+
 ram-start .org
 _origin .label
 \ TODO code to startup goes here
