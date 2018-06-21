@@ -65,16 +65,6 @@ X(LessThanImmediate, TwoRegisterWithImmediate)
 X(Move, TwoRegister)
 X(StoreThenIncrement, TwoRegister)
 // forth operations
-X(ReadLine, TwoRegister) // write a line from stdin into memory
-							   // dest - address to write to (length is written
-							   // into the first cell)
-							   // src - maximum length
-X(PrintOK, NoArguments) // print ok
-X(Digit, OneRegister) // convert the provided character in src3 with
-	                          // base n1 to a binary number n2 with a true flag
-							  // on top of stack. If the digit is an invalid
-							  // character, only a false flagis left on stack.
-							  // ( c n1 -- n2 tf or ff )
 X(Enclose, OneRegister) 
 	// A primitive word to scan the text. From the byte address and the
 	// delimiter c, it determines the byte offset to the first non-delimiter

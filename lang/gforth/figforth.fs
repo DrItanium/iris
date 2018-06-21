@@ -441,7 +441,43 @@ s" i" machineword _i
 	1push,
 s" digit" machineword _digit
 : digit; ( -- ) _digit word, ;
-	xsp digit, 
+deflabel digit1
+deflabel digit2
+deflabel digit3
+deflabel digit4
+    2pop, \ top - numeric base 
+          \ lower - number itself
+    0xFF #, xlower xlower andi, \ get the lower half of the number as all words are 16-bit
+    0x30 #, xlower cv ge,
+    digit1 ??, cv bc,
+    zero xsp push,
+    next,
+digit1 .label
+    0x30 #, xlower cv neq, \ at this point it is just greater if this returns true
+    digit2 ??, cv bc, \ goto that place 
+    \ since they are equal just push zero onto the stack
+    zero xsp push,
+    0xFFFF #, xsp pushi,
+    next,
+digit2 .label
+    0x30 #, xlower xlower subi, \ lower - '0'
+    0x9 #, xlower cv le, 
+    digit3 ??, cv bc,
+    \ lower > 0x9
+    0x7 #, xlower xlower subi,
+    0xa #, xlower cv ge,
+    digit3 ??, cv bc,
+    \ lower < 0xa
+    zero xsp push,
+    next,
+digit3 .label
+    xlower xtop cv lt,
+    digit4 ??, cv bc,
+    zero xsp push,
+    next,
+digit4 .label
+    xlower xsp push,
+    0xFFFF #, xsp pushi,
 	next,
 s" (find)" machineword _(find)
     xsp pfind,
@@ -1051,8 +1087,6 @@ _dtrailing3 .label
     _dtrailing1 ??(loop);
     ;;s
 : -trailing; ( -- ) _dtrailing word, ;
-s" print-ok" machineword _printok prok, next,
-: print-ok; ( -- ) _printok word, ;
 s\" (.\")" 
 colonword _pdotq
     r; 
@@ -1067,7 +1101,7 @@ colonword _pdotq
 : pdotq; ( -- ) _pdotq word, ;
 s\" .\"" 
 colonword _dotq
-\ TODO dotq body
+\ todo dotq body
     ;;s
 : dotq; ( -- ) _dotq word, ;
 s" *" defbinaryop _* mul,
@@ -1597,7 +1631,8 @@ _quit1 .label
     state; @;
     0=;
     _quit2 ??zbranch; \ if
-    print-ok;
+    pdotq;
+    s" ok" .string,
     \ endif 
 _quit2 .label
     _quit1 ??branch; \ again

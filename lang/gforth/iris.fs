@@ -133,9 +133,6 @@ opcode: #ldtincr
 opcode: #lti
 opcode: #move
 opcode: #sttincr
-opcode: #rltm
-opcode: #prok
-opcode: #digit
 opcode: #enclose
 opcode: #pfind
 opcode: #addw
@@ -708,9 +705,6 @@ push, ;
 : bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
 : bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
 #sttincr inst-2reg sttincr,
-#rltm inst-2reg rltm,
-#prok inst-no-reg prok,
-#digit inst-1reg digit, 
 #enclose inst-1reg enclose,
 #pfind inst-1reg pfind,
 : .cell ( addr id -- ) .data16 ;

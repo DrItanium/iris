@@ -366,54 +366,6 @@ namespace iris {
         incr._args.src = op._args.dest;
         perform(incr);
     }
-	DefExec(ReadLine) {
-		std::string _input;
-		std::getline(std::cin, _input);
-		auto length = getSource(op).address;
-		Address numToCopy = ((_input.size() > length) ? length : _input.size()) - 1;
-		auto address = getDestination(op).address;
-		store(address, Number(numToCopy));
-		++address;
-		for (Address i = 0u; i < numToCopy; ++i, ++address) {
-			store(address, _input[i]);
-		}
-	}
-	DefExec(PrintOK) {
-		std::cout << "  ok" << std::endl;
-	}
-	DefExec(Digit) {
-		// dest - stack pointer to manipulate
-		// src3 - character to convert
-		// src2 - number base
-		// src - number
-		// dest - success flag
-		constexpr unsigned char normalizationValue = '0';
-		auto numBase = popDestination(op).get<unsigned char>();
-		auto character = popDestination(op).get<unsigned char>();
-		character -= normalizationValue;
-		if (character < normalizationValue) {
-			pushDestination(op, false);
-			return;
-		} else if (character == normalizationValue) {
-			pushDestination(op, 0);
-			pushDestination(op, true);
-			return;
-		} 
-		auto value = character - normalizationValue;
-		if (value > 0x9) {
-			value -= 0x7;
-			if (value < 0xa) {
-				pushDestination(op, false);
-				return;
-			}
-		} 
-		if (value >= numBase) {
-			pushDestination(op, false);
-			return;
-		}
-		pushDestination(op, Address(value));
-		pushDestination(op, true);
-	}
 	DefExec(Enclose) {
 		// taken from the 8086 figforth impl
 		auto terminator = popDestination(op).address;
