@@ -200,7 +200,16 @@ deflabel-here _next
 : 2push, ( -- ) _2push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
 : machine-code-execute ( -- ) loc@ 1+ constant, ;
-: embed-name ( str length -- ) 
+: .string, ( addr len -- ) 
+    dup constant, \ embed the length as well
+    0 \ go from 0 to length
+    ?do
+      dup i + c@ constant,
+    loop
+    drop ;
+: variable-embed-name ( str length -- ) .string, ;
+: fixed-embed-name ( str length -- ) 
+  \ fixed length string embedding
   dup constant, \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
@@ -224,7 +233,9 @@ deflabel-here _next
     0xFF0000 and 16 rshift constant,
     0xFF000000 and 24 rshift constant,
    endcase ;
-
+: embed-name ( str length -- ) 
+  \ abstraction because I'm indecisive
+  fixed-embed-name ;
 
 0 constant word/none
 1 constant word/smudge
@@ -261,9 +272,7 @@ word/imm word/smudge or constant word/all
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-: embed-string-length ( len -- ) constant, ;
 deflabel _(;code)
-: (;code); ( -- ) _(;code) word, ;
 deflabel _docolon
 deflabel _?exec
 deflabel _?csp
@@ -279,6 +288,7 @@ deflabel _doconstant
 deflabel _douser
 deflabel _dovariable
 deflabel _,
+: (;code); ( -- ) _(;code) word, ;
 : ?exec; ( -- ) _?exec word, ;
 : ?csp; ( -- ) _?csp word, ;
 : !csp; ( -- ) _!csp word, ;
@@ -319,10 +329,6 @@ deflabel _,
 : 4pop ( -- )
   3pop,
   xsp xfourth pop, ;
-: I, ( -- )
-	xrp xtop ld, \ load the top loop element
-	xtop xsp push, \ put it onto the data stack
-	;
 s" lit" machineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
     \ NEXT Return
@@ -1589,7 +1595,7 @@ _abort s" abort" colonword-predef
     \ _dotcpu word,
     pdotq;
     0xd #plit;
-    \ s" fig-forth" string,
+    \ s" fig-forth" .string,
     \ version information embedded here too
     forth;
     definitions;
@@ -1730,9 +1736,9 @@ s" .line" colonword _dline
     type;
     ;;s
 _message s" message" colonword-predef
-    deflabel mess1
-    deflabel mess2
-    deflabel mess3
+deflabel mess1
+deflabel mess2
+deflabel mess3
     warn; @;
     mess1 ??, zbranch; \ if
     2dup;
@@ -1744,15 +1750,14 @@ _message s" message" colonword-predef
     -;
     .line;
     space; \ endif
+mess2 .label 
     mess3 ??, branch;
-
-    mess2 .label 
-        mess3 ??, branch;
-    mess1 .label
-        pdotq;
-        \ encode string and length "msg # "
-        .;
-    mess3 .label ;;s
+mess1 .label
+    pdotq;
+    s" msg # " .string,
+    .;
+mess3 .label 
+    ;;s
 s" pc@" machineword _pcload
     \ todo implement
     next,
@@ -2183,7 +2188,31 @@ s" bye" machineword _bye
   zero xtop st,
   next, \ dead code but here for consistency
 s" list" colonword _list 
+deflabel list1
+deflabel list2
 : list; ( -- ) _list word, ;
+    decimal;
+    cr;
+    dup;
+    scr; !;
+    pdotq;
+    s" scr # " .string,
+    .;
+    0x10 #plit;
+    0; (do);
+list1 .label 
+    cr; i;
+    0x3 #plit;
+    .r; space;
+    i; scr;
+    @; .line;
+    ?terminal;
+    list2 ??zbranch; \ if
+    leave;
+list2 .label
+    list1 ??(loop);
+    cr; 
+    ;;s
 \ todo implement
 ;;s
 s" index" colonword _index 
