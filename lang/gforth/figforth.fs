@@ -87,8 +87,6 @@ deflabel _interpret
 : interpret; ( -- ) _interpret word, ;
 deflabel _message \ message routine
 : message; ( -- ) _message word, ;
-deflabel _warn 
-: warn; ( -- ) _warn word, ;
 deflabel &up
 deflabel &porigin
 deflabel &S0 \ initial value of the data stack pointer
@@ -202,11 +200,6 @@ deflabel-here _next
 : 2push, ( -- ) _2push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
 : machine-code-execute ( -- ) loc@ 1+ constant, ;
-: machineword ( n -- ) .label machine-code-execute ;
-: machine-code-jump ( imm id -- ) 
-  at0 set,
-  at0 at0 ld,
-  at0 br, ;
 : embed-name ( str length -- ) 
   dup constant, \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
@@ -262,8 +255,6 @@ word/imm word/smudge or constant word/all
   last-word @ constant, \ stash the previous word here
   r> last-word ! \ stash the top of this dictionary entry to last word
   ;
-deflabel _(;code)
-: (;code); ( -- ) _(;code) word, ;
 : defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
 : machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
@@ -271,29 +262,30 @@ deflabel _(;code)
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
 : embed-string-length ( len -- ) constant, ;
+deflabel _(;code)
+: (;code); ( -- ) _(;code) word, ;
 deflabel _docolon
 deflabel _?exec
-: ?exec; ( -- ) _?exec word, ;
 deflabel _?csp
-: ?csp; ( -- ) _?csp word, ;
 deflabel _!csp
-: !csp; ( -- ) _!csp word, ;
 deflabel _&current
 deflabel _&context
 deflabel _create
-: create; ( -- ) _create word, ;
 deflabel _leftbracket
-: leftbracket; ( -- ) _leftbracket word, ;
 deflabel _rightbracket
-: rightbracket; ( -- ) _rightbracket word, ;
 deflabel _compile
-: compile; ( -- ) _compile word, ;
 deflabel _smudge
-: smudge; ( -- ) _smudge word, ;
 deflabel _doconstant
 deflabel _douser
 deflabel _dovariable
 deflabel _,
+: ?exec; ( -- ) _?exec word, ;
+: ?csp; ( -- ) _?csp word, ;
+: !csp; ( -- ) _!csp word, ;
+: create; ( -- ) _create word, ;
+: leftbracket; ( -- ) _leftbracket word, ;
+: rightbracket; ( -- ) _rightbracket word, ;
+: compile; ( -- ) _compile word, ;
 : smudge; ( -- ) _smudge word, ;
 : dovariable; ( -- ) _dovariable word, ;
 : ,; ( -- ) _, word, ;
@@ -316,16 +308,16 @@ deflabel _,
 : defvariableword ( n -- ) word/none defvariableword-base ;
 : defvariableword-predef ( label n len -- ) word/none defvariableword-base-predef ;
 
-: 1pop ( -- )
+: 1pop, ( -- )
   xsp xtop pop, ;
-: 2pop ( -- )
-  1pop 
+: 2pop, ( -- )
+  1pop, 
   xsp xlower pop, ;
-: 3pop ( -- )
-  2pop
+: 3pop, ( -- )
+  2pop,
   xsp xthird pop, ;
 : 4pop ( -- )
-  3pop
+  3pop,
   xsp xfourth pop, ;
 : I, ( -- )
 	xrp xtop ld, \ load the top loop element
@@ -361,7 +353,7 @@ s" branch" machineword _branch
 : ??branch; ( loc -- ) ??, branch; ;
 s" 0branch" machineword _0branch
 deflabel _zbra1
-	1pop \ flag
+	1pop, \ flag
 	zero xtop cv neq,
 	_zbra1 ??, cv bc,
 	xip xlower ld,
@@ -401,7 +393,7 @@ s" (+loop)" machineword _(+loop)
 deflabel loop_2
 	deflabel loop_3
 	\ runtime routine at the end of a DO --+loop loop
-	1pop
+	1pop,
 	xrp xlower ld,
 	xtop xlower xlower add,
 	xlower xrp st,
@@ -432,7 +424,7 @@ loop_3 .label
 	next,
 s" (do)" machineword _(do)
 : (do); ( -- ) _(do) word, ;
-	2pop 
+	2pop, 
 	xlower xrp push,
 	xtop xrp push,
 	next,
@@ -455,7 +447,7 @@ s" enclose" machineword _enclose
 : enclose; ( -- ) _enclose word, ;
 s" emit" machineword _emit 
 	/dev/console0 #, xlower set,
-	1pop
+	1pop,
 	xtop xlower st,
 	next,
 : emit; ( -- ) _emit word, ;
@@ -471,7 +463,7 @@ s" cr" machineword _cr
     xtop xlower st,
     next,
 s" cmove" machineword _cmove ( from to u -- ) \ move u bytes in memory 
-    3pop \ top - u
+    3pop, \ top - u
          \ lower - to
          \ third - from
     deflabel _cmove_loop 
@@ -490,7 +482,7 @@ _cmove_done .label
 : cmove; ( -- ) _cmove word, ;
 : defbinaryop ( str length "name" "op" -- )
   machineword 
-  2pop
+  2pop,
   xtop xlower xtop ' execute 
   1push, ;
 s" u*" defbinaryop _u* umul,
@@ -542,7 +534,7 @@ s" leave" machineword _leave
 	xtop xrp push, 
 	next,
 s" >r" machineword _>r \ move top item to return stack
-    1pop 
+    1pop, 
     xtop xrp push,
     next,
 : >r; ( -- ) _>r word, ;
@@ -555,16 +547,16 @@ s" r" machineword _r \ copy top of return stack onto stack
 	1push,
 : r; ( -- ) _r word, ;
 : 0=, ( -- ) 
-  1pop
+  1pop,
   xtop xtop eqz,
   xtop xsp push, ;
 s" 0=" machineword _0=
-    1pop
+    1pop,
     xtop xtop eqz,
 	1push,
 : 0=; ( -- ) _0= word, ;
 s" 0<" machineword _0<
-    1pop
+    1pop,
     xtop xtop ltz,
 	1push,
 : 0<; ( -- ) _0< word, ;
@@ -589,7 +581,7 @@ s" d+" machineword _dplus
 : d+; ( -- ) _dplus word, ;
 s" minus" machineword _minus
     deflabel _minusDone
-    1pop
+    1pop,
     0xFFFF #, xtop xtop muli, \ multiply by negative one
 	1push,
 s" d-" machineword _dminus
@@ -610,7 +602,7 @@ s" d-" machineword _dminus
     next,
 : d-; ( -- ) _dminus word, ;
 s" over" machineword _over 
-	2pop 
+	2pop, 
 	xlower xsp push,
 	xtop xsp push,
 	xlower xsp push, 
@@ -621,7 +613,7 @@ s" drop" machineword _drop
     next,
 : drop; ( -- ) _drop word, ;
 s" swap" machineword _swap
-	2pop \ top -- b
+	2pop, \ top -- b
 		 \ lower -- a
 	xtop xsp push,
 	xlower xsp push,
@@ -641,7 +633,7 @@ s" 2dup" machineword _2dup ( a b -- a b a b )
 	next,
 : 2dup; ( -- ) _2dup word, ;
 : +!, ( -- )
-    2pop \ top - addr 
+    2pop, \ top - addr 
          \ lower - n
     xtop at0 ld,
     xlower at0 xlower add, 
@@ -651,7 +643,7 @@ s" +!" machineword _+!
     next,
 : +!; ( -- ) _+! word, ;
 s" toggle" machineword _toggle ( p addr -- )
-	2pop  \ top - addr
+	2pop,  \ top - addr
 		  \ lower - pattern
 	xtop xthird ld,
 	xthird xlower xthird xor,
@@ -659,25 +651,25 @@ s" toggle" machineword _toggle ( p addr -- )
 	next,
 : toggle; ( -- ) _toggle word, ;
 s" @" machineword _@
-    1pop
+    1pop,
     xtop xtop ld,
 	1push,
 : @; ( -- ) _@ word, ;
 
 s" c@" machineword _c@
 : c@; ( -- ) _c@ word, ;
-	1pop 
+	1pop, 
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
 	1push,
 s" !" machineword _! ( v a -- ) 
-   2pop \ top - addr
+   2pop, \ top - addr
    		\ lower - value
    xlower xtop st, \ perform the store
 next,
 : !; ( -- ) _! word, ;
 s" c!" machineword _c!  ( value addr -- ) 
-	2pop \ top - addr
+	2pop, \ top - addr
 		 \ lower - value
     0xFF #, xlower xlower andi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
@@ -789,12 +781,12 @@ s" +origin" colonword _+origin
 \ TODO more user variables
 s" 1+" machineword _1+
 : 1+; ( -- ) _1+ word, ;
-	1pop
+	1pop,
 	xtop 1+,
 	1push,
 s" 2+" machineword _2+
 : 2+; ( -- ) _2+ word, ;
-	1pop
+	1pop,
 	2 #, xtop xtop addi,
 	1push,
 s" here" machineword _here
@@ -803,7 +795,7 @@ s" here" machineword _here
 	1push,
 : here; ( -- ) _here word, ;
 s" allot" machineword _allot ( n -- )
-	1pop
+	1pop,
 	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
     xlower xtop xlower add,
@@ -813,7 +805,7 @@ s" allot" machineword _allot ( n -- )
 _, s" ," machineword-predef ( n -- )
     \ store n into the next available cell above dictionary and advance DP by 2 thus
     \ compiling into the dictionary
-	1pop 
+	1pop, 
 	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
     xtop xlower st, \ save it to the current dict pointer front
@@ -821,7 +813,7 @@ _, s" ," machineword-predef ( n -- )
 	xlower xtaddr st,
     next,
 s" c," machineword _c,
-	1pop
+	1pop,
     0xFF #, xtop xtop andi, 
 	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
@@ -838,7 +830,7 @@ s" u<" defbinaryop _u< ult,
 : u<; ( -- ) _u< word, ;
 s" >" defbinaryop _> gt,
 : rot, ( -- ) 
-	3pop ( a b c -- b c a )
+	3pop, ( a b c -- b c a )
 		 \ top - c
 		 \ lower - b
 		 \ third - a 
@@ -858,7 +850,7 @@ s" space" machineword _space
 s" -dup" machineword _-dup \ duplicate if non zero
 : -dup; ( -- ) _-dup word, ;
     deflabel _-dup_done
-    1pop 
+    1pop, 
     xtop cv eqz, 
     _-dup_done ??, cv bc,
         xtop xsp push,
@@ -872,22 +864,22 @@ s" latest" machineword _latest \ leave the name field address of the last word d
 : latest; ( -- ) _latest word, ;
 
 s" lfa" machineword _lfa \ convert the parameter field address to link field address
-	1pop
+	1pop,
 	2 #, xtop xtop subi, 
 	1push,
 : lfa; ( -- ) _lfa word, ;
 s" cfa" machineword _cfa \ convert the parameter field address to code field address
-	1pop
+	1pop,
 	1 #, xtop xtop subi,
 	1push,
 : cfa; ( -- ) _cfa word, ;
 s" nfa" machineword _nfa \ convert the parameter field address to name field address
-    1pop
+    1pop,
     7 #, xtop xtop subi,
     1push,
 : nfa; ( -- ) _nfa word, ;
 s" pfa" machineword _pfa \ convert the name field address to its corresponding pfa
-    1pop
+    1pop,
     8 #, xtop xtop addi,
     1push,
 : pfa; ( -- ) _pfa word, ;
@@ -896,7 +888,6 @@ _!csp s" !csp" machineword-predef
     &csp ??, xlower set,
     xtop xlower st,
     next,
-: !csp; ( -- ) _!csp word, ;
 
 s" ?error" colonword _?error
 : ?error; ( -- ) _?error word, ;
@@ -926,6 +917,7 @@ _?exec s" ?exec" colonword-predef
     ?error;
     ;;s
 s" ?pairs" colonword _?pairs
+: ?pairs; ( -- ) _?pairs word, ;
     -;
     0x13 #plit;
     ?error;
@@ -1084,13 +1076,13 @@ s" rshift" defbinaryop _rshift rshift,
 
 s" 1-" machineword _1-
 : 1-; ( -- ) _1- word, ;
-	1pop
+	1pop,
 	xtop 1-,
 	1push,
 s" abs" machineword _abs
 : abs; ( -- ) _abs word, ;
     deflabel _absDone
-    1pop
+    1pop,
     xtop cv gez,
     _absDone ??, cv bc,
     0xFFFF #, xtop xtop muli, \ multiply by negative one
@@ -1099,14 +1091,14 @@ _absDone .label
 
 s" ." machineword _.
 : .; ( -- ) _. word, ;
-   1pop
+   1pop,
    /dev/console2 #, xlower set,
    xtop xlower st,
    next,
 
 s" ?" machineword _?
 : ?; ( -- ) _? word, ;
-    1pop 
+    1pop, 
     xtop xtop ld,
     /dev/console0 #, xlower set,
     xtop xlower st,
@@ -1151,11 +1143,11 @@ s" immediate" machineword _immediate
 	xlower xtop st,
 	next,
 	
-s" 2drop" machineword _2drop ( a b -- ) 2pop next,
+s" 2drop" machineword _2drop ( a b -- ) 2pop, next,
 : 2drop; ( -- ) _2drop word, ;
 s" 2swap" machineword _2swap ( a b c d -- c d a b ) 
 : 2swap; ( -- ) _2swap word, ;
-	3pop \ d - top
+	3pop, \ d - top
 		 \ c - lower
 		 \ b - third
 	xsp xfourth pop, \ a - fourth
@@ -1174,24 +1166,6 @@ s" 2swap" machineword _2swap ( a b c d -- c d a b )
 	r> 
 	xtaddr swap ld, ;
 : zero-variable, ( address type -- ) 2>r 0 #, 2r> assign-variable, ;
-s" block" machineword _block 
-: block; ( -- ) _block word, ;
-	deflabel _block_done
-	( bid -- addr )
-	1pop \ xtop - block number to select
-	xcoreid xtop cv eq, \ if the ids are the same then do nothing
-	_block_done ??, cv bc,
-	\ if they are not then perform the sync automatically followed by
-	\ loading the new id
-	\ will need to expand on this later on by encoding the core contents
-	/dev/core-dump #, io set,
-	xcoreid io st,
-	/dev/core-load #, io set,
-	xtop io st,
-	xtop xcoreid move, 
-_block_done .label
-	&FIRST #, xsp pushi,
-	next,
 
 s" expect" colonword _expect
 : expect; ( -- ) _expect word, ;
@@ -1238,9 +1212,9 @@ _null3 .label
 s" fill" machineword _fill ( addr n b -- ) 
 : fill; ( -- ) _fill word, ;
 	\ fill u bytes in memory with b beginning at address
-    3pop \ top - b
-         \ lower - u
-         \ third - addr
+    3pop, \ top - b
+          \ lower - u
+          \ third - addr
     deflabel _fill_loop
     deflabel _fill_done
 _fill_loop .label
@@ -1276,6 +1250,8 @@ s" pad" colonword _pad ( -- n )
     0x44 #plit;
     +;
     ;;s
+deflabel _block
+: block; ( -- ) _block word, ;
 s" word" colonword _word
 : word; ( -- ) _word word, ;
 deflabel _word1
@@ -1677,10 +1653,14 @@ _cold s" cold" colonword-predef
     abort; \ last
 s" s->d" machineword _s->d 
 : s->d; ( -- ) _s->d word, ;
-deflabel _s->d1
-    2pop
-    \ TODO implement
-_s->d1 .label 
+deflabel s2d0
+    1pop,
+    xtop xlower move,
+    zero xtop move,
+    xlower cv gtz,
+    s2d0 ??, cv bc,
+    xtop 1-,
+s2d0 .label
     2push,
 s" +-" colonword _pm
 : +-; ( -- ) _pm word, ;
@@ -1719,8 +1699,10 @@ s" */mod" colonword _ssmod
 
 s" */" colonword _ssla
 : */; ( -- ) _ssla word, ;
-\ todo implement */
-;;s
+    */mod;
+    swap;
+    drop;
+    ;;s
 s" m/mod" colonword _msmod
 : m/mod; ( -- ) _msmod word, ;
 \ todo implement m/mod
@@ -1792,11 +1774,11 @@ s" track" defvariableword _track#
     .skip
 _next_use s" use" defvariableword-predef 
     &FIRST constant,
-_prev_use s" prev" defvariableword
+_prev_use s" prev" defvariableword-predef
     &FIRST constant,
 s" sec/blk" defconstantword _sectors/block
 : sec/blk; ( -- ) _sectors/block word, ;
-    sectors-per-block constant,
+    sectors/block constant,
 s" #buff" defconstantword _numbuff
 : #buff; ( -- ) _numbuff word, ;
     num-buffers constant, 
@@ -1814,7 +1796,7 @@ deflabel pbuf1
     pbuf1 ??zbranch;
     drop; first;
     pbuf1 .label 
-    dup; pref;
+    dup; prev;
     @; -;
     ;;s
 s" update" colonword _update
@@ -1874,7 +1856,7 @@ deflabel buff2
     r; prev;
     !; r>;
     2+; ;;s
-s" block" colonword _block
+_block s" block" colonword-predef
 deflabel blk1
 deflabel blk3
     offset;
@@ -1973,7 +1955,7 @@ s" load" colonword _load
    ;;s
 s" -->" colonword _arrow
 : -->; ( -- ) _arrow word, ;
-    ?load;  0;
+    ?loading;  0;
     inn; !; 
     b/scr; blk; @; 
     over; mod; -; 
@@ -2145,33 +2127,35 @@ deflabel-here digs1
     over; over; or;
     0=; digs1 ??zbranch;
     ;;s
-s" d.r" colonword d.r
-: d.r; ( -- ) d.r word, ;
+s" d.r" colonword _d.r
+: d.r; ( -- ) _d.r word, ;
     >r;
     swap;
-    ovber;
-    -abs;
+    over;
+    dabs;
     <#; #; sign; #>;
     r>; over; -; spaces;
     type; ;;s
-s" .r" colonword .r
-: .r; ( -- ) .r word, ;
+s" .r" colonword _.r
+: .r; ( -- ) _.r word, ;
     >r; s->d; r>; d.r; ;;s
 
-s" d." colonword d.
-: d.; ( -- ) d. word, ;
+s" d." colonword _d.
+: d.; ( -- ) _d. word, ;
 0; d.r; space; ;;s
 
-s" u." colonword u.
-: u.; ( -- ) u. word, ;
+s" u." colonword _u.
+: u.; ( -- ) _u. word, ;
     0; d.; ;;s
-s" vlist" colonword vlist 
-: vlist; ( -- ) vlist word, ;
+s" vlist" colonword _vlist 
+: vlist; ( -- ) _vlist word, ;
     \ todo implement
     ;;s
 s" bye" machineword _bye
 : bye; ( -- ) _bye word, ;
-    _exit ??, jmp
+  /dev/terminate-vm #, xtop set,
+  zero xtop st,
+  next, \ dead code but here for consistency
 s" list" colonword _list 
 : list; ( -- ) _list word, ;
 \ todo implement
