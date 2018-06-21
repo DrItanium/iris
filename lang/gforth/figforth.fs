@@ -664,13 +664,19 @@ s" @" machineword _@
     xtop xtop ld,
 	1push,
 : @; ( -- ) _@ word, ;
-: 2@; ( -- ) @; @; ;
 s" c@" machineword _c@
 : c@; ( -- ) _c@ word, ;
 	1pop, 
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
 	1push,
+s" 2@" machineword _2@ 
+   1pop,
+   xtop xlower ld, \ lower word
+   xtop 1+,
+   xtop xtop ld, \ upper word
+   2push,
+: 2@; ( -- ) _2@ word, ;
 s" !" machineword _! ( v a -- ) 
    2pop, \ top - addr
    		\ lower - value
@@ -684,6 +690,15 @@ s" c!" machineword _c!  ( value addr -- )
     xlower xtop st, \ save it to memory with the upper 8 bits masked
     next,
 : c!; ( -- ) _c! word, ;
+s" 2!" machineword _2! 
+    3pop, \ top addr
+          \ lower data high
+          \ third data low
+    xthird xtop st, \ low
+    xtop 1+,
+    xlower xtop st, \ high
+    next,
+: 2!; ( -- ) _2! word, ;
 s" :" word/imm machineword-base _colon
     ?exec;
     !csp;
@@ -1808,7 +1823,7 @@ deflabel pbuf1
     ;;s
 s" update" colonword _update
 : update; ( -- ) _update word, ;
-    2@;
+    @; @;
     0x8000 #plit;
     or;
     prev; @;
@@ -2158,7 +2173,7 @@ s" vlist" colonword _vlist
 : vlist; ( -- ) _vlist word, ;
     0x80 #plit; out; !;
     context;
-    2@;
+    @; @;
 deflabel-here vlist1
 deflabel vlist2
     out; \ begin
@@ -2213,7 +2228,6 @@ list2 .label
     list1 ??(loop);
     cr; 
     ;;s
-\ todo implement
 ;;s
 s" index" colonword _index 
 : index; ( -- ) _index word, ;
@@ -2225,7 +2239,6 @@ s" triad" colonword _triad
 ;;s
 s" .cpu" colonword _.cpu 
 : .cpu; ( -- ) _.cpu word, ;
-\ todo implement
 ;;s
 
 s" match" machineword _match
