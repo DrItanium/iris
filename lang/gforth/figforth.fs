@@ -455,7 +455,10 @@ s" key" machineword _key
 	/dev/console0 #, xlower set,
 	xlower xtop ld,
 	1push,
-\ TODO ?TERMINAL goes here
+s" ?terminal" machineword _?terminal
+: ?terminal; ( -- ) _?terminal word, ;
+\ todo implement
+next,
 s" cr" machineword _cr
 : cr; ( -- ) _cr word, ;
     /dev/console0 #, xlower set,
@@ -655,7 +658,7 @@ s" @" machineword _@
     xtop xtop ld,
 	1push,
 : @; ( -- ) _@ word, ;
-
+: 2@; ( -- ) @; @; ;
 s" c@" machineword _c@
 : c@; ( -- ) _c@ word, ;
 	1pop, 
@@ -829,16 +832,15 @@ s" =" defbinaryop _= eq,
 s" u<" defbinaryop _u< ult,
 : u<; ( -- ) _u< word, ;
 s" >" defbinaryop _> gt,
-: rot, ( -- ) 
+: >; ( -- ) _> word, ;
+s" rot" machineword _rot ( a b c -- b c a )
 	3pop, ( a b c -- b c a )
 		 \ top - c
 		 \ lower - b
 		 \ third - a 
 	xlower xsp push,
 	xtop xsp push,
-	xthird xsp push, ;
-s" rot" machineword _rot ( a b c -- b c a )
-	rot, 
+	xthird xsp push, 
     next,
 : rot; ( -- ) _rot word, ;
 s" space" machineword _space
@@ -1801,7 +1803,7 @@ deflabel pbuf1
     ;;s
 s" update" colonword _update
 : update; ( -- ) _update word, ;
-    @; @;
+    2@;
     0x8000 #plit;
     or;
     prev; @;
@@ -2149,7 +2151,31 @@ s" u." colonword _u.
     0; d.; ;;s
 s" vlist" colonword _vlist 
 : vlist; ( -- ) _vlist word, ;
-    \ todo implement
+    0x80 #plit; out; !;
+    context;
+    2@;
+deflabel-here vlist1
+deflabel vlist2
+    out; \ begin
+    @;
+    c/l;
+    >;
+    vlist2 ??zbranch;
+    cr;
+    0; out; !;
+vlist2 .label
+    dup;
+    id.;
+    space;
+    space;
+    pfa;
+    lfa; @;
+    dup;
+    0=;
+    ?terminal;
+    or;
+    vlist1 ??zbranch;
+    drop;
     ;;s
 s" bye" machineword _bye
 : bye; ( -- ) _bye word, ;
