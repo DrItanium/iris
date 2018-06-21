@@ -72,7 +72,9 @@ keyboard-buffer 4 + constant co
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
-deflabel origin
+deflabel _origin
+deflabel _error
+: error; ( -- ) _error word, ;
 deflabel forth_vocabulary_start
 deflabel base-dict-done
 deflabel _cold
@@ -155,6 +157,8 @@ deflabel &BASE       \ numeric base
 deflabel &width 	\ width of some kind
 : width; ( -- ) &width word, ;
 deflabel _eprint
+deflabel _up \ user pointer
+deflabel _rpp \ return stack pointer
 unused-start 
 \ constants
 \ user variables
@@ -197,35 +201,35 @@ deflabel-here _next
 : 1push, ( -- ) _1push ??, b, ;
 : 2push, ( -- ) _2push ??, b, ;
 : x.scr ( -- ) hex .s decimal cr ;
-: machine-code-execute ( -- ) loc@ 1+ .constant ;
+: machine-code-execute ( -- ) loc@ 1+ constant, ;
 : machineword ( n -- ) .label machine-code-execute ;
 : machine-code-jump ( imm id -- ) 
   at0 set,
   at0 at0 ld,
   at0 br, ;
 : embed-name ( str length -- ) 
-  dup .constant \ embed length into its own storage
+  dup constant, \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
   	1 of dup dup dup 
-         0xFF and .constant
+         0xFF and constant,
          .skip .skip .skip endof
     2 of dup dup dup 
-         0xFF and .constant
-         0xFF00 and 8 rshift .constant
+         0xFF and constant,
+         0xFF00 and 8 rshift constant,
          .skip
          .skip endof
 	3 of dup dup dup
-         0xFF and .constant
-         0xFF00 and 8 rshift .constant
-         0xFF0000 and 16 rshift .constant
+         0xFF and constant,
+         0xFF00 and 8 rshift constant,
+         0xFF0000 and 16 rshift constant,
          .skip endof
 	swap \ the length must be consumed by endcase :(
 	dup dup dup
-    0xFF and .constant
-    0xFF00 and 8 rshift .constant 
-    0xFF0000 and 16 rshift .constant
-    0xFF000000 and 24 rshift .constant
+    0xFF and constant,
+    0xFF00 and 8 rshift constant, 
+    0xFF0000 and 16 rshift constant,
+    0xFF000000 and 24 rshift constant,
    endcase ;
 
 
@@ -253,9 +257,9 @@ word/imm word/smudge or constant word/all
   \ a shim to make next and docol unaware of encoding layout
   \ it does slow things down but it can't be helped at this point
   \ another revision will fix this but now I don't care
-  .constant \ stash the control bits here
+  constant, \ stash the control bits here
   embed-name \ stash three more bytes
-  last-word @ .constant \ stash the previous word here
+  last-word @ constant, \ stash the previous word here
   r> last-word ! \ stash the top of this dictionary entry to last word
   ;
 deflabel _(;code)
@@ -266,9 +270,10 @@ deflabel _(;code)
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-: embed-string-length ( len -- ) .constant ;
+: embed-string-length ( len -- ) constant, ;
 deflabel _docolon
 deflabel _?exec
+: ?exec; ( -- ) _?exec word, ;
 deflabel _?csp
 : ?csp; ( -- ) _?csp word, ;
 deflabel _!csp
@@ -301,8 +306,10 @@ deflabel _,
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
 : embed-douser ( -- ) _douser ??, .cell ;
-: defuserword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
-: defuserword ( n -- ) word/none defuserword-base ;
+: userword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
+: userword-base-predef ( label str length control-bits -- ) defword-base-predef embed-douser ;
+: userword ( n -- ) word/none userword-base ;
+: userword-predef ( label n len -- ) word/none userword-base-predef ;
 : embed-dovariable ( -- ) _dovariable ??, .cell ;
 : defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
 : defvariableword-base-predef ( label str length control-bits -- ) defword-base-predef embed-dovariable ;
@@ -341,6 +348,7 @@ s" lit" machineword _lit
 : #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
 s" execute" machineword _execute
+: execute; ( -- ) _execute word, ;
 	\ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
     xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
@@ -429,10 +437,12 @@ s" (do)" machineword _(do)
 	xtop xrp push,
 	next,
 
-s" I" machineword _I
+s" i" machineword _i
+: i; ( -- ) _i word, ;
 	xrp xtop ld, \ load the top loop element
 	1push,
 s" digit" machineword _digit
+: digit; ( -- ) _digit word, ;
 	xsp digit, 
 	next,
 s" (find)" machineword _(find)
@@ -442,7 +452,7 @@ s" (find)" machineword _(find)
 s" enclose" machineword _enclose
     xsp enclose,
 	next,
-
+: enclose; ( -- ) _enclose word, ;
 s" emit" machineword _emit 
 	/dev/console0 #, xlower set,
 	1pop
@@ -484,14 +494,22 @@ _cmove_done .label
   xtop xlower xtop ' execute 
   1push, ;
 s" u*" defbinaryop _u* umul,
+: u*; ( -- ) _u* word, ;
 s" u/" defbinaryop _u/ udiv,
+: u/; ( -- ) _u/ word, ;
 s" and" defbinaryop _and and,
+: and; ( -- ) _and word, ;
 s" or"  defbinaryop _or or,
+: or; ( -- ) _or word, ;
 s" xor" defbinaryop _xor xor,
+: xor; ( -- ) _xor word, ;
+
 s" sp@" machineword _sp@
+: sp@; ( -- ) _sp@ word, ;
     xsp xsp push,
     next,
 s" sp!" machineword _sp!
+: sp!; ( -- ) _sp! word, ;
     \ initialize the stack pointer from S0
     &S0 ??, xtaddr set,
     xtaddr xsp ld,
@@ -501,6 +519,7 @@ s" rp@" machineword _rp@
     xrp xsp push,
     next,
 s" rp!" machineword _rp!
+: rp!; ( -- ) _rp! word, ;
     \ initialize the stack pointer from R0
     &R0 ??, xtaddr set,
     xtaddr xrp ld,
@@ -513,6 +532,7 @@ s" ;s" machineword _;s
   \ embed the semicolons routine
 _;s word, ;
 s" leave" machineword _leave
+: leave; ( -- ) _leave word, ;
 	\ make the loop limit equal to the loop count and force the loop to
 	\ terminate at loop or +loop
 	\ copy loop count to loop limit on return stack
@@ -719,52 +739,53 @@ _douser .label
     &up ??, xlower set, \ user variable addr
     xlower xtop xtop add, \ address of variable
     1push,
-s" 0" defconstantword _0 0x0 .constant 
+s" 0" defconstantword _0 0x0 constant, 
 : 0; ( -- ) _0 word, ;
-s" 1" defconstantword _1 0x1 .constant
+s" 1" defconstantword _1 0x1 constant,
 : 1; ( -- ) _1 word, ;
-s" 2" defconstantword _2 0x2 .constant
+s" 2" defconstantword _2 0x2 constant,
 : 2; ( -- ) _2 word, ;
-s" 3" defconstantword _3 0x3 .constant
+s" 3" defconstantword _3 0x3 constant,
 : 3; ( -- ) _3 word, ;
-s" bl" defconstantword _bl bl .constant
+s" bl" defconstantword _bl bl constant,
 : bl; ( -- ) _bl word, ;
-s" c/l" defconstantword _c/l 0x40 .constant
+s" c/l" defconstantword _c/l 0x40 constant,
 : c/l; ( -- ) _c/l word, ;
-s" first" defconstantword _first &FIRST .constant
+s" first" defconstantword _first &FIRST constant,
 : first; ( -- ) _first word, ;
-s" limit" defconstantword _limit &LIMIT .constant
+s" limit" defconstantword _limit &LIMIT constant,
 : limit; ( -- ) _limit word, ;
-s" b/buf" defconstantword _b/buf b/buf .constant
+s" b/buf" defconstantword _b/buf b/buf constant,
 : b/buf; ( -- ) _b/buf word, ;
-s" b/scr" defconstantword _b/scr b/scr .constant
+s" b/scr" defconstantword _b/scr b/scr constant,
 : b/scr; ( -- ) _b/scr word, ;
 s" +origin" colonword _+origin
     lit;
-    origin;
+    _origin ??plit;
     +;
-&S0 s" s0" defuserword-predef 0x6 .constant
-&R0 s" r0" defuserword-predef 0x7 .constant
-&tib s" tib" defuserword-predef 0x8 .constant
-&width s" width" defuserword-predef 0x9 .constant
-&warning s" warning" defuserword-predef 0xa .constant
-&fence s" fence" defuserword-predef 0xb .constant
-&dp s" dp" defuserword-predef 0xc .constant
-&voc-link s" voc-link" defuserword-predef 0xd .constant
-&blk s" blk" defuserword-predef 0xe .constant
-&in s" in" defuserword-predef 0xf .constant
-&out s" out" defuserword-predef 0x10 .constant
-&scr s" scr" defuserword-predef 0x11 .constant
-&offset s" offset" defuserword-predef 0x12 .constant
-&context s" context" defuserword-predef 0x13 .constant
-&current s" current" defuserword-predef 0x14 .constant
-&state s" state" defuserword-predef 0x15 .constant
-&base s" base" defuserword-predef 0x16 .constant
-&dpl s" dpl" defuserword-predef 0x17 .constant
-&fld s" fld" defuserword-predef 0x18 .constant
-&csp s" csp" defuserword-predef 0x19 .constant
-&r# s" r#" defuserword-predef 0x1a .constant
-&hld s" hld" defuserword-predef 0x1b .constant
+    ;;s
+&S0 s" s0" userword-predef 0x6 constant,
+&R0 s" r0" userword-predef 0x7 constant,
+&tib s" tib" userword-predef 0x8 constant,
+&width s" width" userword-predef 0x9 constant,
+&warning s" warning" userword-predef 0xa constant,
+&fence s" fence" userword-predef 0xb constant,
+&dp s" dp" userword-predef 0xc constant,
+&voc-link s" voc-link" userword-predef 0xd constant,
+&blk s" blk" userword-predef 0xe constant,
+&in s" in" userword-predef 0xf constant,
+&out s" out" userword-predef 0x10 constant,
+&scr s" scr" userword-predef 0x11 constant,
+&offset s" offset" userword-predef 0x12 constant,
+&context s" context" userword-predef 0x13 constant,
+&current s" current" userword-predef 0x14 constant,
+&state s" state" userword-predef 0x15 constant,
+&base s" base" userword-predef 0x16 constant,
+&dpl s" dpl" userword-predef 0x17 constant,
+&fld s" fld" userword-predef 0x18 constant,
+&csp s" csp" userword-predef 0x19 constant,
+&r# s" r#" userword-predef 0x1a constant,
+&hld s" hld" userword-predef 0x1b constant,
 \ TODO more user variables
 s" 1+" machineword _1+
 : 1+; ( -- ) _1+ word, ;
@@ -786,7 +807,7 @@ s" allot" machineword _allot ( n -- )
 	&DP ??, xtaddr set,
 	xtaddr xlower ld, 
     xlower xtop xlower add,
-	xlower xtaddr st, ;
+	xlower xtaddr st, 
     next,
 : allot; ( -- ) _allot word, ;
 _, s" ," machineword-predef ( n -- )
@@ -900,7 +921,6 @@ s" ?comp" colonword _?comp
     ?error;
     ;;s
 _?exec s" ?exec" colonword-predef
-: ?exec; ( -- ) _?exec word, ;
     state; @;
     0x12 #plit;
     ?error;
@@ -955,7 +975,9 @@ s" ;code" colonword _;code
     noop;
     ;;s
 s" <builds" colonword _<builds 0; constant; ;;s
+: <builds; ( -- ) _<builds word, ;
 s" does>" colonword _does>
+: does>; ( -- ) _does> word, ;
     deflabel _dodoes
     r>;
     latest;
@@ -983,7 +1005,7 @@ deflabel _type3
     swap;
     (do); \ do
 _type2 .label
-    ido;
+    i;
     c@;
     emit;
     _type2 ??(loop); \ loop
@@ -1002,7 +1024,7 @@ deflabel _dtrailing3
     1;
     -;
     c@;
-    bls;
+    bl;
     -;
     _dtrailing2 ??zbranch; \ if
     leave;
@@ -1101,16 +1123,19 @@ _rightbracket s" ]" machineword-predef
     next,
 
 s" hex" machineword _hex \ set the base to 16
+: hex; ( -- ) _hex word, ;
 	&base ??, xtaddr set,
 	0x10 #, at0 set,
 	at0 xtaddr st,
 	next,
 s" decimal" machineword _decimal \ set the base to 10
+: decimal; ( -- ) _decimal word, ;
 	&base ??, xtaddr set,
 	0xA #, at0 set,
 	at0 xtaddr st,
 	next,
 s" octal" machineword _octal \ set the base to 8
+: octal; ( -- ) _octal word, ;
 	&base ??, xtaddr set,
 	0x8 #, at0 set,
 	at0 xtaddr st,
@@ -1193,7 +1218,7 @@ deflabel _null3
     0;
     inn; !;
     blk; @;
-    bscr;
+    b/scr;
     1;
     -;
     and;
@@ -1233,7 +1258,7 @@ s" erase" colonword _erase
     ;;s
 s" blanks" colonword _blanks
 : blanks; ( -- ) _blanks word, ;
-    bls;
+    bl;
     fill;
     ;;s
 s" hold" colonword _hold
@@ -1269,7 +1294,7 @@ _word2 .label
     enclose;
     here;
     0x22 #plit;
-    blank;
+    blanks;
     inn;
     +!;
     over; -;
@@ -1320,12 +1345,12 @@ deflabel _number3
     +;
     -1 #plit;
 _number1 .label 
-    _dpl ??, plit; \ begin 
+    &dpl ??plit; \ begin 
     !;
     (number);
     dup;
     c@;
-    _bls ??, plit; 
+    _bl ??, plit; 
     -;
     _number2 ??zbranch; \ while
     dup;
@@ -1346,7 +1371,7 @@ _number3 .label
 : number; ( -- ) _number word, ;
 s" -find" colonword _dfind
 deflabel _dfind1
-    bls;
+    bl;
     word;
     here;
     (find);
@@ -1365,7 +1390,7 @@ s" (abort)" colonword _pabort
     ;;s
 : (abort); ( -- ) _pabort word, ;
 
-s" error" colonword _error
+_error s" error" colonword-predef
 deflabel _error1
 deflabel _error2
     warn; @;
@@ -1378,7 +1403,7 @@ _error1 .label
     type;
     pdotq;
     2;
-    _questionMarkString word, \ "? "
+    \ _questionMarkString word, \ "? "
     message; 
     sp!;
     \ change from the fig model
@@ -1456,9 +1481,10 @@ s" [compile]" colonword _bcompilep
     ,;
     ;;s
 s" literal" colonword _literal
+: literal; ( -- ) _literal word, ;
 deflabel _literal1
     state; @;
-    _literal1 ??0branch \ if
+    _literal1 ??zbranch; \ if
     compile;
     lit;
     ,; \ endif
@@ -1524,7 +1550,7 @@ _interpret5 .label
 s" vocabulary" colonword _vocabulary
 deflabel _dovocab
 : vocabulary; ( -- ) _vocabulary word, ;
-    build;
+    <builds;
     literal;
     0xA081 #plit; \ ????
     ,;
@@ -1533,7 +1559,7 @@ deflabel _dovocab
     here;
     voc-link; @; ,;
     voc-link; !;
-    does;
+    does>;
 _dovocab .label
     2+;
     context; !;
@@ -1543,11 +1569,12 @@ s" forth" colonword _forth
 : forth; ( -- ) _forth word, ;
 	\ set the context to the forth base vocabulary
     _dodoes word,
-    _dovoc word,
+    _dovocab word,
     0xA081 #plit;
     \ TASK - 7 \ cold start value only
     .skip \ end of vocabulary list
 s" definitions" colonword _definitions
+: definitions; ( -- ) _definitions word, ;
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
   \ new definitions will be added to the cccc vocabulary
@@ -1589,6 +1616,8 @@ _abort s" abort" colonword-predef
     forth;
     definitions;
     quit;
+deflabel _empty-bufs
+: empty-buffers; ( -- ) _empty-bufs word, ;
 deflabel _wrm
 deflabel _wrm1
 deflabel _warm
@@ -1597,11 +1626,19 @@ _wrm .label
     _wrm1 ??, xip set,
     next,
 _wrm1 .label 
-    warm;
+    _warm ??, .cell
 _warm s" warm" colonword-predef 
-    mtbuf;
+    empty-buffers;
     abort;
 \ cold start vector comes here
+deflabel _density
+: density; ( -- ) _density word, ;
+deflabel _next_use
+: use; ( -- ) _next_use word, ;
+deflabel _prev_use
+: prev; ( -- ) _prev_use word, ;
+deflabel _dr0
+: dr0; ( -- ) _dr0 word, ;
 deflabel _cld
 deflabel _cld1
 _cld .label
@@ -1620,11 +1657,11 @@ _cld .label
 _cld1 .label
     cold;
 _cold s" cold" colonword-predef 
-    mtbuf;
+    empty-buffers;
     0; density; !;
     first; use; !;
     first; prev; !;
-    drzer; 
+    dr0;
     0 #plit;
     _eprint ??plit;
     !;
@@ -1692,10 +1729,10 @@ s" (line)" colonword _(line)
 : (line); ( -- ) _(line) word, ;
     >r;
     0x40 #plit;
-    bbuf;
+    b/buf;
     */mod;
     r>;
-    bscr;
+    b/scr;
     *;
     +;
     block;
@@ -1718,10 +1755,10 @@ _message s" message" colonword-predef
     mess2 ??, zbranch; \ if
     4 #plit;
     offset; @;
-    bscr;
+    b/scr;
     /;
     -;
-    -line;
+    .line;
     space; \ endif
     mess3 ??, branch;
 
@@ -1753,20 +1790,17 @@ s" sec" defvariableword _sector_num
 s" track" defvariableword _track#
 : track; ( -- ) _track# word, ;
     .skip
-s" use" defvariableword _next_use
-: use; ( -- ) _next_use word, ;
-    &FIRST .constant
-s" prev" defvariableword _prev_use
-: prev; ( -- ) _prev_use word, ;
-    &FIRST .constant
+_next_use s" use" defvariableword-predef 
+    &FIRST constant,
+_prev_use s" prev" defvariableword
+    &FIRST constant,
 s" sec/blk" defconstantword _sectors/block
 : sec/blk; ( -- ) _sectors/block word, ;
-    sectors-per-block .constant
+    sectors-per-block constant,
 s" #buff" defconstantword _numbuff
 : #buff; ( -- ) _numbuff word, ;
-    num-buffers .constant 
-s" density" defvariableword _density
-: density; ( -- ) _density word, ;
+    num-buffers constant, 
+_density s" density" defvariableword-predef
     .skip
 s" disk-error" defvariableword _disk_error
 : disk-error; ( -- ) _disk_error word, ;
@@ -1791,16 +1825,14 @@ s" update" colonword _update
     prev; @;
     !;
     ;;s
-s" empty-buffers" colonword _empty-bufs
-: empty-buffers; ( -- ) _empty-bufs word, ;
+_empty-bufs s" empty-buffers" colonword-predef
     first;
     limit; 
     over;
     -;
     erase;
     ;;s
-s" dr0" colonword _dr0
-: dr0; ( -- ) _dr0 word, ;
+_dr0 s" dr0" colonword-predef
     0; offset; !;
     ;;s
 s" dr1" colonword _dr1
@@ -2167,6 +2199,17 @@ s" task" colonword _task
     ;;s
 ram-start .org
 _origin .label
+nop,
+_cold ??, b,
+nop,
+_warm ??, b,
+\ todo put data to install about version data
+\ todo put cold word variables here
+_up .label  \ where the user pointer data is located
+system-variables-start constant, 
+_rpp .label
+system-variables-start constant,
+
 asm}
 
 bye
