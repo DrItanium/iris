@@ -72,7 +72,7 @@ keyboard-buffer 4 + constant co
 
 \ register reservations
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
-deflabel _origin
+deflabel origin
 deflabel forth_vocabulary_start
 deflabel base-dict-done
 deflabel _cold
@@ -293,10 +293,10 @@ deflabel _,
 : dovariable; ( -- ) _dovariable word, ;
 : ,; ( -- ) _, word, ;
 : embed-docolon ( -- ) _docolon ??, .cell ;
-: defcolonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
-: defcolonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
-: defcolonword ( str length "name"  -- ) word/none defcolonword-base ;
-: defcolonword-predef ( label str length -- ) word/none defcolonword-base-predef ;
+: colonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
+: colonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
+: colonword ( str length "name"  -- ) word/none colonword-base ;
+: colonword-predef ( label str length -- ) word/none colonword-base-predef ;
 : embed-doconstant ( -- ) _doconstant ??, .cell ;
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
@@ -333,12 +333,12 @@ s" lit" defmachineword _lit
     xip 1+,
 	1push,
 : two-cell-op ( n id op -- ) word, .cell ;
-: push-literal; ( n id -- )
+: plit; ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
   \ the number itself
   _lit two-cell-op ;
-: ??push-literal; ( n -- ) ??, push-literal; ;
-: #push-literal; ( n -- ) #, push-literal; ;
+: ??plit; ( n -- ) ??, plit; ;
+: #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
 s" execute" defmachineword _execute
 	\ execute the definition whose code field address cfa is on the data stack
@@ -673,7 +673,7 @@ _docolon .label
     xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     next,
-s" ;" defcolonword _semi
+s" ;" colonword _semi
     ?csp;
     compile;
     ;;s
@@ -684,7 +684,7 @@ s" ;" defcolonword _semi
 
 s" noop" defmachineword _noop next,
 : noop; ( -- ) _noop word, ;
-s" constant" defcolonword _constant
+s" constant" colonword _constant
 : constant; ( -- ) _constant word, ;
     create;
     smudge;
@@ -695,7 +695,7 @@ _doconstant .label
     xw xtop move,
     xtop xtop ld, \ get data
     1push,
-s" variable" defcolonword _variable
+s" variable" colonword _variable
 : variable; ( -- ) _variable word, ;
     constant;
     (;code);
@@ -703,7 +703,7 @@ s" variable" defcolonword _variable
         xw 1+, 
         xw xsp push, 
         next,
-s" user" defcolonword _user
+s" user" colonword _user
 : user; ( -- ) _user word, ;
     constant;
     (;code);
@@ -735,7 +735,7 @@ s" b/buf" defconstantword _b/buf b/buf .constant
 : b/buf; ( -- ) _b/buf word, ;
 s" b/scr" defconstantword _b/scr b/scr .constant
 : b/scr; ( -- ) _b/scr word, ;
-s" +origin" defcolonword _+origin
+s" +origin" colonword _+origin
     lit;
     origin;
     +;
@@ -873,7 +873,7 @@ _!csp s" !csp" defmachineword-predef
     next,
 : !csp; ( -- ) _!csp word, ;
 
-s" ?error" defcolonword _?error
+s" ?error" colonword _?error
 : ?error; ( -- ) _?error word, ;
 deflabel _?err1
 deflabel _?err2
@@ -888,38 +888,38 @@ _?err2 .label
 
 
 
-s" ?comp" defcolonword _?comp 
+s" ?comp" colonword _?comp 
 : ?comp; ( -- ) _?comp word, ;
     state; @;
     0=;
-    0x11 #push-literal;
+    0x11 #plit;
     ?error;
     ;;s
-_?exec s" ?exec" defcolonword-predef
+_?exec s" ?exec" colonword-predef
 : ?exec; ( -- ) _?exec word, ;
     state; @;
-    0x12 #push-literal;
+    0x12 #plit;
     ?error;
     ;;s
-s" ?pairs" defcolonword _?pairs
+s" ?pairs" colonword _?pairs
     -;
-    0x13 #push-literal;
+    0x13 #plit;
     ?error;
     ;;s
-_?csp s" ?csp" defcolonword-predef 
+_?csp s" ?csp" colonword-predef 
     sp@; @;
     -;
-    0x14 #push-literal;
+    0x14 #plit;
     ?error;
     ;;s
-s" ?loading" defcolonword _?loading
+s" ?loading" colonword _?loading
 : ?loading; ( -- ) _?loading word, ;
     blk; @;
     0=;
-    0x16 #push-literal;
+    0x16 #plit;
     ?error;
     ;;s
-_compile s" compile" defcolonword-predef
+_compile s" compile" colonword-predef
     ?comp;
     r>;
     dup; 
@@ -937,21 +937,21 @@ _smudge s" smudge" defmachineword-predef
 	xlower xtop st,
 	next,
 
-_(;code) s" (;code)" defcolonword-predef
+_(;code) s" (;code)" colonword-predef
     r>;
     latest;
     pfa;
     cfa; @;
     ;;s
-s" ;code" defcolonword _;code
+s" ;code" colonword _;code
     ?csp;
     compile;
     (;code); 
     leftbracket;
     noop;
     ;;s
-s" <builds" defcolonword _<builds 0; constant; ;;s
-s" does>" defcolonword _does>
+s" <builds" colonword _<builds 0; constant; ;;s
+s" does>" colonword _does>
     deflabel _dodoes
     r>;
     latest;
@@ -965,9 +965,9 @@ _dodoes .label
     xw 1+, 
     xw xsp push, \ pfa
     next,
-s" count" defcolonword _count dup; 1+; swap; c@; ;;s
+s" count" colonword _count dup; 1+; swap; c@; ;;s
 : count; ( -- ) _count word, ;
-s" type" defcolonword _type
+s" type" colonword _type
 : type; ( -- ) _type word, ;
 deflabel _type1
 deflabel _type2
@@ -986,7 +986,7 @@ _type2 .label
     _type3 ??branch; \ else
     drop; \ endif
     ;;s
-s" -trailing" defcolonword _dtrailing
+s" -trailing" colonword _dtrailing
     dup;
     0;
     xdo; \ do
@@ -1013,7 +1013,7 @@ _dtrailing3 .label
 s" print-ok" defmachineword _printok prok, next,
 : print-ok; ( -- ) _printok word, ;
 s\" (.\")" 
-defcolonword _pdotq
+colonword _pdotq
     r; 
     count;
     dup;
@@ -1025,7 +1025,7 @@ defcolonword _pdotq
     ;;s
 : pdotq; ( -- ) _pdotq word, ;
 s\" .\"" 
-defcolonword _dotq
+colonword _dotq
 \ TODO dotq body
     ;;s
 : dotq; ( -- ) _dotq word, ;
@@ -1164,19 +1164,19 @@ _block_done .label
 	&FIRST #, xsp pushi,
 	next,
 
-s" expect" defcolonword _expect
+s" expect" colonword _expect
 : expect; ( -- ) _expect word, ;
     \ todo implement
     ;;s
-s" query" defcolonword _query
+s" query" colonword _query
 : query; ( -- ) _query word, ;
     tib; @;
-    0x50 #push-literal;
+    0x50 #plit;
     expect;
     0;
     inn; !;
     ;;s
-s" " defcolonword _null
+s" " colonword _null
 : null; ( -- ) _null word, ;
 deflabel _null1
 deflabel _null2
@@ -1222,32 +1222,32 @@ _fill_loop .label
     _fill_loop ??, b,
 _fill_done .label
     next,
-s" erase" defcolonword _erase
+s" erase" colonword _erase
 : erase; ( -- ) _erase word, ;
     0;
     fill;
     ;;s
-s" blanks" defcolonword _blanks
+s" blanks" colonword _blanks
 : blanks; ( -- ) _blanks word, ;
     bls;
     fill;
     ;;s
-s" hold" defcolonword _hold
+s" hold" colonword _hold
 : hold; ( -- ) _hold word, ;
-    -1 #push-literal;
+    -1 #plit;
     hld;
     +!;
     hld; @;
     c@;
     ;;s
 
-s" pad" defcolonword _pad ( -- n )
+s" pad" colonword _pad ( -- n )
 : pad; ( -- ) _pad word, ;
     here;
-    0x44 #push-literal;
+    0x44 #plit;
     +;
     ;;s
-s" word" defcolonword _word
+s" word" colonword _word
 : word; ( -- ) _word word, ;
 deflabel _word1
 deflabel _word2
@@ -1264,7 +1264,7 @@ _word2 .label
     swap;
     enclose;
     here;
-    0x22 #push-literal;
+    0x22 #plit;
     blank;
     inn;
     +!;
@@ -1275,7 +1275,7 @@ _word2 .label
     r>;
     cmove;
     ;;s
-s" (number)" defcolonword _pnum
+s" (number)" colonword _pnum
 : (number); ( -- ) _pnum word, ;
 deflabel-here _pnum1
 deflabel _pnum2
@@ -1303,30 +1303,30 @@ _pnum3 .label
 _pnum2 .label
     r>;
     ;;s
-s" number" defcolonword _number
+s" number" colonword _number
 deflabel _number1
 deflabel _number2
 deflabel _number3
     0; 0; rot;
     dup; 1+;
     c@;
-    0x2D #push-literal;
+    0x2D #plit;
     =;
     dup; >r;
     +;
-    -1 #push-literal;
+    -1 #plit;
 _number1 .label 
-    _dpl ??, push-literal; \ begin 
+    _dpl ??, plit; \ begin 
     !;
     (number);
     dup;
     c@;
-    _bls ??, push-literal; 
+    _bls ??, plit; 
     -;
     _number2 ??zbranch; \ while
     dup;
     c@;
-    0x2E #push-literal;
+    0x2E #plit;
     -;
     0;
     ?error;
@@ -1340,7 +1340,7 @@ _number2 .label
 _number3 .label
     ;;s
 : number; ( -- ) _number word, ;
-s" -find" defcolonword _dfind
+s" -find" colonword _dfind
 deflabel _dfind1
     bls;
     word;
@@ -1356,12 +1356,12 @@ deflabel _dfind1
 _dfind1 .label \ endif
     ;;s
 : -find; ( -- ) _dfind word, ;
-s" (abort)" defcolonword _pabort
+s" (abort)" colonword _pabort
     abort;
     ;;s
 : (abort); ( -- ) _pabort word, ;
 
-s" error" defcolonword _error
+s" error" colonword _error
 deflabel _error1
 deflabel _error2
     warn; @;
@@ -1387,10 +1387,10 @@ _error1 .label
     _error2 .label
     quit;
 
-s" id." defcolonword _iddot
+s" id." colonword _iddot
     pad;
-    0x20 #push-literal;
-    0x5f #push-literal;
+    0x20 #plit;
+    0x5f #plit;
     fill;
     dup;
     pfa;
@@ -1402,20 +1402,20 @@ s" id." defcolonword _iddot
     cmove;
     pad;
     count;
-    0x1f #push-literal;
+    0x1f #plit;
     and;
     type;
     space;
     ;;s
 : id.; ( -- ) _iddot word, ;
-_create s" create" defcolonword-predef 
+_create s" create" colonword-predef 
 deflabel _create1
     -find;
     _create1 ??zbranch; \ if
     drop;
     nfa;
     id.;
-    4 #push-literal;
+    4 #plit;
     message;
     space; \ endif
     _create1 .label
@@ -1427,12 +1427,12 @@ deflabel _create1
     1+;
     allot;
     dup;
-    0x0a0 #push-literal;
+    0x0a0 #plit;
     toggle;
     here;
     1;
     -;
-    0x80 #push-literal;
+    0x80 #plit;
     toggle;
     latest;
     ,;
@@ -1441,7 +1441,7 @@ deflabel _create1
     2+;
     ,;
     ;;s
-s" [compile]" defcolonword _bcompilep
+s" [compile]" colonword _bcompilep
 : [compile]; ( -- ) _bcompilep word, ; 
     -find;
     0=;
@@ -1451,7 +1451,7 @@ s" [compile]" defcolonword _bcompilep
     cfa;
     ,;
     ;;s
-s" literal" defcolonword _literal
+s" literal" colonword _literal
 deflabel _literal1
     state; @;
     _literal1 ??0branch \ if
@@ -1460,11 +1460,11 @@ deflabel _literal1
     ,; \ endif
     _literal1 .label
     ;;s
-s" dliteral" defcolonword _dliteral
+s" dliteral" colonword _dliteral
 : dliteral; ( -- ) _dliteral word, ;
 \ TODO implement
     ;;s
-s" ?stack" defcolonword _?stack
+s" ?stack" colonword _?stack
 : ?stack; ( -- ) _?stack word, ;
     sp@;
     s0; @;
@@ -1474,13 +1474,13 @@ s" ?stack" defcolonword _?stack
     ?error;
     sp@;
     here;
-    0x80 #push-literal;
+    0x80 #plit;
     +;
     u<;
-    7 #push-literal;
+    7 #plit;
     ?error;
     ;;s
-_interpret s" interpret" defcolonword-predef
+_interpret s" interpret" colonword-predef
 deflabel _interpret2
 deflabel _interpret3
 deflabel _interpret4
@@ -1517,12 +1517,12 @@ _interpret7 .label
     ?stack; \ endif
 _interpret5 .label
     _interpret1 ??branch; \ again
-s" vocabulary" defcolonword _vocabulary
+s" vocabulary" colonword _vocabulary
 deflabel _dovocab
 : vocabulary; ( -- ) _vocabulary word, ;
     build;
     literal;
-    0xA081 #push-literal; \ ????
+    0xA081 #plit; \ ????
     ,;
     current; @; 
     cfa; ,;
@@ -1535,26 +1535,26 @@ _dovocab .label
     context; !;
     ;;s
 \ this is a special word that uses dodoes as its interpreter o_O
-s" forth" defcolonword _forth
+s" forth" colonword _forth
 : forth; ( -- ) _forth word, ;
 	\ set the context to the forth base vocabulary
     _dodoes word,
     _dovoc word,
-    0xA081 #push-literal;
+    0xA081 #plit;
     \ TASK - 7 \ cold start value only
     .skip \ end of vocabulary list
-s" definitions" defcolonword _definitions
+s" definitions" colonword _definitions
   \ used in the form: cccc definitions 
   \ make cccc vocabulary the current vocabulary.
   \ new definitions will be added to the cccc vocabulary
     context; @;
     current; !;
     ;;s
-s" (" defcolonword _paren
-    0x29 #push-literal;
+s" (" colonword _paren
+    0x29 #plit;
     word;
     ;;s
-_quit s" quit" defcolonword-predef
+_quit s" quit" colonword-predef
 deflabel _quit1
 deflabel _quit2
     0; blk; !;
@@ -1571,7 +1571,7 @@ _quit1 .label
     \ endif 
 _quit2 .label
     _quit1 ??branch; \ again
-_abort s" abort" defcolonword-predef
+_abort s" abort" colonword-predef
     sp!;
     decimal;
     ?stack;
@@ -1579,7 +1579,7 @@ _abort s" abort" defcolonword-predef
     \ TODO print information out here at some point
     \ _dotcpu word,
     pdotq;
-    0xd #push-literal;
+    0xd #plit;
     \ s" fig-forth" string,
     \ version information embedded here too
     forth;
@@ -1594,7 +1594,7 @@ _wrm .label
     next,
 _wrm1 .label 
     warm;
-_warm s" warm" defcolonword-predef 
+_warm s" warm" colonword-predef 
     mtbuf;
     abort;
 \ cold start vector comes here
@@ -1615,23 +1615,23 @@ _cld .label
     next,
 _cld1 .label
     cold;
-_cold s" cold" defcolonword-predef 
+_cold s" cold" colonword-predef 
     mtbuf;
     0; density; !;
     first; use; !;
     first; prev; !;
     drzer; 
-    0 #push-literal;
-    _eprint ??push-literal;
+    0 #plit;
+    _eprint ??plit;
     !;
     \ orig + 12H 
-    _origin ??push-literal;
-    0x12 #push-literal;
+    _origin ??plit;
+    0x12 #plit;
     +;
-    _up ??push-literal;
+    _up ??plit;
     @;
-    _forth ??push-literal;
-    0x6 #push-literal;
+    _forth ??plit;
+    0x6 #plit;
     !;
     abort; \ last
 s" s->d" defmachineword _s->d 
@@ -1641,7 +1641,7 @@ deflabel _s->d1
     \ TODO implement
 _s->d1 .label 
     2push,
-s" +-" defcolonword _pm
+s" +-" colonword _pm
 : +-; ( -- ) _pm word, ;
 deflabel _pm1
     0<;
@@ -1649,26 +1649,26 @@ deflabel _pm1
     -; \ endif
     _pm1 .label
     ;;s
-s" d+-" defcolonword _dpm
+s" d+-" colonword _dpm
     \ TODO implement
     ;;s
-s" dabs" defcolonword _dabs
+s" dabs" colonword _dabs
 : dabs; ( -- ) _dabs word, ;
 \ TODO implement 
 ;;s
-s" m*" defcolonword _mstar
+s" m*" colonword _mstar
 : m*; ( -- ) _mstar word, ;
 \ TODO implement 
 ;;s
-s" m/" defcolonword _mslas
+s" m/" colonword _mslas
 : m/; ( -- ) _mslas word, ;
 \ todo implement m/
 ;;s
-s" /mod" defcolonword _slmod
+s" /mod" colonword _slmod
 : /mod; ( -- ) _slmod word, ;
 \ todo implement /mod
 ;;s
-s" */mod" defcolonword _ssmod
+s" */mod" colonword _ssmod
 : */mod; ( -- ) _ssmod word, ;
     >r;
     m*;
@@ -1676,18 +1676,18 @@ s" */mod" defcolonword _ssmod
     m/;
     ;;s
 
-s" */" defcolonword _ssla
+s" */" colonword _ssla
 : */; ( -- ) _ssla word, ;
 \ todo implement */
 ;;s
-s" m/mod" defcolonword _msmod
+s" m/mod" colonword _msmod
 : m/mod; ( -- ) _msmod word, ;
 \ todo implement m/mod
 ;;s
-s" (line)" defcolonword _(line)
+s" (line)" colonword _(line)
 : (line); ( -- ) _(line) word, ;
     >r;
-    0x40 #push-literal;
+    0x40 #plit;
     bbuf;
     */mod;
     r>;
@@ -1696,15 +1696,15 @@ s" (line)" defcolonword _(line)
     +;
     block;
     +;
-    0x40 #push-literal;
+    0x40 #plit;
     ;;s
-s" .line" defcolonword _dline
+s" .line" colonword _dline
 : .line; ( -- ) _dline word, ;
     (line);
     -trailing;
     type;
     ;;s
-_message s" message" defcolonword-predef
+_message s" message" colonword-predef
     deflabel mess1
     deflabel mess2
     deflabel mess3
@@ -1712,7 +1712,7 @@ _message s" message" defcolonword-predef
     mess1 ??, zbranch; \ if
     2dup;
     mess2 ??, zbranch; \ if
-    4 #push-literal;
+    4 #plit;
     offset; @;
     bscr;
     /;
@@ -1767,10 +1767,10 @@ s" density" defvariableword _density
 s" disk-error" defvariableword _disk_error
 : disk-error; ( -- ) _disk_error word, ;
     .skip
-s" +buf" defcolonword _pbuf
+s" +buf" colonword _pbuf
 deflabel pbuf1
 : +buf; ( -- ) _pbuf word, ;
-    co #push-literal;
+    co #plit;
     +; dup;
     limit; =;
     pbuf1 ??zbranch;
@@ -1779,15 +1779,15 @@ deflabel pbuf1
     dup; pref;
     @; -;
     ;;s
-s" update" defcolonword _update
+s" update" colonword _update
 : update; ( -- ) _update word, ;
     @; @;
-    0x8000 #push-literal;
+    0x8000 #plit;
     or;
     prev; @;
     !;
     ;;s
-s" empty-buffers" defcolonword _empty-bufs
+s" empty-buffers" colonword _empty-bufs
 : empty-buffers; ( -- ) _empty-bufs word, ;
     first;
     limit; 
@@ -1795,27 +1795,27 @@ s" empty-buffers" defcolonword _empty-bufs
     -;
     erase;
     ;;s
-s" dr0" defcolonword _dr0
+s" dr0" colonword _dr0
 : dr0; ( -- ) _dr0 word, ;
     0; offset; !;
     ;;s
-s" dr1" defcolonword _dr1
+s" dr1" colonword _dr1
 : dr1; ( -- ) _dr1 word, ;
 deflabel dr11
 deflabel dr12
     density; @; 
     dr11 ??zbranch;
-    sectors/double-disk #push-literal;
+    sectors/double-disk #plit;
     dr12 ??branch;
     dr11 .label
-    sectors/disk #push-literal;
+    sectors/disk #plit;
     dr12 .label
     offset; @;
     ;;s
 \ note: won't work if only using a single buffer
 deflabel _rslw
 : r/w; ( -- ) _rslw word, ;
-s" buffer" defcolonword _buffer
+s" buffer" colonword _buffer
 : buffer; ( -- ) _buffer word, ;
 deflabel buff1
 deflabel buff2
@@ -1830,7 +1830,7 @@ deflabel buff2
     buff2 ??zbranch;
     r; 2+;
     r; @;
-    0x7FFF #push-literal;
+    0x7FFF #plit;
     and; 0;
     r/w;
     buff2 .label
@@ -1838,7 +1838,7 @@ deflabel buff2
     r; prev;
     !; r>;
     2+; ;;s
-s" block" defcolonword _block
+s" block" colonword _block
 deflabel blk1
 deflabel blk3
     offset;
@@ -1888,7 +1888,7 @@ s" sec-write" defmachineword _sector_write
 : sec-write; ( -- ) _sector_write word, ;
     \ todo implement
     next,
-_rslw s" r/w" defcolonword-predef 
+_rslw s" r/w" colonword-predef 
     use; @;
     >r;
     swap; sec/blk;
@@ -1908,13 +1908,13 @@ rslw2 .label
     sec-write;
 rslw3 .label
     1+;
-    0x80 #push-literal;
+    0x80 #plit;
     use; +!;
     rslw1 ??, xloop;
     drop; drop;
     r>; use;
     !; ;;s
-s" flush" defcolonword _flush
+s" flush" colonword _flush
 : flush; ( -- ) _flush word, ;
     #buff; 1+;
     0; xdo;
@@ -1923,7 +1923,7 @@ s" flush" defcolonword _flush
     drop;
     flush1 ??, xloop;
     ;;s
-s" load" defcolonword _load
+s" load" colonword _load
 : load; ( -- ) _load word, ;
    blk; @; >r;
    inn; @; 
@@ -1935,7 +1935,7 @@ s" load" defcolonword _load
    r>; inn; !;
    r>; blk; !;
    ;;s
-s" -->" defcolonword _arrow
+s" -->" colonword _arrow
 : -->; ( -- ) _arrow word, ;
     ?load;  0;
     inn; !; 
@@ -1944,7 +1944,7 @@ s" -->" defcolonword _arrow
     blk; +!; ;;s
 \ todo support eprint
 _eprint .label .skip
-s" '" defcolonword _tick
+s" '" colonword _tick
 : '; ( -- ) _tick word, ;
     -find;
     0=;
@@ -1953,80 +1953,80 @@ s" '" defcolonword _tick
     drop;
     literal;
     ;;s
-s" forget" defcolonword _forget
+s" forget" colonword _forget
 : forget; ( -- ) _forget word, ;
     current; @;
     context; @; -;
-    0x18 #push-literal;
+    0x18 #plit;
     ?error;
     '; dup;
     fence; @;
-    <; 0x15 #push-literal;
+    <; 0x15 #plit;
     ?error; dup;
     nfa; dp; !;
     lfa; @;
     context; @;
     !; ;;s
-s" back" defcolonword _back 
+s" back" colonword _back 
 : back; ( -- ) _back word, ;
     here; 
     -; 
     ,; 
     ;;s
 
-s" begin" defcolonword _begin 
+s" begin" colonword _begin 
 : begin; ( -- ) _begin word, ;
     ?comp;
     here; 1;
     ;;s
 
-s" endif" defcolonword _endiff
+s" endif" colonword _endiff
 : endif; ( -- ) _endiff word, ;
     ?comp; 2; ?pairs;
     here; over; -;
     swap; !;
     ;;s
-s" then" defcolonword _then
+s" then" colonword _then
 : then; ( -- ) _then word, ;
     endif; ;;s
 
-s" do" defcolonword _do
+s" do" colonword _do
 : do; ( -- ) _do word, ;
     compile;
     xdo;
     here;
     3;
     ;;s
-s" loop" defcolonword _loop
+s" loop" colonword _loop
 : loop; ( -- ) _loop word, ;
     3; ?pairs;
     compile;
     _back ??, xloop;
     ;;s
-s" +loop" defcolonword _ploop
+s" +loop" colonword _ploop
 : +loop; ( -- ) _ploop word, ;
     3;
     ?pairs;
     compile;
     _back ??, xploop;
     ;;s
-s" until" defcolonword _until
+s" until" colonword _until
 : until; ( -- ) _until word, ;
     1;
     ?pairs;
     compile;
     _back ??zbranch;
     ;;s
-s" end" defcolonword _end
+s" end" colonword _end
 : end; ( -- ) _end word, ;
     until; ;;s
-s" again" defcolonword _again
+s" again" colonword _again
 : again; ( -- ) _again word, ;
     1; ?pairs; 
     compile; 
     _back ??branch; 
     ;;s
-s" repeat" defcolonword _repeat
+s" repeat" colonword _repeat
 : repeat; ( -- ) _repeat word, ;
     >r; >r;
     again;
@@ -2034,22 +2034,101 @@ s" repeat" defcolonword _repeat
     2; -;
     endif;
     ;;s
-s" if" defcolonword _if 
+s" if" colonword _if 
 : if; ( -- ) _if word, ;
     compile;
     _here ??zbranch;
     0; ,; 2; ;;s
-s" else" defcolonword _else
+s" else" colonword _else
 : else; ( -- ) _else word, ;
     2; ?pairs; 
     compile; 
     _here ??branch; 
     0; ,; swap; 
     2; endif; 2; ;;s
-s" while" defcolonword _while
+s" while" colonword _while
 : while; ( -- ) _while word, ;
     if; 2+; 
     ;;s
+s" spaces" colonword _spaces
+: spaces; ( -- ) _spaces word, ;
+deflabel spax1
+deflabel spax2
+    0; max; 
+    2dup; 
+    spax1 ??zbranch;
+    0; xdo;
+spax2 .label
+    space;
+    spax2 ??xloop;
+spax1 .label
+    ;;s
+s" <#" colonword bdigs
+: <#; ( -- ) bdigs word, ;
+    pad;
+    hld;
+    !;
+    ;;s
+s" #>" colonword edigs
+: #>; ( -- ) edigs word, ;
+    drop; drop;
+    hld; @;
+    pad;
+    over;
+    -;
+    ;;s
+s" sign" colonword _sign
+: sign; ( -- ) _sign word, ;
+deflabel sign1
+    rot;
+    0<;
+    sign1 ??zbranch;
+    0x2d #plit;
+    hold;
+sign1 .label
+    ;;s
+s" #" colonword dig
+: #; ( -- ) dig word, ;
+deflabel dig1
+    base; @;
+    */mod; 
+    rot; 
+    0x9 #plit;
+    over;
+    <;
+    dig1 ??zbranch;
+    0x7 #plit;
+    +;
+dig1 .label
+    0x30 #plit; +;
+    hold; ;;s
+s" #s" colonword digs
+: #s; ( -- ) digs word, ;
+deflabel-here digs1
+    #;
+    over; over; or;
+    0=; digs1 ??zbranch;
+    ;;s
+s" d.r" colonword d.r
+: d.r; ( -- ) d.r word, ;
+    >r;
+    swap;
+    ovber;
+    -abs;
+    <#; #; sign; #>;
+    r>; over; -; spaces;
+    type; ;;s
+s" .r" colonword .r
+: .r; ( -- ) .r word, ;
+    >r; s->d; r>; d.r; ;;s
+
+s" d." colonword d.
+: d.; ( -- ) d. word, ;
+0; d.r; space; ;;s
+
+s" u." colonword u.
+: u.; ( -- ) u. word, ;
+    0; d.; ;;s
 ram-start .org
 _origin .label
 asm}
