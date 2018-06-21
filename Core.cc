@@ -366,46 +366,6 @@ namespace iris {
         incr._args.src = op._args.dest;
         perform(incr);
     }
-	DefExec(Enclose) {
-		// taken from the 8086 figforth impl
-		auto terminator = popDestination(op).address;
-		auto addr = popDestination(op).address;
-		pushDestination(op, addr);
-		//terminator &= 0x00FF; // clear the upper half
-		Integer offsetCounter = -1;
-		--addr;
-		// scan to first non-terminator char
-		do {
-			++addr;
-			++offsetCounter;
-			// wait for non terminator
-		} while (load(addr) == terminator);
-		if (load(addr) == 0) {
-			// found null before first terminator
-			pushDestination(op, offsetCounter + 1);
-			pushDestination(op, offsetCounter);
-			return;
-		}
-		// found first text character, count the characters
-		bool foundTerminatorAtEnd = false;
-		do {
-			++addr;
-			++offsetCounter;
-			if (load(addr) == terminator) {
-				foundTerminatorAtEnd = true;
-				break;
-			}
-		}  while(load(addr) != 0);
-		if (foundTerminatorAtEnd) {
-			pushDestination(op, offsetCounter);
-			pushDestination(op, offsetCounter+1);
-		} else {
-			// found null at end of text
-			// counters are equal
-			pushDestination(op, offsetCounter);
-			pushDestination(op, offsetCounter);
-		}
-	}
     DefExec(PrimitiveFind) {
         // we are loading from the front of a dictionary entry of the format
         // [0-5]: name field address

@@ -484,8 +484,56 @@ s" (find)" machineword _(find)
 	next,
 : (find); ( -- ) _(find) word, ;
 s" enclose" machineword _enclose
-    xsp enclose,
-	next,
+	\ A primitive word to scan the text. From the byte address and the
+	\ delimiter c, it determines the byte offset to the first non-delimiter
+	\ character, the offset to the first delimiter after the text string, and
+	\ the offset to the next character after the delimiter. If the string is
+	\ delimited by a nul, the last offset is equal  to the previous offset
+	\ dest - stack pointer to grab arguments from
+	\ ( addr c -- addr nl n2 n3 )
+deflabel enclose2
+deflabel enclose3
+deflabel enclose4
+    2pop, \ top - terminator 
+          \ lower - address
+          \ third - count
+          \ fourth - temporary
+    xlower xsp push, \ addr back to stack
+    0x00FF #, xtop xtop andi,  \ zero uppper half of the value
+    0xFFFF #, xthird set, \ char offset counter
+    xlower 1-, \ decrement address
+    \ scan to first non terminator character
+deflabel-here enclose1
+    xlower 1+,  \ increment address
+    xthird 1+,  \ increment count
+    xlower xfourth ld,
+    xtop xfourth cv eq, \ does it equal the terminator?
+    enclose1 ??, cv bc, \ if so keep looking
+    xthird xsp push,
+    zero xfourth cv neq, \ is it a null char?
+    enclose2 ??, cv bc, \ no? then branch
+    \ found null before first non-terminator char
+    xthird xtop move, \ copy the counter
+    1 #, xthird xlower addi, \ increment the count by 1
+    2push, \ get out of here
+enclose2 .label
+    \ found first text char, count the characters
+    xlower 1+,
+    xthird 1+, 
+    xlower xfourth ld,
+    xfourth xtop cv eq,
+    enclose4 ??, cv bc,
+    zero xfourth cv neq,
+    enclose2 ??, cv bc,
+enclose3 .label
+    xthird xtop move,
+    xthird xlower move,
+    2push,
+enclose4 .label
+    xthird xtop move,
+    xtop 1+,
+    xthird xlower move,
+    2push,
 : enclose; ( -- ) _enclose word, ;
 s" emit" machineword _emit 
 	/dev/console0 #, xlower set,
