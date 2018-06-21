@@ -79,8 +79,8 @@ opcode: #and
 opcode: #or 
 opcode: #not 
 opcode: #xor 
-opcode: #nand 
-opcode: #nor
+\ opcode: #nand 
+\ opcode: #nor
 opcode: #min
 opcode: #max
 opcode: #eq
@@ -108,8 +108,8 @@ opcode: #uand
 opcode: #uor
 opcode: #unot
 opcode: #uxor
-opcode: #unand
-opcode: #unor
+\ opcode: #unand
+\ opcode: #unor
 opcode: #umin
 opcode: #umax
 opcode: #uadd
@@ -316,8 +316,8 @@ drop
 #or inst-3reg or, 
 #not inst-2reg not, 
 #xor inst-3reg xor, 
-#nand inst-3reg nand, 
-#nor inst-3reg nor,
+\ #nand inst-3reg nand, 
+\ #nor inst-3reg nor,
 #min inst-3reg min,
 #max inst-3reg max,
 #eq inst-3reg eq,
@@ -377,8 +377,8 @@ if
 #uor inst-3reg uor,
 #unot inst-2reg unot,
 #uxor inst-3reg uxor,
-#unand inst-3reg unand,
-#unor inst-3reg unor,
+\ #unand inst-3reg unand,
+\ #unor inst-3reg unor,
 #umin inst-3reg umin,
 #umax inst-3reg umax,
 #uadd inst-3reg uadd,
@@ -469,8 +469,8 @@ def3argi uremi, urem,
 def3argi uandi, uand,
 def3argi uori, uor,
 def3argi uxori, uxor,
-def3argi unori, unor,
-def3argi unandi, unand,
+\ def3argi unori, unor,
+\ def3argi unandi, unand,
 def2argi unoti, unot,
 def3argi ueqi, ueq,
 def3argi uneqi, uneq, 
@@ -649,8 +649,8 @@ push, ;
 : andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
 : ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
 : xori, ( imm id src dest -- ) 2>r $->at0 at0 2r> xor, ;
-: nandi, ( imm id src dest -- ) 2>r $->at0 at0 2r> nand, ;
-: nori, ( imm id src dest -- ) 2>r $->at0 at0 2r> nor, ;
+\ : nandi, ( imm id src dest -- ) 2>r $->at0 at0 2r> nand, ;
+\ : nori, ( imm id src dest -- ) 2>r $->at0 at0 2r> nor, ;
 
 : eqz, ( value dest -- ) zero -rot eq, ;
 : neqz, ( value dest -- ) zero -rot neq, ;
@@ -662,8 +662,8 @@ push, ;
 ??def3i ??andi, andi, 
 ??def3i ??ori, ori, 
 ??def3i ??xori, xori, 
-??def3i ??nandi, nandi, 
-??def3i ??nori, nori, 
+\ ??def3i ??nandi, nandi, 
+\ ??def3i ??nori, nori, 
 : 1+, ( reg -- ) dup incr, ;
 : 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;

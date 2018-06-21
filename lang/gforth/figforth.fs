@@ -480,6 +480,7 @@ digit4 .label
     0xFFFF #, xsp pushi,
 	next,
 s" (find)" machineword _(find)
+    \ if we support variable length names then this will be updated at that point
     xsp pfind,
 	next,
 : (find); ( -- ) _(find) word, ;
@@ -1170,10 +1171,10 @@ s" >=" defbinaryop _>= ge,
 : >=; ( -- ) _>= word, ;
 s" <=" defbinaryop _<= le,
 : <=; ( -- ) _<= word, ;
-s" nand" defbinaryop _nand nand,
-: nand; ( -- ) _nand word, ;
-s" nor" defbinaryop _nor nor,
-: nor; ( -- ) _nor word, ;
+\ s" nand" defbinaryop _nand nand,
+\ : nand; ( -- ) _nand word, ;
+\ s" nor" defbinaryop _nor nor,
+\ : nor; ( -- ) _nor word, ;
 s" lshift" defbinaryop _lshift lshift,
 : lshift; ( -- ) _lshift word, ;
 s" rshift" defbinaryop _rshift rshift,
