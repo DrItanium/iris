@@ -29,7 +29,7 @@ ALL_OBJECTS = ${ARCH_OBJECTS} \
 			  ${ALL_BINARIES}
 
 
-all: options forth ${ALL_BINARIES}
+all: options ${ALL_BINARIES}
 
 docs: 
 	@echo "running doxygen"
@@ -56,19 +56,16 @@ options:
 	@echo CXX $<
 	@${CXX} ${CXXFLAGS} -c $< -o $@
 
-forth:
-	@cd misc/forth_interpreter/ && ${MAKE} 
-	@cp misc/forth_interpreter/forth .
 
-nuke: clean
-	@echo Nuking...
-	@rm -f forth
-	@cd misc/forth_interpreter/ && ${MAKE} clean
 
 clean:
 	@echo Cleaning...
 	@rm -f ${ALL_OBJECTS} 
 
-.PHONY: all options clean docs forth
+.PHONY: all options clean docs 
 
-include deps.make
+AssemblerStructures.o: AssemblerStructures.cc Assembler.h Problem.h \
+ AssemblerStructures.h Types.h Core.h Opcodes.def
+Core.o: Core.cc Core.h Types.h Problem.h Opcodes.def
+Linker.o: Linker.cc Types.h Core.h Problem.h Opcodes.def
+Simulator.o: Simulator.cc Core.h Types.h Problem.h Opcodes.def
