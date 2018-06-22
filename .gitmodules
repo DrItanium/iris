@@ -1,3 +1,0 @@
-[submodule "misc/forth_interpreter"]
-	path = misc/forth_interpreter
-	url = https://github.com/DrItanium/forth_interpreter.git
