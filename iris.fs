@@ -153,30 +153,36 @@ variable CurrentAssemblyFile
 : curasm@ ( -- file ) CurrentAssemblyFile @ ;
 : curasm! ( n -- ) CurrentAssemblyFile ! ;
 : <<linker ( entry id -- ) 
+  \ ." address: " hex loc@ . cr decimal
   hex
   dup >r
   nout
   s" " r> write-line throw decimal ;
 : clearasm ( -- ) 0 curasm! ;
 : <<inst ( inst id -- ) 
+  \ ." instruction "
   loc@ swap instruction-entry
   curasm@ <<linker 
   loc2+ \ each instruction is two entries
   ;
 : <<iinst ( inst id -- ) 
+  \ ." indirect instruction "
   loc@ swap indirect-instruction-entry
   curasm@ <<linker 
   loc2+ \ each instruction is two entries
   ;
 : <<mem ( value id -- )
+  \ ." memory value "
   >r
   loc@ swap memory-entry
   r> <<linker loc1+ ;
 : <<imem ( value id -- )
+  \ ." indirect memory value "
   >r
   loc@ swap indirect-memory-entry
   r> <<linker loc1+ ;
 : <<label ( index id -- ) 
+  \ ." label declaration "
   >r
   loc@ swap label-entry
   r> <<linker ;

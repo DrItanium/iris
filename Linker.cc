@@ -164,6 +164,8 @@ int main(int argc, char** argv) {
                     core.install(e.getAddress(), r->second, iris::Core::InstallToMemory());
                 } else {
 					std::cerr << "Not all labels are defined for the given indirect memory!" << std::endl;
+                    std::cerr << "Address: " << std::hex << e.getAddress() << std::endl;
+                    std::cerr << "Value: " << e.getValue() << std::endl;
 					return 1;
                 }
             } else {

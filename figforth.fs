@@ -1,4 +1,5 @@
 include iris.fs
+: x.scr ( -- ) hex .s decimal cr ;
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
@@ -28,7 +29,6 @@ return-stack-start constant input-buffer-start
 input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
-
 
 
 \ ascii characters used
@@ -63,7 +63,7 @@ sectors/track tracks/disk * constant sectors/disk
 sectors/track tracks/disk 2* * constant sectors/double-disk \ double density, double the number of tracks per disk
 0x80 constant words/disk-buffer 
 1 constant max-drive-count \ this could change in the future
-words/block words/sector constant sectors/block
+words/block words/sector * constant sectors/block
 1 constant num-buffers
 words/sector constant keyboard-buffer
 keyboard-buffer 4 + constant co
@@ -74,89 +74,113 @@ keyboard-buffer 4 + constant co
 : too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 deflabel _origin
 deflabel _error
-: error; ( -- ) _error word, ;
 deflabel forth_vocabulary_start
-deflabel base-dict-done
 deflabel _cold
-: cold; ( -- ) _cold word, ;
 deflabel _abort
-: abort; ( -- ) _abort word, ;
 deflabel _quit
-: quit; ( -- ) _quit word, ;
 deflabel _interpret
-: interpret; ( -- ) _interpret word, ;
 deflabel _message \ message routine
-: message; ( -- ) _message word, ;
-deflabel &up
-deflabel &porigin
 deflabel &S0 \ initial value of the data stack pointer
-: s0; ( -- ) &s0 word, ;
 deflabel &R0 \ initial value of the return stack pointer
-: r0; ( -- ) &r0 word, ;
 deflabel &TIB \ address of the terminal input buffer
-: tib; ( -- ) &tib word, ;
 deflabel &WARNING \ error message control number. If 1, disk is present, 
                   \ and screen 4 of drive 0 is the base location of error messages
                   \ if 0, no disk is present and error messages will be presented
                   \ by number. If -1, execute (ABORT) on error
-: warn; ( -- ) &WARNING word, ;
 deflabel &FENCE \ address below which FORGETting is trapped.
                 \ To forget below this point, the user must alter the contents
                 \ of FENCE
-: fence; ( -- ) &fence word, ;
 deflabel &DP \ The dictionary pointer which contains the next free memory
              \ above the dictionary. The value may be read by HERE and altered
              \ by ALLOT.
-: dp; ( -- ) &DP word, ;
 deflabel &VOC-LINK \ address of a field in the definition of the most recently created
                    \ created vocabulary. All vocabulary names are linked by
                    \ these fields to allow control for FORGETting through multiple
                    \ vocabularies
-: voc-link; ( -- ) &voc-link word, ;
 deflabel &BLK \ current block number under interpretation. If 0, input is
               \ being taken from the terminal input buffer
-: blk; ( -- ) &blk word, ;
 deflabel &IN  \ Byte offset within the current input text buffer (terminal or
               \ disk) from which the next text will be accepted. WORD uses and
               \ move the value of IN
-: inn; ( -- ) &IN word, ;
 deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
               \ The user may yalter and examine OUT to control output display formatting.
-: out; ( -- ) &OUT word, ;
 deflabel &SCR      \ Screen number most recently referenced by LIST
-: scr; ( -- ) &scr word, ;
 deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
-: offset; ( -- ) &offset word, ;
 deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
                    \ will first begin
-: context; ( -- ) &context word, ;
 deflabel &CURRENT  \ Pointer to the vocabulary in which new definitions are to be added
-: current; ( -- ) &current word, ;
 deflabel &STATE    \ If 0, the system is in interpretive or executing state. If non-zero, the system is in compiling state. The value itself is implementation
                    \ dependent. So in this case it would be 0 is interpretive and 0xFFFF is compiling
-: state; ( -- ) &state word, ;
 deflabel &DPL      \ number of digits to the right of the decimal point on double integer input. It may also be used to hold output column
                    \ location of a decimal point in user generated formatting. The default value on single number input is -1
-: dpl; ( -- ) &dpl word, ;
 deflabel &FLD      \ field width for formatted number output
-: fld; ( -- ) &fld word, ;
 deflabel &CSP      \ temporarily stored data stack pointer for compilation error checking
-: csp; ( -- ) &csp word, ;
 deflabel &R#       \ location of editor cursor in a text screen
-: r#; ( -- ) &r# word, ;
 deflabel &HLD      \ address of the latest character of text during numeric output conversion
-: hld; ( -- ) &hld word, ;
 deflabel &SEPARATOR \ word separator contents
-: separator; ( -- ) &separator word, ;
 deflabel &TERMINATOR \ terminator index
-: terminator; ( -- ) &terminator word, ;
 deflabel &BASE       \ numeric base
-: base; ( -- ) &base word, ;
 deflabel &width 	\ width of some kind
-: width; ( -- ) &width word, ;
 deflabel _eprint
 deflabel _up \ user pointer
 deflabel _rpp \ return stack pointer
+deflabel _(;code)
+deflabel _docolon
+deflabel _?exec
+deflabel _?csp
+deflabel _!csp
+deflabel _&current
+deflabel _&context
+deflabel _create
+deflabel _leftbracket
+deflabel _rightbracket
+deflabel _compile
+deflabel _smudge
+deflabel _doconstant
+deflabel _douser
+deflabel _dovariable
+deflabel _,
+: dp; ( -- ) &DP word, ;
+: voc-link; ( -- ) &voc-link word, ;
+: blk; ( -- ) &blk word, ;
+: inn; ( -- ) &IN word, ;
+: out; ( -- ) &OUT word, ;
+: scr; ( -- ) &scr word, ;
+: offset; ( -- ) &offset word, ;
+: context; ( -- ) &context word, ;
+: current; ( -- ) &current word, ;
+: error; ( -- ) _error word, ;
+: cold; ( -- ) _cold word, ;
+: abort; ( -- ) _abort word, ;
+: quit; ( -- ) _quit word, ;
+: interpret; ( -- ) _interpret word, ;
+: message; ( -- ) _message word, ;
+: s0; ( -- ) &s0 word, ;
+: r0; ( -- ) &r0 word, ;
+: tib; ( -- ) &tib word, ;
+: warn; ( -- ) &WARNING word, ;
+: fence; ( -- ) &fence word, ;
+: state; ( -- ) &state word, ;
+: dpl; ( -- ) &dpl word, ;
+: fld; ( -- ) &fld word, ;
+: csp; ( -- ) &csp word, ;
+: r#; ( -- ) &r# word, ;
+: hld; ( -- ) &hld word, ;
+: separator; ( -- ) &separator word, ;
+: terminator; ( -- ) &terminator word, ;
+: base; ( -- ) &base word, ;
+: width; ( -- ) &width word, ;
+: (;code); ( -- ) _(;code) word, ;
+: ?exec; ( -- ) _?exec word, ;
+: ?csp; ( -- ) _?csp word, ;
+: !csp; ( -- ) _!csp word, ;
+: create; ( -- ) _create word, ;
+: leftbracket; ( -- ) _leftbracket word, ;
+: rightbracket; ( -- ) _rightbracket word, ;
+: compile; ( -- ) _compile word, ;
+: smudge; ( -- ) _smudge word, ;
+: dovariable; ( -- ) _dovariable word, ;
+: ,; ( -- ) _, word, ;
 unused-start 
 \ constants
 \ user variables
@@ -171,6 +195,7 @@ unused-start
 1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
+1+cconstant xtmp \ temporary used only by _next
 too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
@@ -191,14 +216,14 @@ deflabel-here _1push xtop xsp push,
 deflabel-here _next
     xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
-    xw at0 ldtincr, \ load the contents of xw into at0 and then increment xw
+    xw xtmp ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
-    at0 br,         \ jump to the address found at that point
+    xtmp inspect-register,
+    xtmp br,         \ jump to the address found at that point
 : .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
 : 2push, ( -- ) _2push ??, b, ;
-: x.scr ( -- ) hex .s decimal cr ;
 : machine-code-execute ( -- ) loc@ 1+ constant, ;
 : .string, ( addr len -- ) 
     dup constant, \ embed the length as well
@@ -213,26 +238,25 @@ deflabel-here _next
   dup constant, \ embed length into its own storage
   swap @ swap \ make sure we load the front string address
   case 
-  	1 of dup dup dup 
-         0xFF and constant,
-         .skip .skip .skip endof
-    2 of dup dup dup 
+  	1 of 0xFF and constant, .skip .skip .skip endof
+    2 of dup 
          0xFF and constant,
          0xFF00 and 8 rshift constant,
-         .skip
-         .skip endof
-	3 of dup dup dup
+         .skip .skip endof
+	3 of dup dup 
          0xFF and constant,
          0xFF00 and 8 rshift constant,
          0xFF0000 and 16 rshift constant,
-         .skip endof
+         .skip 
+         endof
 	swap \ the length must be consumed by endcase :(
-	dup dup dup
+	dup dup dup 
     0xFF and constant,
     0xFF00 and 8 rshift constant, 
     0xFF0000 and 16 rshift constant,
     0xFF000000 and 24 rshift constant,
-   endcase ;
+   endcase 
+   ;
 : embed-name ( str length -- ) 
   \ abstraction because I'm indecisive
   fixed-embed-name ;
@@ -256,49 +280,33 @@ word/imm word/smudge or constant word/all
 \ 6: next 
 \ 7: address (interpreter routine) 
 \ 8-n: body 
+: print-current-word ( str len -- str len )
+  2dup ." current-word: " type cr ;
 : defword-header ( str length control-bits "name" -- )
   loc@ >r \ stash a copy of the current location here!
   \ a shim to make next and docol unaware of encoding layout
   \ it does slow things down but it can't be helped at this point
   \ another revision will fix this but now I don't care
   constant, \ stash the control bits here
+  \ print-current-word
   embed-name \ stash three more bytes
   last-word @ constant, \ stash the previous word here
   r> last-word ! \ stash the top of this dictionary entry to last word
+  \ ." end of entry: " loc@ hex . decimal cr
   ;
-: defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
+: defword-base ( str length control-bits "name" -- ) 
+defword-header 
+deflabel-here 
+( then define the label to point at here ) 
+;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
-: machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
+: machineword-base ( str length control-bits "name" -- ) 
+  defword-base 
+  machine-code-execute 
+  ;
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-deflabel _(;code)
-deflabel _docolon
-deflabel _?exec
-deflabel _?csp
-deflabel _!csp
-deflabel _&current
-deflabel _&context
-deflabel _create
-deflabel _leftbracket
-deflabel _rightbracket
-deflabel _compile
-deflabel _smudge
-deflabel _doconstant
-deflabel _douser
-deflabel _dovariable
-deflabel _,
-: (;code); ( -- ) _(;code) word, ;
-: ?exec; ( -- ) _?exec word, ;
-: ?csp; ( -- ) _?csp word, ;
-: !csp; ( -- ) _!csp word, ;
-: create; ( -- ) _create word, ;
-: leftbracket; ( -- ) _leftbracket word, ;
-: rightbracket; ( -- ) _rightbracket word, ;
-: compile; ( -- ) _compile word, ;
-: smudge; ( -- ) _smudge word, ;
-: dovariable; ( -- ) _dovariable word, ;
-: ,; ( -- ) _, word, ;
 : embed-docolon ( -- ) _docolon ??, .cell ;
 : colonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : colonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
@@ -346,11 +354,11 @@ s" lit" machineword _lit
 : #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
 s" execute" machineword _execute
-: execute; ( -- ) _execute word, ;
 	\ execute the definition whose code field address cfa is on the data stack
     xsp xw pop, \ pop the code field address into xw, the word pointer
     xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
     at0 br, 
+: execute; ( -- ) _execute word, ;
 s" branch" machineword _branch
 	xip xtop ld,
 	xtop xip xip add,
@@ -448,12 +456,12 @@ deflabel digit4
     2pop, \ top - numeric base 
           \ lower - number itself
     0xFF #, xlower xlower andi, \ get the lower half of the number as all words are 16-bit
-    0x30 #, xlower cv ge,
+    0x30 #, xlower cv gei,
     digit1 ??, cv bc,
     zero xsp push,
     next,
 digit1 .label
-    0x30 #, xlower cv neq, \ at this point it is just greater if this returns true
+    0x30 #, xlower cv neqi, \ at this point it is just greater if this returns true
     digit2 ??, cv bc, \ goto that place 
     \ since they are equal just push zero onto the stack
     zero xsp push,
@@ -461,11 +469,11 @@ digit1 .label
     next,
 digit2 .label
     0x30 #, xlower xlower subi, \ lower - '0'
-    0x9 #, xlower cv le, 
+    0x9 #, xlower cv lei, 
     digit3 ??, cv bc,
     \ lower > 0x9
     0x7 #, xlower xlower subi,
-    0xa #, xlower cv ge,
+    0xa #, xlower cv gei,
     digit3 ??, cv bc,
     \ lower < 0xa
     zero xsp push,
@@ -837,7 +845,7 @@ _douser .label
     xw xtop move,
     xtop xtop ld,
     0xFF #, xtop xtop andi,
-    &up ??, xlower set, \ user variable addr
+    _up ??, xlower set, \ user variable addr
     xlower xtop xtop add, \ address of variable
     1push,
 s" 0" defconstantword _0 0x0 constant, 
@@ -1109,8 +1117,11 @@ _type2 .label
     c@;
     emit;
     _type2 ??(loop); \ loop
+ 
     _type3 ??branch; \ else
+_type1 .label
     drop; \ endif
+_type3 .label
     ;;s
 s" -trailing" colonword _dtrailing
     dup;
@@ -1729,13 +1740,6 @@ _cld .label
     \ setup the data and return stacks
     data-stack-start #, xsp set,
     return-stack-start #, xrp set,
-	zero xcoreid move, \ set to the zeroth core by default
-	/dev/core-load #, xtop set,
-	xcoreid xtop st, \ setup the zeroth core
-	\ base-dict-done ??, &fence ??, assign-variable,   				\ setup the fence
-	\ base-dict-done ??, &dp ??, assign-variable,      				\ setup the dictionary pointer
-	\ 0x10 #, &base ??, assign-variable,              \ setup the numeric base
-    \ setup the core load routines
     next,
 _cld1 .label
     cold;
@@ -2336,16 +2340,15 @@ s" task" colonword _task
 ram-start .org
 _origin .label
 nop,
-_cold ??, b,
+_cld ??, b,
 nop,
-_warm ??, b,
+_wrm ??, b,
 \ todo put data to install about version data
 \ todo put cold word variables here
 _up .label  \ where the user pointer data is located
 system-variables-start constant, 
 _rpp .label
 system-variables-start constant,
-
 asm}
 
 bye
