@@ -218,7 +218,7 @@ deflabel-here _next
     xip 1+, \ Increment xip, pointing to the second word in execution sequence.
     xw xtmp ldtincr, \ load the contents of xw into at0 and then increment xw
                     \ this will make xw point to the parameter field of the word
-    xtmp inspect-register,
+    xtmp inspect-register
     xtmp br,         \ jump to the address found at that point
 : .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
@@ -803,7 +803,7 @@ s" :" word/imm machineword-base _colon
 _docolon .label
     xw 1+,
 	\ runtime routine for all colon definitions
-    xip xrp push,  \ push the address of the next word to the return stack and enter a lower nesting level
+    xip xrp psh-> \ push the address of the next word to the return stack and enter a lower nesting level
     xw xip -> \ move the parameter field address into IP, pointing to the first word in this definition
     next,
 s" ;" colonword _semi
