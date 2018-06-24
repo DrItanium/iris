@@ -75,6 +75,8 @@ keyboard-buffer 4 + constant co
 deflabel _origin
 deflabel _error
 deflabel forth_vocabulary_start
+deflabel _cld
+deflabel _wrm
 deflabel _cold
 deflabel _abort
 deflabel _quit
@@ -210,16 +212,28 @@ too-many-vars-defined
 variable last-word
 0 last-word !
 \ program start
-0x1000 .org \ dictionary starts at 0x1000
+ram-start .org
+_origin .label
+nop,
+_cld ??, b,
+nop,
+_wrm ??, b,
+\ todo put data to install about version data
+\ todo put cold word variables here
+_up .label  \ where the user pointer data is located
+system-variables-start constant, 
+_rpp .label
+system-variables-start constant,
 deflabel-here _2push xlower xsp push,
 deflabel-here _1push xtop xsp push,
 deflabel-here _next
-    xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
-    xip 1+, \ Increment xip, pointing to the second word in execution sequence.
-    xw xtmp ldtincr, \ load the contents of xw into at0 and then increment xw
-                    \ this will make xw point to the parameter field of the word
-    xtmp inspect-register
-    xtmp br,         \ jump to the address found at that point
+	xip xtmp ld, \ load the contents of xip into xtmp
+	xip 1+,		 \ advance xip by one
+deflabel-here _next1
+    xtmp xw -> \ move the contents of xtmp (which points to the next word to be executed, into xw .
+    xw 1+,   \ Increment xw by one, pointing to the second word in execution sequence.
+	xtmp xtmp ld, \ load the actual interpreter routine start
+    xtmp br, \ jump to the address found at that point
 : .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
@@ -1712,7 +1726,6 @@ _abort s" abort" colonword-predef
     quit;
 deflabel _empty-bufs
 : empty-buffers; ( -- ) _empty-bufs word, ;
-deflabel _wrm
 deflabel _wrm1
 deflabel _warm
 \ warm start vector comes here
@@ -1733,7 +1746,6 @@ deflabel _prev_use
 : prev; ( -- ) _prev_use word, ;
 deflabel _dr0
 : dr0; ( -- ) _dr0 word, ;
-deflabel _cld
 deflabel _cld1
 _cld .label
     _cld1 ??, xip set,
@@ -2337,18 +2349,6 @@ s" task" colonword _task
 : task; ( -- ) _task word, ;
     \ todo implement
     ;;s
-ram-start .org
-_origin .label
-nop,
-_cld ??, b,
-nop,
-_wrm ??, b,
-\ todo put data to install about version data
-\ todo put cold word variables here
-_up .label  \ where the user pointer data is located
-system-variables-start constant, 
-_rpp .label
-system-variables-start constant,
 asm}
 
 bye
