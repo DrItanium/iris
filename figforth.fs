@@ -222,7 +222,8 @@ deflabel-here _next
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
 : 2push, ( -- ) _2push ??, b, ;
-: machine-code-execute ( -- ) loc@ 1+ constant, ;
+\ : machine-code-execute ( -- ) loc@ 1+ constant, ;
+: machine-code-execute ( -- ) ( do nothing ) ;
 : .string, ( addr len -- ) 
     dup constant, \ embed the length as well
     0 \ go from 0 to length
@@ -305,12 +306,13 @@ deflabel-here
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-: embed-docolon ( -- ) _docolon ??, .cell ;
+\ : embed-docolon ( -- ) _docolon ??, .cell ;
+: embed-docolon ( -- ) ( do nothing ) ;
 : colonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
 : colonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
 : colonword ( str length "name"  -- ) word/none colonword-base ;
 : colonword-predef ( label str length -- ) word/none colonword-base-predef ;
-: embed-doconstant ( -- ) _doconstant ??, .cell ;
+: embed-doconstant ( -- ) _doconstant ??, xrp bl, ;
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
 : embed-douser ( -- ) _douser ??, .cell ;
@@ -614,7 +616,6 @@ s" rp!" machineword _rp!
     next,
 s" ;s" machineword _;s
 	\ return execution to the calling definition. Unnest one level.
-    xrp xip pop, \ pop the return stack into xip, pointing now to the next word to be executed in the calling definition
     next,
 : ;;s ( -- )
   \ embed the semicolons routine
@@ -818,18 +819,22 @@ s" constant" colonword _constant
     ,;
     (;code);
 _doconstant .label
-    xw 1+,
-    xw xtop move,
-    xtop xtop ld, \ get data
+    xrp xlower ld,
+    xlower 1+,
+    xlower xtop ld,
+    xlower 1+,
+    xlower xrp st,
     1push,
 s" variable" colonword _variable
 : variable; ( -- ) _variable word, ;
     constant;
     (;code);
-    _dovariable .label
-        xw 1+, 
-        xw xsp push, 
-        next,
+_dovariable .label
+    xrp xlower ld,
+    0x1 #, xlower xtop addi,
+    0x2 #, xlower xlower addi,
+    xlower xrp st,
+    1push,
 s" user" colonword _user
 : user; ( -- ) _user word, ;
     constant;
