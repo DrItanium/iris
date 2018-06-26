@@ -5,7 +5,8 @@ include iris.fs
 s" figforth.o" {asm
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
-: word, ( v -- ) ??, .cell ;
+: word, ( v -- ) ??, xrp call, ;
+\ : word, ( v -- ) ??, .cell ;
 : constant, ( id -- ) #, .cell ;
 0xFFFF constant ram-end
 0xFF00 constant io-start

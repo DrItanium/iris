@@ -138,6 +138,7 @@ opcode: #addw
 opcode: #subw
 opcode: #pushw
 opcode: #popw
+opcode: #return
 opcode}
 \ registers
 set-current \ go back
@@ -716,3 +717,4 @@ push, ;
 #subw inst-3reg subw,
 #pushw inst-2reg pushw,
 #popw inst-2reg popw,
+#return inst-1reg ret,

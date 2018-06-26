@@ -448,6 +448,10 @@ namespace iris {
         setDestination(op, lower);
         setRegister(op._args.dest + 1, upper);
     }
+    DefExec(Return) {
+        // the destination is the return stack pointer to extract from
+        _pc = this->pop(op._args.dest).address;
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
