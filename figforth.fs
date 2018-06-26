@@ -389,12 +389,50 @@ s" @" machineword _at
     1pop,
     xtop xtop ld,
 	1push,
-s" c!" machineword _c!  ( value addr -- ) 
+s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
 		 \ lower - value
     0xFF #, xlower xlower andi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
     next,
+s" c@" machineword _cat
+	1pop, 
+	xtop xtop ld,
+	0xFF #, xtop xtop andi,
+	1push,
+s" rp@" machineword _rpat
+    \ push xrp onto xsp
+    xrp xsp push,
+    next,
+s" rp!" machineword _rpstore
+    \ set the return stack pointer.
+    ( a -- )
+    1pop, \ top - new stack pointer
+    xtop xrp move, 
+    next,
+: rp!; ( -- ) _rpstore word, ;
+s" r>" machineword _rfrm \ retrieve item from top of return stack
+    xrp xtop pop,
+	1push,
+s" r@" machineword _rat \ copy top of return stack onto stack
+	xrp xtop ld,
+	1push,
+s" >r" machineword _>r 
+    \ push the data stack to the return stack
+    ( w -- )
+    1pop, 
+    xtop xrp push,
+    next,
+s" sp@" machineword _spat
+    xsp xsp push,
+    next,
+s" sp!" machineword _spstore ( a -- )
+    \ set the data stack pointer
+    1pop,
+    xtop xsp move,
+    next,
+: sp@; ( -- ) _spat word, ;
+: sp!; ( -- ) _spstore word, ;
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
@@ -615,26 +653,6 @@ s" or"  defbinaryop _or or,
 s" xor" defbinaryop _xor xor,
 : xor; ( -- ) _xor word, ;
 
-s" sp@" machineword _sp@
-: sp@; ( -- ) _sp@ word, ;
-    xsp xsp push,
-    next,
-s" sp!" machineword _sp!
-: sp!; ( -- ) _sp! word, ;
-    \ initialize the stack pointer from S0
-    &S0 ??, xtaddr set,
-    xtaddr xsp ld,
-    next,
-s" rp@" machineword _rp@
-    \ push xrp onto xsp
-    xrp xsp push,
-    next,
-s" rp!" machineword _rp!
-: rp!; ( -- ) _rp! word, ;
-    \ initialize the stack pointer from R0
-    &R0 ??, xtaddr set,
-    xtaddr xrp ld,
-    next,
 s" ;s" machineword _;s
 	\ return execution to the calling definition. Unnest one level.
     next,
@@ -651,19 +669,9 @@ s" leave" machineword _leave
 	xtop xrp push,
 	xtop xrp push, 
 	next,
-s" >r" machineword _>r \ move top item to return stack
-    1pop, 
-    xtop xrp push,
-    next,
 : >r; ( -- ) _>r word, ;
-s" r>" machineword _r> \ retrieve item from top of return stack
-    xrp xtop pop,
-	1push,
-: r>; ( -- ) _r> word, ;
-s" r" machineword _r \ copy top of return stack onto stack
-	xrp xtop ld,
-	1push,
-: r; ( -- ) _r word, ;
+: r>; ( -- ) _rfrm word, ;
+: r@; ( -- ) _rat word, ;
 : 0=, ( -- ) 
   1pop,
   xtop xtop eqz,
@@ -769,12 +777,7 @@ s" toggle" machineword _toggle ( p addr -- )
 	next,
 : toggle; ( -- ) _toggle word, ;
 : @; ( -- ) _at word, ;
-s" c@" machineword _c@
-: c@; ( -- ) _c@ word, ;
-	1pop, 
-	xtop xtop ld,
-	0xFF #, xtop xtop andi,
-	1push,
+: c@; ( -- ) _cat word, ;
 s" 2@" machineword _2@ 
    1pop,
    xtop xlower ld, \ lower word
@@ -783,7 +786,7 @@ s" 2@" machineword _2@
    2push,
 : 2@; ( -- ) _2@ word, ;
 : !; ( -- ) _store word, ;
-: c!; ( -- ) _c! word, ;
+: c!; ( -- ) _cstore word, ;
 s" 2!" machineword _2! 
     3pop, \ top addr
           \ lower data high
