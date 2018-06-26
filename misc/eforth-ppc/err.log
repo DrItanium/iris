@@ -1,0 +1,2850 @@
+EFPPC.S 77: export .eforth
+EFPPC.S 77: ^-
+EFPPC.S 77: error #13: syntax error
+EFPPC.S 78: export .keyTest1
+EFPPC.S 78: ^-
+EFPPC.S 78: error #13: syntax error
+EFPPC.S 79: export .keyTest2
+EFPPC.S 79: ^-
+EFPPC.S 79: error #13: syntax error
+EFPPC.S 80: export .debug
+EFPPC.S 80: ^-
+EFPPC.S 80: error #13: syntax error
+EFPPC.S 82: import .fread
+EFPPC.S 82: ^-
+EFPPC.S 82: error #13: syntax error
+EFPPC.S 83: import .fwrite
+EFPPC.S 83: ^-
+EFPPC.S 83: error #13: syntax error
+EFPPC.S 84: import _iob
+EFPPC.S 84: ^-
+EFPPC.S 84: error #13: syntax error
+EFPPC.S 86: STRING ASIS
+EFPPC.S 86: ^-
+EFPPC.S 86: error #13: syntax error
+EFPPC.S 87: ALIGN 2
+EFPPC.S 87: ^-
+EFPPC.S 87: error #13: syntax error
+EFPPC.S 89: csect ppcforth
+EFPPC.S 89: ^-
+EFPPC.S 89: error #13: syntax error
+EFPPC.S 95: rTOS:equ r31
+EFPPC.S 95: -----^-
+EFPPC.S 95: error #13: syntax error
+EFPPC.S 96: rNOS:equ r30
+EFPPC.S 96: -----^-
+EFPPC.S 96: error #13: syntax error
+EFPPC.S 97: rDP:equ r29
+EFPPC.S 97: ----^-
+EFPPC.S 97: error #13: syntax error
+EFPPC.S 98: rLR:equ r28
+EFPPC.S 98: ----^-
+EFPPC.S 98: error #13: syntax error
+EFPPC.S 99: rTOR:equ r27
+EFPPC.S 99: -----^-
+EFPPC.S 99: error #13: syntax error
+EFPPC.S 100: rRP:equ r26
+EFPPC.S 100: ----^-
+EFPPC.S 100: error #13: syntax error
+EFPPC.S 101: rBase:equ r25
+EFPPC.S 101: ------^-
+EFPPC.S 101: error #13: syntax error
+EFPPC.S 102: rUP:equ r24
+EFPPC.S 102: ----^-
+EFPPC.S 102: error #13: syntax error
+EFPPC.S 104: t1:equ r23
+EFPPC.S 104: ---^-
+EFPPC.S 104: error #13: syntax error
+EFPPC.S 105: t2:equ r22
+EFPPC.S 105: ---^-
+EFPPC.S 105: error #13: syntax error
+EFPPC.S 110: VER EQU 1
+EFPPC.S 110: ^-
+EFPPC.S 110: error #13: syntax error
+EFPPC.S 111: EXT EQU 2
+EFPPC.S 111: ^-
+EFPPC.S 111: error #13: syntax error
+EFPPC.S 115: COMPO EQU 64
+EFPPC.S 115: ^-
+EFPPC.S 115: error #13: syntax error
+EFPPC.S 116: IMEDD EQU 128
+EFPPC.S 116: ^-
+EFPPC.S 116: error #13: syntax error
+EFPPC.S 117: MASKK EQU 528449407
+EFPPC.S 117: ^-
+EFPPC.S 117: error #13: syntax error
+EFPPC.S 119: CELLL EQU 4
+EFPPC.S 119: ^-
+EFPPC.S 119: error #13: syntax error
+EFPPC.S 120: BASEE EQU 10
+EFPPC.S 120: ^-
+EFPPC.S 120: error #13: syntax error
+EFPPC.S 121: VOCSS EQU 8
+EFPPC.S 121: ^-
+EFPPC.S 121: error #13: syntax error
+EFPPC.S 123: BKSPP EQU 8
+EFPPC.S 123: ^-
+EFPPC.S 123: error #13: syntax error
+EFPPC.S 124: LF EQU 10
+EFPPC.S 124: ^-
+EFPPC.S 124: error #13: syntax error
+EFPPC.S 125: CRR EQU 13
+EFPPC.S 125: ^-
+EFPPC.S 125: error #13: syntax error
+EFPPC.S 126: ERR EQU 27
+EFPPC.S 126: ^-
+EFPPC.S 126: error #13: syntax error
+EFPPC.S 127: TIC EQU 39
+EFPPC.S 127: ^-
+EFPPC.S 127: error #13: syntax error
+EFPPC.S 131: EM EQU? (0x00000000 00008000)
+EFPPC.S 131: ^-
+EFPPC.S 131: error #13: syntax error
+EFPPC.S 132: COLDD EQU 0
+EFPPC.S 132: ^-
+EFPPC.S 132: error #13: syntax error
+EFPPC.S 134: US EQU 64*CELLL
+EFPPC.S 134: ^-
+EFPPC.S 134: error #13: syntax error
+EFPPC.S 135: RTS EQU 64*CELLL
+EFPPC.S 135: ^-
+EFPPC.S 135: error #13: syntax error
+EFPPC.S 137: TIBB EQU? (0x00000000 00004000)
+EFPPC.S 137: ^-
+EFPPC.S 137: error #13: syntax error
+EFPPC.S 138: RPP EQU? (0x00000000 00000100)
+EFPPC.S 138: ^-
+EFPPC.S 138: error #13: syntax error
+EFPPC.S 139: SPP EQU? (0x00000000 00000170)
+EFPPC.S 139: ^-
+EFPPC.S 139: error #13: syntax error
+EFPPC.S 140: UPP EQU? (0x00000000 00003d00)
+EFPPC.S 140: ^-
+EFPPC.S 140: error #13: syntax error
+EFPPC.S 141: NAMEE EQU UPP-8*CELLL
+EFPPC.S 141: ^-
+EFPPC.S 141: error #13: syntax error
+EFPPC.S 142: CODEE EQU? (0x00000000 00000180)
+EFPPC.S 142: ^-
+EFPPC.S 142: error #13: syntax error
+EFPPC.S 146: _LINK set 0
+EFPPC.S 146: ^-
+EFPPC.S 146: error #13: syntax error
+EFPPC.S 147: _NAME set NAMEE
+EFPPC.S 147: ^-
+EFPPC.S 147: error #13: syntax error
+EFPPC.S 148: _CODE set CODEE
+EFPPC.S 148: ^-
+EFPPC.S 148: error #13: syntax error
+EFPPC.S 149: _USER set 4*CELLL
+EFPPC.S 149: ^-
+EFPPC.S 149: error #13: syntax error
+EFPPC.S 153: macro
+EFPPC.S 153: ^-
+EFPPC.S 153: error #13: syntax error
+EFPPC.S 154: li32&rA,&val
+EFPPC.S 154: ^-
+EFPPC.S 154: error #13: syntax error
+EFPPC.S 155: lis&rA,(((&val)&$FFFF0000)>>16)
+EFPPC.S 155: ---^-
+EFPPC.S 155: error #13: syntax error
+EFPPC.S 156: ori&rA,&rA,((&val)&$0000FFFF)
+EFPPC.S 156: ---^-
+EFPPC.S 156: error #13: syntax error
+EFPPC.S 157: endm
+EFPPC.S 157: ^-
+EFPPC.S 157: error #13: syntax error
+EFPPC.S 159: macro
+EFPPC.S 159: ^-
+EFPPC.S 159: error #13: syntax error
+EFPPC.S 160: put&stack,&x,&reg
+EFPPC.S 160: ^-
+EFPPC.S 160: error #13: syntax error
+EFPPC.S 161: stw&reg,(4*(&x))(&stack)
+EFPPC.S 161: ---^-
+EFPPC.S 161: error #13: syntax error
+EFPPC.S 162: endm
+EFPPC.S 162: ^-
+EFPPC.S 162: error #13: syntax error
+EFPPC.S 164: macro
+EFPPC.S 164: ^-
+EFPPC.S 164: error #13: syntax error
+EFPPC.S 165: get&stack,&x,&reg
+EFPPC.S 165: ^-
+EFPPC.S 165: error #13: syntax error
+EFPPC.S 166: lwz&reg,(4*(&x))(&stack)
+EFPPC.S 166: ---^-
+EFPPC.S 166: error #13: syntax error
+EFPPC.S 167: endm
+EFPPC.S 167: ^-
+EFPPC.S 167: error #13: syntax error
+EFPPC.S 169: macro
+EFPPC.S 169: ^-
+EFPPC.S 169: error #13: syntax error
+EFPPC.S 170: push&stack,&reg
+EFPPC.S 170: ^-
+EFPPC.S 170: error #13: syntax error
+EFPPC.S 171: stwu&reg,-4(&stack)
+EFPPC.S 171: ----^-
+EFPPC.S 171: error #13: syntax error
+EFPPC.S 172: endm
+EFPPC.S 172: ^-
+EFPPC.S 172: error #13: syntax error
+EFPPC.S 174: macro
+EFPPC.S 174: ^-
+EFPPC.S 174: error #13: syntax error
+EFPPC.S 175: pop&stack,&reg
+EFPPC.S 175: ^-
+EFPPC.S 175: error #13: syntax error
+EFPPC.S 176: lwz&reg,0(&stack)
+EFPPC.S 176: ---^-
+EFPPC.S 176: error #13: syntax error
+EFPPC.S 177: addi&stack,&stack,4
+EFPPC.S 177: ----^-
+EFPPC.S 177: error #13: syntax error
+EFPPC.S 178: endm
+EFPPC.S 178: ^-
+EFPPC.S 178: error #13: syntax error
+EFPPC.S 180: macro
+EFPPC.S 180: ^-
+EFPPC.S 180: error #13: syntax error
+EFPPC.S 181: pushi&stack,&immed
+EFPPC.S 181: ^-
+EFPPC.S 181: error #13: syntax error
+EFPPC.S 182: li32 TOS,&immed
+EFPPC.S 182: ^-
+EFPPC.S 182: error #13: syntax error
+EFPPC.S 183: stwu TOS,-4(&stack)
+EFPPC.S 183: ------------^-
+EFPPC.S 183: error #13: syntax error
+EFPPC.S 184: endm
+EFPPC.S 184: ^-
+EFPPC.S 184: error #13: syntax error
+EFPPC.S 186: macro
+EFPPC.S 186: ^-
+EFPPC.S 186: error #13: syntax error
+EFPPC.S 187: prologue
+EFPPC.S 187: ^-
+EFPPC.S 187: error #13: syntax error
+EFPPC.S 190: stw rTOS,-4(sp)
+EFPPC.S 190: ----^-
+EFPPC.S 190: error #23: expected register
+EFPPC.S 191: stw rNOS,-8(sp)
+EFPPC.S 191: ----^-
+EFPPC.S 191: error #23: expected register
+EFPPC.S 192: stw rDP,-12(sp)
+EFPPC.S 192: ----^-
+EFPPC.S 192: error #23: expected register
+EFPPC.S 193: stw rLR,-16(sp)
+EFPPC.S 193: ----^-
+EFPPC.S 193: error #23: expected register
+EFPPC.S 194: stw rTOR,-20(sp)
+EFPPC.S 194: ----^-
+EFPPC.S 194: error #23: expected register
+EFPPC.S 195: stw rRP,-24(sp)
+EFPPC.S 195: ----^-
+EFPPC.S 195: error #23: expected register
+EFPPC.S 196: stw rBase,-28(sp)
+EFPPC.S 196: ----^-
+EFPPC.S 196: error #23: expected register
+EFPPC.S 197: stw rUP,-32(sp)
+EFPPC.S 197: ----^-
+EFPPC.S 197: error #23: expected register
+EFPPC.S 199: endm
+EFPPC.S 199: ^-
+EFPPC.S 199: error #13: syntax error
+EFPPC.S 201: macro
+EFPPC.S 201: ^-
+EFPPC.S 201: error #13: syntax error
+EFPPC.S 202: epilogue
+EFPPC.S 202: ^-
+EFPPC.S 202: error #13: syntax error
+EFPPC.S 205: lwz rTOS,-4(sp)
+EFPPC.S 205: ----^-
+EFPPC.S 205: error #23: expected register
+EFPPC.S 206: lwz rNOS,-8(sp)
+EFPPC.S 206: ----^-
+EFPPC.S 206: error #23: expected register
+EFPPC.S 207: lwz rDP,-12(sp)
+EFPPC.S 207: ----^-
+EFPPC.S 207: error #23: expected register
+EFPPC.S 208: lwz rLR,-16(sp)
+EFPPC.S 208: ----^-
+EFPPC.S 208: error #23: expected register
+EFPPC.S 209: lwz rTOR,-20(sp)
+EFPPC.S 209: ----^-
+EFPPC.S 209: error #23: expected register
+EFPPC.S 210: lwz rRP,-24(sp)
+EFPPC.S 210: ----^-
+EFPPC.S 210: error #23: expected register
+EFPPC.S 211: lwz rBase,-28(sp)
+EFPPC.S 211: ----^-
+EFPPC.S 211: error #23: expected register
+EFPPC.S 212: lwz rUP,-32(sp)
+EFPPC.S 212: ----^-
+EFPPC.S 212: error #23: expected register
+EFPPC.S 214: endm
+EFPPC.S 214: ^-
+EFPPC.S 214: error #13: syntax error
+EFPPC.S 218: MACRO
+EFPPC.S 218: ^-
+EFPPC.S 218: error #13: syntax error
+EFPPC.S 219: .align
+EFPPC.S 219: ^-
+EFPPC.S 219: error #13: syntax error
+EFPPC.S 220: ALIGN 2
+EFPPC.S 220: ^-
+EFPPC.S 220: error #13: syntax error
+EFPPC.S 221: ENDM
+EFPPC.S 221: ^-
+EFPPC.S 221: error #13: syntax error
+EFPPC.S 225: MACRO
+EFPPC.S 225: ^-
+EFPPC.S 225: error #13: syntax error
+EFPPC.S 226: HEADER&LEX,&NAME,&LABEL
+EFPPC.S 226: ^-
+EFPPC.S 226: error #13: syntax error
+EFPPC.S 227: _LEN SET(&LEX&31)/CELLL
+EFPPC.S 227: ^-
+EFPPC.S 227: error #13: syntax error
+EFPPC.S 228: _CODE SET $+((_LEN+3)*CELLL)
+EFPPC.S 228: ^-
+EFPPC.S 228: error #13: syntax error
+EFPPC.S 229: DC.L _CODE,_LINK
+EFPPC.S 229: ^-
+EFPPC.S 229: error #13: syntax error
+EFPPC.S 230: _LINK SET $
+EFPPC.S 230: ^-
+EFPPC.S 230: error #13: syntax error
+EFPPC.S 231: ENDM
+EFPPC.S 231: ^-
+EFPPC.S 231: error #13: syntax error
+EFPPC.S 233: MACRO
+EFPPC.S 233: ^-
+EFPPC.S 233: error #13: syntax error
+EFPPC.S 234: .CODE&LEX,&NAME,&LABEL
+EFPPC.S 234: ^-
+EFPPC.S 234: error #13: syntax error
+EFPPC.S 235: HEADER&LEX,&NAME,&LABEL
+EFPPC.S 235: ^-
+EFPPC.S 235: error #13: syntax error
+EFPPC.S 236: DC.B&LEX,&NAME
+EFPPC.S 236: ^-
+EFPPC.S 236: error #13: syntax error
+EFPPC.S 237: ALIGN 2
+EFPPC.S 237: ^-
+EFPPC.S 237: error #13: syntax error
+EFPPC.S 238: &LABEL:
+EFPPC.S 238: ^-
+EFPPC.S 238: error #13: syntax error
+EFPPC.S 239: ENDM
+EFPPC.S 239: ^-
+EFPPC.S 239: error #13: syntax error
+EFPPC.S 243: MACRO
+EFPPC.S 243: ^-
+EFPPC.S 243: error #13: syntax error
+EFPPC.S 244: .COLON&LEX,&NAME,&LABEL
+EFPPC.S 244: ^-
+EFPPC.S 244: error #13: syntax error
+EFPPC.S 245: HEADER&LEX,&NAME,&LABEL
+EFPPC.S 245: ^-
+EFPPC.S 245: error #13: syntax error
+EFPPC.S 246: DC.B&LEX,&NAME
+EFPPC.S 246: ^-
+EFPPC.S 246: error #13: syntax error
+EFPPC.S 247: ALIGN 2
+EFPPC.S 247: ^-
+EFPPC.S 247: error #13: syntax error
+EFPPC.S 248: &LABEL:
+EFPPC.S 248: ^-
+EFPPC.S 248: error #13: syntax error
+EFPPC.S 249: push rRP,rTOR
+EFPPC.S 249: ^-
+EFPPC.S 249: error #13: syntax error
+EFPPC.S 250: mflr rTOR
+EFPPC.S 250: -----^-
+EFPPC.S 250: error #23: expected register
+EFPPC.S 251: ENDM
+EFPPC.S 251: ^-
+EFPPC.S 251: error #13: syntax error
+EFPPC.S 255: MACRO
+EFPPC.S 255: ^-
+EFPPC.S 255: error #13: syntax error
+EFPPC.S 256: .USER&LEX,&NAME,&LABEL
+EFPPC.S 256: ^-
+EFPPC.S 256: error #13: syntax error
+EFPPC.S 257: HEADER&LEX,&NAME,&LABEL
+EFPPC.S 257: ^-
+EFPPC.S 257: error #13: syntax error
+EFPPC.S 258: DC.B&LEX,&NAME
+EFPPC.S 258: ^-
+EFPPC.S 258: error #13: syntax error
+EFPPC.S 259: ALIGN 2
+EFPPC.S 259: ^-
+EFPPC.S 259: error #13: syntax error
+EFPPC.S 260: &LABEL:
+EFPPC.S 260: ^-
+EFPPC.S 260: error #13: syntax error
+EFPPC.S 261: mflr rLR
+EFPPC.S 261: -----^-
+EFPPC.S 261: error #23: expected register
+EFPPC.S 263: dc.l _USER
+EFPPC.S 263: ^-
+EFPPC.S 263: error #13: syntax error
+EFPPC.S 264: _USER set _USER+CELLL
+EFPPC.S 264: ^-
+EFPPC.S 264: error #13: syntax error
+EFPPC.S 265: ENDM
+EFPPC.S 265: ^-
+EFPPC.S 265: error #13: syntax error
+EFPPC.S 269: MACRO
+EFPPC.S 269: ^-
+EFPPC.S 269: error #13: syntax error
+EFPPC.S 270: .DS&FUNCT,&STRNG
+EFPPC.S 270: ^-
+EFPPC.S 270: error #13: syntax error
+EFPPC.S 271: bl&FUNCT
+EFPPC.S 271: --^-
+EFPPC.S 271: error #13: syntax error
+EFPPC.S 272: _LEN set $
+EFPPC.S 272: ^-
+EFPPC.S 272: error #13: syntax error
+EFPPC.S 273: DC.B 0,&STRNG
+EFPPC.S 273: ^-
+EFPPC.S 273: error #13: syntax error
+EFPPC.S 274: _CODE set $
+EFPPC.S 274: ^-
+EFPPC.S 274: error #13: syntax error
+EFPPC.S 275: ORG _LEN
+EFPPC.S 275: ^-
+EFPPC.S 275: error #13: syntax error
+EFPPC.S 276: DC.B _CODE-_LEN-1
+EFPPC.S 276: ^-
+EFPPC.S 276: error #13: syntax error
+EFPPC.S 277: ORG _CODE
+EFPPC.S 277: ^-
+EFPPC.S 277: error #13: syntax error
+EFPPC.S 278: .align
+EFPPC.S 278: ^-
+EFPPC.S 278: error #13: syntax error
+EFPPC.S 279: ENDM
+EFPPC.S 279: ^-
+EFPPC.S 279: error #13: syntax error
+EFPPC.S 291: ORG COLDD
+EFPPC.S 291: ^-
+EFPPC.S 291: error #13: syntax error
+EFPPC.S 293: .align
+EFPPC.S 293: ^-
+EFPPC.S 293: error #13: syntax error
+EFPPC.S 295: UZERO:dcb.l 4,0
+EFPPC.S 295: ------^-
+EFPPC.S 295: error #13: syntax error
+EFPPC.S 296: dc.l SPP
+EFPPC.S 296: ^-
+EFPPC.S 296: error #13: syntax error
+EFPPC.S 297: dc.l RPP
+EFPPC.S 297: ^-
+EFPPC.S 297: error #13: syntax error
+EFPPC.S 298: dc.l QRX
+EFPPC.S 298: ^-
+EFPPC.S 298: error #13: syntax error
+EFPPC.S 299: dc.l TXSTO
+EFPPC.S 299: ^-
+EFPPC.S 299: error #13: syntax error
+EFPPC.S 300: dc.l ACCEP
+EFPPC.S 300: ^-
+EFPPC.S 300: error #13: syntax error
+EFPPC.S 301: dc.l KTAP
+EFPPC.S 301: ^-
+EFPPC.S 301: error #13: syntax error
+EFPPC.S 302: dc.l DROP
+EFPPC.S 302: ^-
+EFPPC.S 302: error #13: syntax error
+EFPPC.S 303: dc.l DOTOK
+EFPPC.S 303: ^-
+EFPPC.S 303: error #13: syntax error
+EFPPC.S 304: dc.l BASEE
+EFPPC.S 304: ^-
+EFPPC.S 304: error #13: syntax error
+EFPPC.S 305: dc.l 0
+EFPPC.S 305: ^-
+EFPPC.S 305: error #13: syntax error
+EFPPC.S 306: dc.l 0
+EFPPC.S 306: ^-
+EFPPC.S 306: error #13: syntax error
+EFPPC.S 307: dc.l 0
+EFPPC.S 307: ^-
+EFPPC.S 307: error #13: syntax error
+EFPPC.S 308: dc.l 0
+EFPPC.S 308: ^-
+EFPPC.S 308: error #13: syntax error
+EFPPC.S 309: dc.l TIBB
+EFPPC.S 309: ^-
+EFPPC.S 309: error #13: syntax error
+EFPPC.S 310: dc.l 0
+EFPPC.S 310: ^-
+EFPPC.S 310: error #13: syntax error
+EFPPC.S 311: dc.l INTER
+EFPPC.S 311: ^-
+EFPPC.S 311: error #13: syntax error
+EFPPC.S 312: dc.l NUMBQ
+EFPPC.S 312: ^-
+EFPPC.S 312: error #13: syntax error
+EFPPC.S 313: dc.l 0
+EFPPC.S 313: ^-
+EFPPC.S 313: error #13: syntax error
+EFPPC.S 314: dc.l 0
+EFPPC.S 314: ^-
+EFPPC.S 314: error #13: syntax error
+EFPPC.S 315: dc.l FORTH1
+EFPPC.S 315: ^-
+EFPPC.S 315: error #13: syntax error
+EFPPC.S 316: dcb.l 8,0
+EFPPC.S 316: ^-
+EFPPC.S 316: error #13: syntax error
+EFPPC.S 317: dc.l FORTH1
+EFPPC.S 317: ^-
+EFPPC.S 317: error #13: syntax error
+EFPPC.S 318: dc.l 0
+EFPPC.S 318: ^-
+EFPPC.S 318: error #13: syntax error
+EFPPC.S 319: dc.l CTOP
+EFPPC.S 319: ^-
+EFPPC.S 319: error #13: syntax error
+EFPPC.S 320: dc.l TIBB-4
+EFPPC.S 320: ^-
+EFPPC.S 320: error #13: syntax error
+EFPPC.S 321: dc.l LASTN
+EFPPC.S 321: ^-
+EFPPC.S 321: error #13: syntax error
+EFPPC.S 328: ORG CODEE
+EFPPC.S 328: ^-
+EFPPC.S 328: error #13: syntax error
+EFPPC.S 331: buff:dc.l 0
+EFPPC.S 331: -----^-
+EFPPC.S 331: error #13: syntax error
+EFPPC.S 332: .eforth:prologue
+EFPPC.S 332: --------^-
+EFPPC.S 332: error #13: syntax error
+EFPPC.S 334: efor1:mflr rBase
+EFPPC.S 334: -----------^-
+EFPPC.S 334: error #23: expected register
+EFPPC.S 335: addi rBase,rBase,UZERO-efor1
+EFPPC.S 335: -----^-
+EFPPC.S 335: error #23: expected register
+EFPPC.S 336: li rUP,UZERO
+EFPPC.S 336: ---^-
+EFPPC.S 336: error #23: expected register
+EFPPC.S 337: addi rDP,rBase,SPP
+EFPPC.S 337: -----^-
+EFPPC.S 337: error #23: expected register
+EFPPC.S 338: addi rRP,rBase,RPP
+EFPPC.S 338: -----^-
+EFPPC.S 338: error #23: expected register
+EFPPC.S 339: li rTOS,-1
+EFPPC.S 339: ---^-
+EFPPC.S 339: error #23: expected register
+EFPPC.S 340: li rNOS,-1
+EFPPC.S 340: ---^-
+EFPPC.S 340: error #23: expected register
+EFPPC.S 341: li rTOR,-1
+EFPPC.S 341: ---^-
+EFPPC.S 341: error #23: expected register
+EFPPC.S 344: .keyTest2:prologue
+EFPPC.S 344: ----------^-
+EFPPC.S 344: error #13: syntax error
+EFPPC.S 346: efor2:mflr rBase
+EFPPC.S 346: -----------^-
+EFPPC.S 346: error #23: expected register
+EFPPC.S 347: addi rBase,rBase,UZERO-efor2
+EFPPC.S 347: -----^-
+EFPPC.S 347: error #23: expected register
+EFPPC.S 348: li rUP,UZERO
+EFPPC.S 348: ---^-
+EFPPC.S 348: error #23: expected register
+EFPPC.S 349: addi rDP,rBase,SPP
+EFPPC.S 349: -----^-
+EFPPC.S 349: error #23: expected register
+EFPPC.S 350: addi rRP,rBase,RPP
+EFPPC.S 350: -----^-
+EFPPC.S 350: error #23: expected register
+EFPPC.S 351: li rTOS,-1
+EFPPC.S 351: ---^-
+EFPPC.S 351: error #23: expected register
+EFPPC.S 352: li rNOS,-1
+EFPPC.S 352: ---^-
+EFPPC.S 352: error #23: expected register
+EFPPC.S 353: li rTOR,-1
+EFPPC.S 353: ---^-
+EFPPC.S 353: error #23: expected register
+EFPPC.S 361: dc.l 114
+EFPPC.S 361: ^-
+EFPPC.S 361: error #13: syntax error
+EFPPC.S 375: error #230: missing single quote
+EFPPC.S 376: epilogue 3,epilogue
+EFPPC.S 376: ^-
+EFPPC.S 376: error #13: syntax error
+EFPPC.S 382: error #230: missing single quote
+EFPPC.S 383: .CODE 3,
+EFPPC.S 383: ^-
+EFPPC.S 383: error #13: syntax error
+EFPPC.S 384: prologue
+EFPPC.S 384: ^-
+EFPPC.S 384: error #13: syntax error
+EFPPC.S 387: la r4,buff(rBase)
+EFPPC.S 387: ----------^-
+EFPPC.S 387: error #318: can't combine these types for addressing
+EFPPC.S 390: epilogue
+EFPPC.S 390: ^-
+EFPPC.S 390: error #13: syntax error
+EFPPC.S 393: push rDP,rTOS
+EFPPC.S 393: ^-
+EFPPC.S 393: error #13: syntax error
+EFPPC.S 394: li rTOS,0
+EFPPC.S 394: ---^-
+EFPPC.S 394: error #23: expected register
+EFPPC.S 397: lbz rTOS,buff(rBase)
+EFPPC.S 397: -------------^-
+EFPPC.S 397: error #318: can't combine these types for addressing
+EFPPC.S 398: push rDP,rTOS
+EFPPC.S 398: ^-
+EFPPC.S 398: error #13: syntax error
+EFPPC.S 399: li rTOS,-1
+EFPPC.S 399: ---^-
+EFPPC.S 399: error #23: expected register
+EFPPC.S 405: error #230: missing single quote
+EFPPC.S 406: stb 3,stb rTOS,buff(rBase)
+EFPPC.S 406: ----------^-
+EFPPC.S 406: stb 3,stb rTOS,buff(rBase)
+EFPPC.S 406: error #245: expected end of line
+EFPPC.S 407: pop rDP,rTOS
+EFPPC.S 407: ^-
+EFPPC.S 407: error #13: syntax error
+EFPPC.S 409: prologue
+EFPPC.S 409: ^-
+EFPPC.S 409: error #13: syntax error
+EFPPC.S 412: la r4,buff(rBase)
+EFPPC.S 412: ----------^-
+EFPPC.S 412: error #318: can't combine these types for addressing
+EFPPC.S 415: epilogue
+EFPPC.S 415: ^-
+EFPPC.S 415: error #13: syntax error
+EFPPC.S 422: error #230: missing single quote
+EFPPC.S 423: blr 3,blr
+EFPPC.S 423: ----^-
+EFPPC.S 423: blr 3,blr
+EFPPC.S 423: error #245: expected end of line
+EFPPC.S 438: error #230: missing single quote
+EFPPC.S 439: push DP+5,push rDP,rTOS
+EFPPC.S 439: ^-
+EFPPC.S 439: error #13: syntax error
+EFPPC.S 440: mflr rLR
+EFPPC.S 440: -----^-
+EFPPC.S 440: error #23: expected register
+EFPPC.S 441: addi t1,rLR,4
+EFPPC.S 441: -----^-
+EFPPC.S 441: error #23: expected register
+EFPPC.S 442: mtctr t1
+EFPPC.S 442: ------^-
+EFPPC.S 442: error #23: expected register
+EFPPC.S 443: lwz rTOS,0(rLR)
+EFPPC.S 443: ----------^-
+EFPPC.S 443: error #318: can't combine these types for addressing
+EFPPC.S 449: error #230: missing single quote
+EFPPC.S 450: mtlr 4,mtlr rTOR
+EFPPC.S 450: -------^-
+EFPPC.S 450: mtlr 4,mtlr rTOR
+EFPPC.S 450: error #245: expected end of line
+EFPPC.S 451: pop rRP,rTOR
+EFPPC.S 451: ^-
+EFPPC.S 451: error #13: syntax error
+EFPPC.S 457: error #230: missing single quote
+EFPPC.S 458: add 7,add rTOS,rTOS,rBase
+EFPPC.S 458: --------------^-
+EFPPC.S 458: error #27: expected ','
+EFPPC.S 459: mtctr rTOS
+EFPPC.S 459: ------^-
+EFPPC.S 459: error #23: expected register
+EFPPC.S 460: pop rDP,rTOS
+EFPPC.S 460: ^-
+EFPPC.S 460: error #13: syntax error
+EFPPC.S 469: error #230: missing single quote
+EFPPC.S 470: addic. +4,addic. rTOR,rTOR,-1
+EFPPC.S 470: ---------------------^-
+EFPPC.S 470: error #27: expected ','
+EFPPC.S 471: mflr rLR
+EFPPC.S 471: -----^-
+EFPPC.S 471: error #23: expected register
+EFPPC.S 472: addi t1,rLR,4
+EFPPC.S 472: -----^-
+EFPPC.S 472: error #23: expected register
+EFPPC.S 473: mtctr t1
+EFPPC.S 473: ------^-
+EFPPC.S 473: error #23: expected register
+EFPPC.S 475: pop rRP,rTOR
+EFPPC.S 475: ^-
+EFPPC.S 475: error #13: syntax error
+EFPPC.S 485: error #230: missing single quote
+EFPPC.S 486: mflr lr+7,mflr rLR
+EFPPC.S 486: -------^-
+EFPPC.S 486: error #353: Inconsistent operand types: (null) and constant
+EFPPC.S 487: cmpi CR0,rTOS,0
+EFPPC.S 487: -----^-
+EFPPC.S 487: error #21: expected condition register
+EFPPC.S 488: addi t1,rLR,4
+EFPPC.S 488: -----^-
+EFPPC.S 488: error #23: expected register
+EFPPC.S 489: mtctr t1
+EFPPC.S 489: ------^-
+EFPPC.S 489: error #23: expected register
+EFPPC.S 490: pop rDP,rTOS
+EFPPC.S 490: ^-
+EFPPC.S 490: error #13: syntax error
+EFPPC.S 505: .CODE 1,33,STOR
+EFPPC.S 505: ^-
+EFPPC.S 505: error #13: syntax error
+EFPPC.S 506: pop rDP,rNOS
+EFPPC.S 506: ^-
+EFPPC.S 506: error #13: syntax error
+EFPPC.S 507: stwx rNOS,rTOS,rBase
+EFPPC.S 507: -----^-
+EFPPC.S 507: error #23: expected register
+EFPPC.S 508: pop rDP,rTOS
+EFPPC.S 508: ^-
+EFPPC.S 508: error #13: syntax error
+EFPPC.S 514: .CODE 1,64,AT
+EFPPC.S 514: ^-
+EFPPC.S 514: error #13: syntax error
+EFPPC.S 515: lwzx rTOS,rTOS,rBase
+EFPPC.S 515: -----^-
+EFPPC.S 515: error #23: expected register
+EFPPC.S 521: error #230: missing single quote
+EFPPC.S 522: pop 2,pop rDP,rNOS
+EFPPC.S 522: ^-
+EFPPC.S 522: error #13: syntax error
+EFPPC.S 523: stbx rNOS,rTOS,rBase
+EFPPC.S 523: -----^-
+EFPPC.S 523: error #23: expected register
+EFPPC.S 524: pop rDP,rTOS
+EFPPC.S 524: ^-
+EFPPC.S 524: error #13: syntax error
+EFPPC.S 530: error #230: missing single quote
+EFPPC.S 531: lbzx 2,lbzx rTOS,rTOS,rBase
+EFPPC.S 531: ----------------^-
+EFPPC.S 531: error #27: expected ','
+EFPPC.S 537: error #230: missing single quote
+EFPPC.S 538: push 3,push rDP,rTOS
+EFPPC.S 538: ^-
+EFPPC.S 538: error #13: syntax error
+EFPPC.S 539: subf rTOS,rBase,rRP
+EFPPC.S 539: -----^-
+EFPPC.S 539: error #23: expected register
+EFPPC.S 545: error #230: missing single quote
+EFPPC.S 546: add P+3,add rRP,rTOS,rBase
+EFPPC.S 546: ---------------^-
+EFPPC.S 546: error #27: expected ','
+EFPPC.S 547: pop rDP,rTOS
+EFPPC.S 547: ^-
+EFPPC.S 547: error #13: syntax error
+EFPPC.S 548: li rTOR,0
+EFPPC.S 548: ---^-
+EFPPC.S 548: error #23: expected register
+EFPPC.S 554: error #230: missing single quote
+EFPPC.S 555: push 2,push rDP,rTOS
+EFPPC.S 555: ^-
+EFPPC.S 555: error #13: syntax error
+EFPPC.S 556: mr rTOS,rTOR
+EFPPC.S 556: ---^-
+EFPPC.S 556: error #23: expected register
+EFPPC.S 557: pop rRP,rTOR
+EFPPC.S 557: ^-
+EFPPC.S 557: error #13: syntax error
+EFPPC.S 563: error #230: missing single quote
+EFPPC.S 564: push 2,push rDP,rTOS
+EFPPC.S 564: ^-
+EFPPC.S 564: error #13: syntax error
+EFPPC.S 565: mr rTOS,rTOR
+EFPPC.S 565: ---^-
+EFPPC.S 565: error #23: expected register
+EFPPC.S 571: error #230: missing single quote
+EFPPC.S 572: push RP+2,push rRP,rTOR
+EFPPC.S 572: ^-
+EFPPC.S 572: error #13: syntax error
+EFPPC.S 573: mr rTOR,rTOS
+EFPPC.S 573: ---^-
+EFPPC.S 573: error #23: expected register
+EFPPC.S 574: pop rDP,rTOS
+EFPPC.S 574: ^-
+EFPPC.S 574: error #13: syntax error
+EFPPC.S 580: error #230: missing single quote
+EFPPC.S 581: push 3,push rDP,rTOS
+EFPPC.S 581: ^-
+EFPPC.S 581: error #13: syntax error
+EFPPC.S 582: subf rTOS,rBase,rDP
+EFPPC.S 582: -----^-
+EFPPC.S 582: error #23: expected register
+EFPPC.S 588: error #230: missing single quote
+EFPPC.S 589: add 3,add rDP,rTOS,rBase
+EFPPC.S 589: -------------^-
+EFPPC.S 589: error #27: expected ','
+EFPPC.S 590: li rTOS,0
+EFPPC.S 590: ---^-
+EFPPC.S 590: error #23: expected register
+EFPPC.S 596: error #230: missing single quote
+EFPPC.S 597: pop 4,pop rDP,rTOS
+EFPPC.S 597: ^-
+EFPPC.S 597: error #13: syntax error
+EFPPC.S 603: error #230: missing single quote
+EFPPC.S 604: push 3,push rDP,rTOS
+EFPPC.S 604: ^-
+EFPPC.S 604: error #13: syntax error
+EFPPC.S 610: error #230: missing single quote
+EFPPC.S 611: get 4,get rDP,0,rNOS
+EFPPC.S 611: ^-
+EFPPC.S 611: error #13: syntax error
+EFPPC.S 612: put rDP,0,rTOS
+EFPPC.S 612: ^-
+EFPPC.S 612: error #13: syntax error
+EFPPC.S 613: mr rTOS,rNOS
+EFPPC.S 613: ---^-
+EFPPC.S 613: error #23: expected register
+EFPPC.S 619: error #230: missing single quote
+EFPPC.S 620: push 4,push rDP,rTOS
+EFPPC.S 620: ^-
+EFPPC.S 620: error #13: syntax error
+EFPPC.S 621: get rDP,1,rTOS
+EFPPC.S 621: ^-
+EFPPC.S 621: error #13: syntax error
+EFPPC.S 627: error #230: missing single quote
+EFPPC.S 628: cmpwi 2,cmpwi cr0,rTOS,0
+EFPPC.S 628: --------------^-
+EFPPC.S 628: cmpwi 2,cmpwi cr0,rTOS,0
+EFPPC.S 628: error #245: expected end of line
+EFPPC.S 629: li rTOS,0
+EFPPC.S 629: ---^-
+EFPPC.S 629: error #23: expected register
+EFPPC.S 631: li rTOS,-1
+EFPPC.S 631: ---^-
+EFPPC.S 631: error #23: expected register
+EFPPC.S 637: error #230: missing single quote
+EFPPC.S 638: pop 3,pop rDP,rNOS
+EFPPC.S 638: ^-
+EFPPC.S 638: error #13: syntax error
+EFPPC.S 639: and rTOS,rTOS,rNOS
+EFPPC.S 639: ----^-
+EFPPC.S 639: error #23: expected register
+EFPPC.S 645: error #230: missing single quote
+EFPPC.S 646: pop 2,pop rDP,rNOS
+EFPPC.S 646: ^-
+EFPPC.S 646: error #13: syntax error
+EFPPC.S 647: or rTOS,rTOS,rNOS
+EFPPC.S 647: ---^-
+EFPPC.S 647: error #23: expected register
+EFPPC.S 653: error #230: missing single quote
+EFPPC.S 654: pop 3,pop rDP,rNOS
+EFPPC.S 654: ^-
+EFPPC.S 654: error #13: syntax error
+EFPPC.S 655: xor rTOS,rTOS,rNOS
+EFPPC.S 655: ----^-
+EFPPC.S 655: error #23: expected register
+EFPPC.S 661: error #230: missing single quote
+EFPPC.S 662: pop 3,pop rDP,rNOS
+EFPPC.S 662: ^-
+EFPPC.S 662: error #13: syntax error
+EFPPC.S 663: addc rNOS,rNOS,rTOS
+EFPPC.S 663: -----^-
+EFPPC.S 663: error #23: expected register
+EFPPC.S 664: adde rTOS,0,0
+EFPPC.S 664: -----^-
+EFPPC.S 664: error #23: expected register
+EFPPC.S 671: doVar:mtctr rLR
+EFPPC.S 671: ------------^-
+EFPPC.S 671: error #23: expected register
+EFPPC.S 672: push rDP,rTOS
+EFPPC.S 672: ^-
+EFPPC.S 672: error #13: syntax error
+EFPPC.S 673: mflr rTOS
+EFPPC.S 673: -----^-
+EFPPC.S 673: error #23: expected register
+EFPPC.S 674: subf rTOS,rBase,rTOS
+EFPPC.S 674: -----^-
+EFPPC.S 674: error #23: expected register
+EFPPC.S 679: doCon:mtctr rLR
+EFPPC.S 679: ------------^-
+EFPPC.S 679: error #23: expected register
+EFPPC.S 680: mflr t1
+EFPPC.S 680: -----^-
+EFPPC.S 680: error #23: expected register
+EFPPC.S 681: push rDP,rTOS
+EFPPC.S 681: ^-
+EFPPC.S 681: error #13: syntax error
+EFPPC.S 682: lwz rTOS,0(t1)
+EFPPC.S 682: ----------^-
+EFPPC.S 682: error #318: can't combine these types for addressing
+EFPPC.S 688: error #230: missing single quote
+EFPPC.S 689: push 2,push rDP,rTOS
+EFPPC.S 689: ^-
+EFPPC.S 689: error #13: syntax error
+EFPPC.S 690: mr rTOS,rUP
+EFPPC.S 690: ---^-
+EFPPC.S 690: error #23: expected register
+EFPPC.S 696: doUser:mtctr rLR
+EFPPC.S 696: -------------^-
+EFPPC.S 696: error #23: expected register
+EFPPC.S 697: mflr t1
+EFPPC.S 697: -----^-
+EFPPC.S 697: error #23: expected register
+EFPPC.S 698: lwz t1,0(t1)
+EFPPC.S 698: --------^-
+EFPPC.S 698: error #318: can't combine these types for addressing
+EFPPC.S 699: push rDP,rTOS
+EFPPC.S 699: ^-
+EFPPC.S 699: error #13: syntax error
+EFPPC.S 700: add rTOS,t1,rUP
+EFPPC.S 700: ----^-
+EFPPC.S 700: error #23: expected register
+EFPPC.S 706: error #230: missing single quote
+EFPPC.S 707: .USER 3,
+EFPPC.S 707: ^-
+EFPPC.S 707: error #13: syntax error
+EFPPC.S 711: error #230: missing single quote
+EFPPC.S 712: .USER 3,
+EFPPC.S 712: ^-
+EFPPC.S 712: error #13: syntax error
+EFPPC.S 716: error #234: missing character constant
+EFPPC.S 717: .USER 5,
+EFPPC.S 717: ^-
+EFPPC.S 717: error #13: syntax error
+EFPPC.S 721: error #234: missing character constant
+EFPPC.S 722: .USER 5,
+EFPPC.S 722: ^-
+EFPPC.S 722: error #13: syntax error
+EFPPC.S 726: error #234: missing character constant
+EFPPC.S 727: .USER 7,
+EFPPC.S 727: ^-
+EFPPC.S 727: error #13: syntax error
+EFPPC.S 731: error #234: missing character constant
+EFPPC.S 732: .USER 4,
+EFPPC.S 732: ^-
+EFPPC.S 732: error #13: syntax error
+EFPPC.S 736: error #234: missing character constant
+EFPPC.S 737: .USER 5,
+EFPPC.S 737: ^-
+EFPPC.S 737: error #13: syntax error
+EFPPC.S 741: error #234: missing character constant
+EFPPC.S 742: .USER 7,
+EFPPC.S 742: ^-
+EFPPC.S 742: error #13: syntax error
+EFPPC.S 746: error #230: missing single quote
+EFPPC.S 747: .USER 4,
+EFPPC.S 747: ^-
+EFPPC.S 747: error #13: syntax error
+EFPPC.S 751: error #230: missing single quote
+EFPPC.S 752: .USER COMPO+3,
+EFPPC.S 752: ^-
+EFPPC.S 752: error #13: syntax error
+EFPPC.S 756: error #230: missing single quote
+EFPPC.S 757: .USER 4,
+EFPPC.S 757: ^-
+EFPPC.S 757: error #13: syntax error
+EFPPC.S 761: error #230: missing single quote
+EFPPC.S 762: .USER 3,
+EFPPC.S 762: ^-
+EFPPC.S 762: error #13: syntax error
+EFPPC.S 766: HEADER 4,,NTIB
+EFPPC.S 766: ^-
+EFPPC.S 766: error #13: syntax error
+EFPPC.S 767: DC.B 4,$23,$54,$49,$42
+EFPPC.S 767: ^-
+EFPPC.S 767: error #13: syntax error
+EFPPC.S 768: NTIB:mflr rLR
+EFPPC.S 768: ----------^-
+EFPPC.S 768: error #23: expected register
+EFPPC.S 770: dc.l _USER
+EFPPC.S 770: ^-
+EFPPC.S 770: error #13: syntax error
+EFPPC.S 771: _USER set _USER+CELLL
+EFPPC.S 771: ^-
+EFPPC.S 771: error #13: syntax error
+EFPPC.S 773: _USER set _USER+CELLL
+EFPPC.S 773: ^-
+EFPPC.S 773: error #13: syntax error
+EFPPC.S 778: error #230: missing single quote
+EFPPC.S 779: .USER 3,
+EFPPC.S 779: ^-
+EFPPC.S 779: error #13: syntax error
+EFPPC.S 783: error #234: missing character constant
+EFPPC.S 784: .USER 5,
+EFPPC.S 784: ^-
+EFPPC.S 784: error #13: syntax error
+EFPPC.S 788: error #234: missing character constant
+EFPPC.S 789: .USER 7,
+EFPPC.S 789: ^-
+EFPPC.S 789: error #13: syntax error
+EFPPC.S 793: error #230: missing single quote
+EFPPC.S 794: .USER 3,
+EFPPC.S 794: ^-
+EFPPC.S 794: error #13: syntax error
+EFPPC.S 798: error #230: missing single quote
+EFPPC.S 799: .USER 7,
+EFPPC.S 799: ^-
+EFPPC.S 799: error #13: syntax error
+EFPPC.S 803: error #230: missing single quote
+EFPPC.S 804: _USER 7,_USER set _USER+VOCSS*CELLL
+EFPPC.S 804: ^-
+EFPPC.S 804: error #13: syntax error
+EFPPC.S 809: error #230: missing single quote
+EFPPC.S 810: _USER 7,_USER set _USER+CELLL
+EFPPC.S 810: ^-
+EFPPC.S 810: error #13: syntax error
+EFPPC.S 815: error #230: missing single quote
+EFPPC.S 816: .USER 2,
+EFPPC.S 816: ^-
+EFPPC.S 816: error #13: syntax error
+EFPPC.S 820: error #230: missing single quote
+EFPPC.S 821: .USER 2,
+EFPPC.S 821: ^-
+EFPPC.S 821: error #13: syntax error
+EFPPC.S 825: error #230: missing single quote
+EFPPC.S 826: .USER 4,
+EFPPC.S 826: ^-
+EFPPC.S 826: error #13: syntax error
+EFPPC.S 832: error #230: missing single quote
+EFPPC.S 833: bl +5,bl RFRM
+EFPPC.S 833: ------^-
+EFPPC.S 833: bl +5,bl RFRM
+EFPPC.S 833: error #245: expected end of line
+EFPPC.S 834: subf rTOS,rBase,rTOS
+EFPPC.S 834: -----^-
+EFPPC.S 834: error #23: expected register
+EFPPC.S 842: error #230: missing single quote
+EFPPC.S 843: bl 5,bl DVOC
+EFPPC.S 843: -----^-
+EFPPC.S 843: bl 5,bl DVOC
+EFPPC.S 843: error #245: expected end of line
+EFPPC.S 844: FORTH1:dc.l LASTN
+EFPPC.S 844: -------^-
+EFPPC.S 844: error #13: syntax error
+EFPPC.S 845: dc.l 0
+EFPPC.S 845: ^-
+EFPPC.S 845: error #13: syntax error
+EFPPC.S 850: error #230: missing single quote
+EFPPC.S 851: cmpi 4,cmpi cr0,rTOS,0
+EFPPC.S 851: ------------^-
+EFPPC.S 851: cmpi 4,cmpi cr0,rTOS,0
+EFPPC.S 851: error #245: expected end of line
+EFPPC.S 853: push rDP,rTOS
+EFPPC.S 853: ^-
+EFPPC.S 853: error #13: syntax error
+EFPPC.S 859: error #230: missing single quote
+EFPPC.S 860: get 3,get rDP,0,rNOS
+EFPPC.S 860: ^-
+EFPPC.S 860: error #13: syntax error
+EFPPC.S 861: put rDP,0,rTOS
+EFPPC.S 861: ^-
+EFPPC.S 861: error #13: syntax error
+EFPPC.S 862: get rDP,1,rTOS
+EFPPC.S 862: ^-
+EFPPC.S 862: error #13: syntax error
+EFPPC.S 863: put rDP,1,rNOS
+EFPPC.S 863: ^-
+EFPPC.S 863: error #13: syntax error
+EFPPC.S 869: error #230: missing single quote
+EFPPC.S 870: pop 5,pop rDP,rTOS
+EFPPC.S 870: ^-
+EFPPC.S 870: error #13: syntax error
+EFPPC.S 871: pop rDP,rTOS
+EFPPC.S 871: ^-
+EFPPC.S 871: error #13: syntax error
+EFPPC.S 877: error #230: missing single quote
+EFPPC.S 878: get 4,get rDP,0,rNOS
+EFPPC.S 878: ^-
+EFPPC.S 878: error #13: syntax error
+EFPPC.S 879: push rDP,rTOS
+EFPPC.S 879: ^-
+EFPPC.S 879: error #13: syntax error
+EFPPC.S 880: push rDP,rNOS
+EFPPC.S 880: ^-
+EFPPC.S 880: error #13: syntax error
+EFPPC.S 886: .CODE 1,43,PLUS
+EFPPC.S 886: ^-
+EFPPC.S 886: error #13: syntax error
+EFPPC.S 887: pop rDP,rNOS
+EFPPC.S 887: ^-
+EFPPC.S 887: error #13: syntax error
+EFPPC.S 888: add rTOS,rTOS,rNOS
+EFPPC.S 888: ----^-
+EFPPC.S 888: error #23: expected register
+EFPPC.S 894: error #230: missing single quote
+EFPPC.S 895: pop 2,pop rDP,rNOS
+EFPPC.S 895: ^-
+EFPPC.S 895: error #13: syntax error
+EFPPC.S 896: get rDP,1,t2
+EFPPC.S 896: ^-
+EFPPC.S 896: error #13: syntax error
+EFPPC.S 897: pop rDP,t1
+EFPPC.S 897: ^-
+EFPPC.S 897: error #13: syntax error
+EFPPC.S 898: addc rNOS,rNOS,t2
+EFPPC.S 898: -----^-
+EFPPC.S 898: error #23: expected register
+EFPPC.S 899: adde rTOS,rTOS,t1
+EFPPC.S 899: -----^-
+EFPPC.S 899: error #23: expected register
+EFPPC.S 900: put rDP,0,rNOS
+EFPPC.S 900: ^-
+EFPPC.S 900: error #13: syntax error
+EFPPC.S 906: error #230: missing single quote
+EFPPC.S 907: li 3,li rNOS,-1
+EFPPC.S 907: --------^-
+EFPPC.S 907: li 3,li rNOS,-1
+EFPPC.S 907: error #245: expected end of line
+EFPPC.S 908: xor rTOS,rTOS,rNOS
+EFPPC.S 908: ----^-
+EFPPC.S 908: error #23: expected register
+EFPPC.S 914: error #230: missing single quote
+EFPPC.S 915: neg 6,neg rTOS,rTOS
+EFPPC.S 915: ----------^-
+EFPPC.S 915: neg 6,neg rTOS,rTOS
+EFPPC.S 915: error #245: expected end of line
+EFPPC.S 921: error #230: missing single quote
+EFPPC.S 922: pop 7,pop rDP,rNOS
+EFPPC.S 922: ^-
+EFPPC.S 922: error #13: syntax error
+EFPPC.S 923: li t1,-1
+EFPPC.S 923: ---^-
+EFPPC.S 923: error #23: expected register
+EFPPC.S 924: xor rTOS,rTOS,t1
+EFPPC.S 924: ----^-
+EFPPC.S 924: error #23: expected register
+EFPPC.S 925: xor rNOS,rNOS,t1
+EFPPC.S 925: ----^-
+EFPPC.S 925: error #23: expected register
+EFPPC.S 926: addic rNOS,rNOS,1
+EFPPC.S 926: ------^-
+EFPPC.S 926: error #23: expected register
+EFPPC.S 927: adde rTOS,rTOS,0
+EFPPC.S 927: -----^-
+EFPPC.S 927: error #23: expected register
+EFPPC.S 928: push rDP,rNOS
+EFPPC.S 928: ^-
+EFPPC.S 928: error #13: syntax error
+EFPPC.S 934: .CODE 1,45,SUBB
+EFPPC.S 934: ^-
+EFPPC.S 934: error #13: syntax error
+EFPPC.S 935: pop rDP,rNOS
+EFPPC.S 935: ^-
+EFPPC.S 935: error #13: syntax error
+EFPPC.S 936: subf rTOS,rTOS,rNOS
+EFPPC.S 936: -----^-
+EFPPC.S 936: error #23: expected register
+EFPPC.S 942: error #230: missing single quote
+EFPPC.S 943: cmplwi 3,cmplwi cr0,rTOS,0
+EFPPC.S 943: ----------------^-
+EFPPC.S 943: cmplwi 3,cmplwi cr0,rTOS,0
+EFPPC.S 943: error #245: expected end of line
+EFPPC.S 945: neg rTOS,rTOS
+EFPPC.S 945: ----^-
+EFPPC.S 945: error #23: expected register
+EFPPC.S 948: Odd2 equ 61
+EFPPC.S 948: ^-
+EFPPC.S 948: error #13: syntax error
+EFPPC.S 953: .CODE 1,Odd2,EQUL
+EFPPC.S 953: ^-
+EFPPC.S 953: error #13: syntax error
+EFPPC.S 954: pop rDP,rNOS
+EFPPC.S 954: ^-
+EFPPC.S 954: error #13: syntax error
+EFPPC.S 955: cmpw cr0,rNOS,rTOS
+EFPPC.S 955: ---------^-
+EFPPC.S 955: error #23: expected register
+EFPPC.S 956: li rTOS,-1
+EFPPC.S 956: ---^-
+EFPPC.S 956: error #23: expected register
+EFPPC.S 958: li rTOS,0
+EFPPC.S 958: ---^-
+EFPPC.S 958: error #23: expected register
+EFPPC.S 964: error #230: missing single quote
+EFPPC.S 965: pop 2,pop rDP,rNOS
+EFPPC.S 965: ^-
+EFPPC.S 965: error #13: syntax error
+EFPPC.S 966: cmplw cr0,rNOS,rTOS
+EFPPC.S 966: ----------^-
+EFPPC.S 966: error #23: expected register
+EFPPC.S 967: li rTOS,-1
+EFPPC.S 967: ---^-
+EFPPC.S 967: error #23: expected register
+EFPPC.S 969: li rTOS,0
+EFPPC.S 969: ---^-
+EFPPC.S 969: error #23: expected register
+EFPPC.S 975: .CODE 1,60,LESS
+EFPPC.S 975: ^-
+EFPPC.S 975: error #13: syntax error
+EFPPC.S 976: pop rDP,rNOS
+EFPPC.S 976: ^-
+EFPPC.S 976: error #13: syntax error
+EFPPC.S 977: cmpw cr0,rNOS,rTOS
+EFPPC.S 977: ---------^-
+EFPPC.S 977: error #23: expected register
+EFPPC.S 978: li rTOS,-1
+EFPPC.S 978: ---^-
+EFPPC.S 978: error #23: expected register
+EFPPC.S 980: li rTOS,0
+EFPPC.S 980: ---^-
+EFPPC.S 980: error #23: expected register
+EFPPC.S 986: error #230: missing single quote
+EFPPC.S 987: pop 3,pop rDP,rNOS
+EFPPC.S 987: ^-
+EFPPC.S 987: error #13: syntax error
+EFPPC.S 988: cmp cr0,rTOS,rNOS
+EFPPC.S 988: --------^-
+EFPPC.S 988: error #23: expected register
+EFPPC.S 991: mr rTOS,rNOS
+EFPPC.S 991: ---^-
+EFPPC.S 991: error #23: expected register
+EFPPC.S 997: error #230: missing single quote
+EFPPC.S 998: pop 3,pop rDP,rNOS
+EFPPC.S 998: ^-
+EFPPC.S 998: error #13: syntax error
+EFPPC.S 999: cmp cr0,rTOS,rNOS
+EFPPC.S 999: --------^-
+EFPPC.S 999: error #23: expected register
+EFPPC.S 1002: mr rTOS,rNOS
+EFPPC.S 1002: ---^-
+EFPPC.S 1002: error #23: expected register
+EFPPC.S 1008: error #230: missing single quote
+EFPPC.S 1009: pop 6,pop rDP,rNOS
+EFPPC.S 1009: ^-
+EFPPC.S 1009: error #13: syntax error
+EFPPC.S 1010: pop rDP,t1
+EFPPC.S 1010: ^-
+EFPPC.S 1010: error #13: syntax error
+EFPPC.S 1011: cmpl cr0,t1,rTOS
+EFPPC.S 1011: ---------^-
+EFPPC.S 1011: error #23: expected register
+EFPPC.S 1012: li rTOS,0
+EFPPC.S 1012: ---^-
+EFPPC.S 1012: error #23: expected register
+EFPPC.S 1014: cmpl cr0,t1,rNOS
+EFPPC.S 1014: ---------^-
+EFPPC.S 1014: error #23: expected register
+EFPPC.S 1017: li rTOS,-1
+EFPPC.S 1017: ---^-
+EFPPC.S 1017: error #23: expected register
+EFPPC.S 1025: error #230: missing single quote
+EFPPC.S 1026: pop 6,pop rDP,rNOS
+EFPPC.S 1026: ^-
+EFPPC.S 1026: error #13: syntax error
+EFPPC.S 1027: get rDP,0,rNOS
+EFPPC.S 1027: ^-
+EFPPC.S 1027: error #13: syntax error
+EFPPC.S 1028: divwu t1,rNOS,rTOS
+EFPPC.S 1028: ------^-
+EFPPC.S 1028: error #23: expected register
+EFPPC.S 1029: mullw t2,t1,rTOS
+EFPPC.S 1029: ------^-
+EFPPC.S 1029: error #23: expected register
+EFPPC.S 1030: subf rNOS,t2,rNOS
+EFPPC.S 1030: -----^-
+EFPPC.S 1030: error #23: expected register
+EFPPC.S 1031: put rDP,0,rNOS
+EFPPC.S 1031: ^-
+EFPPC.S 1031: error #13: syntax error
+EFPPC.S 1032: mr rTOS,t1
+EFPPC.S 1032: ---^-
+EFPPC.S 1032: error #23: expected register
+EFPPC.S 1037: error #230: missing single quote
+EFPPC.S 1038: pop 5,pop rDP,rNOS
+EFPPC.S 1038: ^-
+EFPPC.S 1038: error #13: syntax error
+EFPPC.S 1039: get rDP,0,rNOS
+EFPPC.S 1039: ^-
+EFPPC.S 1039: error #13: syntax error
+EFPPC.S 1040: divw t1,rNOS,rTOS
+EFPPC.S 1040: -----^-
+EFPPC.S 1040: error #23: expected register
+EFPPC.S 1041: mullw t2,t1,rTOS
+EFPPC.S 1041: ------^-
+EFPPC.S 1041: error #23: expected register
+EFPPC.S 1042: subf rNOS,t2,rNOS
+EFPPC.S 1042: -----^-
+EFPPC.S 1042: error #23: expected register
+EFPPC.S 1043: put rDP,0,rNOS
+EFPPC.S 1043: ^-
+EFPPC.S 1043: error #13: syntax error
+EFPPC.S 1044: mr rTOS,t1
+EFPPC.S 1044: ---^-
+EFPPC.S 1044: error #23: expected register
+EFPPC.S 1050: error #230: missing single quote
+EFPPC.S 1051: get 4,get rDP,0,rNOS
+EFPPC.S 1051: ^-
+EFPPC.S 1051: error #13: syntax error
+EFPPC.S 1052: divw t1,rNOS,rTOS
+EFPPC.S 1052: -----^-
+EFPPC.S 1052: error #23: expected register
+EFPPC.S 1053: mullw t2,t1,rTOS
+EFPPC.S 1053: ------^-
+EFPPC.S 1053: error #23: expected register
+EFPPC.S 1054: subf rNOS,t2,rNOS
+EFPPC.S 1054: -----^-
+EFPPC.S 1054: error #23: expected register
+EFPPC.S 1055: put rDP,0,rNOS
+EFPPC.S 1055: ^-
+EFPPC.S 1055: error #13: syntax error
+EFPPC.S 1056: mr rTOS,t1
+EFPPC.S 1056: ---^-
+EFPPC.S 1056: error #23: expected register
+EFPPC.S 1062: error #230: missing single quote
+EFPPC.S 1063: pop 3,pop rDP,rNOS
+EFPPC.S 1063: ^-
+EFPPC.S 1063: error #13: syntax error
+EFPPC.S 1064: divw t1,rNOS,rTOS
+EFPPC.S 1064: -----^-
+EFPPC.S 1064: error #23: expected register
+EFPPC.S 1065: mullw t2,t1,rTOS
+EFPPC.S 1065: ------^-
+EFPPC.S 1065: error #23: expected register
+EFPPC.S 1066: subf rTOS,t2,rNOS
+EFPPC.S 1066: -----^-
+EFPPC.S 1066: error #23: expected register
+EFPPC.S 1072: .CODE 1,47,SLASH
+EFPPC.S 1072: ^-
+EFPPC.S 1072: error #13: syntax error
+EFPPC.S 1073: pop rDP,rNOS
+EFPPC.S 1073: ^-
+EFPPC.S 1073: error #13: syntax error
+EFPPC.S 1074: divw rTOS,rNOS,rTOS
+EFPPC.S 1074: -----^-
+EFPPC.S 1074: error #23: expected register
+EFPPC.S 1082: error #230: missing single quote
+EFPPC.S 1083: pop 3,pop rDP,rNOS
+EFPPC.S 1083: ^-
+EFPPC.S 1083: error #13: syntax error
+EFPPC.S 1084: mullw t1,rNOS,rTOS
+EFPPC.S 1084: ------^-
+EFPPC.S 1084: error #23: expected register
+EFPPC.S 1085: push rDP,t1
+EFPPC.S 1085: ^-
+EFPPC.S 1085: error #13: syntax error
+EFPPC.S 1086: mulhwu rTOS,rTOS,rNOS
+EFPPC.S 1086: -------^-
+EFPPC.S 1086: error #23: expected register
+EFPPC.S 1092: .CODE 1,42,STAR
+EFPPC.S 1092: ^-
+EFPPC.S 1092: error #13: syntax error
+EFPPC.S 1093: pop rDP,rNOS
+EFPPC.S 1093: ^-
+EFPPC.S 1093: error #13: syntax error
+EFPPC.S 1094: mullw rTOS,rTOS,rNOS
+EFPPC.S 1094: ------^-
+EFPPC.S 1094: error #23: expected register
+EFPPC.S 1100: error #230: missing single quote
+EFPPC.S 1101: pop 2,pop rDP,rNOS
+EFPPC.S 1101: ^-
+EFPPC.S 1101: error #13: syntax error
+EFPPC.S 1102: mullw t1,rNOS,rTOS
+EFPPC.S 1102: ------^-
+EFPPC.S 1102: error #23: expected register
+EFPPC.S 1103: push rDP,t1
+EFPPC.S 1103: ^-
+EFPPC.S 1103: error #13: syntax error
+EFPPC.S 1104: mulhw rTOS,rTOS,rNOS
+EFPPC.S 1104: ------^-
+EFPPC.S 1104: error #23: expected register
+EFPPC.S 1110: error #230: missing single quote
+EFPPC.S 1111: bl 5,bl TOR
+EFPPC.S 1111: -----^-
+EFPPC.S 1111: bl 5,bl TOR
+EFPPC.S 1111: error #245: expected end of line
+EFPPC.S 1120: error #230: missing single quote
+EFPPC.S 1121: pop 2,pop rDP,rNOS
+EFPPC.S 1121: ^-
+EFPPC.S 1121: error #13: syntax error
+EFPPC.S 1122: pop rDP,t1
+EFPPC.S 1122: ^-
+EFPPC.S 1122: error #13: syntax error
+EFPPC.S 1123: mullw rNOS,rNOS,t1
+EFPPC.S 1123: ------^-
+EFPPC.S 1123: error #23: expected register
+EFPPC.S 1124: divw rTOS,rNOS,rTOS
+EFPPC.S 1124: -----^-
+EFPPC.S 1124: error #23: expected register
+EFPPC.S 1132: error #230: missing single quote
+EFPPC.S 1133: addi 5,addi rTOS,rTOS,4
+EFPPC.S 1133: ----------------^-
+EFPPC.S 1133: error #27: expected ','
+EFPPC.S 1139: error #230: missing single quote
+EFPPC.S 1140: addi 5,addi rTOS,rTOS,-4
+EFPPC.S 1140: ----------------^-
+EFPPC.S 1140: error #27: expected ','
+EFPPC.S 1146: error #230: missing single quote
+EFPPC.S 1147: slwi 5,slwi rTOS,rTOS,2
+EFPPC.S 1147: ----------------^-
+EFPPC.S 1147: error #27: expected ','
+EFPPC.S 1153: error #230: missing single quote
+EFPPC.S 1154: addi 7,addi rTOS,rTOS,3
+EFPPC.S 1154: ----------------^-
+EFPPC.S 1154: error #27: expected ','
+EFPPC.S 1155: li t1,-4
+EFPPC.S 1155: ---^-
+EFPPC.S 1155: error #23: expected register
+EFPPC.S 1156: and rTOS,rTOS,t1
+EFPPC.S 1156: ----^-
+EFPPC.S 1156: error #23: expected register
+EFPPC.S 1162: error #230: missing single quote
+EFPPC.S 1163: bl 2,bl DLIT
+EFPPC.S 1163: -----^-
+EFPPC.S 1163: bl 2,bl DLIT
+EFPPC.S 1163: error #245: expected end of line
+EFPPC.S 1164: dc.l 32
+EFPPC.S 1164: ^-
+EFPPC.S 1164: error #13: syntax error
+EFPPC.S 1170: error #230: missing single quote
+EFPPC.S 1171: bl 5,bl DLIT
+EFPPC.S 1171: -----^-
+EFPPC.S 1171: bl 5,bl DLIT
+EFPPC.S 1171: error #245: expected end of line
+EFPPC.S 1172: dc.l 127
+EFPPC.S 1172: ^-
+EFPPC.S 1172: error #13: syntax error
+EFPPC.S 1177: dc.l 127
+EFPPC.S 1177: ^-
+EFPPC.S 1177: error #13: syntax error
+EFPPC.S 1184: dc.l 46
+EFPPC.S 1184: ^-
+EFPPC.S 1184: error #13: syntax error
+EFPPC.S 1190: error #230: missing single quote
+EFPPC.S 1191: bl 5,bl SPAT
+EFPPC.S 1191: -----^-
+EFPPC.S 1191: bl 5,bl SPAT
+EFPPC.S 1191: error #245: expected end of line
+EFPPC.S 1198: dc.l CELLL
+EFPPC.S 1198: ^-
+EFPPC.S 1198: error #13: syntax error
+EFPPC.S 1205: error #230: missing single quote
+EFPPC.S 1206: slwi 4,slwi rTOS,rTOS,2
+EFPPC.S 1206: ----------------^-
+EFPPC.S 1206: error #27: expected ','
+EFPPC.S 1207: lwzx rTOS,rDP,rTOS
+EFPPC.S 1207: -----^-
+EFPPC.S 1207: error #23: expected register
+EFPPC.S 1215: error #230: missing single quote
+EFPPC.S 1216: pop 2,pop rDP,rNOS
+EFPPC.S 1216: ^-
+EFPPC.S 1216: error #13: syntax error
+EFPPC.S 1217: lwzx t1,rTOS,rBase
+EFPPC.S 1217: -----^-
+EFPPC.S 1217: error #23: expected register
+EFPPC.S 1218: add t1,t1,rNOS
+EFPPC.S 1218: ----^-
+EFPPC.S 1218: error #23: expected register
+EFPPC.S 1219: stwx t1,rTOS,rBase
+EFPPC.S 1219: -----^-
+EFPPC.S 1219: error #23: expected register
+EFPPC.S 1220: pop rDP,rTOS
+EFPPC.S 1220: ^-
+EFPPC.S 1220: error #13: syntax error
+EFPPC.S 1226: error #230: missing single quote
+EFPPC.S 1227: pop 2,pop rDP,rNOS
+EFPPC.S 1227: ^-
+EFPPC.S 1227: error #13: syntax error
+EFPPC.S 1228: pop rDP,t1
+EFPPC.S 1228: ^-
+EFPPC.S 1228: error #13: syntax error
+EFPPC.S 1229: stwx rNOS,rTOS,rBase
+EFPPC.S 1229: -----^-
+EFPPC.S 1229: error #23: expected register
+EFPPC.S 1230: addi rTOS,rTOS,4
+EFPPC.S 1230: -----^-
+EFPPC.S 1230: error #23: expected register
+EFPPC.S 1231: stwx t1,rTOS,rBase
+EFPPC.S 1231: -----^-
+EFPPC.S 1231: error #23: expected register
+EFPPC.S 1232: pop rDP,rTOS
+EFPPC.S 1232: ^-
+EFPPC.S 1232: error #13: syntax error
+EFPPC.S 1238: error #230: missing single quote
+EFPPC.S 1239: addi 2,addi t1,rTOS,4
+EFPPC.S 1239: --------------^-
+EFPPC.S 1239: error #27: expected ','
+EFPPC.S 1240: lwzx rNOS,t1,rBase
+EFPPC.S 1240: -----^-
+EFPPC.S 1240: error #23: expected register
+EFPPC.S 1241: push rDP,rNOS
+EFPPC.S 1241: ^-
+EFPPC.S 1241: error #13: syntax error
+EFPPC.S 1242: lwzx rTOS,rTOS,rBase
+EFPPC.S 1242: -----^-
+EFPPC.S 1242: error #23: expected register
+EFPPC.S 1248: error #230: missing single quote
+EFPPC.S 1249: addi 5,addi rNOS,rTOS,1
+EFPPC.S 1249: ----------------^-
+EFPPC.S 1249: error #27: expected ','
+EFPPC.S 1250: push rDP,rNOS
+EFPPC.S 1250: ^-
+EFPPC.S 1250: error #13: syntax error
+EFPPC.S 1251: lbzx rTOS,rTOS,rBase
+EFPPC.S 1251: -----^-
+EFPPC.S 1251: error #23: expected register
+EFPPC.S 1257: error #230: missing single quote
+EFPPC.S 1258: bl 4,bl CP
+EFPPC.S 1258: -----^-
+EFPPC.S 1258: bl 4,bl CP
+EFPPC.S 1258: error #245: expected end of line
+EFPPC.S 1265: error #230: missing single quote
+EFPPC.S 1266: bl 3,bl HERE
+EFPPC.S 1266: -----^-
+EFPPC.S 1266: bl 3,bl HERE
+EFPPC.S 1266: error #245: expected end of line
+EFPPC.S 1268: dc.l 80
+EFPPC.S 1268: ^-
+EFPPC.S 1268: error #13: syntax error
+EFPPC.S 1275: error #230: missing single quote
+EFPPC.S 1276: bl 3,bl NTIB
+EFPPC.S 1276: -----^-
+EFPPC.S 1276: bl 3,bl NTIB
+EFPPC.S 1276: error #245: expected end of line
+EFPPC.S 1284: error #230: missing single quote
+EFPPC.S 1285: lwzx 8,lwzx rTOS,rTOS,rBase
+EFPPC.S 1285: ----------------^-
+EFPPC.S 1285: error #27: expected ','
+EFPPC.S 1286: cmpi cr0,rTOS,0
+EFPPC.S 1286: ---------^-
+EFPPC.S 1286: error #23: expected register
+EFPPC.S 1287: add rTOS,rTOS,rBase
+EFPPC.S 1287: ----^-
+EFPPC.S 1287: error #23: expected register
+EFPPC.S 1288: mtctr rTOS
+EFPPC.S 1288: ------^-
+EFPPC.S 1288: error #23: expected register
+EFPPC.S 1289: pop rDP,rTOS
+EFPPC.S 1289: ^-
+EFPPC.S 1289: error #13: syntax error
+EFPPC.S 1296: error #230: missing single quote
+EFPPC.S 1297: cmpwi 5,cmpwi cr0,rTOS,0
+EFPPC.S 1297: --------------^-
+EFPPC.S 1297: cmpwi 5,cmpwi cr0,rTOS,0
+EFPPC.S 1297: error #245: expected end of line
+EFPPC.S 1298: mtctr rTOS
+EFPPC.S 1298: ------^-
+EFPPC.S 1298: error #23: expected register
+EFPPC.S 1299: pop rDP,rTOS
+EFPPC.S 1299: ^-
+EFPPC.S 1299: error #13: syntax error
+EFPPC.S 1300: pop rDP,rNOS
+EFPPC.S 1300: ^-
+EFPPC.S 1300: error #13: syntax error
+EFPPC.S 1302: add rTOS,rBase,rTOS
+EFPPC.S 1302: ----^-
+EFPPC.S 1302: error #23: expected register
+EFPPC.S 1303: add rNOS,rBase,rNOS
+EFPPC.S 1303: ----^-
+EFPPC.S 1303: error #23: expected register
+EFPPC.S 1304: subi rTOS,rTOS,1
+EFPPC.S 1304: -----^-
+EFPPC.S 1304: error #23: expected register
+EFPPC.S 1305: subi rNOS,rNOS,1
+EFPPC.S 1305: -----^-
+EFPPC.S 1305: error #23: expected register
+EFPPC.S 1306: move0:lbzu t1,1(rNOS)
+EFPPC.S 1306: ---------------^-
+EFPPC.S 1306: error #318: can't combine these types for addressing
+EFPPC.S 1307: stbu t1,1(rTOS)
+EFPPC.S 1307: ---------^-
+EFPPC.S 1307: error #318: can't combine these types for addressing
+EFPPC.S 1309: move1:pop rDP,rTOS
+EFPPC.S 1309: ------^-
+EFPPC.S 1309: error #13: syntax error
+EFPPC.S 1315: error #230: missing single quote
+EFPPC.S 1316: pop 4,pop rDP,rNOS
+EFPPC.S 1316: ^-
+EFPPC.S 1316: error #13: syntax error
+EFPPC.S 1317: mtctr rNOS
+EFPPC.S 1317: ------^-
+EFPPC.S 1317: error #23: expected register
+EFPPC.S 1318: cmpwi cr0,rNOS,0
+EFPPC.S 1318: ----------^-
+EFPPC.S 1318: error #23: expected register
+EFPPC.S 1319: pop rDP,rNOS
+EFPPC.S 1319: ^-
+EFPPC.S 1319: error #13: syntax error
+EFPPC.S 1320: add rNOS,rBase,rNOS
+EFPPC.S 1320: ----^-
+EFPPC.S 1320: error #23: expected register
+EFPPC.S 1321: subi rNOS,rNOS,1
+EFPPC.S 1321: -----^-
+EFPPC.S 1321: error #23: expected register
+EFPPC.S 1323: fill0:stbu rTOS,1(rNOS)
+EFPPC.S 1323: -----------------^-
+EFPPC.S 1323: error #318: can't combine these types for addressing
+EFPPC.S 1325: fill1:pop rDP,rTOS
+EFPPC.S 1325: ------^-
+EFPPC.S 1325: error #13: syntax error
+EFPPC.S 1331: error #230: missing single quote
+EFPPC.S 1332: bl 9,bl TOR
+EFPPC.S 1332: -----^-
+EFPPC.S 1332: bl 9,bl TOR
+EFPPC.S 1332: error #245: expected end of line
+EFPPC.S 1344: dc.l 1
+EFPPC.S 1344: ^-
+EFPPC.S 1344: error #13: syntax error
+EFPPC.S 1350: dc.l 0
+EFPPC.S 1350: ^-
+EFPPC.S 1350: error #13: syntax error
+EFPPC.S 1356: error #230: missing single quote
+EFPPC.S 1357: bl 5,bl ALGD
+EFPPC.S 1357: -----^-
+EFPPC.S 1357: bl 5,bl ALGD
+EFPPC.S 1357: error #245: expected end of line
+EFPPC.S 1363: dc.l 0
+EFPPC.S 1363: ^-
+EFPPC.S 1363: error #13: syntax error
+EFPPC.S 1365: dc.l CELLL
+EFPPC.S 1365: ^-
+EFPPC.S 1365: error #13: syntax error
+EFPPC.S 1372: dc.l 0
+EFPPC.S 1372: ^-
+EFPPC.S 1372: error #13: syntax error
+EFPPC.S 1378: dc.l 1
+EFPPC.S 1378: ^-
+EFPPC.S 1378: error #13: syntax error
+EFPPC.S 1390: error #230: missing single quote
+EFPPC.S 1391: bl 5,bl DLIT
+EFPPC.S 1391: -----^-
+EFPPC.S 1391: bl 5,bl DLIT
+EFPPC.S 1391: error #245: expected end of line
+EFPPC.S 1392: dc.l 9
+EFPPC.S 1392: ^-
+EFPPC.S 1392: error #13: syntax error
+EFPPC.S 1396: dc.l 7
+EFPPC.S 1396: ^-
+EFPPC.S 1396: error #13: syntax error
+EFPPC.S 1400: dc.l 48
+EFPPC.S 1400: ^-
+EFPPC.S 1400: error #13: syntax error
+EFPPC.S 1407: error #230: missing single quote
+EFPPC.S 1408: bl 7,bl DLIT
+EFPPC.S 1408: -----^-
+EFPPC.S 1408: bl 7,bl DLIT
+EFPPC.S 1408: error #245: expected end of line
+EFPPC.S 1409: dc.l 0
+EFPPC.S 1409: ^-
+EFPPC.S 1409: error #13: syntax error
+EFPPC.S 1419: HEADER 2,,BDGS
+EFPPC.S 1419: ^-
+EFPPC.S 1419: error #13: syntax error
+EFPPC.S 1420: DC.B 2,$3c,$23
+EFPPC.S 1420: ^-
+EFPPC.S 1420: error #13: syntax error
+EFPPC.S 1421: BDGS:push rRP,rTOR
+EFPPC.S 1421: -----^-
+EFPPC.S 1421: error #13: syntax error
+EFPPC.S 1422: mflr rTOR
+EFPPC.S 1422: -----^-
+EFPPC.S 1422: error #23: expected register
+EFPPC.S 1432: error #230: missing single quote
+EFPPC.S 1433: bl 4,bl HLD
+EFPPC.S 1433: -----^-
+EFPPC.S 1433: bl 4,bl HLD
+EFPPC.S 1433: error #245: expected end of line
+EFPPC.S 1436: DC.L 1
+EFPPC.S 1436: ^-
+EFPPC.S 1436: error #13: syntax error
+EFPPC.S 1444: Odd4 equ $23
+EFPPC.S 1444: ^-
+EFPPC.S 1444: error #13: syntax error
+EFPPC.S 1449: .COLON 1,Odd4,DIG
+EFPPC.S 1449: ^-
+EFPPC.S 1449: error #13: syntax error
+EFPPC.S 1459: HEADER 2,,DIGS
+EFPPC.S 1459: ^-
+EFPPC.S 1459: error #13: syntax error
+EFPPC.S 1460: DC.B 2,$23,$53
+EFPPC.S 1460: ^-
+EFPPC.S 1460: error #13: syntax error
+EFPPC.S 1461: DIGS:push rRP,rTOR
+EFPPC.S 1461: -----^-
+EFPPC.S 1461: error #13: syntax error
+EFPPC.S 1462: mflr rTOR
+EFPPC.S 1462: -----^-
+EFPPC.S 1462: error #23: expected register
+EFPPC.S 1474: error #230: missing single quote
+EFPPC.S 1475: bl 4,bl ZLSS
+EFPPC.S 1475: -----^-
+EFPPC.S 1475: bl 4,bl ZLSS
+EFPPC.S 1475: error #245: expected end of line
+EFPPC.S 1479: dc.l 45
+EFPPC.S 1479: ^-
+EFPPC.S 1479: error #13: syntax error
+EFPPC.S 1486: HEADER 2,,EDGS
+EFPPC.S 1486: ^-
+EFPPC.S 1486: error #13: syntax error
+EFPPC.S 1487: DC.B 2,$23,$3e
+EFPPC.S 1487: ^-
+EFPPC.S 1487: error #13: syntax error
+EFPPC.S 1488: EDGS:push rRP,rTOR
+EFPPC.S 1488: -----^-
+EFPPC.S 1488: error #13: syntax error
+EFPPC.S 1489: mflr rTOR
+EFPPC.S 1489: -----^-
+EFPPC.S 1489: error #23: expected register
+EFPPC.S 1502: error #230: missing single quote
+EFPPC.S 1503: bl 3,bl DUPP
+EFPPC.S 1503: -----^-
+EFPPC.S 1503: bl 3,bl DUPP
+EFPPC.S 1503: error #245: expected end of line
+EFPPC.S 1516: error #230: missing single quote
+EFPPC.S 1517: bl 3,bl DLIT
+EFPPC.S 1517: -----^-
+EFPPC.S 1517: bl 3,bl DLIT
+EFPPC.S 1517: error #245: expected end of line
+EFPPC.S 1518: DC.L 16
+EFPPC.S 1518: ^-
+EFPPC.S 1518: error #13: syntax error
+EFPPC.S 1526: error #230: missing single quote
+EFPPC.S 1527: bl 7,bl DLIT
+EFPPC.S 1527: -----^-
+EFPPC.S 1527: bl 7,bl DLIT
+EFPPC.S 1527: error #245: expected end of line
+EFPPC.S 1528: DC.L 10
+EFPPC.S 1528: ^-
+EFPPC.S 1528: error #13: syntax error
+EFPPC.S 1538: error #230: missing single quote
+EFPPC.S 1539: bl 6,bl TOR
+EFPPC.S 1539: -----^-
+EFPPC.S 1539: bl 6,bl TOR
+EFPPC.S 1539: error #245: expected end of line
+EFPPC.S 1541: dc.l 48
+EFPPC.S 1541: ^-
+EFPPC.S 1541: error #13: syntax error
+EFPPC.S 1544: dc.l 9
+EFPPC.S 1544: ^-
+EFPPC.S 1544: error #13: syntax error
+EFPPC.S 1550: dc.l 7
+EFPPC.S 1550: ^-
+EFPPC.S 1550: error #13: syntax error
+EFPPC.S 1554: dc.l 10
+EFPPC.S 1554: ^-
+EFPPC.S 1554: error #13: syntax error
+EFPPC.S 1565: error #230: missing single quote
+EFPPC.S 1566: bl 7,bl BASE
+EFPPC.S 1566: -----^-
+EFPPC.S 1566: bl 7,bl BASE
+EFPPC.S 1566: error #245: expected end of line
+EFPPC.S 1570: dc.l 0
+EFPPC.S 1570: ^-
+EFPPC.S 1570: error #13: syntax error
+EFPPC.S 1576: dc.l 36
+EFPPC.S 1576: ^-
+EFPPC.S 1576: error #13: syntax error
+EFPPC.S 1583: dc.l 1
+EFPPC.S 1583: ^-
+EFPPC.S 1583: error #13: syntax error
+EFPPC.S 1587: dc.l 1
+EFPPC.S 1587: ^-
+EFPPC.S 1587: error #13: syntax error
+EFPPC.S 1592: dc.l 45
+EFPPC.S 1592: ^-
+EFPPC.S 1592: error #13: syntax error
+EFPPC.S 1605: dc.l 1
+EFPPC.S 1605: ^-
+EFPPC.S 1605: error #13: syntax error
+EFPPC.S 1623: dc.l 1
+EFPPC.S 1623: ^-
+EFPPC.S 1623: error #13: syntax error
+EFPPC.S 1640: dc.l 0
+EFPPC.S 1640: ^-
+EFPPC.S 1640: error #13: syntax error
+EFPPC.S 1654: error #230: missing single quote
+EFPPC.S 1655: bl 4,bl TQKY
+EFPPC.S 1655: -----^-
+EFPPC.S 1655: bl 4,bl TQKY
+EFPPC.S 1655: error #245: expected end of line
+EFPPC.S 1662: error #230: missing single quote
+EFPPC.S 1663: KEY1 3,KEY1:bl QKEY
+EFPPC.S 1663: ^-
+EFPPC.S 1663: error #13: syntax error
+EFPPC.S 1671: error #230: missing single quote
+EFPPC.S 1672: bl 4,bl TEMIT
+EFPPC.S 1672: -----^-
+EFPPC.S 1672: bl 4,bl TEMIT
+EFPPC.S 1672: error #245: expected end of line
+EFPPC.S 1679: error #230: missing single quote
+EFPPC.S 1680: bl 4,bl DLIT
+EFPPC.S 1680: -----^-
+EFPPC.S 1680: bl 4,bl DLIT
+EFPPC.S 1680: error #245: expected end of line
+EFPPC.S 1681: dc.l 11
+EFPPC.S 1681: ^-
+EFPPC.S 1681: error #13: syntax error
+EFPPC.S 1688: error #230: missing single quote
+EFPPC.S 1689: bl 5,bl BLNK
+EFPPC.S 1689: -----^-
+EFPPC.S 1689: bl 5,bl BLNK
+EFPPC.S 1689: error #245: expected end of line
+EFPPC.S 1696: error #230: missing single quote
+EFPPC.S 1697: bl 6,bl DLIT
+EFPPC.S 1697: -----^-
+EFPPC.S 1697: bl 6,bl DLIT
+EFPPC.S 1697: error #245: expected end of line
+EFPPC.S 1698: dc.l 0
+EFPPC.S 1698: ^-
+EFPPC.S 1698: error #13: syntax error
+EFPPC.S 1710: error #230: missing single quote
+EFPPC.S 1711: bl 4,bl TOR
+EFPPC.S 1711: -----^-
+EFPPC.S 1711: bl 4,bl TOR
+EFPPC.S 1711: error #245: expected end of line
+EFPPC.S 1717: dc.l 1
+EFPPC.S 1717: ^-
+EFPPC.S 1717: error #13: syntax error
+EFPPC.S 1727: error #230: missing single quote
+EFPPC.S 1728: bl 2,bl DLIT
+EFPPC.S 1728: -----^-
+EFPPC.S 1728: bl 2,bl DLIT
+EFPPC.S 1728: error #245: expected end of line
+EFPPC.S 1729: dc.l CRR
+EFPPC.S 1729: ^-
+EFPPC.S 1729: error #13: syntax error
+EFPPC.S 1732: dc.l LF
+EFPPC.S 1732: ^-
+EFPPC.S 1732: error #13: syntax error
+EFPPC.S 1739: error #230: missing single quote
+EFPPC.S 1740: bl +3,bl RFRM
+EFPPC.S 1740: ------^-
+EFPPC.S 1740: bl +3,bl RFRM
+EFPPC.S 1740: error #245: expected end of line
+EFPPC.S 1742: subf rTOS,rBase,rTOS
+EFPPC.S 1742: -----^-
+EFPPC.S 1742: error #23: expected register
+EFPPC.S 1747: addi rTOS,rTOS,1
+EFPPC.S 1747: -----^-
+EFPPC.S 1747: error #23: expected register
+EFPPC.S 1758: error #230: missing single quote
+EFPPC.S 1759: bl R+3,bl DOSTR
+EFPPC.S 1759: -------^-
+EFPPC.S 1759: bl R+3,bl DOSTR
+EFPPC.S 1759: error #245: expected end of line
+EFPPC.S 1765: error #230: missing single quote
+EFPPC.S 1766: bl R+3,bl DOSTR
+EFPPC.S 1766: -------^-
+EFPPC.S 1766: bl R+3,bl DOSTR
+EFPPC.S 1766: error #245: expected end of line
+EFPPC.S 1774: error #230: missing single quote
+EFPPC.S 1775: bl 2,bl TOR
+EFPPC.S 1775: -----^-
+EFPPC.S 1775: bl 2,bl TOR
+EFPPC.S 1775: error #245: expected end of line
+EFPPC.S 1787: error #230: missing single quote
+EFPPC.S 1788: bl 3,bl TOR
+EFPPC.S 1788: -----^-
+EFPPC.S 1788: bl 3,bl TOR
+EFPPC.S 1788: error #245: expected end of line
+EFPPC.S 1802: error #230: missing single quote
+EFPPC.S 1803: bl 2,bl BDGS
+EFPPC.S 1803: -----^-
+EFPPC.S 1803: bl 2,bl BDGS
+EFPPC.S 1803: error #245: expected end of line
+EFPPC.S 1813: .COLON 1,46,DOT
+EFPPC.S 1813: ^-
+EFPPC.S 1813: error #13: syntax error
+EFPPC.S 1817: dc.l 10
+EFPPC.S 1817: ^-
+EFPPC.S 1817: error #13: syntax error
+EFPPC.S 1831: .COLON 1,63,QUEST
+EFPPC.S 1831: ^-
+EFPPC.S 1831: error #13: syntax error
+EFPPC.S 1841: error #230: missing single quote
+EFPPC.S 1842: bl 5,bl TEMP
+EFPPC.S 1842: -----^-
+EFPPC.S 1842: bl 5,bl TEMP
+EFPPC.S 1842: error #245: expected end of line
+EFPPC.S 1850: dc.l 1
+EFPPC.S 1850: ^-
+EFPPC.S 1850: error #13: syntax error
+EFPPC.S 1868: dc.l 1
+EFPPC.S 1868: ^-
+EFPPC.S 1868: error #13: syntax error
+EFPPC.S 1875: dc.l 0
+EFPPC.S 1875: ^-
+EFPPC.S 1875: error #13: syntax error
+EFPPC.S 1897: dc.l 1
+EFPPC.S 1897: ^-
+EFPPC.S 1897: error #13: syntax error
+EFPPC.S 1908: dc.l 1
+EFPPC.S 1908: ^-
+EFPPC.S 1908: error #13: syntax error
+EFPPC.S 1925: error #230: missing single quote
+EFPPC.S 1926: bl 5,bl TOR
+EFPPC.S 1926: -----^-
+EFPPC.S 1926: bl 5,bl TOR
+EFPPC.S 1926: error #245: expected end of line
+EFPPC.S 1945: error #230: missing single quote
+EFPPC.S 1946: bl +2,bl DLIT
+EFPPC.S 1946: ------^-
+EFPPC.S 1946: bl +2,bl DLIT
+EFPPC.S 1946: error #245: expected end of line
+EFPPC.S 1947: dc.l 41
+EFPPC.S 1947: ^-
+EFPPC.S 1947: error #13: syntax error
+EFPPC.S 1955: .COLON IMEDD+1,40,PAREN
+EFPPC.S 1955: ^-
+EFPPC.S 1955: error #13: syntax error
+EFPPC.S 1957: dc.l 41
+EFPPC.S 1957: ^-
+EFPPC.S 1957: error #13: syntax error
+EFPPC.S 1962: Odd7:equ 92
+EFPPC.S 1962: -----^-
+EFPPC.S 1962: error #13: syntax error
+EFPPC.S 1967: .COLON IMEDD+1,Odd7,BKSLA
+EFPPC.S 1967: ^-
+EFPPC.S 1967: error #13: syntax error
+EFPPC.S 1977: error #230: missing single quote
+EFPPC.S 1978: bl 4,bl BLNK
+EFPPC.S 1978: -----^-
+EFPPC.S 1978: bl 4,bl BLNK
+EFPPC.S 1978: error #245: expected end of line
+EFPPC.S 1987: error #230: missing single quote
+EFPPC.S 1988: bl 5,bl BLNK
+EFPPC.S 1988: -----^-
+EFPPC.S 1988: bl 5,bl BLNK
+EFPPC.S 1988: error #245: expected end of line
+EFPPC.S 1991: dc.l 31
+EFPPC.S 1991: ^-
+EFPPC.S 1991: error #13: syntax error
+EFPPC.S 2004: error #230: missing single quote
+EFPPC.S 2005: bl 4,bl PARS
+EFPPC.S 2005: -----^-
+EFPPC.S 2005: bl 4,bl PARS
+EFPPC.S 2005: error #245: expected end of line
+EFPPC.S 2015: error #230: missing single quote
+EFPPC.S 2016: bl 5,bl CLLM
+EFPPC.S 2016: -----^-
+EFPPC.S 2016: bl 5,bl CLLM
+EFPPC.S 2016: error #245: expected end of line
+EFPPC.S 2024: error #230: missing single quote
+EFPPC.S 2025: bl 5,bl TOR
+EFPPC.S 2025: -----^-
+EFPPC.S 2025: bl 5,bl TOR
+EFPPC.S 2025: error #245: expected end of line
+EFPPC.S 2047: dc.l 0
+EFPPC.S 2047: ^-
+EFPPC.S 2047: error #13: syntax error
+EFPPC.S 2053: error #230: missing single quote
+EFPPC.S 2054: bl 4,bl SWAP
+EFPPC.S 2054: -----^-
+EFPPC.S 2054: bl 4,bl SWAP
+EFPPC.S 2054: error #245: expected end of line
+EFPPC.S 2058: dc.l CELLL
+EFPPC.S 2058: ^-
+EFPPC.S 2058: error #13: syntax error
+EFPPC.S 2074: dc.l MASKK
+EFPPC.S 2074: ^-
+EFPPC.S 2074: error #13: syntax error
+EFPPC.S 2111: error #230: missing single quote
+EFPPC.S 2112: bl 5,bl CTXT
+EFPPC.S 2112: -----^-
+EFPPC.S 2112: bl 5,bl CTXT
+EFPPC.S 2112: error #245: expected end of line
+EFPPC.S 2138: dc.l 0
+EFPPC.S 2138: ^-
+EFPPC.S 2138: error #13: syntax error
+EFPPC.S 2146: error #230: missing single quote
+EFPPC.S 2147: bl 2,bl TOR
+EFPPC.S 2147: -----^-
+EFPPC.S 2147: bl 2,bl TOR
+EFPPC.S 2147: error #245: expected end of line
+EFPPC.S 2156: dc.l BKSPP
+EFPPC.S 2156: ^-
+EFPPC.S 2156: error #13: syntax error
+EFPPC.S 2160: dc.l 1
+EFPPC.S 2160: ^-
+EFPPC.S 2160: error #13: syntax error
+EFPPC.S 2166: dc.l BKSPP
+EFPPC.S 2166: ^-
+EFPPC.S 2166: error #13: syntax error
+EFPPC.S 2174: error #230: missing single quote
+EFPPC.S 2175: bl 3,bl DUPP
+EFPPC.S 2175: -----^-
+EFPPC.S 2175: bl 3,bl DUPP
+EFPPC.S 2175: error #245: expected end of line
+EFPPC.S 2181: dc.l 1
+EFPPC.S 2181: ^-
+EFPPC.S 2181: error #13: syntax error
+EFPPC.S 2188: error #230: missing single quote
+EFPPC.S 2189: bl 4,bl DUPP
+EFPPC.S 2189: -----^-
+EFPPC.S 2189: bl 4,bl DUPP
+EFPPC.S 2189: error #245: expected end of line
+EFPPC.S 2191: dc.l CRR
+EFPPC.S 2191: ^-
+EFPPC.S 2191: error #13: syntax error
+EFPPC.S 2196: dc.l BKSPP
+EFPPC.S 2196: ^-
+EFPPC.S 2196: error #13: syntax error
+EFPPC.S 2214: error #230: missing single quote
+EFPPC.S 2215: bl 6,bl OVER
+EFPPC.S 2215: -----^-
+EFPPC.S 2215: bl 6,bl OVER
+EFPPC.S 2215: error #245: expected end of line
+EFPPC.S 2226: dc.l 127
+EFPPC.S 2226: ^-
+EFPPC.S 2226: error #13: syntax error
+EFPPC.S 2243: error #230: missing single quote
+EFPPC.S 2244: bl 6,bl TEXPE
+EFPPC.S 2244: -----^-
+EFPPC.S 2244: bl 6,bl TEXPE
+EFPPC.S 2244: error #245: expected end of line
+EFPPC.S 2254: error #230: missing single quote
+EFPPC.S 2255: bl 5,bl TIB
+EFPPC.S 2255: -----^-
+EFPPC.S 2255: bl 5,bl TIB
+EFPPC.S 2255: error #245: expected end of line
+EFPPC.S 2257: dc.l 80
+EFPPC.S 2257: ^-
+EFPPC.S 2257: error #13: syntax error
+EFPPC.S 2264: dc.l 0
+EFPPC.S 2264: ^-
+EFPPC.S 2264: error #13: syntax error
+EFPPC.S 2274: error #230: missing single quote
+EFPPC.S 2275: bl 5,bl SPAT
+EFPPC.S 2275: -----^-
+EFPPC.S 2275: bl 5,bl SPAT
+EFPPC.S 2275: error #245: expected end of line
+EFPPC.S 2290: dc.l 0
+EFPPC.S 2290: ^-
+EFPPC.S 2290: error #13: syntax error
+EFPPC.S 2296: error #230: missing single quote
+EFPPC.S 2297: bl 5,bl HNDL
+EFPPC.S 2297: -----^-
+EFPPC.S 2297: bl 5,bl HNDL
+EFPPC.S 2297: error #245: expected end of line
+EFPPC.S 2314: error #230: missing single quote
+EFPPC.S 2315: mflr 5,mflr rLR
+EFPPC.S 2315: -------^-
+EFPPC.S 2315: mflr 5,mflr rLR
+EFPPC.S 2315: error #245: expected end of line
+EFPPC.S 2317: dc.l 0
+EFPPC.S 2317: ^-
+EFPPC.S 2317: error #13: syntax error
+EFPPC.S 2318: dc.b 99,111,121,111,116,101
+EFPPC.S 2318: ^-
+EFPPC.S 2318: error #13: syntax error
+EFPPC.S 2319: .align
+EFPPC.S 2319: ^-
+EFPPC.S 2319: error #13: syntax error
+EFPPC.S 2324: error #230: missing single quote
+EFPPC.S 2325: bl 5,bl NLLS
+EFPPC.S 2325: -----^-
+EFPPC.S 2325: bl 5,bl NLLS
+EFPPC.S 2325: error #245: expected end of line
+EFPPC.S 2331: error #230: missing single quote
+EFPPC.S 2332: bl +6,bl QBRN
+EFPPC.S 2332: ------^-
+EFPPC.S 2332: bl +6,bl QBRN
+EFPPC.S 2332: error #245: expected end of line
+EFPPC.S 2345: error #230: missing single quote
+EFPPC.S 2346: bl 10,bl NAMQ
+EFPPC.S 2346: ------^-
+EFPPC.S 2346: bl 10,bl NAMQ
+EFPPC.S 2346: error #245: expected end of line
+EFPPC.S 2352: dc.l COMPO<<24
+EFPPC.S 2352: ^-
+EFPPC.S 2352: error #13: syntax error
+EFPPC.S 2354: error #230: missing single quote
+EFPPC.S 2355: bl XEC,bl EXEC
+EFPPC.S 2355: -------^-
+EFPPC.S 2355: bl XEC,bl EXEC
+EFPPC.S 2355: error #245: expected end of line
+EFPPC.S 2367: .COLON IMEDD+1,91,LBRC
+EFPPC.S 2367: ^-
+EFPPC.S 2367: error #13: syntax error
+EFPPC.S 2369: dc.l INTER
+EFPPC.S 2369: ^-
+EFPPC.S 2369: error #13: syntax error
+EFPPC.S 2377: error #230: missing single quote
+EFPPC.S 2378: bl 3,bl DLIT
+EFPPC.S 2378: -----^-
+EFPPC.S 2378: bl 3,bl DLIT
+EFPPC.S 2378: error #245: expected end of line
+EFPPC.S 2379: dc.l INTER
+EFPPC.S 2379: ^-
+EFPPC.S 2379: error #13: syntax error
+EFPPC.S 2385: error #230: missing single quote
+EFPPC.S 2386: DOTO1 1,DOTO1:bl CR
+EFPPC.S 2386: ^-
+EFPPC.S 2386: error #13: syntax error
+EFPPC.S 2392: error #230: missing single quote
+EFPPC.S 2393: bl 6,bl DPTH
+EFPPC.S 2393: -----^-
+EFPPC.S 2393: bl 6,bl DPTH
+EFPPC.S 2393: error #245: expected end of line
+EFPPC.S 2395: error #230: missing single quote
+EFPPC.S 2396: bl XIT,bl EXIT
+EFPPC.S 2396: -------^-
+EFPPC.S 2396: bl XIT,bl EXIT
+EFPPC.S 2396: error #245: expected end of line
+EFPPC.S 2401: error #230: missing single quote
+EFPPC.S 2402: EVAL1 4,EVAL1:bl TOKN
+EFPPC.S 2402: ^-
+EFPPC.S 2402: error #13: syntax error
+EFPPC.S 2421: error #230: missing single quote
+EFPPC.S 2422: bl 6,bl SZER
+EFPPC.S 2422: -----^-
+EFPPC.S 2422: bl 6,bl SZER
+EFPPC.S 2422: error #245: expected end of line
+EFPPC.S 2426: dc.l TIBB
+EFPPC.S 2426: ^-
+EFPPC.S 2426: error #13: syntax error
+EFPPC.S 2435: error #230: missing single quote
+EFPPC.S 2436: bl +3,bl DLIT
+EFPPC.S 2436: ------^-
+EFPPC.S 2436: bl +3,bl DLIT
+EFPPC.S 2436: error #245: expected end of line
+EFPPC.S 2437: dc.l ACCEP
+EFPPC.S 2437: ^-
+EFPPC.S 2437: error #13: syntax error
+EFPPC.S 2447: error #230: missing single quote
+EFPPC.S 2448: bl 4,bl DLIT
+EFPPC.S 2448: -----^-
+EFPPC.S 2448: bl 4,bl DLIT
+EFPPC.S 2448: error #245: expected end of line
+EFPPC.S 2449: dc.l PACE
+EFPPC.S 2449: ^-
+EFPPC.S 2449: error #13: syntax error
+EFPPC.S 2451: dc.l DROP
+EFPPC.S 2451: ^-
+EFPPC.S 2451: error #13: syntax error
+EFPPC.S 2453: dc.l KTAP
+EFPPC.S 2453: ^-
+EFPPC.S 2453: error #13: syntax error
+EFPPC.S 2460: error #230: missing single quote
+EFPPC.S 2461: bl 4,bl DLIT
+EFPPC.S 2461: -----^-
+EFPPC.S 2461: bl 4,bl DLIT
+EFPPC.S 2461: error #245: expected end of line
+EFPPC.S 2462: dc.l DOTOK
+EFPPC.S 2462: ^-
+EFPPC.S 2462: error #13: syntax error
+EFPPC.S 2464: dc.l DROP
+EFPPC.S 2464: ^-
+EFPPC.S 2464: error #13: syntax error
+EFPPC.S 2467: dc.l KTAP
+EFPPC.S 2467: ^-
+EFPPC.S 2467: error #13: syntax error
+EFPPC.S 2474: error #230: missing single quote
+EFPPC.S 2475: mflr 3,mflr rLR
+EFPPC.S 2475: -------^-
+EFPPC.S 2475: mflr 3,mflr rLR
+EFPPC.S 2475: error #245: expected end of line
+EFPPC.S 2477: dc.l QRX
+EFPPC.S 2477: ^-
+EFPPC.S 2477: error #13: syntax error
+EFPPC.S 2478: dc.l TXSTO
+EFPPC.S 2478: ^-
+EFPPC.S 2478: error #13: syntax error
+EFPPC.S 2484: error #230: missing single quote
+EFPPC.S 2485: bl 7,bl ISLO
+EFPPC.S 2485: -----^-
+EFPPC.S 2485: bl 7,bl ISLO
+EFPPC.S 2485: error #245: expected end of line
+EFPPC.S 2495: error #230: missing single quote
+EFPPC.S 2496: bl 4,bl RZER
+EFPPC.S 2496: -----^-
+EFPPC.S 2496: bl 4,bl RZER
+EFPPC.S 2496: error #245: expected end of line
+EFPPC.S 2502: dc.l EVAL
+EFPPC.S 2502: ^-
+EFPPC.S 2502: error #13: syntax error
+EFPPC.S 2519: error #230: missing single quote
+EFPPC.S 2520: bl R,bl CR
+EFPPC.S 2520: -----^-
+EFPPC.S 2520: bl R,bl CR
+EFPPC.S 2520: error #245: expected end of line
+EFPPC.S 2522: dc.l DOTOK
+EFPPC.S 2522: ^-
+EFPPC.S 2522: error #13: syntax error
+EFPPC.S 2527: dc.l ERR
+EFPPC.S 2527: ^-
+EFPPC.S 2527: error #13: syntax error
+EFPPC.S 2537: error #234: missing character constant
+EFPPC.S 2538: bl 1,bl TOKN
+EFPPC.S 2538: -----^-
+EFPPC.S 2538: bl 1,bl TOKN
+EFPPC.S 2538: error #245: expected end of line
+EFPPC.S 2548: error #230: missing single quote
+EFPPC.S 2549: bl 5,bl CP
+EFPPC.S 2549: -----^-
+EFPPC.S 2549: bl 5,bl CP
+EFPPC.S 2549: error #245: expected end of line
+EFPPC.S 2553: Odd8:set $2c
+EFPPC.S 2553: -----^-
+EFPPC.S 2553: error #13: syntax error
+EFPPC.S 2558: .COLON 1,Odd8,CMMA
+EFPPC.S 2558: ^-
+EFPPC.S 2558: error #13: syntax error
+EFPPC.S 2570: error #230: missing single quote
+EFPPC.S 2571: bl +9,bl TICK
+EFPPC.S 2571: ------^-
+EFPPC.S 2571: bl +9,bl TICK
+EFPPC.S 2571: error #245: expected end of line
+EFPPC.S 2578: error #230: missing single quote
+EFPPC.S 2579: bl +7,bl RFRM
+EFPPC.S 2579: ------^-
+EFPPC.S 2579: bl +7,bl RFRM
+EFPPC.S 2579: error #245: expected end of line
+EFPPC.S 2581: lwz rTOS,0(rTOS)
+EFPPC.S 2581: ----------^-
+EFPPC.S 2581: error #318: can't combine these types for addressing
+EFPPC.S 2583: subf rTOS,rBase,rTOS
+EFPPC.S 2583: -----^-
+EFPPC.S 2583: error #23: expected register
+EFPPC.S 2586: dc.l? (0x00000000 03fffffc)
+EFPPC.S 2586: ^-
+EFPPC.S 2586: error #13: syntax error
+EFPPC.S 2596: error #230: missing single quote
+EFPPC.S 2597: bl I+7,bl COMPI
+EFPPC.S 2597: -------^-
+EFPPC.S 2597: bl I+7,bl COMPI
+EFPPC.S 2597: error #245: expected end of line
+EFPPC.S 2605: HEADER 3,,STCQ
+EFPPC.S 2605: ^-
+EFPPC.S 2605: error #13: syntax error
+EFPPC.S 2606: DC.B 3,$24,$2c,$22
+EFPPC.S 2606: ^-
+EFPPC.S 2606: error #13: syntax error
+EFPPC.S 2607: STCQ:push rRP,rTOR
+EFPPC.S 2607: -----^-
+EFPPC.S 2607: error #13: syntax error
+EFPPC.S 2608: mflr rTOR
+EFPPC.S 2608: -----^-
+EFPPC.S 2608: error #23: expected register
+EFPPC.S 2611: dc.l 34
+EFPPC.S 2611: ^-
+EFPPC.S 2611: error #13: syntax error
+EFPPC.S 2623: error #230: missing single quote
+EFPPC.S 2624: bl +7,bl LAST
+EFPPC.S 2624: ------^-
+EFPPC.S 2624: bl +7,bl LAST
+EFPPC.S 2624: error #245: expected end of line
+EFPPC.S 2644: error #230: missing single quote
+EFPPC.S 2645: bl +4,bl HERE
+EFPPC.S 2645: ------^-
+EFPPC.S 2645: bl +4,bl HERE
+EFPPC.S 2645: error #245: expected end of line
+EFPPC.S 2649: dc.l? (0x00000000 03fffffc)
+EFPPC.S 2649: ^-
+EFPPC.S 2649: error #13: syntax error
+EFPPC.S 2652: dc.l 1207959553
+EFPPC.S 2652: ^-
+EFPPC.S 2652: error #13: syntax error
+EFPPC.S 2662: error #230: missing single quote
+EFPPC.S 2663: bl +5,bl HERE
+EFPPC.S 2663: ------^-
+EFPPC.S 2663: bl +5,bl HERE
+EFPPC.S 2663: error #245: expected end of line
+EFPPC.S 2666: dc.l? (0x00000000 03fffffc)
+EFPPC.S 2666: ^-
+EFPPC.S 2666: error #13: syntax error
+EFPPC.S 2669: dc.l 1207959553
+EFPPC.S 2669: ^-
+EFPPC.S 2669: error #13: syntax error
+EFPPC.S 2677: error #230: missing single quote
+EFPPC.S 2678: bl I+3,bl COMPI
+EFPPC.S 2678: -------^-
+EFPPC.S 2678: bl I+3,bl COMPI
+EFPPC.S 2678: error #245: expected end of line
+EFPPC.S 2686: error #230: missing single quote
+EFPPC.S 2687: bl +5,bl HERE
+EFPPC.S 2687: ------^-
+EFPPC.S 2687: bl +5,bl HERE
+EFPPC.S 2687: error #245: expected end of line
+EFPPC.S 2693: error #230: missing single quote
+EFPPC.S 2694: bl I+4,bl COMPI
+EFPPC.S 2694: -------^-
+EFPPC.S 2694: bl I+4,bl COMPI
+EFPPC.S 2694: error #245: expected end of line
+EFPPC.S 2702: error #230: missing single quote
+EFPPC.S 2703: bl I+5,bl COMPI
+EFPPC.S 2703: -------^-
+EFPPC.S 2703: bl I+5,bl COMPI
+EFPPC.S 2703: error #245: expected end of line
+EFPPC.S 2711: error #230: missing single quote
+EFPPC.S 2712: bl I+2,bl COMPI
+EFPPC.S 2712: -------^-
+EFPPC.S 2712: bl I+2,bl COMPI
+EFPPC.S 2712: error #245: expected end of line
+EFPPC.S 2716: dc.l 1207959553
+EFPPC.S 2716: ^-
+EFPPC.S 2716: error #13: syntax error
+EFPPC.S 2723: error #230: missing single quote
+EFPPC.S 2724: bl +5,bl HERE
+EFPPC.S 2724: ------^-
+EFPPC.S 2724: bl +5,bl HERE
+EFPPC.S 2724: error #245: expected end of line
+EFPPC.S 2726: dc.l 1207959553
+EFPPC.S 2726: ^-
+EFPPC.S 2726: error #13: syntax error
+EFPPC.S 2733: error #230: missing single quote
+EFPPC.S 2734: bl +6,bl AGAN
+EFPPC.S 2734: ------^-
+EFPPC.S 2734: bl +6,bl AGAN
+EFPPC.S 2734: error #245: expected end of line
+EFPPC.S 2741: error #230: missing single quote
+EFPPC.S 2742: bl +3,bl DROP
+EFPPC.S 2742: ------^-
+EFPPC.S 2742: bl +3,bl DROP
+EFPPC.S 2742: error #245: expected end of line
+EFPPC.S 2751: error #230: missing single quote
+EFPPC.S 2752: bl +4,bl AHEA
+EFPPC.S 2752: ------^-
+EFPPC.S 2752: bl +4,bl AHEA
+EFPPC.S 2752: error #245: expected end of line
+EFPPC.S 2760: error #230: missing single quote
+EFPPC.S 2761: bl IMEDD+5,bl IFF
+EFPPC.S 2761: -----------^-
+EFPPC.S 2761: bl IMEDD+5,bl IFF
+EFPPC.S 2761: error #245: expected end of line
+EFPPC.S 2768: error #230: missing single quote
+EFPPC.S 2769: bl I+6,bl COMPI
+EFPPC.S 2769: -------^-
+EFPPC.S 2769: bl I+6,bl COMPI
+EFPPC.S 2769: error #245: expected end of line
+EFPPC.S 2777: error #230: missing single quote
+EFPPC.S 2778: bl I+2,bl COMPI
+EFPPC.S 2778: -------^-
+EFPPC.S 2778: bl I+2,bl COMPI
+EFPPC.S 2778: error #245: expected end of line
+EFPPC.S 2786: error #230: missing single quote
+EFPPC.S 2787: bl I+2,bl COMPI
+EFPPC.S 2787: -------^-
+EFPPC.S 2787: bl I+2,bl COMPI
+EFPPC.S 2787: error #245: expected end of line
+EFPPC.S 2797: error #230: missing single quote
+EFPPC.S 2798: bl 7,bl DUPP
+EFPPC.S 2798: -----^-
+EFPPC.S 2798: bl 7,bl DUPP
+EFPPC.S 2798: error #245: expected end of line
+EFPPC.S 2802: error #230: missing single quote
+EFPPC.S 2803: bl VER,bl OVER
+EFPPC.S 2803: -------^-
+EFPPC.S 2803: bl VER,bl OVER
+EFPPC.S 2803: error #245: expected end of line
+EFPPC.S 2812: HEADER 3,,SNAM
+EFPPC.S 2812: ^-
+EFPPC.S 2812: error #13: syntax error
+EFPPC.S 2813: DC.B 3,$23,$2c,$6e
+EFPPC.S 2813: ^-
+EFPPC.S 2813: error #13: syntax error
+EFPPC.S 2814: SNAM:push rRP,rTOR
+EFPPC.S 2814: -----^-
+EFPPC.S 2814: error #13: syntax error
+EFPPC.S 2815: mflr rTOR
+EFPPC.S 2815: -----^-
+EFPPC.S 2815: error #23: expected register
+EFPPC.S 2840: error #230: missing single quote
+EFPPC.S 2841: bl:W STQP,bl THRW
+EFPPC.S 2841: ---^-
+EFPPC.S 2841: error #13: syntax error
+EFPPC.S 2848: error #230: missing single quote
+EFPPC.S 2849: bl 8,bl NAMQ
+EFPPC.S 2849: -----^-
+EFPPC.S 2849: bl 8,bl NAMQ
+EFPPC.S 2849: error #245: expected end of line
+EFPPC.S 2855: dc.l IMEDD<<24
+EFPPC.S 2855: ^-
+EFPPC.S 2855: error #13: syntax error
+EFPPC.S 2876: error #230: missing single quote
+EFPPC.S 2877: bl 5,bl LAST
+EFPPC.S 2877: -----^-
+EFPPC.S 2877: bl 5,bl LAST
+EFPPC.S 2877: error #245: expected end of line
+EFPPC.S 2884: Odd11:equ $3b
+EFPPC.S 2884: ------^-
+EFPPC.S 2884: error #13: syntax error
+EFPPC.S 2889: .COLON IMEDD+COMPO+1,Odd11,SEMIS
+EFPPC.S 2889: ^-
+EFPPC.S 2889: error #13: syntax error
+EFPPC.S 2899: .COLON 1,93,RBRAC
+EFPPC.S 2899: ^-
+EFPPC.S 2899: error #13: syntax error
+EFPPC.S 2901: dc.l SCMP
+EFPPC.S 2901: ^-
+EFPPC.S 2901: error #13: syntax error
+EFPPC.S 2906: Odd12:equ $3a
+EFPPC.S 2906: ------^-
+EFPPC.S 2906: error #13: syntax error
+EFPPC.S 2911: .COLON 1,Odd12,COLON
+EFPPC.S 2911: ^-
+EFPPC.S 2911: error #13: syntax error
+EFPPC.S 2915: push rRP,rTOR
+EFPPC.S 2915: ^-
+EFPPC.S 2915: error #13: syntax error
+EFPPC.S 2918: mflr rTOR
+EFPPC.S 2918: -----^-
+EFPPC.S 2918: error #23: expected register
+EFPPC.S 2926: error #230: missing single quote
+EFPPC.S 2927: bl 9,bl DLIT
+EFPPC.S 2927: -----^-
+EFPPC.S 2927: bl 9,bl DLIT
+EFPPC.S 2927: error #245: expected end of line
+EFPPC.S 2928: dc.l IMEDD<<24
+EFPPC.S 2928: ^-
+EFPPC.S 2928: error #13: syntax error
+EFPPC.S 2943: error #230: missing single quote
+EFPPC.S 2944: bl 4,bl TOKN
+EFPPC.S 2944: -----^-
+EFPPC.S 2944: bl 4,bl TOKN
+EFPPC.S 2944: error #245: expected end of line
+EFPPC.S 2948: mflr rLR
+EFPPC.S 2948: -----^-
+EFPPC.S 2948: error #23: expected register
+EFPPC.S 2951: dc.l doUser
+EFPPC.S 2951: ^-
+EFPPC.S 2951: error #13: syntax error
+EFPPC.S 2959: error #230: missing single quote
+EFPPC.S 2960: bl 6,bl TOKN
+EFPPC.S 2960: -----^-
+EFPPC.S 2960: bl 6,bl TOKN
+EFPPC.S 2960: error #245: expected end of line
+EFPPC.S 2964: mflr rLR
+EFPPC.S 2964: -----^-
+EFPPC.S 2964: error #23: expected register
+EFPPC.S 2967: dc.l doVar
+EFPPC.S 2967: ^-
+EFPPC.S 2967: error #13: syntax error
+EFPPC.S 2974: error #230: missing single quote
+EFPPC.S 2975: bl 8,bl CREA
+EFPPC.S 2975: -----^-
+EFPPC.S 2975: bl 8,bl CREA
+EFPPC.S 2975: error #245: expected end of line
+EFPPC.S 2977: dc.l 0
+EFPPC.S 2977: ^-
+EFPPC.S 2977: error #13: syntax error
+EFPPC.S 2986: error #230: missing single quote
+EFPPC.S 2987: bl 5,bl TOR
+EFPPC.S 2987: -----^-
+EFPPC.S 2987: bl 5,bl TOR
+EFPPC.S 2987: error #245: expected end of line
+EFPPC.S 2994: dc.l 1
+EFPPC.S 2994: ^-
+EFPPC.S 2994: error #13: syntax error
+EFPPC.S 3004: error #230: missing single quote
+EFPPC.S 3005: bl 3,bl OVER
+EFPPC.S 3005: -----^-
+EFPPC.S 3005: bl 3,bl OVER
+EFPPC.S 3005: error #245: expected end of line
+EFPPC.S 3007: dc.l 4
+EFPPC.S 3007: ^-
+EFPPC.S 3007: error #13: syntax error
+EFPPC.S 3015: dc.l 3
+EFPPC.S 3015: ^-
+EFPPC.S 3015: error #13: syntax error
+EFPPC.S 3018: dc.l 1
+EFPPC.S 3018: ^-
+EFPPC.S 3018: error #13: syntax error
+EFPPC.S 3027: error #230: missing single quote
+EFPPC.S 3028: bl 4,bl BASE
+EFPPC.S 3028: -----^-
+EFPPC.S 3028: bl 4,bl BASE
+EFPPC.S 3028: error #245: expected end of line
+EFPPC.S 3033: dc.l 16
+EFPPC.S 3033: ^-
+EFPPC.S 3033: error #13: syntax error
+EFPPC.S 3039: dc.l 16
+EFPPC.S 3039: ^-
+EFPPC.S 3039: error #13: syntax error
+EFPPC.S 3058: error #230: missing single quote
+EFPPC.S 3059: bl 2,bl SPAC
+EFPPC.S 3059: -----^-
+EFPPC.S 3059: bl 2,bl SPAC
+EFPPC.S 3059: error #245: expected end of line
+EFPPC.S 3074: error #230: missing single quote
+EFPPC.S 3075: bl 4,bl SPAT
+EFPPC.S 3075: -----^-
+EFPPC.S 3075: bl 4,bl SPAT
+EFPPC.S 3075: error #245: expected end of line
+EFPPC.S 3083: error #230: missing single quote
+EFPPC.S 3084: bl 4,bl SPAT
+EFPPC.S 3084: -----^-
+EFPPC.S 3084: bl 4,bl SPAT
+EFPPC.S 3084: error #245: expected end of line
+EFPPC.S 3088: error #230: missing single quote
+EFPPC.S 3089: bl XIT,bl EXIT
+EFPPC.S 3089: -------^-
+EFPPC.S 3089: bl XIT,bl EXIT
+EFPPC.S 3089: error #245: expected end of line
+EFPPC.S 3094: error #230: missing single quote
+EFPPC.S 3095: bl 5,bl CRNT
+EFPPC.S 3095: -----^-
+EFPPC.S 3095: bl 5,bl CRNT
+EFPPC.S 3095: error #245: expected end of line
+EFPPC.S 3125: dc.l 0
+EFPPC.S 3125: ^-
+EFPPC.S 3125: error #13: syntax error
+EFPPC.S 3131: error #230: missing single quote
+EFPPC.S 3132: bl 3,bl QDUP
+EFPPC.S 3132: -----^-
+EFPPC.S 3132: bl 3,bl QDUP
+EFPPC.S 3132: error #245: expected end of line
+EFPPC.S 3137: dc.l 31
+EFPPC.S 3137: ^-
+EFPPC.S 3137: error #13: syntax error
+EFPPC.S 3141: error #230: missing single quote
+EFPPC.S 3142: bl:T DTQP,bl EXIT
+EFPPC.S 3142: ^-
+EFPPC.S 3142: error #113: multiply defined
+EFPPC.S 3142: bl:T DTQP,bl EXIT
+EFPPC.S 3142: ---^-
+EFPPC.S 3142: error #13: syntax error
+EFPPC.S 3151: error #230: missing single quote
+EFPPC.S 3152: bl 2,bl DUPP
+EFPPC.S 3152: -----^-
+EFPPC.S 3152: bl 2,bl DUPP
+EFPPC.S 3152: error #245: expected end of line
+EFPPC.S 3155: dc.l 1207959552
+EFPPC.S 3155: ^-
+EFPPC.S 3155: error #13: syntax error
+EFPPC.S 3164: dc.l? (0x00000000 02000000)
+EFPPC.S 3164: ^-
+EFPPC.S 3164: error #13: syntax error
+EFPPC.S 3169: dc.l -67108864
+EFPPC.S 3169: ^-
+EFPPC.S 3169: error #13: syntax error
+EFPPC.S 3172: dc.l -4
+EFPPC.S 3172: ^-
+EFPPC.S 3172: error #13: syntax error
+EFPPC.S 3176: dc.l? (0x00000000 03fffffc)
+EFPPC.S 3176: ^-
+EFPPC.S 3176: error #13: syntax error
+EFPPC.S 3189: error #230: missing single quote
+EFPPC.S 3190: bl 3,bl TICK
+EFPPC.S 3190: -----^-
+EFPPC.S 3190: bl 3,bl TICK
+EFPPC.S 3190: error #245: expected end of line
+EFPPC.S 3193: dc.l 19
+EFPPC.S 3193: ^-
+EFPPC.S 3193: error #13: syntax error
+EFPPC.S 3219: error #230: missing single quote
+EFPPC.S 3220: bl 5,bl CTXT
+EFPPC.S 3220: -----^-
+EFPPC.S 3220: bl 5,bl CTXT
+EFPPC.S 3220: error #245: expected end of line
+EFPPC.S 3223: dc.l 10
+EFPPC.S 3223: ^-
+EFPPC.S 3223: error #13: syntax error
+EFPPC.S 3238: dc.l 1
+EFPPC.S 3238: ^-
+EFPPC.S 3238: error #13: syntax error
+EFPPC.S 3253: error #230: missing single quote
+EFPPC.S 3254: mflr 3,mflr rLR
+EFPPC.S 3254: -------^-
+EFPPC.S 3254: mflr 3,mflr rLR
+EFPPC.S 3254: error #245: expected end of line
+EFPPC.S 3256: dc.l VER*256+EXT
+EFPPC.S 3256: ^-
+EFPPC.S 3256: error #13: syntax error
+EFPPC.S 3261: error #230: missing single quote
+EFPPC.S 3262: bl 2,bl STOIO
+EFPPC.S 3262: -----^-
+EFPPC.S 3262: bl 2,bl STOIO
+EFPPC.S 3262: error #245: expected end of line
+EFPPC.S 3264: error #230: missing single quote
+EFPPC.S 3265: bl ASE,bl BASE
+EFPPC.S 3265: -------^-
+EFPPC.S 3265: bl ASE,bl BASE
+EFPPC.S 3265: error #245: expected end of line
+EFPPC.S 3273: dc.l 46
+EFPPC.S 3273: ^-
+EFPPC.S 3273: error #13: syntax error
+EFPPC.S 3286: error #234: missing character constant
+EFPPC.S 3287: mflr 5,mflr rLR
+EFPPC.S 3287: -------^-
+EFPPC.S 3287: mflr 5,mflr rLR
+EFPPC.S 3287: error #245: expected end of line
+EFPPC.S 3289: dc.l HI
+EFPPC.S 3289: ^-
+EFPPC.S 3289: error #13: syntax error
+EFPPC.S 3294: error #230: missing single quote
+EFPPC.S 3295: COLD1 4,COLD1:bl PRES
+EFPPC.S 3295: ^-
+EFPPC.S 3295: error #13: syntax error
+EFPPC.S 3318: error #230: missing single quote
+EFPPC.S 3319: mflr 9,mflr rLR
+EFPPC.S 3319: -------^-
+EFPPC.S 3319: mflr 9,mflr rLR
+EFPPC.S 3319: error #245: expected end of line
+EFPPC.S 3321: source:dc.l 0
+EFPPC.S 3321: -------^-
+EFPPC.S 3321: error #13: syntax error
+EFPPC.S 3325: error #230: missing single quote
+EFPPC.S 3326: pop 4,pop rDP,r3
+EFPPC.S 3326: ^-
+EFPPC.S 3326: error #13: syntax error
+EFPPC.S 3327: add r3,r3,rBase
+EFPPC.S 3327: ----------^-
+EFPPC.S 3327: error #23: expected register
+EFPPC.S 3328: ori r4,rTOS,0
+EFPPC.S 3328: -------^-
+EFPPC.S 3328: error #23: expected register
+EFPPC.S 3330: prologue
+EFPPC.S 3330: ^-
+EFPPC.S 3330: error #13: syntax error
+EFPPC.S 3333: epilogue
+EFPPC.S 3333: ^-
+EFPPC.S 3333: error #13: syntax error
+EFPPC.S 3335: ori rTOS,r3,0
+EFPPC.S 3335: ----^-
+EFPPC.S 3335: error #23: expected register
+EFPPC.S 3336: stw r3,source(rBase)
+EFPPC.S 3336: -------------^-
+EFPPC.S 3336: error #318: can't combine these types for addressing
+EFPPC.S 3341: error #230: missing single quote
+EFPPC.S 3342: add 5,add r3,rTOS,rBase
+EFPPC.S 3342: ------------^-
+EFPPC.S 3342: error #27: expected ','
+EFPPC.S 3344: prologue
+EFPPC.S 3344: ^-
+EFPPC.S 3344: error #13: syntax error
+EFPPC.S 3347: epilogue
+EFPPC.S 3347: ^-
+EFPPC.S 3347: error #13: syntax error
+EFPPC.S 3349: ori rTOS,r3,0
+EFPPC.S 3349: ----^-
+EFPPC.S 3349: error #23: expected register
+EFPPC.S 3350: stw r3,source(rBase)
+EFPPC.S 3350: -------------^-
+EFPPC.S 3350: error #318: can't combine these types for addressing
+EFPPC.S 3355: error #230: missing single quote
+EFPPC.S 3356: ori 4,ori r3,rTOS,0
+EFPPC.S 3356: ------------^-
+EFPPC.S 3356: error #27: expected ','
+EFPPC.S 3357: pop rDP,r5
+EFPPC.S 3357: ^-
+EFPPC.S 3357: error #13: syntax error
+EFPPC.S 3358: pop rDP,r4
+EFPPC.S 3358: ^-
+EFPPC.S 3358: error #13: syntax error
+EFPPC.S 3359: add r4,r4,rBase
+EFPPC.S 3359: ----------^-
+EFPPC.S 3359: error #23: expected register
+EFPPC.S 3361: prologue
+EFPPC.S 3361: ^-
+EFPPC.S 3361: error #13: syntax error
+EFPPC.S 3364: epilogue
+EFPPC.S 3364: ^-
+EFPPC.S 3364: error #13: syntax error
+EFPPC.S 3366: ori rTOS,r3,0
+EFPPC.S 3366: ----^-
+EFPPC.S 3366: error #23: expected register
+EFPPC.S 3371: error #230: missing single quote
+EFPPC.S 3372: ori 5,ori r3,rTOS,0
+EFPPC.S 3372: ------------^-
+EFPPC.S 3372: error #27: expected ','
+EFPPC.S 3373: pop rDP,r5
+EFPPC.S 3373: ^-
+EFPPC.S 3373: error #13: syntax error
+EFPPC.S 3374: pop rDP,r4
+EFPPC.S 3374: ^-
+EFPPC.S 3374: error #13: syntax error
+EFPPC.S 3375: add r4,r4,rBase
+EFPPC.S 3375: ----------^-
+EFPPC.S 3375: error #23: expected register
+EFPPC.S 3377: prologue
+EFPPC.S 3377: ^-
+EFPPC.S 3377: error #13: syntax error
+EFPPC.S 3380: epilogue
+EFPPC.S 3380: ^-
+EFPPC.S 3380: error #13: syntax error
+EFPPC.S 3382: ori rTOS,r3,0
+EFPPC.S 3382: ----^-
+EFPPC.S 3382: error #23: expected register
+EFPPC.S 3387: error #230: missing single quote
+EFPPC.S 3388: ori 4,ori r3,rTOS,0
+EFPPC.S 3388: ------------^-
+EFPPC.S 3388: error #27: expected ','
+EFPPC.S 3389: pop rDP,r5
+EFPPC.S 3389: ^-
+EFPPC.S 3389: error #13: syntax error
+EFPPC.S 3390: pop rDP,r4
+EFPPC.S 3390: ^-
+EFPPC.S 3390: error #13: syntax error
+EFPPC.S 3392: prologue
+EFPPC.S 3392: ^-
+EFPPC.S 3392: error #13: syntax error
+EFPPC.S 3395: epilogue
+EFPPC.S 3395: ^-
+EFPPC.S 3395: error #13: syntax error
+EFPPC.S 3397: ori rTOS,r3,0
+EFPPC.S 3397: ----^-
+EFPPC.S 3397: error #23: expected register
+EFPPC.S 3402: error #230: missing single quote
+EFPPC.S 3403: ori 6,ori r3,rTOS,0
+EFPPC.S 3403: ------------^-
+EFPPC.S 3403: error #27: expected ','
+EFPPC.S 3405: prologue
+EFPPC.S 3405: ^-
+EFPPC.S 3405: error #13: syntax error
+EFPPC.S 3408: epilogue
+EFPPC.S 3408: ^-
+EFPPC.S 3408: error #13: syntax error
+EFPPC.S 3410: ori rTOS,r3,0
+EFPPC.S 3410: ----^-
+EFPPC.S 3410: error #23: expected register
+EFPPC.S 3415: error #230: missing single quote
+EFPPC.S 3416: ori 5,ori r3,rTOS,0
+EFPPC.S 3416: ------------^-
+EFPPC.S 3416: error #27: expected ','
+EFPPC.S 3418: prologue
+EFPPC.S 3418: ^-
+EFPPC.S 3418: error #13: syntax error
+EFPPC.S 3421: epilogue
+EFPPC.S 3421: ^-
+EFPPC.S 3421: error #13: syntax error
+EFPPC.S 3423: ori rTOS,r3,0
+EFPPC.S 3423: ----^-
+EFPPC.S 3423: error #23: expected register
+EFPPC.S 3428: error #230: missing single quote
+EFPPC.S 3429: bl 4,bl TOKN
+EFPPC.S 3429: -----^-
+EFPPC.S 3429: bl 4,bl TOKN
+EFPPC.S 3429: error #245: expected end of line
+EFPPC.S 3431: dc.l 1
+EFPPC.S 3431: ^-
+EFPPC.S 3431: error #13: syntax error
+EFPPC.S 3434: dc.l 0
+EFPPC.S 3434: ^-
+EFPPC.S 3434: error #13: syntax error
+EFPPC.S 3440: error #230: missing single quote
+EFPPC.S 3441: bl 7,bl TIB
+EFPPC.S 3441: -----^-
+EFPPC.S 3441: bl 7,bl TIB
+EFPPC.S 3441: error #245: expected end of line
+EFPPC.S 3446: dc.l 8192
+EFPPC.S 3446: ^-
+EFPPC.S 3446: error #13: syntax error
+EFPPC.S 3452: error #230: missing single quote
+EFPPC.S 3453: bl EAD,bl READ
+EFPPC.S 3453: -------^-
+EFPPC.S 3453: bl EAD,bl READ
+EFPPC.S 3453: error #245: expected end of line
+EFPPC.S 3481: LASTN equ _LINK
+EFPPC.S 3481: ^-
+EFPPC.S 3481: error #13: syntax error
+EFPPC.S 3483: CTOP equ $
+EFPPC.S 3483: ^-
+EFPPC.S 3483: error #13: syntax error
+EFPPC.S 3485: ORG TIBB-4
+EFPPC.S 3485: ^-
+EFPPC.S 3485: error #13: syntax error
+EFPPC.S 3486: NTOP equ $
+EFPPC.S 3486: ^-
+EFPPC.S 3486: error #13: syntax error
+EFPPC.S 3488: ORG TIBB
+EFPPC.S 3488: ^-
+EFPPC.S 3488: error #13: syntax error
+EFPPC.S 3489: dcb.l 32768,0
+EFPPC.S 3489: ^-
+EFPPC.S 3489: error #13: syntax error
+EFPPC.S 3502: MACRO
+EFPPC.S 3502: ^-
+EFPPC.S 3502: error #13: syntax error
+EFPPC.S 3503: MakeFunction&fnName
+EFPPC.S 3503: ^-
+EFPPC.S 3503: error #13: syntax error
+EFPPC.S 3504: EXPORT&fnName[DS]
+EFPPC.S 3504: ^-
+EFPPC.S 3504: error #13: syntax error
+EFPPC.S 3505: EXPORT .&fnName[PR]
+EFPPC.S 3505: ^-
+EFPPC.S 3505: error #13: syntax error
+EFPPC.S 3507: TC&fnName[TC],&fnName[DS]
+EFPPC.S 3507: ^-
+EFPPC.S 3507: error #13: syntax error
+EFPPC.S 3509: CSECT&fnName[DS]
+EFPPC.S 3509: ^-
+EFPPC.S 3509: error #13: syntax error
+EFPPC.S 3510: DC.L .&fnName[PR]
+EFPPC.S 3510: ^-
+EFPPC.S 3510: error #13: syntax error
+EFPPC.S 3511: DC.L TOC[tc0]
+EFPPC.S 3511: ^-
+EFPPC.S 3511: error #13: syntax error
+EFPPC.S 3513: CSECT .&fnName[PR]
+EFPPC.S 3513: ^-
+EFPPC.S 3513: error #13: syntax error
+EFPPC.S 3514: FUNCTION .&fnName[PR]
+EFPPC.S 3514: ^-
+EFPPC.S 3514: error #13: syntax error
+EFPPC.S 3516: ENDM
+EFPPC.S 3516: ^-
+EFPPC.S 3516: error #13: syntax error
+EFPPC.S 3518: linkageArea:set 24
+EFPPC.S 3518: ------------^-
+EFPPC.S 3518: error #13: syntax error
+EFPPC.S 3519: CalleesParams:set 32
+EFPPC.S 3519: --------------^-
+EFPPC.S 3519: error #13: syntax error
+EFPPC.S 3520: CalleesLocalVars:set 0
+EFPPC.S 3520: -----------------^-
+EFPPC.S 3520: error #13: syntax error
+EFPPC.S 3521: numGPRs:set 10
+EFPPC.S 3521: --------^-
+EFPPC.S 3521: error #13: syntax error
+EFPPC.S 3522: numFPRs:set 0
+EFPPC.S 3522: --------^-
+EFPPC.S 3522: error #13: syntax error
+EFPPC.S 3524: spaceToSave:set linkageArea+CalleesParams+CalleesLocalVars+4*numGPRs+8*numFPRs
+EFPPC.S 3524: ------------^-
+EFPPC.S 3524: error #13: syntax error
+EFPPC.S 3527: import .read,.write,.open,.close,.creat,.lseek,.unlink
+EFPPC.S 3527: ^-
+EFPPC.S 3527: error #13: syntax error
+EFPPC.S 3529: import gHelloString
+EFPPC.S 3529: ^-
+EFPPC.S 3529: error #13: syntax error
+EFPPC.S 3531: toc
+EFPPC.S 3531: ^-
+EFPPC.S 3531: error #13: syntax error
+EFPPC.S 3532: tc gHelloString[TC],gHelloString
+EFPPC.S 3532: ^-
+EFPPC.S 3532: error #13: syntax error
+EFPPC.S 3536: MakeFunction CharHandler
+EFPPC.S 3536: ^-
+EFPPC.S 3536: error #13: syntax error
+EFPPC.S 3542: stwu sp,-spaceToSave(sp)
+EFPPC.S 3542: error #368: type clash, operator='-'
+EFPPC.S 3550: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3550: -------------------^-
+EFPPC.S 3550: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3550: error #245: expected end of line
+EFPPC.S 3557: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3557: -------------------^-
+EFPPC.S 3557: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3557: error #245: expected end of line
+EFPPC.S 3564: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3564: -------------------^-
+EFPPC.S 3564: lwz r4,gHelloString[TC](RTOC)
+EFPPC.S 3564: error #245: expected end of line
+EFPPC.S 3578: csect .CharHandler[pr]
+EFPPC.S 3578: ^-
+EFPPC.S 3578: error #13: syntax error
+EFPPC.S 3579: error #230: missing single quote
+EFPPC.S 3580: dc.b
+EFPPC.S 3580: ^-
+EFPPC.S 3580: error #13: syntax error
+EFPPC.S 3581: end
+EFPPC.S 3581: ^-
+EFPPC.S 3581: error #13: syntax error
+EFPPC.S 198: stwu sp,-spaceToSave(sp)
+EFPPC.S 198: error #368: type clash, operator='-'
+EFPPC.S 203: addic sp,sp,spaceToSave
+EFPPC.S 203: ------------^-
+EFPPC.S 203: error #70: illegal relocation
+EFPPC.S 3572: lwz r0,8+spaceToSave(sp)
+EFPPC.S 3572: -------^-
+EFPPC.S 3572: error #70: illegal relocation
+EFPPC.S 3573: addic sp,sp,spaceToSave
+EFPPC.S 3573: ------------^-
+EFPPC.S 3573: error #70: illegal relocation
+errors detected: 1049
