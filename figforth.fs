@@ -356,7 +356,7 @@ s" execute" machineword _execute
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
 : execute; ( -- ) _execute word, ;
-: branch; ( location id -- ) bl, ;
+: branch; ( location id -- ) xrp bl, ;
 : ??branch; ( loc -- ) ??, branch; ;
 s" 0branch" machineword _0branch
 deflabel _zbra1
