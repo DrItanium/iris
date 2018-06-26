@@ -351,15 +351,16 @@ s" lit" machineword _lit
 : lit; ( -- ) _lit word, ;
 s" execute" machineword _execute
 	\ execute the definition whose code field address cfa is on the data stack
-    xsp xw pop, \ pop the code field address into xw, the word pointer
-    xw at0 ldtincr, \ Jump indirectly to the code routine. Increment xw to point to the parameter field
-    at0 br, 
+    1pop, \ top - cfa
+    \ do not use normal call procedure since we don't want to come back here
+    \ and muck up the return stack
+    xtop br, \ go there, the return stack has not been touched
 : execute; ( -- ) _execute word, ;
 s" branch" machineword _branch
 	xip xtop ld,
 	xtop xip xip add,
 	next,
-: branch; ( location id -- ) _branch two-cell-op ;
+: branch; ( location id -- ) bl, ;
 : ??branch; ( loc -- ) ??, branch; ;
 s" 0branch" machineword _0branch
 deflabel _zbra1
