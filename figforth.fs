@@ -337,12 +337,9 @@ deflabel-here
 : 4pop ( -- )
   3pop,
   xsp xfourth pop, ;
-s" lit" machineword _lit
-    xrp xlower ld, \ address of next which is a literal
-    xlower xtop ld, \ load the value
-    xlower 1+,     \ skip over the cell
-    xlower xrp st, \ overwrite the cell
-    1push,
+deflabel _lit
+deflabel _execute
+deflabel _0branch
 : two-cell-op ( n id op -- ) word, .cell ;
 : plit; ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
@@ -351,16 +348,27 @@ s" lit" machineword _lit
 : ??plit; ( n -- ) ??, plit; ;
 : #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
-s" execute" machineword _execute
+: execute; ( -- ) _execute word, ;
+: branch; ( location id -- ) xrp bl, ;
+: ??branch; ( loc -- ) ??, branch; ;
+: zbranch; ( location id -- ) _0branch two-cell-op ;
+: ??zbranch; ( location -- ) ??, zbranch; ;
+_lit s" lit" machineword-predef
+    xrp xlower ld, \ address of next which is a literal
+    xlower xtop ld, \ load the value
+    xlower 1+,     \ skip over the cell
+    xlower xrp st, \ overwrite the cell
+    1push,
+s" exit" machineword _exit
+    \ terminate a colon definition
+    xrp ret,
+_execute s" execute" machineword-predef
 	\ execute the definition whose code field address cfa is on the data stack
     1pop, \ top - cfa
     \ do not use normal call procedure since we don't want to come back here
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
-: execute; ( -- ) _execute word, ;
-: branch; ( location id -- ) xrp bl, ;
-: ??branch; ( loc -- ) ??, branch; ;
-s" 0branch" machineword _0branch
+_0branch s" 0branch" machineword-predef
 deflabel _zbra1
 	1pop, \ flag
 	zero xtop cv neq,
@@ -372,8 +380,21 @@ _zbra1 .label
     0x2 #, xlower xlower addi, \ compute <>0 case
     xlower xrp st, 
 	next,
-: zbranch; ( location id -- ) _0branch two-cell-op ;
-: ??zbranch; ( location -- ) ??, zbranch; ;
+s" !" machineword _store ( v a -- ) 
+   2pop, \ top - addr
+         \ lower - value
+   xlower xtop st, \ perform the store
+   next,
+s" @" machineword _at
+    1pop,
+    xtop xtop ld,
+	1push,
+s" c!" machineword _c!  ( value addr -- ) 
+	2pop, \ top - addr
+		 \ lower - value
+    0xFF #, xlower xlower andi,
+    xlower xtop st, \ save it to memory with the upper 8 bits masked
+    next,
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
@@ -747,11 +768,7 @@ s" toggle" machineword _toggle ( p addr -- )
 	xtop xthird st, 
 	next,
 : toggle; ( -- ) _toggle word, ;
-s" @" machineword _@
-    1pop,
-    xtop xtop ld,
-	1push,
-: @; ( -- ) _@ word, ;
+: @; ( -- ) _at word, ;
 s" c@" machineword _c@
 : c@; ( -- ) _c@ word, ;
 	1pop, 
@@ -765,18 +782,7 @@ s" 2@" machineword _2@
    xtop xtop ld, \ upper word
    2push,
 : 2@; ( -- ) _2@ word, ;
-s" !" machineword _! ( v a -- ) 
-   2pop, \ top - addr
-   		\ lower - value
-   xlower xtop st, \ perform the store
-next,
-: !; ( -- ) _! word, ;
-s" c!" machineword _c!  ( value addr -- ) 
-	2pop, \ top - addr
-		 \ lower - value
-    0xFF #, xlower xlower andi,
-    xlower xtop st, \ save it to memory with the upper 8 bits masked
-    next,
+: !; ( -- ) _store word, ;
 : c!; ( -- ) _c! word, ;
 s" 2!" machineword _2! 
     3pop, \ top addr
@@ -1044,12 +1050,12 @@ _?csp s" ?csp" colonword-predef
     ?error;
     ;;s
 s" ?loading" colonword _?loading
-: ?loading; ( -- ) _?loading word, ;
     blk; @;
     0=;
     0x16 #plit;
     ?error;
     ;;s
+: ?loading; ( -- ) _?loading word, ;
 _compile s" compile" colonword-predef
     ?comp;
     r>;
