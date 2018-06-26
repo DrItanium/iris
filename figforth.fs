@@ -15,6 +15,8 @@ unused-start
 1+cconstant xlower \ contents of the second stack item when a pop is called
 1+cconstant xthird \ contents of the third stack item
 1+cconstant xfourth \ contents of the fourth stack item
+1+cconstant xfifth \ contents of the fifth stack item or result of a double add
+1+cconstant xsixth \ contents of the sixth stack item or result of a double add
 1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
@@ -453,6 +455,28 @@ s" over" machineword _over
 	xtop xsp push,
 	xlower xsp push, 
 	next,
+s" 0<" machineword _0<
+    1pop,
+    xtop xtop ltz,
+	1push,
+s" and" defbinaryop _and and,
+s" or"  defbinaryop _or or,
+s" xor" defbinaryop _xor xor,
+s" um+" machineword _uplus ( a b -- c f )
+    \ add two numbers, return the sum and carry flag
+    xsp xtop pop, \ do a wide add at this point and just zero out the upper portion
+    zero xlower move, 
+    xsp xthird pop, 
+    zero xfourth move,
+    xlower xtop xfifth addw, \ we take the result and
+    xfifth xlower move,
+    xtop xtop neqz, \ check and see if the upper portion has been set, this becomes the carry flag
+    2push,
+: um+; ( -- ) _uplus word, ;
+: and; ( -- ) _and word, ;
+: or; ( -- ) _or word, ;
+: xor; ( -- ) _xor word, ;
+: 0<; ( -- ) _0< word, ;
 : rp!; ( -- ) _rpstore word, ;
 : sp@; ( -- ) _spat word, ;
 : sp!; ( -- ) _spstore word, ;
@@ -668,12 +692,6 @@ s" u*" defbinaryop _u* umul,
 : u*; ( -- ) _u* word, ;
 s" u/" defbinaryop _u/ udiv,
 : u/; ( -- ) _u/ word, ;
-s" and" defbinaryop _and and,
-: and; ( -- ) _and word, ;
-s" or"  defbinaryop _or or,
-: or; ( -- ) _or word, ;
-s" xor" defbinaryop _xor xor,
-: xor; ( -- ) _xor word, ;
 
 s" ;s" machineword _;s
 	\ return execution to the calling definition. Unnest one level.
@@ -703,11 +721,6 @@ s" 0=" machineword _0=
     xtop xtop eqz,
 	1push,
 : 0=; ( -- ) _0= word, ;
-s" 0<" machineword _0<
-    1pop,
-    xtop xtop ltz,
-	1push,
-: 0<; ( -- ) _0< word, ;
 s" +" defbinaryop _+ add,
 : +; ( -- ) _+ word, ;
 s" d+" machineword _dplus
