@@ -21,6 +21,7 @@ unused-start
 1+cconstant xerror \ error code
 1+cconstant xcoreid \ current core section id
 1+cconstant xtmp \ temporary used only by _next
+1+cconstant xup \ user area pointer
 too-many-vars-defined
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
@@ -91,6 +92,7 @@ keyboard-buffer 4 + constant co
 \ bootstrap-end constant dictionary-start
 
 \ register reservations
+deflabel forth1
 deflabel _origin
 deflabel _error
 deflabel forth_vocabulary_start
@@ -210,8 +212,14 @@ deflabel _,
 &FIRST constant xfirst
 0x8 constant b/scr
 0x80 constant b/buf 
+1 constant cell-size
 variable last-word
+variable user-offset
 0 last-word !
+0 user-space-offset !
+: user-offset@ ( -- n ) user-offset @ ;
+: user-offset! ( n -- ) user-offset ! ;
+: user-offset1+ ( -- ) user-offset@ 1+ user-offset! ;
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
 deflabel-here _2push 
@@ -317,7 +325,10 @@ deflabel-here
 : embed-doconstant ( -- ) _doconstant ??, xrp bl, ;
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
-: embed-douser ( -- ) _douser ??, .cell ;
+: embed-douser ( -- ) 
+    _douser ??, rsp bl,
+    user-offset@ constant,
+    user-offset1+ ;
 : userword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
 : userword-base-predef ( label str length control-bits -- ) defword-base-predef embed-douser ;
 : userword ( n -- ) word/none userword-base ;
@@ -369,6 +380,7 @@ _lit s" lit" machineword-predef
 s" exit" machineword _exit
     \ terminate a colon definition
     xrp ret,
+: exit; ( -- ) _exit word, ;
 _execute s" execute" machineword-predef
 	\ execute the definition whose code field address cfa is on the data stack
     1pop, \ top - cfa
@@ -472,6 +484,53 @@ s" um+" machineword _uplus ( a b -- c f )
     xfifth xlower move,
     xtop xtop neqz, \ check and see if the upper portion has been set, this becomes the carry flag
     2push,
+deflabel-here dovariable ( -- a )
+    \ runtime routine for VARIABLE and CREATE 
+    xrp xtop pop, \ this routine will be called from variables, we use the return address as the beginning of values
+    1push, \ push the address of the next storage to the data stack and then return to what called the routine two levels up
+deflabel-here doconstant ( -- n )
+    \ runtime routine for CONSTANT and VALUE
+    xrp xtop pop, \ get the address of the CONSTANT or VALUE
+    xtop xtop ld, \ load the value at this location
+    1push, \ push the value onto the stack
+_up s" up" machineword-predef  ( -- a )
+    \ pointer to the user area
+    xup xsp push,
+    next,
+_douser .label ( -- a )
+    \ runtime routine for user variables
+    xrp xtop pop, \ get the address of where we were
+    xtop xtop ld, \ get the offset from memory
+    xup xtop xtop add,
+    1push,
+&S0 s" sp0" userword-predef 
+&R0 s" rp0" userword-predef
+s" '?key" userword _tqky
+s" 'emit" userword _temit
+s" 'expect" userword _texpect
+s" 'tap" userword _ttap
+s" 'echo" userword _techo
+s" 'prompt" userword _tprompt
+s" base" userword _base
+s" tmp" userword _tmp
+s" span" userword _span
+&in s" >in" userword-predef
+s" #tib" userword _ntib
+user-offset1+ \ since it is doublewide advance by one again
+
+s" csp" userword _csp
+s" 'eval" userword _teval
+s" 'number" userword _tnumber
+s" hld" userword _hld
+s" handler" userword _handler
+&context s" context" userword-predef \ already advanced one at this point
+\ consumes eight cells
+user-offset@ 8 + user-offset!
+&current s" current" userword-predef \ advance four cells
+user-offset@ 4 + user-offset!
+s" cp" userword _cp
+s" np" userword _np
+s" last" userword _last
 : um+; ( -- ) _uplus word, ;
 : and; ( -- ) _and word, ;
 : or; ( -- ) _or word, ;
@@ -484,6 +543,80 @@ s" um+" machineword _uplus ( a b -- c f )
 : dup; ( -- ) _dup word, ;
 : over; ( -- ) _over word, ;
 : swap; ( -- ) _swap word, ;
+s" dovoc" machineword _dovocab  ( -- )
+    \ runtime action of vocabularies
+   r>; 
+   context; 
+   !; 
+   exit; 
+s" forth" machineword _forth ( -- )
+    \ make forth the context vocabulary
+    _dovocab word,
+forth1 .label
+    last-word @ constant, \ vocabulary head pointer
+    0 constant, \ vocabulary link pointer
+s" ?dup" machineword _qdup
+    xsp xtop ld,
+    xtop xrp reteqz,
+    xtop xsp push,
+    next,
+s" rot" machineword _rot ( a b c -- b c a )
+	3pop, ( a b c -- b c a )
+		 \ top - c
+		 \ lower - b
+		 \ third - a 
+	xlower xsp push,
+	xtop xsp push,
+	xthird xsp push, 
+    next,
+s" 2drop" machineword _2drop ( a b -- ) 
+    2pop, 
+    next,
+s" 2dup" machineword _2dup ( a b -- a b a b ) 
+	xsp xtaddr move,
+	xtaddr xtop ld,
+	xtaddr 1+,
+	xtaddr xlower ld,
+    2push,
+s" +" defbinaryop _+ add,
+s" d+" machineword _dplus
+    ( xl xh yl yh -- zl zh )
+    \ iris takes in a front register which is the lower half
+    \ because of this we have to pop registers differently
+    \ not in the order found on the stack
+    \ top - yl
+    \ lower - yh
+    \ third - xl
+    \ fourth - xh
+    \ actual input from the stack
+    ( xl xh yl yh -- sl sh )
+    xsp xtop popw, \ xtop then lower
+    xsp xthird popw, \ third then fourth
+    xtop xthird xtop addw, \ result will be in xtop,xlower
+    xtop xsp pushw, \ push xtop then xlower
+    next,
+s" not" machineword _not
+    1pop, 
+    0xFFFF #, xlower set,
+    xlower xtop xtop xor,
+    1push,
+s" negate" machineword _negate
+    1pop, 
+    xtop xtop negate,
+    1push,
+s" dnegate" machineword _dnegate
+    xsp xtop popw, 
+    xtop xtop negatew,
+    xtop xsp pushw, 
+    next,
+: not; ( -- ) _not word, ;
+: negate: ( -- ) _negate word, ;
+: d+; ( -- ) _dplus word, ;
+: +; ( -- ) _+ word, ;
+: 2dup; ( -- ) _2dup word, ;
+: rot; ( -- ) _rot word, ;
+: 2drop; ( -- ) _2drop word, ;
+
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
@@ -721,25 +854,6 @@ s" 0=" machineword _0=
     xtop xtop eqz,
 	1push,
 : 0=; ( -- ) _0= word, ;
-s" +" defbinaryop _+ add,
-: +; ( -- ) _+ word, ;
-s" d+" machineword _dplus
-    ( xl xh yl yh -- )
-    \ iris takes in a front register which is the lower half
-    \ because of this we have to pop registers differently
-    \ not in the order found on the stack
-    \ top - yl
-    \ lower - yh
-    \ third - xl
-    \ fourth - xh
-    \ actual input from the stack
-    ( xl xh yl yh -- sl sh )
-    xsp xtop popw, \ xtop then lower
-    xsp xthird popw, \ third then fourth
-    xtop xthird xtop addw, \ result will be in xtop,xlower
-    xtop xsp pushw, \ push xtop then xlower
-    next,
-: d+; ( -- ) _dplus word, ;
 s" minus" machineword _minus
     deflabel _minusDone
     1pop,
@@ -762,15 +876,6 @@ s" d-" machineword _dminus
     xtop xsp pushw, \ push xtop then xlower
     next,
 : d-; ( -- ) _dminus word, ;
-s" 2dup" machineword _2dup ( a b -- a b a b ) 
-	xsp xtaddr move,
-	xtaddr xtop ld,
-	xtaddr 1+,
-	xtaddr xlower ld,
-	xlower xsp push,
-	xtop xsp push,
-	next,
-: 2dup; ( -- ) _2dup word, ;
 : +!, ( -- )
     2pop, \ top - addr 
          \ lower - n
@@ -857,18 +962,6 @@ _dovariable .label
     0x2 #, xlower xlower addi,
     xlower xrp st,
     1push,
-s" user" colonword _user
-: user; ( -- ) _user word, ;
-    constant;
-    (;code);
-_douser .label
-    xw 1+,
-    xw xtop move,
-    xtop xtop ld,
-    0xFF #, xtop xtop andi,
-    _up ??, xlower set, \ user variable addr
-    xlower xtop xtop add, \ address of variable
-    1push,
 s" 0" defconstantword _0 0x0 constant, 
 : 0; ( -- ) _0 word, ;
 s" 1" defconstantword _1 0x1 constant,
@@ -894,8 +987,6 @@ s" +origin" colonword _+origin
     _origin ??plit;
     +;
     ;;s
-&S0 s" s0" userword-predef 0x6 constant,
-&R0 s" r0" userword-predef 0x7 constant,
 &tib s" tib" userword-predef 0x8 constant,
 &width s" width" userword-predef 0x9 constant,
 &warning s" warning" userword-predef 0xa constant,
@@ -968,16 +1059,6 @@ s" u<" defbinaryop _u< ult,
 : u<; ( -- ) _u< word, ;
 s" >" defbinaryop _> gt,
 : >; ( -- ) _> word, ;
-s" rot" machineword _rot ( a b c -- b c a )
-	3pop, ( a b c -- b c a )
-		 \ top - c
-		 \ lower - b
-		 \ third - a 
-	xlower xsp push,
-	xtop xsp push,
-	xthird xsp push, 
-    next,
-: rot; ( -- ) _rot word, ;
 s" space" machineword _space
 : space; ( -- ) _space word, ;
     /dev/console0 #, xlower set,
@@ -1281,8 +1362,6 @@ s" immediate" machineword _immediate
 	xlower xtop st,
 	next,
 	
-s" 2drop" machineword _2drop ( a b -- ) 2pop, next,
-: 2drop; ( -- ) _2drop word, ;
 s" 2swap" machineword _2swap ( a b c d -- c d a b ) 
 : 2swap; ( -- ) _2swap word, ;
 	3pop, \ d - top
@@ -1661,23 +1740,23 @@ _interpret7 .label
     ?stack; \ endif
 _interpret5 .label
     _interpret1 ??branch; \ again
-s" vocabulary" colonword _vocabulary
-deflabel _dovocab
-: vocabulary; ( -- ) _vocabulary word, ;
-    <builds;
-    literal;
-    0xA081 #plit; \ ????
-    ,;
-    current; @; 
-    cfa; ,;
-    here;
-    voc-link; @; ,;
-    voc-link; !;
-    does>;
-_dovocab .label
-    2+;
-    context; !;
-    ;;s
+\ s" vocabulary" colonword _vocabulary
+\ deflabel _dovocab
+\ : vocabulary; ( -- ) _vocabulary word, ;
+\     <builds;
+\     literal;
+\     0xA081 #plit; \ ????
+\     ,;
+\     current; @; 
+\     cfa; ,;
+\     here;
+\     voc-link; @; ,;
+\     voc-link; !;
+\     does>;
+\ _dovocab .label
+\     2+;
+\     context; !;
+\     ;;s
 \ this is a special word that uses dodoes as its interpreter o_O
 s" forth" colonword _forth
 : forth; ( -- ) _forth word, ;
@@ -2366,8 +2445,8 @@ nop,
 _wrm ??, b,
 \ todo put data to install about version data
 \ todo put cold word variables here
-_up .label  \ where the user pointer data is located
-system-variables-start constant, 
+\ _up .label  \ where the user pointer data is located
+\ system-variables-start constant, 
 _rpp .label
 system-variables-start constant,
 asm}

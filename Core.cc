@@ -167,7 +167,7 @@ namespace iris {
     DefExec(ShiftRight) { setDestination(op, getSource(op).integer >> getSource2(op).integer); }
     DefExec(And) { setDestination(op, getSource(op).integer & getSource2(op).integer); }
     DefExec(Or) { setDestination(op, getSource(op).integer | getSource2(op).integer); }
-    DefExec(Not) { setDestination(op, ~getSource(op).integer); }
+    DefExec(Negate) { setDestination(op, ~getSource(op).integer); }
     DefExec(Xor) { setDestination(op, getSource(op).integer ^ getSource2(op).integer); }
     // DefExec(Nand) { setDestination(op, binaryNand(getSource(op).integer, getSource2(op).integer)); }
     // DefExec(Nor) { setDestination(op, binaryNor(getSource(op).integer, getSource2(op).integer)); }
@@ -281,7 +281,7 @@ namespace iris {
     DefExec(UnsignedGreaterThanOrEqualTo) { setDestination(op, getSource(op).address >= getSource2(op).address); }
     DefExec(UnsignedAnd) { setDestination(op, getSource(op).address & getSource2(op).address); }
     DefExec(UnsignedOr) { setDestination(op, getSource(op).address | getSource2(op).address); }
-    DefExec(UnsignedNot) { setDestination(op, ~getSource(op).address); }
+    DefExec(UnsignedNegate) { setDestination(op, ~getSource(op).address); }
     DefExec(UnsignedXor) { setDestination(op, getSource(op).address ^ getSource2(op).address); }
     // DefExec(UnsignedNand) { setDestination(op, binaryNand(getSource(op).address, getSource2(op).address)); }
     // DefExec(UnsignedNor) { setDestination(op, binaryNor(getSource(op).address, getSource2(op).address)); }
@@ -452,6 +452,18 @@ namespace iris {
         // the destination is the return stack pointer to extract from
         _pc = this->pop(op._args.dest).address;
     }
+    DefExec(ConditionalReturn) {
+        if (getSource(op).getTruth()) {
+            _pc = this->pop(op._args.dest).address;
+        }
+    }
+    DefExec(WideNegate) {
+        auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op._args.src + 1).getValue().integer);
+        src = ~src;
+        setDestination(op, Integer(src));
+        setRegister(op._args.dest + 1, Integer(src >> 16));
+    }
+
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

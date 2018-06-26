@@ -77,7 +77,7 @@ opcode: #lshift
 opcode: #rshift
 opcode: #and 
 opcode: #or 
-opcode: #not 
+opcode: #negate
 opcode: #xor 
 \ opcode: #nand 
 \ opcode: #nor
@@ -106,7 +106,7 @@ opcode: #ule
 opcode: #uge
 opcode: #uand
 opcode: #uor
-opcode: #unot
+opcode: #unegate
 opcode: #uxor
 \ opcode: #unand
 \ opcode: #unor
@@ -139,6 +139,8 @@ opcode: #subw
 opcode: #pushw
 opcode: #popw
 opcode: #return
+opcode: #creturn
+opcode: #negatew
 opcode}
 \ registers
 set-current \ go back
@@ -321,7 +323,7 @@ drop
 #lshift inst-3reg lshift, 
 #and inst-3reg and, 
 #or inst-3reg or, 
-#not inst-2reg not, 
+#negate inst-2reg negate, 
 #xor inst-3reg xor, 
 \ #nand inst-3reg nand, 
 \ #nor inst-3reg nor,
@@ -382,7 +384,7 @@ if
 #uge inst-3reg uge,
 #uand inst-3reg uand,
 #uor inst-3reg uor,
-#unot inst-2reg unot,
+#unegate inst-2reg unegate,
 #uxor inst-3reg uxor,
 \ #unand inst-3reg unand,
 \ #unor inst-3reg unor,
@@ -461,7 +463,7 @@ if
 def3argi muli, mul,
 def3argi divi, div,
 def3argi remi, rem,
-def2argi noti, not,
+def2argi negatei, negate,
 def3argi eqi, eq,
 def3argi neqi, neq,
 def3argi gti, gt,
@@ -478,7 +480,7 @@ def3argi uori, uor,
 def3argi uxori, uxor,
 \ def3argi unori, unor,
 \ def3argi unandi, unand,
-def2argi unoti, unot,
+def2argi unegatei, unegate,
 def3argi ueqi, ueq,
 def3argi uneqi, uneq, 
 def3argi ulti, ult,
@@ -718,3 +720,8 @@ push, ;
 #pushw inst-2reg pushw,
 #popw inst-2reg popw,
 #return inst-1reg ret,
+#creturn inst-2reg cret,
+: reteqz, ( reg sp -- ) 
+  swap cv eqz, 
+  cv swap cret, ;
+#negatew inst-2reg negatew,
