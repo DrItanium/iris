@@ -337,6 +337,11 @@ deflabel-here
 : 4pop ( -- )
   3pop,
   xsp xfourth pop, ;
+: defbinaryop ( str length "name" "op" -- )
+  machineword 
+  2pop,
+  xtop xlower xtop ' execute 
+  1push, ;
 deflabel _lit
 deflabel _execute
 deflabel _0branch
@@ -410,7 +415,6 @@ s" rp!" machineword _rpstore
     1pop, \ top - new stack pointer
     xtop xrp move, 
     next,
-: rp!; ( -- ) _rpstore word, ;
 s" r>" machineword _rfrm \ retrieve item from top of return stack
     xrp xtop pop,
 	1push,
@@ -431,8 +435,31 @@ s" sp!" machineword _spstore ( a -- )
     1pop,
     xtop xsp move,
     next,
+s" drop" machineword _drop 
+    xsp zero pop,
+    next,
+s" dup" machineword _dup 
+	xsp xtop ld,
+	1push,
+s" swap" machineword _swap
+	2pop, \ top -- b
+		 \ lower -- a
+	xtop xsp push,
+	xlower xsp push,
+    next,
+s" over" machineword _over 
+	2pop, 
+	xlower xsp push,
+	xtop xsp push,
+	xlower xsp push, 
+	next,
+: rp!; ( -- ) _rpstore word, ;
 : sp@; ( -- ) _spat word, ;
 : sp!; ( -- ) _spstore word, ;
+: drop; ( -- ) _drop word, ;
+: dup; ( -- ) _dup word, ;
+: over; ( -- ) _over word, ;
+: swap; ( -- ) _swap word, ;
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
@@ -637,11 +664,6 @@ _cmove_loop .label
 _cmove_done .label
     next,
 : cmove; ( -- ) _cmove word, ;
-: defbinaryop ( str length "name" "op" -- )
-  machineword 
-  2pop,
-  xtop xlower xtop ' execute 
-  1push, ;
 s" u*" defbinaryop _u* umul,
 : u*; ( -- ) _u* word, ;
 s" u/" defbinaryop _u/ udiv,
@@ -727,28 +749,6 @@ s" d-" machineword _dminus
     xtop xsp pushw, \ push xtop then xlower
     next,
 : d-; ( -- ) _dminus word, ;
-s" over" machineword _over 
-	2pop, 
-	xlower xsp push,
-	xtop xsp push,
-	xlower xsp push, 
-	next,
-: over; ( -- ) _over word, ;
-s" drop" machineword _drop 
-    xsp zero pop,
-    next,
-: drop; ( -- ) _drop word, ;
-s" swap" machineword _swap
-	2pop, \ top -- b
-		 \ lower -- a
-	xtop xsp push,
-	xlower xsp push,
-    next,
-: swap; ( -- ) _swap word, ;
-s" dup" machineword _dup 
-	xsp xtop ld,
-	1push,
-: dup; ( -- ) _dup word, ;
 s" 2dup" machineword _2dup ( a b -- a b a b ) 
 	xsp xtaddr move,
 	xtaddr xtop ld,
@@ -1157,7 +1157,7 @@ _dtrailing3 .label
 : -trailing; ( -- ) _dtrailing word, ;
 s\" (.\")" 
 colonword _pdotq
-    r; 
+    r@; 
     count;
     dup;
     1+; 
@@ -1399,7 +1399,7 @@ _word2 .label
     inn;
     +!;
     over; -;
-    >r; r; here;
+    >r; r@; here;
     c!;
     1+;
     r>;
@@ -1961,17 +1961,17 @@ deflabel buff2
     +buf;
     buff1 ??zbranch;
     use; !;
-    r; @;
+    r@; @;
     0<; 
     buff2 ??zbranch;
-    r; 2+;
-    r; @;
+    r@; 2+;
+    r@; @;
     0x7FFF #plit;
     and; 0;
     r/w;
     buff2 .label
-    r; !;
-    r; prev;
+    r@; !;
+    r@; prev;
     !; r>;
     2+; ;;s
 _block s" block" colonword-predef
@@ -1981,21 +1981,21 @@ deflabel blk3
     @; +;
     >r; prev;
     @; dup;
-    @; r;
+    @; r@;
     -;
     dup; +;
     blk1 ??, zbranch;
 deflabel-here blk2
     +buf; 0=;
     blk3 ??, zbranch;
-    drop; r;
+    drop; r@;
     buffer; dup;
-    r; 1;
+    r@; 1;
     r/w;
     2; -;
 blk3 .label
     dup; @;
-    r; -;
+    r@; -;
     dup; +;
     0=;
     blk2 ??, zbranch;
