@@ -356,22 +356,19 @@ s" execute" machineword _execute
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
 : execute; ( -- ) _execute word, ;
-s" branch" machineword _branch
-	xip xtop ld,
-	xtop xip xip add,
-	next,
 : branch; ( location id -- ) bl, ;
 : ??branch; ( loc -- ) ??, branch; ;
 s" 0branch" machineword _0branch
 deflabel _zbra1
 	1pop, \ flag
 	zero xtop cv neq,
-	_zbra1 ??, cv bc,
-	xip xlower ld,
-	xip xlower xip add,
+	_zbra1 ??, cv bc, \ 0<>?
+    \ do nothing at this point since it is already setup correctly
 	next,
 _zbra1 .label
-	0x2 #, xip xip addi,
+    xrp xlower ld, \ load the return address which is equals 0 case
+    0x2 #, xlower xlower addi, \ compute <>0 case
+    xlower xrp st, 
 	next,
 : zbranch; ( location id -- ) _0branch two-cell-op ;
 : ??zbranch; ( location -- ) ??, zbranch; ;
