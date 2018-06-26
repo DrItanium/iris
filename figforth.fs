@@ -3,9 +3,26 @@ include iris.fs
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
+: too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
+unused-start 
+\ constants
+\ user variables
+1+cconstant xsp \ data stack pointer
+1+cconstant xrp \ return stack pointer
+1+cconstant xip \ interpretive pointer
+1+cconstant xw \ current word pointer
+1+cconstant xtop \  contents of the top of stack when a pop is called
+1+cconstant xlower \ contents of the second stack item when a pop is called
+1+cconstant xthird \ contents of the third stack item
+1+cconstant xfourth \ contents of the fourth stack item
+1+cconstant xtaddr \ temporary storage for an address
+1+cconstant xerror \ error code
+1+cconstant xcoreid \ current core section id
+1+cconstant xtmp \ temporary used only by _next
+too-many-vars-defined
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
-: word, ( v -- ) ??, xrp call, ;
+: word, ( v -- ) ??, xrp bl, ;
 \ : word, ( v -- ) ??, .cell ;
 : constant, ( id -- ) #, .cell ;
 0xFFFF constant ram-end
@@ -72,7 +89,6 @@ keyboard-buffer 4 + constant co
 \ bootstrap-end constant dictionary-start
 
 \ register reservations
-: too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 deflabel _origin
 deflabel _error
 deflabel forth_vocabulary_start
@@ -182,22 +198,6 @@ deflabel _,
 : smudge; ( -- ) _smudge word, ;
 : dovariable; ( -- ) _dovariable word, ;
 : ,; ( -- ) _, word, ;
-unused-start 
-\ constants
-\ user variables
-1+cconstant xsp \ data stack pointer
-1+cconstant xrp \ return stack pointer
-1+cconstant xip \ interpretive pointer
-1+cconstant xw \ current word pointer
-1+cconstant xtop \  contents of the top of stack when a pop is called
-1+cconstant xlower \ contents of the second stack item when a pop is called
-1+cconstant xthird \ contents of the third stack item
-1+cconstant xfourth \ contents of the fourth stack item
-1+cconstant xtaddr \ temporary storage for an address
-1+cconstant xerror \ error code
-1+cconstant xcoreid \ current core section id
-1+cconstant xtmp \ temporary used only by _next
-too-many-vars-defined
 
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
@@ -212,15 +212,12 @@ variable last-word
 0 last-word !
 \ program start
 0x1000 .org \ dictionary starts at 0x1000
-deflabel-here _2push xlower xsp push,
-deflabel-here _1push xtop xsp push,
+deflabel-here _2push 
+    xlower xsp push,
+deflabel-here _1push 
+    xtop xsp push,
 deflabel-here _next
-    xip xw -> \ move the contents of xip (which points to the next word to be executed, into xw .
-    xip 1+, \ Increment xip, pointing to the second word in execution sequence.
-    xw xtmp ldtincr, \ load the contents of xw into at0 and then increment xw
-                    \ this will make xw point to the parameter field of the word
-    xtmp inspect-register
-    xtmp br,         \ jump to the address found at that point
+    xrp ret,
 : .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
@@ -339,13 +336,11 @@ deflabel-here
   3pop,
   xsp xfourth pop, ;
 s" lit" machineword _lit
-    \ push the next word to the data stack as a literal. Increment IP and skip this literal.
-    \ NEXT Return
-    \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
-    \ inline literal to the data stack to be used in computations
-	xip xtop ld,
-    xip 1+,
-	1push,
+    xrp xlower ld, \ address of next which is a literal
+    xlower xtop ld, \ load the value
+    xlower 1+,     \ skip over the cell
+    xlower xrp st, \ overwrite the cell
+    1push,
 : two-cell-op ( n id op -- ) word, .cell ;
 : plit; ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
