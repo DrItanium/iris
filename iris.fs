@@ -728,3 +728,6 @@ push, ;
 : retgez, ( reg sp -- )
   swap cv gez,
   cv swap cret, ;
+: retgt, ( src2 src sp -- )
+  >r cv gt, 
+  cv r> cret, ;

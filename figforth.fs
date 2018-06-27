@@ -23,6 +23,8 @@ unused-start
 1+cconstant xtmp \ temporary used only by _next
 1+cconstant xup \ user area pointer
 too-many-vars-defined
+xtop cconstant wxtop \ masquerade for double wide operations
+xthird cconstant wxlower \ masquerade for double wide operations
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
 : word, ( v -- ) ??, xrp bl, ;
@@ -216,7 +218,7 @@ deflabel _,
 variable last-word
 variable user-offset
 0 last-word !
-0 user-space-offset !
+0 user-offset !
 : user-offset@ ( -- n ) user-offset @ ;
 : user-offset! ( n -- ) user-offset ! ;
 : user-offset1+ ( -- ) user-offset@ 1+ user-offset! ;
@@ -326,7 +328,7 @@ deflabel-here
 : defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
 : defconstantword ( n -- ) word/none defconstantword-base ;
 : embed-douser ( -- ) 
-    _douser ??, rsp bl,
+    _douser ??, xrp bl,
     user-offset@ constant,
     user-offset1+ ;
 : userword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
@@ -531,6 +533,7 @@ user-offset@ 4 + user-offset!
 s" cp" userword _cp
 s" np" userword _np
 s" last" userword _last
+: !; ( -- ) _store word, ;
 : um+; ( -- ) _uplus word, ;
 : and; ( -- ) _and word, ;
 : or; ( -- ) _or word, ;
@@ -543,6 +546,9 @@ s" last" userword _last
 : dup; ( -- ) _dup word, ;
 : over; ( -- ) _over word, ;
 : swap; ( -- ) _swap word, ;
+: >r; ( -- ) _>r word, ;
+: r>; ( -- ) _rfrm word, ;
+: r@; ( -- ) _rat word, ;
 s" dovoc" machineword _dovocab  ( -- )
     \ runtime action of vocabularies
    r>; 
@@ -550,6 +556,7 @@ s" dovoc" machineword _dovocab  ( -- )
    !; 
    exit; 
 s" forth" machineword _forth ( -- )
+: forth; ( -- ) _forth word, ;
     \ make forth the context vocabulary
     _dovocab word,
 forth1 .label
@@ -590,10 +597,10 @@ s" d+" machineword _dplus
     \ fourth - xh
     \ actual input from the stack
     ( xl xh yl yh -- sl sh )
-    xsp xtop popw, \ xtop then lower
-    xsp xthird popw, \ third then fourth
-    xtop xthird xtop addw, \ result will be in xtop,xlower
-    xtop xsp pushw, \ push xtop then xlower
+    xsp wxtop popw, \ wxtop then lower
+    xsp wxlower popw, \ third then fourth
+    wxtop wxlower wxtop addw, \ result will be in xtop,xlower
+    wxtop xsp pushw, \ push xtop then xlower
     next,
 s" not" machineword _not
     1pop, 
@@ -605,9 +612,9 @@ s" negate" machineword _negate
     xtop xtop negate,
     1push,
 s" dnegate" machineword _dnegate
-    xsp xtop popw, 
-    xtop xtop negatew,
-    xtop xsp pushw, 
+    xsp wxtop popw, 
+    wxtop wxtop negatew,
+    wxtop xsp pushw, 
     next,
 s" -" defbinaryop _- sub, 
 s" abs" machineword _abs
@@ -625,6 +632,23 @@ s" min" defbinaryop _min min,
 s" max" defbinaryop _max max,
 s" umin" defbinaryop _umin umin,
 s" umax" defbinaryop _umax umax,
+s" within" machineword _within ( u ul uh -- t )
+deflabel within0
+    \ return true if u is within the range of ul and uh
+    3pop, \ top - uh
+          \ lower - ul
+          \ third - u
+    within0 ??, xtaddr set,
+    xtop xthird cv gt, \ u > top
+    xtaddr cv bcr,
+    xlower xthird cv lt, \ u < lower
+    xtaddr cv bcr,
+    0xFFFF #, xsp pushi,
+    next,
+within0 .label
+    zero xsp push,
+    next,
+: within; ( -- ) _within word, ;
 : min; ( -- ) _min word, ;
 : max; ( -- ) _max word, ;
 : u<; ( -- ) _u< word, ;
@@ -641,6 +665,8 @@ s" umax" defbinaryop _umax umax,
 : 2dup; ( -- ) _2dup word, ;
 : rot; ( -- ) _rot word, ;
 : 2drop; ( -- ) _2drop word, ;
+\ division operations
+\ TODO continue here
 
 s" (loop)" machineword _(loop)
 	deflabel loop_1
@@ -867,9 +893,6 @@ s" leave" machineword _leave
 	xtop xrp push,
 	xtop xrp push, 
 	next,
-: >r; ( -- ) _>r word, ;
-: r>; ( -- ) _rfrm word, ;
-: r@; ( -- ) _rat word, ;
 : 0=, ( -- ) 
   1pop,
   xtop xtop eqz,
@@ -928,7 +951,6 @@ s" 2@" machineword _2@
    xtop xtop ld, \ upper word
    2push,
 : 2@; ( -- ) _2@ word, ;
-: !; ( -- ) _store word, ;
 : c!; ( -- ) _cstore word, ;
 s" 2!" machineword _2! 
     3pop, \ top addr
@@ -1760,14 +1782,13 @@ _interpret5 .label
 \     context; !;
 \     ;;s
 \ this is a special word that uses dodoes as its interpreter o_O
-s" forth" colonword _forth
-: forth; ( -- ) _forth word, ;
-	\ set the context to the forth base vocabulary
-    _dodoes word,
-    _dovocab word,
-    0xA081 #plit;
-    \ TASK - 7 \ cold start value only
-    .skip \ end of vocabulary list
+\ s" forth" colonword _forth
+\ 	\ set the context to the forth base vocabulary
+\     _dodoes word,
+\     _dovocab word,
+\     0xA081 #plit;
+\     \ TASK - 7 \ cold start value only
+\     .skip \ end of vocabulary list
 s" definitions" colonword _definitions
 : definitions; ( -- ) _definitions word, ;
   \ used in the form: cccc definitions 
