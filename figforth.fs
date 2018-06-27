@@ -609,6 +609,31 @@ s" dnegate" machineword _dnegate
     xtop xtop negatew,
     xtop xsp pushw, 
     next,
+s" -" defbinaryop _- sub, 
+s" abs" machineword _abs
+    xsp xtop ld,
+    xtop xrp retgez,
+    xtop xtop negate,
+    xtop xsp st,
+    next,
+s" =" defbinaryop _= eq,
+s" u<" defbinaryop _u< ult,
+s" u>" defbinaryop _u> ugt,
+s" >" defbinaryop _> gt,
+s" <" defbinaryop _< lt,
+s" min" defbinaryop _min min,
+s" max" defbinaryop _max max,
+s" umin" defbinaryop _umin umin,
+s" umax" defbinaryop _umax umax,
+: min; ( -- ) _min word, ;
+: max; ( -- ) _max word, ;
+: u<; ( -- ) _u< word, ;
+: u>; ( -- ) _u> word, ;
+: >; ( -- ) _> word, ;
+: <; ( -- ) _< word, ;
+: =; ( -- ) _= word, ;
+: abs; ( -- ) _abs word, ;
+: -; ( -- ) _- word, ;
 : not; ( -- ) _not word, ;
 : negate: ( -- ) _negate word, ;
 : d+; ( -- ) _dplus word, ;
@@ -1051,14 +1076,6 @@ s" c," machineword _c,
 	xlower xtaddr st,
     next,
 : c,; ( -- ) _c, word, ;
-s" -" defbinaryop _- sub, 
-: -; ( -- ) _- word, ;
-s" =" defbinaryop _= eq,
-: =; ( -- ) _= word, ;
-s" u<" defbinaryop _u< ult,
-: u<; ( -- ) _u< word, ;
-s" >" defbinaryop _> gt,
-: >; ( -- ) _> word, ;
 s" space" machineword _space
 : space; ( -- ) _space word, ;
     /dev/console0 #, xlower set,
@@ -1272,12 +1289,6 @@ s" /" defbinaryop _/ div,
 : /; ( -- ) _/ word, ;
 s" mod" defbinaryop _mod rem,
 : mod; ( -- ) _mod word, ;
-s" min" defbinaryop _min min,
-: min; ( -- ) _min word, ;
-s" max" defbinaryop _max max,
-: max; ( -- ) _max word, ;
-s" <"  defbinaryop _< lt,
-: <; ( -- ) _< word, ;
 s" !=" defbinaryop _!= neq,
 : !=; ( -- ) _!= word, ;
 s" >=" defbinaryop _>= ge,
@@ -1297,15 +1308,6 @@ s" 1-" machineword _1-
 : 1-; ( -- ) _1- word, ;
 	1pop,
 	xtop 1-,
-	1push,
-s" abs" machineword _abs
-: abs; ( -- ) _abs word, ;
-    deflabel _absDone
-    1pop,
-    xtop cv gez,
-    _absDone ??, cv bc,
-    0xFFFF #, xtop xtop muli, \ multiply by negative one
-_absDone .label
 	1push,
 
 s" ." machineword _.

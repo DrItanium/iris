@@ -725,3 +725,6 @@ push, ;
   swap cv eqz, 
   cv swap cret, ;
 #negatew inst-2reg negatew,
+: retgez, ( reg sp -- )
+  swap cv gez,
+  cv swap cret, ;
