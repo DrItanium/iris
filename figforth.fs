@@ -25,6 +25,7 @@ unused-start
 too-many-vars-defined
 xtop cconstant wxtop \ masquerade for double wide operations
 xthird cconstant wxlower \ masquerade for double wide operations
+xfifth cconstant wxthird 
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
 : word, ( v -- ) ??, xrp bl, ;
@@ -667,7 +668,19 @@ within0 .label
 : 2drop; ( -- ) _2drop word, ;
 \ division operations
 \ TODO continue here
-
+s" um/mod" machineword _ummd ( udl udh u -- ur uq ) \ discard udh for the moment
+    \ unsigned divide of a double by a single. Return mod and quotient
+    1pop,
+    xsp wxlower popw,
+    xtop wxlower wxtop um/mod, \ top -> quotient
+                               \ lower -> remainder
+    2push,
+s" m/mod" machineword _msmd ( d n -- r q ) 
+    \ signed floored divide of double 
+    xsp wxtop popw,
+    xsp xthird pop,
+    
+    next,
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop

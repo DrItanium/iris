@@ -60,6 +60,10 @@ namespace iris {
         return ((static_cast<DoubleWideInteger>(upper) << 16) & 0xFFFF0000) | 
                ((static_cast<DoubleWideInteger>(lower) & 0x0000FFFF));
     }
+    constexpr DoubleWideAddress makeDoubleWideAddress(Address lower, Address upper) noexcept {
+        return ((static_cast<DoubleWideAddress>(upper) << 16) & 0xFFFF0000) | 
+               ((static_cast<DoubleWideAddress>(lower) & 0x0000FFFF));
+    }
 
     Register::Register() : Register(0) { }
     Register::Register(Number v) : _value(v) { }
@@ -462,6 +466,25 @@ namespace iris {
         src = ~src;
         setDestination(op, Integer(src));
         setRegister(op._args.dest + 1, Integer(src >> 16));
+    }
+
+    DefExec(UMSMOD) {
+        // unsigned divide of a double by a single. Return mod and quotient
+        auto src = makeDoubleWideAddress(getSource(op).address, getRegister(op._args.src + 1).getValue().address);
+        auto src2 = DoubleWideAddress(getSource2(op).address);
+        DoubleWideAddress quotient = src2 == 0 ? 0 : src / src2;
+        DoubleWideAddress remainder = src2 == 0 ? 0 : src % src2;
+        setDestination(op, Address(quotient));
+        setRegister(op._args.dest + 1, Address(remainder));
+    }
+    DefExec(MSMOD) {
+        // signed floored divide of a double by double. Return mod and quotient
+        auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op._args.src + 1).getValue().integer);
+        auto src2 = DoubleWideInteger(getSource2(op).integer);
+        DoubleWideInteger quotient = src2 == 0 ? 0 : src / src2;
+        DoubleWideInteger remainder = src2 == 0 ? 0 : src % src2;
+        setDestination(op, Integer(quotient));
+        setRegister(op._args.dest + 1, Integer(remainder));
     }
 
 #undef DefExec

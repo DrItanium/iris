@@ -141,6 +141,8 @@ opcode: #popw
 opcode: #return
 opcode: #creturn
 opcode: #negatew
+opcode: #umsmod
+opcode: #msmod
 opcode}
 \ registers
 set-current \ go back
@@ -731,3 +733,5 @@ push, ;
 : retgt, ( src2 src sp -- )
   >r cv gt, 
   cv r> cret, ;
+#umsmod inst-3reg um/mod,
+#msmod inst-3reg m/mod,
