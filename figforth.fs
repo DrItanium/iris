@@ -741,6 +741,7 @@ s" cell-" machineword _cell- ( a -- b )
     1pop,
     xtop 1-,
     1push,
+: cell-; ( -- ) _cell- word, ;
 s" cells" machineword _cells ( n -- n )
     \ multiply tos by cell size in words
     \ this is a nop since this is in words
@@ -770,8 +771,24 @@ deflabel tcha1
     0x2e #, xsp pushi,  \ replace non printables
 tcha1 .label
     exit;
-\ todo continue with DEPTH
-    
+s" depth" machineword _depth ( -- n )
+\ return the depth of the data stack
+    sp@;
+    sp0;
+    @;
+    swap;
+    -;
+    cell-;
+    1 #, xsp pushi,
+    /;
+    exit;
+s" pick" machineword _pick ( ... +n --  ... w )
+    \ copy the nth stack item to tos
+    1pop, \ top - index
+    xsp xtop xlower add, \ make the address to load from
+    xlower xtop ld, \ load the address
+    1push,
+\ todo continue with memory access line 1210
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
