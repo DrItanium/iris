@@ -143,6 +143,8 @@ opcode: #creturn
 opcode: #negatew
 opcode: #umsmod
 opcode: #msmod
+opcode: #umstar
+opcode: #mstar
 opcode}
 \ registers
 set-current \ go back
@@ -735,3 +737,5 @@ push, ;
   cv r> cret, ;
 #umsmod inst-3reg um/mod,
 #msmod inst-3reg m/mod,
+#umstar inst-3reg um*,
+#mstar inst-3reg m*,

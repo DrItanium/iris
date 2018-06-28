@@ -679,8 +679,39 @@ s" m/mod" machineword _msmd ( d n -- r q )
     \ signed floored divide of double 
     xsp wxtop popw,
     xsp xthird pop,
-    
+    xthird wxtop wxtop m/mod, \ top -> quotient
+                              \ lower -> remainder
+    2push,
+s" /mod" machineword _slmod ( n n -- r q )
+\ signed divide. Return mod and quotient
+    xsp xthird pop,
+    xsp xfourth pop,
+    xthird xfourth xtop div,
+    xthird xfourth xlower rem,
+    2push,
+s" mod" defbinaryop _mod rem,
+s" /" defbinaryop _/ div, 
+s" u*" defbinaryop _u* umul,
+s" um*" machineword _umstar ( a b -- n )
+    \ unsigned multiply, return double product
+    xsp xthird pop, \ b
+    xsp xfourth pop, \ a
+    xthird xfourth wxtop um*,
+    wxtop xsp pushw,
     next,
+s" *" defbinaryop _* mul,
+s" m*" machineword _mstar ( a b -- n )
+    \ signed multiply, return double product
+    xsp xthird pop, \ b
+    xsp xfourth pop, \ a
+    xthird xfourth wxtop m*,
+    wxtop xsp pushw,
+    next,
+: *; ( -- ) _* word, ;
+: u*; ( -- ) _u* word, ;
+: mod; ( -- ) _mod word, ;
+: /; ( -- ) _/ word, ;
+    
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
@@ -885,8 +916,6 @@ _cmove_loop .label
 _cmove_done .label
     next,
 : cmove; ( -- ) _cmove word, ;
-s" u*" defbinaryop _u* umul,
-: u*; ( -- ) _u* word, ;
 s" u/" defbinaryop _u/ udiv,
 : u/; ( -- ) _u/ word, ;
 
@@ -1318,12 +1347,6 @@ colonword _dotq
 \ todo dotq body
     ;;s
 : dotq; ( -- ) _dotq word, ;
-s" *" defbinaryop _* mul,
-: *; ( -- ) _* word, ;
-s" /" defbinaryop _/ div, 
-: /; ( -- ) _/ word, ;
-s" mod" defbinaryop _mod rem,
-: mod; ( -- ) _mod word, ;
 s" !=" defbinaryop _!= neq,
 : !=; ( -- ) _!= word, ;
 s" >=" defbinaryop _>= ge,

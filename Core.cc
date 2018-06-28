@@ -486,6 +486,20 @@ namespace iris {
         setDestination(op, Integer(quotient));
         setRegister(op._args.dest + 1, Integer(remainder));
     }
+    DefExec(UMSTAR) {
+        auto src = DoubleWideAddress(getSource(op).address);
+        auto src2 = DoubleWideAddress(getSource2(op).address);
+        auto result = src * src2;
+        setDestination(op, Address(result));
+        setRegister(op._args.dest + 1, Address(result >> 16));
+    }
+    DefExec(MSTAR) {
+        auto src = DoubleWideInteger(getSource(op).integer);
+        auto src2 = DoubleWideInteger(getSource2(op).integer);
+        auto result = src * src2;
+        setDestination(op, Integer(result));
+        setRegister(op._args.dest + 1, Integer(result >> 16));
+    }
 
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
