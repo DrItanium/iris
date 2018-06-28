@@ -374,6 +374,7 @@ deflabel _0branch
 : ??branch; ( loc -- ) ??, branch; ;
 : zbranch; ( location id -- ) _0branch two-cell-op ;
 : ??zbranch; ( location -- ) ??, zbranch; ;
+: ?branch; ( -- ) _0branch word, ;
 _lit s" lit" machineword-predef
     xrp xlower ld, \ address of next which is a literal
     xlower xtop ld, \ load the value
@@ -730,6 +731,47 @@ s" */" machineword _stasl ( n1 n2 n3 -- q )
     xtop xlower xtop div,
     1push,
 \ TODO continue misc operations
+s" cell+" machineword _cell+ ( a -- b )
+    \ add cell size in words to address [ originally this was bytes ]
+    1pop,
+    xtop 1+,
+    1push,
+s" cell-" machineword _cell- ( a -- b )
+    \ subtract cell size in words from address
+    1pop,
+    xtop 1-,
+    1push,
+s" cells" machineword _cells ( n -- n )
+    \ multiply tos by cell size in words
+    \ this is a nop since this is in words
+    next,
+s" aligned" machineword _aligned ( n -- n )
+    \ align address to the cell boundary
+    \ nop since automatic alignment :D
+    next,
+s" bl" machineword _blank ( -- 32 )
+    \ return 32, the blank character
+    0x20 #, xsp pushi,
+    next,
+: bl; ( -- ) _blank word, ;
+s" >char" machineword _tchr ( c -- c )
+    \ filter non-printing characters
+deflabel tcha1
+    0x7f #, xsp pushi,
+    and;
+    dup; \ mask msb
+    bl;
+    0x7f #, xsp pushi,
+    within; \ check for printable
+    not;
+    ?branch; 
+    tcha1 word,
+    drop;
+    0x2e #, xsp pushi,  \ replace non printables
+tcha1 .label
+    exit;
+\ todo continue with DEPTH
+    
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
