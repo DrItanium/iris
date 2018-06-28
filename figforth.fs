@@ -682,6 +682,7 @@ s" m/mod" machineword _msmd ( d n -- r q )
     xthird wxtop wxtop m/mod, \ top -> quotient
                               \ lower -> remainder
     2push,
+: m/mod; ( -- ) _msmd word, ;
 s" /mod" machineword _slmod ( n n -- r q )
 \ signed divide. Return mod and quotient
     xsp xthird pop,
@@ -707,11 +708,28 @@ s" m*" machineword _mstar ( a b -- n )
     xthird xfourth wxtop m*,
     wxtop xsp pushw,
     next,
+: m*; ( -- ) _mstar word, ;
 : *; ( -- ) _* word, ;
 : u*; ( -- ) _u* word, ;
 : mod; ( -- ) _mod word, ;
 : /; ( -- ) _/ word, ;
-    
+s" */mod" machineword _ssmod ( n1 n2 n3 -- r q )
+    \ multiply n1 and n2, then divide by n3. Return mod and quotient.
+    >r;
+    m*;
+    r>;
+    m/mod;
+    exit;
+
+s" */" machineword _stasl ( n1 n2 n3 -- q )
+    \ multiply n1 by n2, then divide by n3. Return quotient only.
+    3pop, \ top - n3
+          \ lower - n2
+          \ third - n1
+    xlower xthird xlower mul,
+    xtop xlower xtop div,
+    1push,
+\ TODO continue misc operations
 s" (loop)" machineword _(loop)
 	deflabel loop_1
 	\ runtime routine of loop
