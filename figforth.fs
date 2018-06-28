@@ -721,7 +721,7 @@ s" */mod" machineword _ssmod ( n1 n2 n3 -- r q )
     r>;
     m/mod;
     exit;
-
+: */mod; ( -- ) _ssmod word, ;
 s" */" machineword _stasl ( n1 n2 n3 -- q )
     \ multiply n1 by n2, then divide by n3. Return quotient only.
     3pop, \ top - n3
@@ -1119,8 +1119,6 @@ s" 2" defconstantword _2 0x2 constant,
 : 2; ( -- ) _2 word, ;
 s" 3" defconstantword _3 0x3 constant,
 : 3; ( -- ) _3 word, ;
-s" bl" defconstantword _bl bl constant,
-: bl; ( -- ) _bl word, ;
 s" c/l" defconstantword _c/l 0x40 constant,
 : c/l; ( -- ) _c/l word, ;
 s" first" defconstantword _first &FIRST constant,
@@ -1663,7 +1661,7 @@ _number1 .label
     (number);
     dup;
     c@;
-    _bl ??, plit; 
+    0x20 #, xsp pushi, 
     -;
     _number2 ??zbranch; \ while
     dup;
@@ -2007,36 +2005,11 @@ s" dabs" colonword _dabs
 : dabs; ( -- ) _dabs word, ;
 \ TODO implement 
 ;;s
-s" m*" colonword _mstar
-: m*; ( -- ) _mstar word, ;
-\ TODO implement 
-;;s
 s" m/" colonword _mslas
 : m/; ( -- ) _mslas word, ;
 \ todo implement m/
 ;;s
-s" /mod" colonword _slmod
-: /mod; ( -- ) _slmod word, ;
-\ todo implement /mod
-;;s
-s" */mod" colonword _ssmod
-: */mod; ( -- ) _ssmod word, ;
-    >r;
-    m*;
-    r>;
-    m/;
-    ;;s
 
-s" */" colonword _ssla
-: */; ( -- ) _ssla word, ;
-    */mod;
-    swap;
-    drop;
-    ;;s
-s" m/mod" colonword _msmod
-: m/mod; ( -- ) _msmod word, ;
-\ todo implement m/mod
-;;s
 s" (line)" colonword _(line)
 : (line); ( -- ) _(line) word, ;
     >r;
