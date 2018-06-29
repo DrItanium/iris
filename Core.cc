@@ -619,7 +619,8 @@ namespace iris {
 		IODevice vmTerminator(vmDumper.getEnd(),1, nullptr, terminateVM);
         IODevice registerInspector(vmTerminator.getEnd(),1, nullptr, [this](auto index, auto value) {
                         auto maskedIndex = byte(0b111111 & value);
-                        std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
+						auto reg = getRegister(maskedIndex).get<Address>();
+                        std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << reg << std::endl;
                     });
 		IODevice hexPrinter(registerInspector.getEnd(),1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
 		IODevice decPrinter(hexPrinter.getEnd(), 1, nullptr, [](auto index, auto value) { std::cout << std::dec << value; });

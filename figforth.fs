@@ -214,26 +214,29 @@ variable last-word
 \ program start
 ram-start .org
 _origin .label
-nop,
-_cld ??, b,
-nop,
-_wrm ??, b,
+( 0x0000 ) nop,
+( 0x0002 ) _cld ??, b,
+( 0x0004 ) nop,
+( 0x0006 ) _wrm ??, b,
 \ todo put data to install about version data
 \ todo put cold word variables here
 _up .label  \ where the user pointer data is located
-system-variables-start constant, 
+( 0x0007 ) system-variables-start constant, 
 _rpp .label
-system-variables-start constant,
-deflabel-here _2push xlower xsp push,
-deflabel-here _1push xtop xsp push,
+( 0x0008 ) system-variables-start constant,
+deflabel-here _2push 
+( 0x000A )	xlower xsp push,
+deflabel-here 
+( 0x000C )	_1push xtop xsp push,
 deflabel-here _next
-	xip xtmp ld, \ load the contents of xip into xtmp
-	xip 1+,		 \ advance xip by one
+( 0x000E )	xip xtmp ld, \ load the contents of xip into xtmp
+( 0x0010 )	xip 1+,		 \ advance xip by one
+( 0x0012 )	xtmp inspect-register
 deflabel-here _next1
-    xtmp xw -> \ move the contents of xtmp (which points to the next word to be executed, into xw .
-    xw 1+,   \ Increment xw by one, pointing to the second word in execution sequence.
-	xtmp xtmp ld, \ load the actual interpreter routine start
-    xtmp br, \ jump to the address found at that point
+( 0x0014 ) xtmp xw -> \ move the contents of xtmp (which points to the next word to be executed, into xw .
+( 0x0016 ) xw 1+,   \ Increment xw by one, pointing to the second word in execution sequence.
+( 0x0018 ) xtmp xtmp ld, \ load the actual interpreter routine start
+( 0x001a ) xtmp br, \ jump to the address found at that point
 : .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) _next ??, b, ;
 : 1push, ( -- ) _1push ??, b, ;
@@ -308,16 +311,9 @@ word/imm word/smudge or constant word/all
   r> last-word ! \ stash the top of this dictionary entry to last word
   \ ." end of entry: " loc@ hex . decimal cr
   ;
-: defword-base ( str length control-bits "name" -- ) 
-defword-header 
-deflabel-here 
-( then define the label to point at here ) 
-;
+: defword-base ( str length control-bits "name" -- ) defword-header ( then define the label to point at here ) deflabel-here ;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
-: machineword-base ( str length control-bits "name" -- ) 
-  defword-base 
-  machine-code-execute 
-  ;
+: machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
@@ -340,25 +336,18 @@ deflabel-here
 : defvariableword ( n -- ) word/none defvariableword-base ;
 : defvariableword-predef ( label n len -- ) word/none defvariableword-base-predef ;
 
-: 1pop, ( -- )
-  xsp xtop pop, ;
-: 2pop, ( -- )
-  1pop, 
-  xsp xlower pop, ;
-: 3pop, ( -- )
-  2pop,
-  xsp xthird pop, ;
-: 4pop ( -- )
-  3pop,
-  xsp xfourth pop, ;
+: 1pop, ( -- ) xsp xtop pop, ;
+: 2pop, ( -- ) 1pop, xsp xlower pop, ;
+: 3pop, ( -- ) 2pop, xsp xthird pop, ;
+: 4pop ( -- ) 3pop, xsp xfourth pop, ;
 s" lit" machineword _lit
     \ push the next word to the data stack as a literal. Increment IP and skip this literal.
     \ NEXT Return
     \ LIT is used to compile numbers into the dictionary. At run-time, LIT pushes the 
     \ inline literal to the data stack to be used in computations
-	xip xtop ld,
-    xip 1+,
-	1push,
+( 0x001C ) xip xtop ld,
+( 0x001E ) xip 1+,
+( 0x0020 ) 1push,
 : two-cell-op ( n id op -- ) word, .cell ;
 : plit; ( n id -- )
   \ compile the literal into the dictionary by putting the _LIT command followed by
