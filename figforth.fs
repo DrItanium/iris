@@ -208,6 +208,7 @@ deflabel _,
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
 : ??lit, ( n -- ) ??, lit, ;
+: 0lit, ( -- ) zero xsp push, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -419,6 +420,7 @@ s" @" machineword _at
     xtop xtop ld,
 	1push,
 : @; ( -- ) _at word, ;
+: base@; ( -- ) base; @; ;
 s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
 		 \ lower - value
@@ -653,10 +655,10 @@ deflabel within0
     xtaddr cv bcr,
     xlower xthird cv lt, \ u < lower
     xtaddr cv bcr,
-    0xFFFF #, xsp pushi,
+    0xFFFF #lit,
     next,
 within0 .label
-    zero xsp push,
+    0lit,
     next,
 : within; ( -- ) _within word, ;
 : min; ( -- ) _min word, ;
@@ -761,23 +763,23 @@ s" aligned" machineword _aligned ( n -- n )
 : aligned; ( -- ) _aligned word, ;
 s" bl" machineword _blank ( -- 32 )
     \ return 32, the blank character
-    0x20 #, xsp pushi,
+    0x20 #lit,
     next,
 : bl; ( -- ) _blank word, ;
 s" >char" machineword _tchr ( c -- c )
     \ filter non-printing characters
 deflabel tcha1
-    0x7f #, xsp pushi,
+    0x7f #lit,
     and;
     dup; \ mask msb
     bl;
-    0x7f #, xsp pushi,
+    0x7f #lit,
     within; \ check for printable
     not;
     ?branch; 
     tcha1 word,
     drop;
-    0x2e #, xsp pushi,  \ replace non printables
+    0x2e #lit, \ replace non printables
 tcha1 .label
     exit;
 s" depth" machineword _depth ( -- n )
@@ -788,7 +790,7 @@ s" depth" machineword _depth ( -- n )
     swap;
     -;
     cell-;
-    1 #, xsp pushi,
+    1 #lit,
     /;
     exit;
 s" pick" machineword _pick ( ... +n --  ... w )
@@ -822,6 +824,7 @@ s" count" machineword _count ( b -- b +n )
     1 #, xtop xlower addi,
     xtop xtop ld,
     2push,
+: count; ( -- ) _count word, ;
 s" here" machineword _here ( -- a )
     \ return the top of the code dictionary.
     cp;
@@ -831,7 +834,7 @@ s" here" machineword _here ( -- a )
 s" pad" machineword _pad ( -- a )
     \ return the address of a temporary buffer.
     here;
-    decimal 80 #, xsp pushi,
+    decimal 80 #lit,
     +;
     exit;
 s" tib" machineword _tib ( -- a )
@@ -899,13 +902,13 @@ deflabel-here dtrail1
     ?branch; 
     dtrail2 word,
     r>;
-    0x1 #, xsp pushi,
+    0x1 #lit,
     +;
     exit; \ adjusted count
 dtrail2 .label
     _donext word,
     dtrail1 word,
-    zero xsp push,
+    0lit,
     exit;
 : -trailing; ( -- ) _dtrailing word, ;
 s" pack$" machineword _pack$ ( b u a -- a )
@@ -915,19 +918,19 @@ s" pack$" machineword _pack$ ( b u a -- a )
     >r; \ strings only on cell boundary
     over;
     dup;
-    zero xsp push, \ push zero
-    0x1 #, xsp pushi, \ push cell size
+    0lit, \ push zero
+    0x1 #lit, \ push cell size
     um/mod; 
     drop; \ count mod cell
     -;
     over;
     +;
-    zero xsp push, 
+    0lit, 
     swap;
     !;              \ null fill cell
     dup;
     c!; 
-    0x1 #, xsp pushi, 
+    0x1 #lit,
     +; \ save count
     swap;
     cmove;
@@ -936,18 +939,18 @@ s" pack$" machineword _pack$ ( b u a -- a )
 \ numeric output single precision
 s" digit" machineword _digit ( u -- c )
     \ convert digit u to a character
-    0x9 #, xsp pushi,
+    0x9 #lit,
     over;
     <;
-    0x7 #, xsp pushi,
+    0x7 #lit,
     and;
     +;
-    0x30 #, xsp pushi,
+    0x30 #lit,
     +;
     exit;
 : digit; ( -- ) _digit word, ;
 s" extract" machineword _extract
-    zero xsp push,
+    0lit,
     swap;
     um/mod;
     swap;
@@ -963,11 +966,12 @@ s" <#" machineword _bdgs ( -- )
     hld; 
     !;
     exit;
+: <#; ( -- ) _bdgs word, ;
 s" hold" machineword _hold ( c -- )
     \ insert a character into the numeric output string
     hld;
     @;
-    0x1 #, xsp pushi,
+    0x1 #lit,
     -;
     dup;
     hld;
@@ -995,18 +999,18 @@ deflabel-here digs1
     digs1 word,
 digs2 .label
     exit;
-
+: #s; ( -- ) _extractDigits word, ;
 s" sign" machineword _sign ( n -- )
     \ add a minus sign to the numeric output string
 deflabel sign1
     0<;
     ?branch;
     sign1 word,
-    0x2D #, xsp pushi,
+    0x2d #lit,
     hold;
 sign1 .label
     exit;
-
+: sign; ( -- ) _sign word, ;
 s" #>" machineword _edgs ( w --  b u )
     \ prepare the output string to be typed
     drop;
@@ -1016,7 +1020,130 @@ s" #>" machineword _edgs ( w --  b u )
     over;
     -;
     exit;
-\ s" str" machineword 
+: #>; ( -- ) _edgs word, ;
+s" str" machineword _str ( n -- b u )
+    \ convert a signed integer to a numeric string
+    dup; >r;
+    abs; 
+    <#; 
+    #s;
+    r>;
+    sign;
+    #>;
+    exit;
+s" hex" machineword _hex ( -- )
+    \ use radix 16 as base for numeric conversions
+    0x10 #lit, base; !;
+    exit;
+: hex; ( -- ) _hex word, ;
+s" decimal" machineword _decimal ( -- )
+    \ use radix 10 as base for numeric conversions
+    0xa #lit, base; !; 
+    exit; 
+: decimal; ( -- ) _decimal word, ;
+\ numeric input single precision
+s" digit?" machineword _digit? ( c base -- u t )
+deflabel dgtq1
+    \ convert a character to its numeric value. A flag indicates success.
+    >r;
+    0x30 #lit, \ '0'
+    -;
+    0x9 #lit, 
+    over;
+    <;
+    ?branch;
+    dgtq1 word,
+    7 #lit,
+    -;
+    dup;
+    0xa #lit,
+    <;
+    or;
+dgtq1 .label
+    dup;
+    r>;
+    u<; 
+    exit;
+: digit?; ( -- ) _digit? word, ;
+s" number?" machineword _number? ( a -- n T | a F )
+deflabel numq1
+deflabel numq2
+deflabel numq3
+deflabel numq4
+deflabel numq5
+deflabel numq6
+    \ convert a number string to integer. Push a flag on tos.
+    base@; >r;
+    0lit,
+    over;
+    count;
+    over;
+    c@;
+    0x24 #lit, \ '$'
+    =;
+    ?branch,
+    numq1 word,
+    hex;
+    swap;
+    0x1 #lit,
+    +;
+    swap;
+    0x1 #lit,
+    -; 
+numq1 .label
+    over; c@;
+    0x2d #lit, =;
+    >r; swap; r@; -;
+    swap; r@; +;
+    ?dup;
+    ?branch;
+    numq6 word,
+    0x1 #lit, -;
+    >r;
+numq2 .label
+    dup;
+    >r; c@;
+    base@;
+    digit?;
+    ?branch;
+    numq4 word,
+    swap;
+    base@;
+    *;
+    +;
+    r>;
+    0x1 #lit,
+    +;
+    donext;
+    numq2 word, 
+    r@;
+    swap;
+    drop;
+    ?branch;
+    numq3 word,
+    negate;
+numq3 .label
+    swap;
+    numq5 word,
+numq4 .label
+    r>;
+    r>;
+    2drop;
+    2drop;
+    0lit,
+numq5 .label
+    dup;
+numq6 .label
+    r>;
+    2drop;
+    r>;
+    base; !;
+    exit;
+
+\ basic io
+
+
+
 asm}
 
 bye
