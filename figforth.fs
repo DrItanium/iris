@@ -29,7 +29,6 @@ xfifth cconstant wxthird
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
 : word, ( v -- ) ??, xrp bl, ;
-\ : word, ( v -- ) ??, .cell ;
 : constant, ( id -- ) #, .cell ;
 0xFFFF constant ram-end
 0xFF00 constant io-start
@@ -319,15 +318,6 @@ deflabel-here
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-\ : embed-docolon ( -- ) _docolon ??, .cell ;
-: embed-docolon ( -- ) ( do nothing ) ;
-: colonword-base ( str length control-bits "name" -- ) defword-base embed-docolon ;
-: colonword-base-predef ( label str length control-bits -- ) defword-base-predef embed-docolon ;
-: colonword ( str length "name"  -- ) word/none colonword-base ;
-: colonword-predef ( label str length -- ) word/none colonword-base-predef ;
-: embed-doconstant ( -- ) _doconstant ??, xrp bl, ;
-: defconstantword-base ( str length control-bits "name" -- ) defword-base embed-doconstant ;
-: defconstantword ( n -- ) word/none defconstantword-base ;
 : embed-douser ( -- ) 
     _douser ??, xrp bl,
     user-offset@ constant,
@@ -336,11 +326,6 @@ deflabel-here
 : userword-base-predef ( label str length control-bits -- ) defword-base-predef embed-douser ;
 : userword ( n -- ) word/none userword-base ;
 : userword-predef ( label n len -- ) word/none userword-base-predef ;
-: embed-dovariable ( -- ) _dovariable ??, .cell ;
-: defvariableword-base ( str length control-bits "name" -- ) defword-base embed-dovariable ;
-: defvariableword-base-predef ( label str length control-bits -- ) defword-base-predef embed-dovariable ;
-: defvariableword ( n -- ) word/none defvariableword-base ;
-: defvariableword-predef ( label n len -- ) word/none defvariableword-base-predef ;
 
 : 1pop, ( -- )
   xsp xtop pop, ;
