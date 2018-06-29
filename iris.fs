@@ -145,6 +145,8 @@ opcode: #umsmod
 opcode: #msmod
 opcode: #umstar
 opcode: #mstar
+opcode: #stw
+opcode: #ldw
 opcode}
 \ registers
 set-current \ go back
@@ -739,3 +741,5 @@ push, ;
 #msmod inst-3reg m/mod,
 #umstar inst-3reg um*,
 #mstar inst-3reg m*,
+#stw inst-2reg stw,
+#ldw inst-2reg ldw,

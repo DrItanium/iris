@@ -500,7 +500,18 @@ namespace iris {
         setDestination(op, Integer(result));
         setRegister(op._args.dest + 1, Integer(result >> 16));
     }
-
+    
+    DefExec(WideStore) {
+        auto dest = getDestination(op).address;
+        auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op._args.src + 1).getValue().integer);
+        store(dest, Number(Address(src)));
+        store(dest+1, Number(Address(src >> 16)));
+    }
+    DefExec(WideLoad) {
+        auto src = getSource(op).address;
+        setDestination(op, load(src));
+        setRegister(op._args.dest + 1, load(src + 1));
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
