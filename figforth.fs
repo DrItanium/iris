@@ -391,6 +391,25 @@ _execute s" execute" machineword-predef
     \ do not use normal call procedure since we don't want to come back here
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
+s" next" machinword _donext ( -- )
+deflabel donext0
+    \ runtime code for the single index loop.
+    \ : next ( -- ) \ hilevel model
+    \   r> r> dup if 1 - >r @ >r exit then drop cell+ >r ;
+    \ After next is a bl instruction, not an address.
+    xrp xtop pop, xtop xsp push, \ r>
+    xrp xtop pop, xtop xsp push, \ r>
+                                 \ implied dup
+    xtop xtop eqz,               \ if
+    donext0 ??, xtop bc,
+    xsp xtop pop, xtop 1-,       \ 1 - 
+    xtop xrp push,               \ >r
+    xsp xtop pop, xtop xtop ld,  \ @
+    xtop xrp push,               \ >r
+    xrp ret,
+donext0 .label
+    \ todo continue
+    next,
 _0branch s" 0branch" machineword-predef
 deflabel _zbra1
 	1pop, \ flag
@@ -876,7 +895,16 @@ fill0 .label
     fill0 ??, cv bc,
 fill1 .label
     next,
+s" -trailing" machineword _dtrailing ( b u -- b u )
+deflabel dtrail2
+    \ adjust the count ot eliminate trailing white space
+    >r;
+    dtrail2 word,
+deflabel-here dtrail1
+dtrail2 .label
+    
 
+    
 \ s" (loop)" machineword _(loop)
 \ 	deflabel loop_1
 \ 	\ runtime routine of loop
