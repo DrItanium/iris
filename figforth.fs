@@ -179,7 +179,7 @@ deflabel _,
 : quit; ( -- ) _quit word, ;
 : interpret; ( -- ) _interpret word, ;
 : message; ( -- ) _message word, ;
-: s0; ( -- ) &s0 word, ;
+: sp0; ( -- ) &s0 word, ;
 : r0; ( -- ) &r0 word, ;
 : tib; ( -- ) &tib word, ;
 : warn; ( -- ) &WARNING word, ;
@@ -412,6 +412,7 @@ s" @" machineword _at
     1pop,
     xtop xtop ld,
 	1push,
+: @; ( -- ) _at word, ;
 s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
 		 \ lower - value
@@ -736,7 +737,7 @@ s" cell+" machineword _cell+ ( a -- b )
     1pop,
     xtop 1+,
     1push,
-: cell+ ( -- ) _cell+ word, ;
+: cell+; ( -- ) _cell+ word, ;
 s" cell-" machineword _cell- ( a -- b )
     \ subtract cell size in words from address
     1pop,
@@ -800,13 +801,13 @@ s" +!" machineword _pstore ( n a -- )
 s" 2!" machineword _dstore ( d a -- )
     \ store the double integer to address a
     1pop, \ top - 
-    xsp xwlower popw,
-    xwlower xtop stw,
+    xsp wxlower popw,
+    wxlower xtop stw,
     next,
 s" 2@" machineword _dat ( a -- d )
     \ fetch double integer from address a
     xsp xthird pop,
-    xthird xwtop ldw,
+    xthird wxtop ldw,
     2push,
 s" count" machineword _count ( b -- b +n )
     \ return count byte of a string and add 1 to byte address.
@@ -1148,7 +1149,6 @@ fill1 .label
 \ 	xtop xthird st, 
 \ 	next,
 \ : toggle; ( -- ) _toggle word, ;
-\ : @; ( -- ) _at word, ;
 \ : c@; ( -- ) _cat word, ;
 \ s" 2@" machineword _2@ 
 \    1pop,
