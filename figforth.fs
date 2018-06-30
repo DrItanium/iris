@@ -423,11 +423,13 @@ s" c!" machineword _cstore  ( value addr -- )
     0xFF #, xlower xlower andi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
     next,
+: c!; ( -- ) _cstore word, ;
 s" c@" machineword _cat
 	1pop, 
 	xtop xtop ld,
 	0xFF #, xtop xtop andi,
 	1push,
+: c@; ( -- ) _cat word, ;
 s" rp@" machineword _rpat
     \ push xrp onto xsp
     xrp xsp push,
@@ -577,6 +579,7 @@ s" ?dup" machineword _qdup
     xtop xrp reteqz,
     xtop xsp push,
     next,
+: ?dup; ( -- ) _qdup word, ;
 s" rot" machineword _rot ( a b c -- b c a )
 	3pop, ( a b c -- b c a )
 		 \ top - c
@@ -621,6 +624,7 @@ s" negate" machineword _negate
     1pop, 
     xtop xtop negate,
     1push,
+: negate; ( -- ) _negate word, ;
 s" dnegate" machineword _dnegate
     xsp wxtop popw, 
     wxtop wxtop negatew,
@@ -684,6 +688,7 @@ s" um/mod" machineword _ummd ( udl udh u -- ur uq ) \ discard udh for the moment
     xtop wxlower wxtop um/mod, \ top -> quotient
                                \ lower -> remainder
     2push,
+: um/mod; ( -- ) _ummd word, ;
 s" m/mod" machineword _msmd ( d n -- r q ) 
     \ signed floored divide of double 
     xsp wxtop popw,
@@ -835,6 +840,7 @@ s" pad" machineword _pad ( -- a )
     decimal 80 #lit,
     +;
     exit;
+: pad; ( -- ) _pad word, ;
 s" tib" machineword _tib ( -- a )
     \ return the address of the terminal input buffer
     #tib;
@@ -848,7 +854,7 @@ s" @execute" machineword _atexec ( a -- )
     xtop cv eqz,
     cv xsp cret,
     xtop br,
-: @execute ( -- ) _atexec word, ;
+: @execute; ( -- ) _atexec word, ;
 s" cmove" machineword _cmove ( b1 b2 u -- )
 deflabel cmove0
 deflabel cmove1
@@ -989,9 +995,9 @@ s" #" machineword _extractDigit ( u -- u )
     extract;
     hold;
     exit; 
-: #; ( -- ) _extractDigit word, ;s
+: #; ( -- ) _extractDigit word, ;
 
-s" #s" machineword _extractDigits ( u -- 0 )
+s" #s" machineword _exdigs ( u -- 0 )
 deflabel digs2
     \ convert u until all digits are added to the output string
 deflabel-here digs1
@@ -1002,7 +1008,7 @@ deflabel-here digs1
     digs1 word,
 digs2 .label
     exit;
-: #s; ( -- ) _extractDigits word, ;
+: #s; ( -- ) _exdigs word, ;
 s" sign" machineword _sign ( n -- )
     \ add a minus sign to the numeric output string
 deflabel sign1
@@ -1084,7 +1090,7 @@ deflabel numq6
     c@;
     0x24 #lit, \ '$'
     =;
-    ?branch,
+    ?branch;
     numq1 word,
     hex;
     swap;
@@ -1202,8 +1208,8 @@ type2 .label
 : type; ( -- ) _type word, ;
 s" cr" machineword _cr ( -- )
     \ output a carriage return and a line feed.
-    ccr #emit;
-    clf #emit;
+    ccr emit#;
+    clf emit#;
     exit;
 s" do$" word/compile machineword-base _dostr ( -- a )
     \ return the address of a compiled string
