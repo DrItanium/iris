@@ -1040,6 +1040,7 @@ s" str" machineword _str ( n -- b u )
     sign;
     #>;
     exit;
+: str; ( -- ) _str word, ;
 s" hex" machineword _hex ( -- )
     \ use radix 16 as base for numeric conversions
     0x10 #lit, base; !;
@@ -1190,6 +1191,7 @@ char2 .label
     donext;
     char1 word, 
     exit;
+: spaces; ( -- ) _spaces word, ;
 s" type" machineword _type ( b u -- )
 deflabel type2
     \ output u characters from b.
@@ -1236,7 +1238,59 @@ s\" .\"|" word/compile machineword-base _dtqp ( -- )
     count;
     type;
     exit;
-\ todo continue, line 1771
+s" .r" machineword _dotr ( n +n -- )
+	\ display an integer in a field of n columsn, right justified
+	>r;
+	str;
+	r>;
+	over;
+	-;
+	spaces;
+	type;
+	exit;
+s" u.r" machineword _udotr ( u +n -- )
+	\ display an unsigned integer in n column, right justified
+	>r;
+	<#;
+	digits;
+	#>;
+	r>;
+	over;
+	-;
+	spaces;
+	type;
+	exit;
+s" u." machineword _udot ( u -- ) 
+	\ display an unsigned integer in free format
+	<#;
+	digits;
+	#>;
+	spaces;
+	type;
+	exit;
+: u.; ( -- ) _udot word, ;
+s" ." machineword _dot ( w -- )
+deflabel dot1
+	\ display an integer in free format, preceeded by a space
+	base@;
+	0xa #, xsp pushi,
+	xor;			 \ ?decimal
+	?branch;
+	dot1 word,
+	u.;
+	exit;
+dot1 .label
+	str;
+	spaces;
+	type;
+	exit;
+: .; ( -- ) _dot word, ;
+s" ?" machineword _quest ( a -- )
+	\ display the contents in a memory cell
+	@;
+	.;
+	exit;
+\ parsing words
 asm}
 
 bye
