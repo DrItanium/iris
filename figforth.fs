@@ -1381,7 +1381,49 @@ s" parse" machineword _parse ( c -- b u ; <string> )
 	in; 
 	+!;
 	exit;
-
+: parse; ( -- ) _parse word, ;
+s" .(" word/immediate machineword-base _dotpr ( -- )
+	\ output following string up to next ) .
+	0x29 #, xsp pushi, \ )
+	parse;
+	type;
+	exit;
+s" (" word/immediate machineword-base _paren ( -- )
+	\ ignore following string up to next ). A comment
+	0x29 #, xsp pushi,	\ )
+	parse;
+	2drop;
+	exit;
+s" \" word/immediate machineword-base _backslash ( -- )
+	\ ignore following text till the end of line
+	#tib; @;
+	in; !;
+	exit;
+s" char" machineword _char ( -- c )
+	\ parse next word and return its first character
+	blank;
+	parse;
+	drop;
+	c@;
+	exit;
+s" token" machineword _token
+	blank;
+	parse;
+	decimal 31 #, xsp pushi,
+	min;
+	np; @;
+	over;
+	-;
+	cell-;
+	pack$;
+	exit;
+s" word" machineword _word ( c -- a ; <string> )
+	\ parse a word from input stream and copy it to code dictionary.
+	parse;
+	here;
+	pack$;
+	exit;
+\ dictionary search
 
 asm}
 
