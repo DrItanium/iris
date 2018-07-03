@@ -523,6 +523,7 @@ s" 'emit" userword _temit
 s" 'expect" userword _texpect
 s" 'tap" userword _ttap
 s" 'echo" userword _techo
+: tech; ( -- ) _techo word, ;
 s" 'prompt" userword _tprompt
 s" base" userword _base
 s" tmp" word/compile userword-base _tmp
@@ -1538,9 +1539,28 @@ nameq3 .label
 	zero xsp push,
 	exit; \ false flag
 
-
-
-
+s" ^h" machineword _bksp ( bot eot cur -- bot eot cur )
+	\ backup the cursor by one character.
+deflabel back1
+	>r;
+	over;
+	r>;
+	swap;
+	over;
+	xor;
+	?branch; back1 word,
+	cbksp #, xsp pushi, 
+	tech;
+	@execute;
+	0x1 #, xsp pushi,
+	-; blank;
+	tech;
+	@execute;
+	cbksp #, xsp pushi,
+	tech;
+	@execute;
+back1 .label
+	exit;
 asm}
 
 bye
