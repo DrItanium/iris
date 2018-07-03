@@ -1291,6 +1291,98 @@ s" ?" machineword _quest ( a -- )
 	.;
 	exit;
 \ parsing words
+s" parse" machineword _parse0 ( b u c -- b u delta ; <string> )
+deflabel parse2
+deflabel parse3
+deflabel parse5
+deflabel parse6
+deflabel parse7
+	\ scan string delimited by c. Return found string and its offset
+	temp; !;
+	over;
+	>r;
+	dup;
+	?branch; parse8 word,
+	xsp xtop pop,
+	xtop 1-,
+	xtop xsp push,
+	temp; @; blank; =;
+	?branch; parse3 word,
+	>r;
+deflabel-here parse1
+	blank;
+	over;
+	c@; 	\ skip leading blanks only
+	-; 
+	0<;
+	not;
+	?branch; parse2 word,
+	xsp xtop pop, 
+	xtop 1+,
+	xtop xsp push, 
+	donext; parse1 word,
+	r>;
+	drop;
+	zero xsp push,
+	zero xsp push, \ originally a dup
+	exit;
+parse2 .label
+	r>;
+parse3 .label
+	over;
+	swap;
+	>r;
+deflabel-here parse4 
+	temp;
+	@;
+	blank;
+	=;
+	?branch; parse5 word,
+	0<;
+parse5 .label
+	?branch; parse6 word,
+	xsp xtop pop,
+	xtop 1+,
+	xtop xsp push,
+	donext; parse4 word,
+	dup; >r;
+	parse7 word,
+parse6 .label
+	r>;
+	drop;
+	dup;
+	xsp xtop pop,
+	xtop 1+,
+	xtop xsp push,
+	>r;
+parse7 .label
+	over;
+	-;
+	r>;
+	r>;
+	-;
+	exit;
+parse8 .label
+	over;
+	r>;
+	-;
+	exit;
+s" parse" machineword _parse ( c -- b u ; <string> )
+	\ scan input stream and return counted string delimited by c.
+	>r;
+	tib;
+	in; @;
+	+; \ current input buffer pointer
+	#tib; @;
+	in; @;
+	-; 	\ remaining count
+	r>;
+	_parse0 word,
+	in; 
+	+!;
+	exit;
+
+
 asm}
 
 bye
