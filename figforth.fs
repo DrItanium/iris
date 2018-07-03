@@ -1424,6 +1424,122 @@ s" word" machineword _word ( c -- a ; <string> )
 	pack$;
 	exit;
 \ dictionary search
+s" name>" machineword _namet ( na -- ca )
+	\ return a code address given a name address
+	cell-; cell-; \ 16-bit cells, 16 bit values.$$$ ???
+	@;
+	exit;
+: name>; ( -- ) _namet word, ;
+s" same?" machineword _sameq ( a a u -- a a f \ -0+ )
+deflabel same2
+	\ compare u cells in two strings. Return 0 if identical
+	>r;
+	same2 word,
+deflabel-here same1
+	over;
+	r@;
+	cells; +; @; \ 32/16 mix-up
+	over; r@;
+	cells; +; @; \ 32/16 mix-up
+	-; ?dup;
+	?branch; same2 word, 
+	r>;
+	drop;
+	exit;	\ strings not equal
+same2 .label
+	donext; same1 word,
+	zero xsp push,
+	exit;	\ strings equal
+: same?; ( -- ) _sameq word, ;
+s" find" machineword _find ( a va -- ca na | a F )
+deflabel find2
+deflabel find3
+deflabel find4
+deflabel find5
+deflabel find6
+	\ search a vocabulary for a string. Return ca and na if succeeded
+	swap; dup; c@;
+	0x1 #, xsp pushi,
+	/;
+	temp; !;	\ 32/16 bit mix-up
+	dup; @; >r;
+	cell+;
+	swap;
+deflabel-here find1
+	@; 
+	dup; 
+	?branch; find6 word,
+	dup; @;
+	0x1f7f #, xsp pushi,
+	and;
+	r@;
+	xor;
+	?branch; find2 word,
+	cell- \ backup to link field
+	find1 word,	\ try the next word
+find2 .label
+	cell+;
+	temp; @;
+	same?;
+find3 .label
+	find4 word,
+find6 .label
+	r>;
+	drop;
+	swap;
+	cell-;
+	swap;
+	exit;
+find4 .label
+	?branch; find5 word,
+	cell-; cell-;
+	find1 word,
+find5 .label
+	r>;
+	drop;
+	swap;
+	drop;
+	cell-;
+	dup;
+	name>;
+	swap;
+	exit; \ ca
+
+s" name?" machineword _nameq ( a -- ca na | a F ) 
+deflabel nameq1
+deflabel nameq2
+deflabel nameq3
+	\ search all context vocabularies for a string.
+	context;
+	dup;
+	d@;
+	xor;	\ ?context = also
+	?branch; nameq1 word,
+	cell-; \ no, start with context
+nameq1 .label
+	>r;
+nameq2 .label
+	r>;
+	cell+;
+	dup;
+	>r; 	\ next in search order
+	@;
+	?dup;
+	?branch; nameq3 word,
+	_find word,
+	?dup;
+	?branch; nameq2 word,
+	r>;
+	drop;
+	exit;	\ found name
+nameq3 .label
+	r>; 
+	drop; \ name not found
+	zero xsp push,
+	exit; \ false flag
+
+
+
 
 asm}
 
