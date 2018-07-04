@@ -1642,7 +1642,48 @@ s" query" machineword _query ( -- )
 	zero xsp push,
 	in; !;
 	exit;
+\ error handling
+s" catch" machineword _catch ( ca -- 0 | err# )
+	\ execute word at ca and setup and error frame for it
+	sp@; >r;
+	_handler word, @; >r; \ save error frame
+	rp@; _handler word, !; exec; \ execute
+	r>; _handler word; !; \ restore error frame
+	r>; drop; zero xsp pushi, exit; \ no error
+s" throw" machineword _throw ( err# -- err# ) 
+	_handler word, @;
+	rp!;  \ restore return stack
+	r>; _handler word, !; \ restore handler frame
+	r>; swap; >r; sp!; \ restore data stack
+	drop; r>; exit;
 
+s" null$" machineword _nulld ( -- a )
+	\ return address of a null string with zero count
+	dovariable; 
+	0 .constant,
+	99 .constant, \ c
+	111 .constant, \ o
+	121 .constant, \ y
+	111 .constant, \ o
+	116 .constant, \ t 
+	101 .constant, \ e
+s" abort" machineword _abort ( -- )
+	\ reset data stack and jump to quit
+	_nulld word,
+	_throw word, 
+
+s\" abort\"" word/compile machineword-base _abortq ( f -- ) 
+	\ runtime routine of abort" . Abort with a message.
+deflabel abortq1
+	?branch; 
+	abortq1 word, \ text flag
+	dostr; 
+	_throw word, \ pass error string
+abortq1 .label
+	dostr;
+	drop;
+	exit;	\ drop error
+\ the text interpreter
 asm}
 
 bye
