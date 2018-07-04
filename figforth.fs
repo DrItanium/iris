@@ -296,6 +296,8 @@ word/compile word/immediate or  constant word/all
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
 : machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
+: immediate-machineword ( str length "name" -- ) word/immediate machineword-base ;
+: immediate-machineword-predef ( label str length -- ) word/immediate machineword-base-predef ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
 : embed-douser ( -- ) 
@@ -1457,19 +1459,19 @@ s" parse" machineword _parse ( c -- b u ; <string> )
 	+!;
 	exit;
 : parse; ( -- ) _parse word, ;
-s" .(" word/immediate machineword-base _dotpr ( -- )
+s" .(" immediate-machineword _dotpr ( -- )
 	\ output following string up to next ) .
 	0x29 #, xsp pushi, \ )
 	parse;
 	type;
 	exit;
-s" (" word/immediate machineword-base _paren ( -- )
+s" (" immdiate-machineword _paren ( -- )
 	\ ignore following string up to next ). A comment
 	0x29 #, xsp pushi,	\ )
 	parse;
 	2drop;
 	exit;
-s" \" word/immediate machineword-base _backslash ( -- )
+s" \" immediate-machineword _backslash ( -- )
 	\ ignore following text till the end of line
 	#tib; @;
 	inn; !;
@@ -1781,7 +1783,7 @@ _interpret1 .label
 	exit;
 interpret2 .label \ error
 	throw;
-s" [" word/immediate machineword-base _lbrack ( -- )
+s" [" immediate-machineword _lbrack ( -- )
 	\ start the text interpreter
 	_interpret ??, xsp pushi,
 	'eval; !;
@@ -1925,7 +1927,7 @@ _, s" ," machineword-predef ( w -- )
 	exit; \ adjust code pointer, compile
 deflabel _again
 : again; ( -- ) _again word, ;
-s" [compile]" word/immediate machineword-base _bcompile ( -- ; <string> )
+s" [compile]" immediate-machineword _bcompile ( -- ; <string> )
 	\ compile the next immediate word into code dictionary
 	_tick word,
 	again;
@@ -1947,10 +1949,9 @@ _compile s" compile" word/compile machineword-base-predef ( -- )
 	>r;
 	exit;
 
-s" literal" word/immediate machineword-base _literal ( w -- )
+s" literal" immediate-machineword _literal ( w -- )
 	\ compile top of stack to code dictionary as an integer literal
-	compile; \ _lit will be compiled into the dictionary
-	_lit word, 
+	compile; lit; \ _lit will be compiled into the dictionary
 	,;
 	exit;
 
@@ -1971,7 +1972,10 @@ s" recurse" machineword _recurse ( -- )
 	name>; 
 	again;
 	exit; \ compile branch instruction
-s" then" word/immediate machineword-base _then ( a -- )
+
+\ structures
+
+s" then" immediate-machineword _then ( a -- )
 	\ terminate a forward branch structure.
 	\ the forward reference deposits a branch instruction. The address
 	\ is filled by a.
@@ -1981,14 +1985,34 @@ s" then" word/immediate machineword-base _then ( a -- )
 	decimal 1 #, xsp pushi, +; \ go to next address
 	!; \ store the address into this cell
 	exit;
-_again s" again" word/immediate machineword-base-predef ( a -- )
+_again s" again" immediate-machineword-predef ( a -- )
 	\ resolve a backwards jump and terminate a loop structure
 	\ compile a branch instruction, with 'a' in the address field.
 	here; -; \ offset from here
 	#call #, xsp pushi, ,; \ stash the call instruction portion
 	,; \ stash the address
 	exit;
-	
+s" for" immediate-machineword _for ( -- a )
+	\ start a for-next loop structure in a colon definition
+	compile; >r;
+	here;
+	exit;
+s" begin" immediate-machineword _begin ( -- a )
+	\ start an infinite or indefinite loop structure
+	here;
+	exit;
+s" next" immediate-machineword _next ( a -- )
+	\ terminate a for-next loop structure
+	compile; donext;
+	again;
+	exit;
+s" until" immediate-machineword _until ( a -- )
+	\ terminate a begin-until indefinite loop structure
+	compile; ?branch;
+	again;
+	exit;
+\ todo continue at if on line 2708
+\ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
 asm}
