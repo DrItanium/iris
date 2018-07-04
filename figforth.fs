@@ -1907,6 +1907,7 @@ s" ," machineword _comma ( w -- )
 	!;
 	!;
 	exit \ adjust code pointer, compile
+: ,; ( -- ) _comma word, ;
 deflabel _again
 s" [compile]" word/immediate machineword-base _bcompile ( -- ; <string> )
 	\ compile the next immediate word into code dictionary
@@ -1934,7 +1935,7 @@ s" literal" word/immediate machineword-base _literal ( w -- )
 	\ compile top of stack to code dictionary as an integer literal
 	_compile word, \ _lit will be compiled into the dictionary
 	_lit word, 
-	_comma word,
+	,;
 	exit;
 
 s\" $,\"" machineword _stcq ( -- )
@@ -1954,7 +1955,24 @@ s" recurse" machineword _recurse ( -- )
 	_namt word,
 	_again word,
 	exit; \ compile branch instruction
-
+s" then" word/immediate machineword-base _then ( a -- )
+	\ terminate a forward branch structure.
+	\ the forward reference deposits a branch instruction. The address
+	\ is filled by a.
+	here; over; -; \ construct a base address to store to
+	\ need to construct a branch instruction
+	#call #, xsp pushi, over; !; \ stash a zero #call 
+	decimal 1 #, xsp pushi, +; \ go to next address
+	!; \ store the address into this cell
+	exit;
+_again s" again" word/immediate machineword-base-predef ( a -- )
+	\ resolve a backwards jump and terminate a loop structure
+	\ compile a branch instruction, with 'a' in the address field.
+	here; -; \ offset from here
+	#call #, xsp pushi, ,; \ stash the call instruction portion
+	,; \ stash the address
+	exit;
+	
 asm}
 
 bye
