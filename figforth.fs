@@ -1561,6 +1561,88 @@ deflabel back1
 	@execute;
 back1 .label
 	exit;
+s" tap" machineword _tap ( bot eot cur c -- bot eot cur )
+	\ accept and echo the key stroke and bump the cursor.
+	dup;
+	tech;
+	@execute;
+	over;
+	c!;
+	xsp xtop pop,
+	xtop 1+,
+	xtop xsp push,
+	exit;
+s" ktap" machineword _ktap ( bot eot cur c -- bot eot cur )
+deflabel ktap1
+deflabel ktap2
+	\ Process a key stroke, cr, or backspace
+	dup;
+	ccr #, xsp pushi,
+	xor;
+	?branch; ktap2 word,
+	cbksp #, xsp pushi,
+	xor;
+	?branch?; ktap1 word,
+	blank;
+	_tap word,
+	exit;
+ktap1 .label
+	_bksp word,
+	exit;
+ktap2 .label
+	drop;
+	swap;
+	drop;
+	dup;
+	exit;
+s" accept" machineword _accept ( b u -- b u )
+deflabel accept2
+deflabel accept3
+deflabel accept4
+	\ accept characters to input buffer. Return with actual count
+	over; +; over; 
+deflabel-here accept1
+	2dup;
+	xor;
+	?branch; accept4 word,
+	key;
+	dup;
+	blnk;
+	decimal 127 #, xsp pushi,
+	within;
+	?branch; accept2 word,
+	_tap word,
+	accept3 word,
+accept2 .label
+	_ttap word,
+	@execute;
+accept3 .label
+	accept1 word,
+accept4 .label
+	drop;
+	over;
+	-;
+	exit;
+s" except" machineword _except ( b u -- )
+	\ accept input stream and store count in SPAN.
+	_texpect word,
+	@execute;
+	_span word,
+	!;
+	drop;
+	exit;
+s" query" machineword _query ( -- )
+	\ accept input stream to terminal input buffer.
+	tib;
+	decimal 80 #, xsp pushi,
+	_texpect word,
+	@execute;
+	#tib; !;
+	drop;
+	zero xsp push,
+	in; !;
+	exit;
+
 asm}
 
 bye
