@@ -1,13 +1,20 @@
+\ this design is ported from the eforth ppc implementation found online
+\ written by C.H. Ting. The comments you see in the words are not mine but the
+\ porting effort is mine. Iris is a 16-bit riscy chip with 64 16-bit registers,
+\ no FPU, and a 64 kiloword memory space. Instructions are two words wide and the
+\ machine exclusively operates on 16-bit words. 
+\ the words I define are meant for adaption purposes as well
+
 include iris.fs
-: x.scr ( -- ) hex .s decimal cr ;
+: x.scr ( -- ) 
+	\ display the stack and then print a newline
+hex .s decimal cr ;
+: too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
-: too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
-unused-start 
-\ constants
-\ user variables
-1+cconstant xsp \ data stack pointer
+\ setup the registers first
+unused-start 1+cconstant xsp \ data stack pointer
 1+cconstant xrp \ return stack pointer
 1+cconstant xip \ interpretive pointer
 1+cconstant xw \ current word pointer
@@ -53,7 +60,6 @@ input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
 
-
 \ ascii characters used
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
@@ -62,15 +68,6 @@ output-buffer-start 0x100 + constant output-buffer-end
 \ memory allocation
 ram-end 1+ constant EM \ end of memory
 
-\ unlike the 8086 forth impl, iris does things a tad differently
-\ there is only one drive which holds up to 64 megawords of data
-\ Hence drive 0 will always be storage
-\ We divide these 64 megawords into 1 kiloword sections called tracks
-\ There are 65536 total tracks available from the 'drive'
-\ The sector is where this design gets even stranger, by default, 8086 forth 
-\ is defined to access 8 inch magnetic disks with 128 bytes per sector and 
-\ 26 or 52 sectors per track depending on the density. In our case, a track
-\ is divided up into 8 sectors of 128 words each.
 0x400 constant words/block
 0x80 constant words/sector
 0x400 constant words/track
@@ -219,17 +216,10 @@ variable user-offset
 : user-offset! ( n -- ) user-offset ! ;
 : user-offset1+ ( -- ) user-offset@ 1+ user-offset! ;
 \ program start
-0x1000 .org \ dictionary starts at 0x1000
-deflabel-here _2push 
-    xlower xsp push,
-deflabel-here _1push 
-    xtop xsp push,
-deflabel-here _next
-    xrp ret,
 : .skip ( -- ) 0 #, .cell ; 
-: next, ( -- ) _next ??, b, ;
-: 1push, ( -- ) _1push ??, b, ;
-: 2push, ( -- ) _2push ??, b, ;
+: next, ( -- ) xrp ret, ;
+: 1push, ( -- ) xtop xsp push, next, ;
+: 2push, ( -- ) xlower xsp push, 1push, ;
 \ : machine-code-execute ( -- ) loc@ 1+ constant, ;
 : machine-code-execute ( -- ) ( do nothing ) ;
 : .string, ( addr len -- ) 
@@ -301,16 +291,9 @@ word/compile word/immediate or  constant word/all
   r> last-word ! \ stash the top of this dictionary entry to last word
   \ ." end of entry: " loc@ hex . decimal cr
   ;
-: defword-base ( str length control-bits "name" -- ) 
-defword-header 
-deflabel-here 
-( then define the label to point at here ) 
-;
+: defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
-: machineword-base ( str length control-bits "name" -- ) 
-  defword-base 
-  machine-code-execute 
-  ;
+: machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
 : machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
@@ -323,17 +306,10 @@ deflabel-here
 : userword ( n -- ) word/none userword-base ;
 : userword-predef ( label n len -- ) word/none userword-base-predef ;
 
-: 1pop, ( -- )
-  xsp xtop pop, ;
-: 2pop, ( -- )
-  1pop, 
-  xsp xlower pop, ;
-: 3pop, ( -- )
-  2pop,
-  xsp xthird pop, ;
-: 4pop ( -- )
-  3pop,
-  xsp xfourth pop, ;
+: 1pop, ( -- ) xsp xtop pop, ;
+: 2pop, ( -- ) 1pop, xsp xlower pop, ;
+: 3pop, ( -- ) 2pop, xsp xthird pop, ;
+: 4pop ( -- ) 3pop, xsp xfourth pop, ;
 : defbinaryop ( str length "name" "op" -- )
   machineword 
   2pop,
@@ -356,6 +332,47 @@ deflabel _0branch
 : zbranch; ( location id -- ) _0branch two-cell-op ;
 : ??zbranch; ( location -- ) ??, zbranch; ;
 : ?branch; ( -- ) _0branch word, ;
+\ code start
+0x0000 .org
+_cold .label
+deflabel _qrx
+deflabel _txsto
+deflabel _accept
+deflabel _ktap 
+deflabel _drop
+deflabel _dotok
+deflabel _interpret
+deflabel _numberq
+deflabel-here _uzero
+	0x400 constant, \ reserved
+	data-stack-start constant, \ SP0
+	return-stack-start constant, \ RP0
+	_qrx ??, .cell \ '?key
+	_txsto ??, .cell \ 'emit
+	_accept ??, .cell \ 'expect
+	_ktap ??, .cell \ 'tap
+	_drop ??, .cell \ 'echo
+	_dotock ??, .cell \ 'prompt
+	decimal 10 constant, \ base
+	0 constant, \ tmp
+	0 constant, \ span
+	0 constant, \ >in
+	0 constant, \ #tib
+	input-buffer-start constant, \ tib
+	0 constant, \ csp
+	_interpret ??, .cell \ 'eval
+	_numberq ??, .cell \ 'number
+	0 constant, \ hld
+	0 constant, \ handler
+	_forth1 ??, .cell \ context pointer
+	0x800 constant, \ vocabulary stack
+	_forth1 ??, .cell \ current pointer
+	0 constant, \ vocabulary link pointer
+	_ctop ??, .cell \ code dictionary
+	input-buffer-start 4 - constant, \ name dictionary
+	_lastn ??, .cell \ last
+deflabel-here _ulast
+
 _lit s" lit" word/compile machineword-base-predef
     xrp xlower ld, \ address of next which is a literal
     xlower xtop ld, \ load the value
@@ -460,7 +477,7 @@ s" sp!" machineword _spstore ( a -- )
     1pop,
     xtop xsp move,
     next,
-s" drop" machineword _drop 
+_drop s" drop" machineword-predef 
     xsp zero pop,
     next,
 s" dup" machineword _dup 
@@ -517,13 +534,14 @@ _douser .label ( -- a )
 &S0 s" sp0" userword-predef 
 &R0 s" rp0" userword-predef
 s" '?key" userword _tqky
-: tqky; ( -- ) _tqky word, ;
+: 'qky; ( -- ) _tqky word, ;
 s" 'emit" userword _temit
-: temit; ( -- ) _temit word, ;
+: 'emit; ( -- ) _temit word, ;
 s" 'expect" userword _texpect
+: 'expect; ( -- ) _texpect word, ;
 s" 'tap" userword _ttap
 s" 'echo" userword _techo
-: tech; ( -- ) _techo word, ;
+: 'echo; ( -- ) _techo word, ;
 s" 'prompt" userword _tprompt
 : 'prompt; ( -- ) _tprompt word, ;
 s" base" userword _base
@@ -807,7 +825,6 @@ s" pick" machineword _pick ( ... +n --  ... w )
     xsp xtop xlower add, \ make the address to load from
     xlower xtop ld, \ load the address
     1push,
-\ todo continue with memory access line 1210
 s" +!" machineword _pstore ( n a -- )
     \ add n to the contents at address a
     2pop,
@@ -1155,7 +1172,7 @@ numq6 .label
 \ basic io
 s" ?key" machineword _qkey ( -- c T | F )
     \ return input character and true, or a false if no input
-    tqky; 
+    'qky; 
     @execute;
     exit;
 s" key" machineword _key ( -- c )
@@ -1555,21 +1572,21 @@ deflabel back1
 	xor;
 	?branch; back1 word,
 	cbksp #, xsp pushi, 
-	tech;
+	'echo;
 	@execute;
 	0x1 #, xsp pushi,
 	-; blank;
-	tech;
+	'echo;
 	@execute;
 	cbksp #, xsp pushi,
-	tech;
+	'echo;
 	@execute;
 back1 .label
 	exit;
 s" tap" machineword _tap ( bot eot cur c -- bot eot cur )
 	\ accept and echo the key stroke and bump the cursor.
 	dup;
-	tech;
+	'echo;
 	@execute;
 	over;
 	c!;
@@ -1751,7 +1768,43 @@ eval2 .label
 	@execute;
 	exit;	\ prompt
 \ shell
-\ todo line 2416
+s" preset" machineword _preset ( -- ) 
+	\ reset data stack pointer and the terminal input buffer
+	s0; @; sp!;
+	input-buffer-start #, xsp pushi, 
+	#tib;
+	cell+;
+	!;
+	exit;
+s" xio" word/compile machineword-base _xio ( a a a -- )
+	\ reset the i/o vectors 'expect, 'tap, 'echo, and 'prompt
+	\ this seems questionable to me :/
+	_accept ??, xsp pushi,
+	'expect;
+	2!;
+	'echo;
+	2!; 
+	exit;
+s" file" machineword _file ( -- )
+	\ select io vectors for file download
+	_pace ??, xsp pushi,
+	_drop ??, xsp pushi,
+	_ktap ??, xsp pushi,
+	_xio word,
+	exit;
+s" hand" machineword _hand ( -- )
+	\ select io vectors for terminal interface
+	_dotok ??, xsp pushi,
+	\ _drop ??, xsp pushi, \ don't repeat characters, macos did it already 4/20/97 - cht
+						   \ doesn't seem to apply to me since I'm not on mac os - jws 
+	_ktap ??, xsp pushi, 
+	_xio word,
+	exit;
+s" i/o" machineword _i/o ( -- a )
+	\ array to store default io vectors
+	dovariable;
+	
+
 asm}
 
 bye
