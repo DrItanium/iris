@@ -1883,12 +1883,77 @@ deflabel-here quit2
 quit4 .label
 	_preset word, \ some cleanup
 	quit1 ??, bl,
+\ compiler routines
+s" '" machineword _tick ( -- ca )
+deflabel tick1
+	\ search context vocabularies for the next word in input stream
+	_token word,
+	_nameq word, \ ?defined
+	?branch; tick1 word,
+	exit;	\ yes, push code address
+tick1 .label
+	throw;	\ no, error
+s" allot" machineword _allot ( n -- )
+	\ allocate n words to the code dictionary
+	_cp word,
+	+!;
+	exit;	\ adjust code pointer
+s" ," machineword _comma ( w -- )
+	\ compile an integer into the code dictionary
+	here;
+	dup;
+	cell+;
+	_cp word,
+	!;
+	!;
+	exit \ adjust code pointer, compile
+deflabel _again
+s" [compile]" word/immediate machineword-base _bcompile ( -- ; <string> )
+	\ compile the next immediate word into code dictionary
+	_tick word,
+	_again word,
+	exit;
 
+s" compile" word/compile machineword-base _compile ( -- )
+	\ compile the next address in colon list to code dictionary
+	r>; ( a )
+	dup; ( a a )
+	1pop, \ xtop - a
+	xtop xtop ld, 
+	xtop xsp push, ( a bl )
+	over;  \ convert abs addr to rel addr ( not needed for my design )
+	+;
+	\ 0x03FFFFFFC #, xsp pushi,
+	\ and; ; a ca -- 
+	_again word, \ compile bl instruction
+	cell+;
+	>r;
+	exit;
 
+s" literal" word/immediate machineword-base _literal ( w -- )
+	\ compile top of stack to code dictionary as an integer literal
+	_compile word, \ _lit will be compiled into the dictionary
+	_lit word, 
+	_comma word,
+	exit;
 
+s\" $,\"" machineword _stcq ( -- )
+	\ compile a literal string up to next " .
+	\ Is this supposed to be compile time?
+	0x22 #, xsp pushi, \ '"'
+	_word word, \ move string to code dictionary
+	count; +;
+	_aligned word, \ calculate aligned end of string
+	cp;
+	!;
+	exit; \ adjust the code pointer
 
-
-
+s" recurse" machineword _recurse ( -- )
+	\ make the current word available for compilation
+	last; @;
+	_namt word,
+	_again word,
+	exit; \ compile branch instruction
 
 asm}
 
