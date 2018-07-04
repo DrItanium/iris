@@ -525,6 +525,7 @@ s" 'tap" userword _ttap
 s" 'echo" userword _techo
 : tech; ( -- ) _techo word, ;
 s" 'prompt" userword _tprompt
+: 'prompt; ( -- ) _tprompt word, ;
 s" base" userword _base
 s" tmp" word/compile userword-base _tmp
 s" span" userword _span
@@ -534,9 +535,12 @@ user-offset1+ \ since it is doublewide advance by one again
 : #tib; ( -- ) _ntib word, ;
 s" csp" userword _csp
 s" 'eval" userword _teval
+: 'eval; ( -- ) _teval word, ;
 s" 'number" userword _tnumber
+: 'number; ( -- ) _tnumber word, ;
 s" hld" userword _hld
 s" handler" userword _handler
+: handler; ( -- ) _handler word, ;
 &context s" context" userword-predef \ already advanced one at this point
 \ consumes eight cells
 user-offset@ 8 + user-offset!
@@ -1239,6 +1243,7 @@ s\" .\"|" word/compile machineword-base _dtqp ( -- )
     count;
     type;
     exit;
+: dtqp; ( -- ) _dtqp word, ;
 s" .r" machineword _dotr ( n +n -- )
 	\ display an integer in a field of n columsn, right justified
 	>r;
@@ -1646,14 +1651,14 @@ s" query" machineword _query ( -- )
 s" catch" machineword _catch ( ca -- 0 | err# )
 	\ execute word at ca and setup and error frame for it
 	sp@; >r;
-	_handler word, @; >r; \ save error frame
-	rp@; _handler word, !; exec; \ execute
+	handler; @; >r; \ save error frame
+	rp@; handler; !; exec; \ execute
 	r>; _handler word; !; \ restore error frame
 	r>; drop; zero xsp pushi, exit; \ no error
 s" throw" machineword _throw ( err# -- err# ) 
-	_handler word, @;
+	handler; @;
 	rp!;  \ restore return stack
-	r>; _handler word, !; \ restore handler frame
+	r>; handler; !; \ restore handler frame
 	r>; swap; >r; sp!; \ restore data stack
 	drop; r>; exit;
 : throw; ( -- ) _throw word, ;
@@ -1683,6 +1688,7 @@ abortq1 .label
 	dostr;
 	drop;
 	exit;	\ drop error
+: abortq; ( -- ) _abortq word, ;
 \ the text interpreter
 s" $interpret" machineword _interpret ( a -- )
 deflabel interpret1
@@ -1694,12 +1700,11 @@ deflabel interpret2
 	@;
 	word/compile #, xsp pushi, 
 	and; \ ?compile only lexicon bits
-	_abortq word,
-	s" compile only" .string,
+	abortq; s" compile only" .string,
 	exec;
 	exit; \ execute defined word
 interpret1 .label
-	_tnumber word, \ convert a number
+	'number; \ convert a number
 	@execute;
 	?branch; interpret2 word,
 	exit;
@@ -1708,17 +1713,15 @@ interpret2 .label \ error
 s" [" word/immediate machineword-base _lbrack ( -- )
 	\ start the text interpreter
 	_interpret ??, xsp pushi,
-	_teval word,
-	!;
+	'eval; !;
 	exit;
 s" .ok" machineword _dotok ( -- ) 
 deflabel dotok1
 	\ display ok only while interpreting
 	_interpret ??, xsp pushi,
-	_teval word, @; =;
+	'eval; @; =;
 	?branch; dotok1 word,
-	_dtqp word,
-	s" ok" .string,
+	dtqp; s" ok" .string,
 dotok1 .label
 	cr;
 	exit;
@@ -1727,9 +1730,9 @@ s" ?stack" machineword _qstack ( -- )
 	\ abort if the data stack underflows
 	depth;
 	0<;
-	_abortq word, 
-	s" underflow" .string, 
+	abortq; s" underflow" .string, 
 	exit;
+
 s" eval" machineword _eval ( -- )
 	\ interpret the input stream
 deflabel-here eval1
@@ -1738,13 +1741,13 @@ deflabel eval2
 	dup;
 	c@; \ input stream empty
 	?branch; eval2 word,
-	_teval word,
+	'eval;
 	@execute;
 	_qstack word, \ evaluate input, check stack
 	eval1 word,
 eval2 .label
 	drop;
-	_tprompt word,
+	'prompt;
 	@execute;
 	exit;	\ prompt
 \ shell
