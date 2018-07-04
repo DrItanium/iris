@@ -60,6 +60,7 @@ input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
 
+
 \ ascii characters used
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
@@ -334,6 +335,8 @@ deflabel _0branch
 : ?branch; ( -- ) _0branch word, ;
 \ code start
 0x0000 .org
+deflabel .eforth
+	.eforth ??, b,
 _cold .label
 deflabel _qrx
 deflabel _txsto
@@ -372,7 +375,42 @@ deflabel-here _uzero
 	input-buffer-start 4 - constant, \ name dictionary
 	_lastn ??, .cell \ last
 deflabel-here _ulast
-
+deflabel _eforth1
+0x0180 .org
+.eforth .label
+	_eforth1 word,
+_eforth1 .label
+	_uzero ??, xup set,
+	0x1 #, xup xtop addi,
+	xtop xsp ld,
+	xtop 1+,
+	xtop xrp ld,
+	_cold ??, b,
+s" bye" machineword _bye ( -- )
+	\ exit simulator 
+	/dev/terminate-vm #, io set,
+	zero io st,
+_qrx s" ?rx" machineword-predef ( -- c T | F )
+deflabel qrx1
+	\ return input character and true, or a false if no input
+	/dev/console0 #, io set,
+	io xlower ld, 
+	xlower cv eqz,
+	qrx1 ??, cv bc, \ if equal zero then no input
+	0xFFFF #, xtop set,
+	2push,
+qrx1 .label
+	zero xsp push,
+	next,
+_txsto s" tx!" machineword-predef ( c -- )
+	\ send character c to the output device.
+	1pop,
+	/dev/console0 #, io set,
+	xtop io st,
+	next,
+s" !io" machineword _storeio ( -- )
+	\ initialize the serial I/O devices
+	next,
 _lit s" lit" word/compile machineword-base-predef
     xrp xlower ld, \ address of next which is a literal
     xlower xtop ld, \ load the value
@@ -1803,7 +1841,54 @@ s" hand" machineword _hand ( -- )
 s" i/o" machineword _i/o ( -- a )
 	\ array to store default io vectors
 	dovariable;
-	
+	_qrx ??, .cell
+	_txsto ??, .cell \ default io vectors for 32 bit systems 3/16/92
+s" console" machineword _console ( -- )
+	\ initiate terminal interface.
+	_i/o word,
+	2@;
+	'qky;
+	2!;
+	_hand word,
+	exit;
+s" quit" machineword _quit ( -- )
+deflabel quit3
+deflabel quit4
+	\ reset stack pointer and start text interpreter
+	r0; @; rp!; \ reset return stack pointer
+deflabel-here quit1
+	_leftbracket word, \ start interpretation
+deflabel-here quit2
+	_query word, 	   \ get input
+	_eval ??, xsp pushi,
+	_catch word,
+	?dup;			   \ evaluate input
+	?branch; quit2 word, \ continue till error
+	'prompt; @; swap;    \ save input device
+	_console word,
+	_nulld word,
+	over;
+	xor; \ display error message?
+	?branch; quit3 word,
+	spaces;
+	count;
+	type; \ error message
+	dtqp; s"  ? " .string, \ error prompt
+	cr;
+	_dotok ??, xsp pushi,
+	xor; \ file input?
+	?branch; quit4 word,
+	_error ??, xsp pushi,
+	emit; \ file error, tell host
+quit4 .label
+	_preset word, \ some cleanup
+	quit1 ??, bl,
+
+
+
+
+
+
 
 asm}
 
