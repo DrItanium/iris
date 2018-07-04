@@ -1656,7 +1656,7 @@ s" throw" machineword _throw ( err# -- err# )
 	r>; _handler word, !; \ restore handler frame
 	r>; swap; >r; sp!; \ restore data stack
 	drop; r>; exit;
-
+: throw; ( -- ) _throw word, ;
 s" null$" machineword _nulld ( -- a )
 	\ return address of a null string with zero count
 	dovariable; 
@@ -1670,7 +1670,7 @@ s" null$" machineword _nulld ( -- a )
 s" abort" machineword _abort ( -- )
 	\ reset data stack and jump to quit
 	_nulld word,
-	_throw word, 
+	throw;
 
 s\" abort\"" word/compile machineword-base _abortq ( f -- ) 
 	\ runtime routine of abort" . Abort with a message.
@@ -1678,12 +1678,76 @@ deflabel abortq1
 	?branch; 
 	abortq1 word, \ text flag
 	dostr; 
-	_throw word, \ pass error string
+	throw; \ pass error string
 abortq1 .label
 	dostr;
 	drop;
 	exit;	\ drop error
 \ the text interpreter
+s" $interpret" machineword _interpret ( a -- )
+deflabel interpret1
+deflabel interpret2
+	\ interpret a word. If failed, try to convert it to an integer.
+	?name;
+	?dup; 	\ ?defined
+	?branch; interpret1 word,
+	@;
+	word/compile #, xsp pushi, 
+	and; \ ?compile only lexicon bits
+	_abortq word,
+	s" compile only" .string,
+	exec;
+	exit; \ execute defined word
+interpret1 .label
+	_tnumber word, \ convert a number
+	@execute;
+	?branch; interpret2 word,
+	exit;
+interpret2 .label \ error
+	throw;
+s" [" word/immediate machineword-base _lbrack ( -- )
+	\ start the text interpreter
+	_interpret ??, xsp pushi,
+	_teval word,
+	!;
+	exit;
+s" .ok" machineword _dotok ( -- ) 
+deflabel dotok1
+	\ display ok only while interpreting
+	_interpret ??, xsp pushi,
+	_teval word, @; =;
+	?branch; dotok1 word,
+	_dtqp word,
+	s" ok" .string,
+dotok1 .label
+	cr;
+	exit;
+		
+s" ?stack" machineword _qstack ( -- )
+	\ abort if the data stack underflows
+	depth;
+	0<;
+	_abortq word, 
+	s" underflow" .string, 
+	exit;
+s" eval" machineword _eval ( -- )
+	\ interpret the input stream
+deflabel-here eval1
+deflabel eval2
+	token;
+	dup;
+	c@; \ input stream empty
+	?branch; eval2 word,
+	_teval word,
+	@execute;
+	_qstack word, \ evaluate input, check stack
+	eval1 word,
+eval2 .label
+	drop;
+	_tprompt word,
+	@execute;
+	exit;	\ prompt
+\ shell
 asm}
 
 bye
