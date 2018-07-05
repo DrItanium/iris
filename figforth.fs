@@ -1307,6 +1307,7 @@ s\" $\"|" word/compile machineword-base _stqp ( -- a )
     \ runtime routine compiled by $". Return address of a compiled string.
     dostr;
     exit;
+: stqp; ( -- ) _stqp word, ;
 s\" .\"|" word/compile machineword-base _dtqp ( -- )
     \ runtime routine of ." . output a compile string.
     dostr;
@@ -1965,7 +1966,7 @@ s\" $,\"" machineword _stcq ( -- )
 	cp;
 	!;
 	exit; \ adjust the code pointer
-
+: stcq; ( -- ) _stcq word, ;
 s" recurse" machineword _recurse ( -- )
 	\ make the current word available for compilation
 	last; @;
@@ -2012,6 +2013,65 @@ s" until" immediate-machineword _until ( a -- )
 	again;
 	exit;
 \ todo continue at if on line 2708
+s" if" immediate-machineword _if ( -- A )
+    \ begin a conditional branch
+    compile; ?branch;
+    here;
+    #call #, xsp pushi, \ call with register zero thus it is a branch
+    ,;
+    zero xsp push,
+    ,;
+    exit;
+s" ahead" immediate-machineword _ahead ( -- A )
+    \ compile a forward branch instruction
+    here;
+    #call #, xsp pushi, \ call with register zero thus it is a branch
+    ,;
+    zero xsp push,
+    ,;
+    exit;
+s" repeat" immediate-machineword _repeat ( A a -- ) 
+    \ terminate a begin while-repeat indefinite loop
+    again;
+    _then word,
+    exit;
+
+s" aft" immediate-machineword _aft ( a -- a A )
+    \ Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through
+    drop;
+    _ahead word,
+    _begin word,
+    swap;
+    exit;
+
+s" else" immediate-machineword _else ( A -- A )
+    \ start the false clause in an if-else-then structure
+    _ahead word,
+    swap;
+    _then word,
+    exit;
+s" while" immediate-machineword _while ( a -- A a )
+    \ Conditional branch out of a begin-while-repeat loop
+    _if word,
+    swap;
+    exit;
+s\" abort\"" immediate-machineword _rabortq ( -- ; <string> )
+    \ conditional abort with an error message.
+    compile; abortq;
+    stcq;
+    exit;
+
+s\" $\"" immediate-machineword _strq ( -- ; <string> )
+    \ compile an inline string literal.
+    compile; stqp;
+    stcq;
+    exit;
+s\" .\"" immediate-machineword _dotq ( -- ; <string> )
+    \ compile an inline string literal to be typed out at run time.
+    compile; dtqp;
+    stcq;
+    exit;
+\ name compiler
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
