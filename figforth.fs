@@ -1466,7 +1466,7 @@ s" .(" immediate-machineword _dotpr ( -- )
 	parse;
 	type;
 	exit;
-s" (" immdiate-machineword _paren ( -- )
+s" (" immediate-machineword _paren ( -- )
 	\ ignore following string up to next ). A comment
 	0x29 #, xsp pushi,	\ )
 	parse;
@@ -2072,6 +2072,22 @@ s\" .\"" immediate-machineword _dotq ( -- ; <string> )
     stcq;
     exit;
 \ name compiler
+s" ?unique" machineword _unique ( a -- a )
+deflabel unique1
+    \ display a warning message if the word already exists.
+    dup;
+    name?; \ ?name exists
+    ?branch; unique1 word, \ redefinitions are OK
+    dtqp; s" redefined " .string, \ but warn the user
+    over;
+    count;
+    type;   \ just in case it is not planned
+unique1 .label
+    drop;
+    exit;
+
+
+    
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
