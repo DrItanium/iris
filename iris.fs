@@ -1,6 +1,8 @@
 get-current ( wid )
 vocabulary iris also iris definitions
 
+variable iris-debug 
+false iris-debug !
 : nout ( num id -- ) swap s>d 
 \ get rid of sign extension nonsense
 dup 0< if 0 and endif 
@@ -157,7 +159,7 @@ variable CurrentAssemblyFile
 : curasm@ ( -- file ) CurrentAssemblyFile @ ;
 : curasm! ( n -- ) CurrentAssemblyFile ! ;
 : <<linker ( entry id -- ) 
-  \ ." address: " hex loc@ . cr decimal
+  iris-debug @ if ." address: " hex loc@ . ." : " over hex . cr decimal then
   hex
   dup >r
   nout
@@ -192,8 +194,6 @@ variable CurrentAssemblyFile
   r> <<linker ;
 \ labels must be defined ahead of time before first reference
 : reset-labels ( -- ) 0 labelIndex ! ;
-variable iris-debug 
-false iris-debug !
 : print-latest ( -- ) latest name>string type ;
 : print-new-label ( -- ) print-latest ." : " loc@ hex . ." , index#: " labelindex @ . cr ;
 : deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! 
@@ -201,7 +201,7 @@ iris-debug @ if print-new-label then
 does> @ ;
 
 : .org ( n -- ) loc! ;
-: .label ( label -- ) curasm@ <<label ;
+: .label ( label -- ) iris-debug @ if dup >r then curasm@ <<label iris-debug @ if r> ." emit label: " . cr then ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
 : .data16 ( imm id -- ) swap addr16 swap curasm@ swap 0= if <<mem else <<imem endif ;

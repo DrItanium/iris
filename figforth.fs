@@ -89,7 +89,7 @@ keyboard-buffer 4 + constant co
 \ register reservations
 deflabel forth1
 deflabel _origin
-deflabel _error
+\ deflabel _error
 deflabel forth_vocabulary_start
 deflabel _cold
 deflabel _abort
@@ -130,7 +130,7 @@ deflabel _,
 : offset; ( -- ) &offset word, ;
 : context; ( -- ) &context word, ;
 : current; ( -- ) _&current word, ;
-: error; ( -- ) _error word, ;
+\ : error; ( -- ) _error word, ;
 : cold; ( -- ) _cold word, ;
 : abort; ( -- ) _abort word, ;
 : quit; ( -- ) _quit word, ;
@@ -285,7 +285,7 @@ deflabel _0branch
 0x0000 .org
 deflabel .eforth
 	.eforth ??, b,
-_cold .label
+deflabel-here _coldv
 deflabel _qrx
 deflabel _txsto
 deflabel _accept
@@ -1844,10 +1844,11 @@ deflabel-here quit2
 	type; \ error message
 	dtqp; s"  ? " .string, \ error prompt
 	cr;
+quit3 .label
 	_dotok ??, xsp pushi,
 	xor; \ file input?
 	?branch; quit4 word,
-	_error ??, xsp pushi,
+    decimal 27 #, xsp pushi, \ push the error code
 	emit; \ file error, tell host
 quit4 .label
 	_preset word, \ some cleanup
@@ -2038,6 +2039,15 @@ unique1 .label
 
 
     
+_cold s" cold" machineword-predef ( -- ) 
+    \ the high level cold start sequence
+deflabel-here cold1
+    \ todo finish
+    _forth word, context; @;
+    dup;
+    \ todo finish
+    _quit word,
+    cold1 ??, b,
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
