@@ -173,8 +173,6 @@ namespace iris {
     DefExec(Or) { setDestination(op, getSource(op).integer | getSource2(op).integer); }
     DefExec(Negate) { setDestination(op, ~getSource(op).integer); }
     DefExec(Xor) { setDestination(op, getSource(op).integer ^ getSource2(op).integer); }
-    // DefExec(Nand) { setDestination(op, binaryNand(getSource(op).integer, getSource2(op).integer)); }
-    // DefExec(Nor) { setDestination(op, binaryNor(getSource(op).integer, getSource2(op).integer)); }
     DefExec(Min) {
         auto a = getSource(op).integer;
         auto b = getSource2(op).integer;
@@ -287,8 +285,6 @@ namespace iris {
     DefExec(UnsignedOr) { setDestination(op, getSource(op).address | getSource2(op).address); }
     DefExec(UnsignedNegate) { setDestination(op, ~getSource(op).address); }
     DefExec(UnsignedXor) { setDestination(op, getSource(op).address ^ getSource2(op).address); }
-    // DefExec(UnsignedNand) { setDestination(op, binaryNand(getSource(op).address, getSource2(op).address)); }
-    // DefExec(UnsignedNor) { setDestination(op, binaryNor(getSource(op).address, getSource2(op).address)); }
     DefExec(UnsignedMin) {
         auto a = getSource(op).address;
         auto b = getSource2(op).address;
@@ -369,58 +365,6 @@ namespace iris {
         incr._args.dest = op._args.dest;
         incr._args.src = op._args.dest;
         perform(incr);
-    }
-    DefExec(PrimitiveFind) {
-        // we are loading from the front of a dictionary entry of the format
-        // [0-5]: name field address
-        // 0: control bits
-        // 1: length
-        // 2: char 0 
-        // 3: char 1
-        // 4: char 2
-        // 5: char 3
-        // 6: link field
-        // 7: code field
-        // 8: parameter field
-        auto nfa = popDestination(op);
-        auto stringAddr = popDestination(op);
-        auto checkNext = [this, &op, nfa, stringAddr]()  {
-            // recursively call this routine for the next entry if we have one
-            if (auto linkField = load(nfa.address + 6) ; linkField == 0) {
-                pushDestination(op, false);
-            } else {
-                pushDestination(op, stringAddr);
-                pushDestination(op, linkField);
-                perform(op);
-            }
-        };
-        // take the string and generate a compressed format from it
-        auto stringLength = load(stringAddr.address);
-        auto nfaLength = load(nfa.address + 1);
-        if (stringLength == nfaLength) {
-            auto nfaStringStart = nfa.address + 2;
-            auto stringStart = stringAddr.address + 1;
-            // now check the lengths (maximum of four characters)
-            auto numCharacters = stringLength > 4 ? 4 : stringLength ;
-            auto mismatchFound = false;
-            for (Address i = 0; i < numCharacters; ++i) {
-                auto nw = load(nfaStringStart + i);
-                auto sw = load(stringStart + i);
-                if (nw != sw) {
-                    mismatchFound = true;
-                    break;
-                }
-            }
-            if (mismatchFound) {
-                checkNext();
-            } else {
-                // we found a match
-                pushDestination(op, nfa.address + 8);
-                pushDestination(op, true);
-            }
-        } else {
-            checkNext();
-        }
     }
     DefExec(WideAdd) {
         // the design means that x255 will couple with zero

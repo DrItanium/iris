@@ -79,8 +79,6 @@ opcode: #and
 opcode: #or 
 opcode: #negate
 opcode: #xor 
-\ opcode: #nand 
-\ opcode: #nor
 opcode: #min
 opcode: #max
 opcode: #eq
@@ -108,8 +106,6 @@ opcode: #uand
 opcode: #uor
 opcode: #unegate
 opcode: #uxor
-\ opcode: #unand
-\ opcode: #unor
 opcode: #umin
 opcode: #umax
 opcode: #uadd
@@ -133,7 +129,6 @@ opcode: #ldtincr
 opcode: #lti
 opcode: #move
 opcode: #sttincr
-opcode: #pfind
 opcode: #addw
 opcode: #subw
 opcode: #pushw
@@ -719,7 +714,6 @@ push, ;
 : bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
 : bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
 #sttincr inst-2reg sttincr,
-#pfind inst-1reg pfind,
 : .cell ( addr id -- ) .data16 ;
 #addw inst-3reg addw,
 #subw inst-3reg subw,

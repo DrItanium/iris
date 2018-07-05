@@ -10,8 +10,6 @@ X(And, ThreeRegister)
 X(Or, ThreeRegister)
 X(Negate, TwoRegister)
 X(Xor, ThreeRegister)
-// X(Nand, ThreeRegister)
-// X(Nor, ThreeRegister)
 X(Min, ThreeRegister)
 X(Max, ThreeRegister)
 X(Eq, ThreeRegister)
@@ -39,8 +37,6 @@ X(UnsignedAnd, ThreeRegister)
 X(UnsignedOr, ThreeRegister)
 X(UnsignedNegate, TwoRegister)
 X(UnsignedXor, ThreeRegister)
-// X(UnsignedNand, ThreeRegister)
-// X(UnsignedNor, ThreeRegister)
 X(UnsignedMin, ThreeRegister)
 X(UnsignedMax, ThreeRegister)
 X(UnsignedAdd, ThreeRegister)
@@ -64,15 +60,6 @@ X(LoadThenIncrement, TwoRegister)
 X(LessThanImmediate, TwoRegisterWithImmediate)
 X(Move, TwoRegister)
 X(StoreThenIncrement, TwoRegister)
-// forth operations
-X(PrimitiveFind, OneRegister) 
-    // searches the dictionary starting at the name field address addr2
-    // matching to the text at addr1. Returns parameter field address and
-    // boolean true for a good match
-    //
-    // No match only pushes false to the stack
-    // ( addr1 addr2 -- pfa tf ) ( ok )
-    // ( addr1 addr2 -- ff ) ( bad )
 X(WideAdd, ThreeRegister)
 X(WideSubtract, ThreeRegister)
 X(WidePush, TwoRegister)
