@@ -276,10 +276,8 @@ deflabel _0branch
 : lit; ( -- ) _lit word, ;
 : execute; ( -- ) _execute word, ;
 : branch; ( location id -- ) xrp bl, ;
-: ??branch; ( loc -- ) ??, branch; ;
-: zbranch; ( location id -- ) _0branch two-cell-op ;
-: ??zbranch; ( location -- ) ??, zbranch; ;
 : ?branch; ( -- ) _0branch word, ;
+: ??branch; ( label -- ) ?branch; word, ;
 \ code start
 0x0000 .org
 deflabel .eforth
@@ -797,8 +795,7 @@ deflabel tcha1
     0x7f #lit,
     within; \ check for printable
     not;
-    ?branch; 
-    tcha1 word,
+    tcha1 ??branch; 
     drop;
     0x2e #lit, \ replace non printables
 tcha1 .label
@@ -929,8 +926,7 @@ deflabel-here dtrail1
     +;
     c@;
     <;
-    ?branch; 
-    dtrail2 word,
+    dtrail2 ??branch; 
     r>;
     1+,,
     exit; \ adjusted count
@@ -1025,8 +1021,7 @@ deflabel digs2
 deflabel-here digs1
     digit;
     dup;
-    ?branch;
-    digs2 word,
+    digs2 ??branch;
     digs1 word,
 digs2 .label
     exit;
@@ -1035,8 +1030,7 @@ s" sign" machineword _sign ( n -- )
     \ add a minus sign to the numeric output string
 deflabel sign1
     0<;
-    ?branch;
-    sign1 word,
+    sign1 ??branch;
     0x2d #lit,
     hold;
 sign1 .label
@@ -1083,8 +1077,7 @@ deflabel dgtq1
     0x9 #lit, 
     over;
     <;
-    ?branch;
-    dgtq1 word,
+    dgtq1 ??branch;
     7 #lit,
     -;
     dup;
@@ -1113,8 +1106,7 @@ deflabel numq6
     c@;
     0x24 #lit, \ '$'
     =;
-    ?branch;
-    numq1 word,
+    numq1 ??branch;
     hex;
     swap;
     1+,,
@@ -1126,8 +1118,7 @@ numq1 .label
     >r; swap; r@; -;
     swap; r@; +;
     ?dup;
-    ?branch;
-    numq6 word,
+    numq6 ??branch;
     1-,,
     >r;
 numq2 .label
@@ -1135,8 +1126,7 @@ numq2 .label
     >r; c@;
     base@;
     digit?;
-    ?branch;
-    numq4 word,
+    numq4 ??branch;
     swap;
     base@;
     *;
@@ -1148,8 +1138,7 @@ numq2 .label
     r@;
     swap;
     drop;
-    ?branch;
-    numq3 word,
+    numq3 ??branch;
     negate;
 numq3 .label
     swap;
@@ -1179,8 +1168,7 @@ s" key" machineword _key ( -- c )
     \ wait for and return an input character
 deflabel-here key1
     _qkey word,
-    ?branch;
-    key1 word,
+    key1 ??branch;
     exit;
 : key; ( -- ) _key word, ;
 s" emit" machineword _emit ( c -- )
@@ -1301,8 +1289,7 @@ deflabel dot1
 	base@;
 	0xa #, xsp pushi,
 	xor;			 \ ?decimal
-	?branch;
-	dot1 word,
+	dot1 ??branch;
 	u.;
 	exit;
 dot1 .label
@@ -1329,12 +1316,12 @@ deflabel parse8
 	over;
 	>r;
 	dup;
-	?branch; parse8 word,
+	parse8 ??branch; 
 	xsp xtop pop,
 	xtop 1-,
 	xtop xsp push,
 	temp; @; bl; =;
-	?branch; parse3 word,
+	parse3 ??branch; 
 	>r;
 deflabel-here parse1
 	bl;
@@ -1343,7 +1330,7 @@ deflabel-here parse1
 	-; 
 	0<;
 	not;
-	?branch; parse2 word,
+	parse2 ??branch; 
 	xsp xtop pop, 
 	xtop 1+,
 	xtop xsp push, 
@@ -1364,10 +1351,10 @@ deflabel-here parse4
 	@;
 	bl;
 	=;
-	?branch; parse5 word,
+	parse5 ??branch; 
 	0<;
 parse5 .label
-	?branch; parse6 word,
+	parse6 ??branch; 
 	xsp xtop pop,
 	xtop 1+,
 	xtop xsp push,
@@ -1471,7 +1458,7 @@ deflabel-here same1
 	over; r@;
 	cells; +; @; \ 32/16 mix-up
 	-; ?dup;
-	?branch; same2 word, 
+	same2 ??branch; 
 	r>;
 	drop;
 	exit;	\ strings not equal
@@ -1497,13 +1484,13 @@ deflabel find6
 deflabel-here find1
 	@; 
 	dup; 
-	?branch; find6 word,
+	find6 ??branch; 
 	dup; @;
 	0x1f7f #, xsp pushi,
 	and;
 	r@;
 	xor;
-	?branch; find2 word,
+	find2 ??branch; 
 	cell-; \ backup to link field
 	find1 word,	\ try the next word
 find2 .label
@@ -1520,7 +1507,7 @@ find6 .label
 	swap;
 	exit;
 find4 .label
-	?branch; find5 word,
+	find5 ??branch; 
 	cell-; cell-;
 	find1 word,
 find5 .label
@@ -1543,7 +1530,7 @@ deflabel nameq3
 	dup;
 	2@;
 	xor;	\ ?context = also
-	?branch; nameq1 word,
+	nameq1 ??branch; 
 	cell-; \ no, start with context
 nameq1 .label
 	>r;
@@ -1554,10 +1541,10 @@ nameq2 .label
 	>r; 	\ next in search order
 	@;
 	?dup;
-	?branch; nameq3 word,
+	nameq3 ??branch; 
 	_find word,
 	?dup;
-	?branch; nameq2 word,
+	nameq2 ??branch; 
 	r>;
 	drop;
 	exit;	\ found name
@@ -1576,7 +1563,7 @@ deflabel back1
 	swap;
 	over;
 	xor;
-	?branch; back1 word,
+	back1 ??branch; 
 	cbksp #, xsp pushi, 
 	'echo;
 	@execute;
@@ -1607,10 +1594,10 @@ deflabel ktap2
 	dup;
 	ccr #, xsp pushi,
 	xor;
-	?branch; ktap2 word,
+	ktap2 ??branch; 
 	cbksp #, xsp pushi,
 	xor;
-	?branch; ktap1 word,
+	ktap1 ??branch; 
 	bl;
 	_tap word,
 	exit;
@@ -1632,13 +1619,13 @@ deflabel accept4
 deflabel-here accept1
 	2dup;
 	xor;
-	?branch; accept4 word,
+	accept4 ??branch; 
 	key;
 	dup;
 	bl;
 	decimal 127 #, xsp pushi,
 	within;
-	?branch; accept2 word,
+	accept2 ??branch; 
 	_tap word,
 	accept3 word,
 accept2 .label
@@ -1703,8 +1690,7 @@ _abort s" abort" machineword-predef ( -- )
 s\" abort\"" word/compile machineword-base _abortq ( f -- ) 
 	\ runtime routine of abort" . Abort with a message.
 deflabel abortq1
-	?branch; 
-	abortq1 word, \ text flag
+	abortq1 ??branch; \ text flag
 	dostr; 
 	throw; \ pass error string
 abortq1 .label
@@ -1719,7 +1705,7 @@ deflabel interpret2
 	\ interpret a word. If failed, try to convert it to an integer.
 	name?;
 	?dup; 	\ ?defined
-	?branch; _interpret1 word,
+	_interpret1 ??branch; 
 	@;
 	word/compile #, xsp pushi, 
 	and; \ ?compile only lexicon bits
@@ -1729,7 +1715,7 @@ deflabel interpret2
 _interpret1 .label
 	'number; \ convert a number
 	@execute;
-	?branch; interpret2 word,
+	interpret2 ??branch; 
 	exit;
 interpret2 .label \ error
 	throw;
@@ -1743,7 +1729,7 @@ deflabel dotok1
 	\ display ok only while interpreting
 	_interpret ??, xsp pushi,
 	'eval; @; =;
-	?branch; dotok1 word,
+	dotok1 ??branch; 
 	dtqp; s" ok" .string,
 dotok1 .label
 	cr;
@@ -1763,7 +1749,7 @@ deflabel eval2
 	token;
 	dup;
 	c@; \ input stream empty
-	?branch; eval2 word,
+	eval2 ??branch; 
 	'eval;
 	@execute;
 	_qstack word, \ evaluate input, check stack
@@ -1831,13 +1817,13 @@ deflabel-here quit2
 	_eval ??, xsp pushi,
 	_catch word,
 	?dup;			   \ evaluate input
-	?branch; quit2 word, \ continue till error
+	quit2 ??branch; \ continue till error
 	'prompt; @; swap;    \ save input device
 	_console word,
 	_nulld word,
 	over;
 	xor; \ display error message?
-	?branch; quit3 word,
+	quit3 ??branch; 
 	spaces;
 	count;
 	type; \ error message
@@ -1846,7 +1832,7 @@ deflabel-here quit2
 quit3 .label
 	_dotok ??, xsp pushi,
 	xor; \ file input?
-	?branch; quit4 word,
+	quit4 ??branch; 
     decimal 27 #, xsp pushi, \ push the error code
 	emit; \ file error, tell host
 quit4 .label
@@ -1858,7 +1844,7 @@ deflabel tick1
 	\ search context vocabularies for the next word in input stream
 	_token word,
 	_nameq word, \ ?defined
-	?branch; tick1 word,
+	tick1 ??branch; 
 	exit;	\ yes, push code address
 tick1 .label
 	throw;	\ no, error
@@ -2027,7 +2013,7 @@ deflabel unique1
     \ display a warning message if the word already exists.
     dup;
     name?; \ ?name exists
-    ?branch; unique1 word, \ redefinitions are OK
+    unique1 ??branch; \ redefinitions are OK
     dtqp; s" redefined " .string, \ but warn the user
     over;
     count;
@@ -2040,7 +2026,7 @@ deflabel pnam1
     \ build a new dictionary name using the string at na.
     dup;
     c@;     \ null input?
-    ?branch; pnam1 word,
+    pnam1 ??branch; 
     _unique word, \ redef?
     dup; last; !; \ save na for vocabulary link
     here; 
