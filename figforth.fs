@@ -2047,6 +2047,16 @@ pnam1 .label
     stqp; s"  name" .string,  \ null input
     throw;
 \ forth compiler
+\ s" $compile" machineword _$compile ( a -- )
+\ deflabel scom1
+\ deflabel scom2
+\ deflabel scom3
+\     \ compile next word to code dictionary as a token or literal.
+\     name?;
+\     ?dup;   \ ?defined
+\     scom2 ??branch;
+\     @;
+\     word/immediate 
 _cold s" cold" machineword-predef ( -- ) 
     \ the high level cold start sequence
 deflabel-here cold1
