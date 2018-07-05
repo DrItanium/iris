@@ -192,11 +192,15 @@ variable CurrentAssemblyFile
   r> <<linker ;
 \ labels must be defined ahead of time before first reference
 : reset-labels ( -- ) 0 labelIndex ! ;
-: deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! does> @ ;
-
+variable iris-debug 
+false iris-debug !
+: print-latest ( -- ) latest name>string type ;
+: print-new-label ( -- ) print-latest ." : " loc@ hex . ." , index#: " labelindex @ . cr ;
+: deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! 
+iris-debug @ if print-new-label then
+does> @ ;
 
 : .org ( n -- ) loc! ;
-
 : .label ( label -- ) curasm@ <<label ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;

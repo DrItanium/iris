@@ -6,6 +6,7 @@
 \ the words I define are meant for adaption purposes as well
 
 include iris.fs
+true iris-debug !
 : x.scr ( -- ) 
 	\ display the stack and then print a newline
 hex .s decimal cr ;
@@ -97,17 +98,6 @@ deflabel _interpret
 deflabel _message \ message routine
 deflabel &S0 \ initial value of the data stack pointer
 deflabel &R0 \ initial value of the return stack pointer
-deflabel &TIB \ address of the terminal input buffer
-deflabel &WARNING \ error message control number. If 1, disk is present, 
-                  \ and screen 4 of drive 0 is the base location of error messages
-                  \ if 0, no disk is present and error messages will be presented
-                  \ by number. If -1, execute (ABORT) on error
-deflabel &FENCE \ address below which FORGETting is trapped.
-                \ To forget below this point, the user must alter the contents
-                \ of FENCE
-deflabel &DP \ The dictionary pointer which contains the next free memory
-             \ above the dictionary. The value may be read by HERE and altered
-             \ by ALLOT.
 deflabel &VOC-LINK \ address of a field in the definition of the most recently created
                    \ created vocabulary. All vocabulary names are linked by
                    \ these fields to allow control for FORGETting through multiple
@@ -124,38 +114,14 @@ deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to th
 deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
                    \ will first begin
 deflabel &CURRENT  \ Pointer to the vocabulary in which new definitions are to be added
-deflabel &STATE    \ If 0, the system is in interpretive or executing state. If non-zero, the system is in compiling state. The value itself is implementation
-                   \ dependent. So in this case it would be 0 is interpretive and 0xFFFF is compiling
-deflabel &DPL      \ number of digits to the right of the decimal point on double integer input. It may also be used to hold output column
-                   \ location of a decimal point in user generated formatting. The default value on single number input is -1
-deflabel &FLD      \ field width for formatted number output
-deflabel &CSP      \ temporarily stored data stack pointer for compilation error checking
-deflabel &R#       \ location of editor cursor in a text screen
-deflabel &HLD      \ address of the latest character of text during numeric output conversion
-deflabel &SEPARATOR \ word separator contents
-deflabel &TERMINATOR \ terminator index
-deflabel &BASE       \ numeric base
-deflabel &width 	\ width of some kind
 deflabel _eprint
 deflabel _up \ user pointer
-deflabel _rpp \ return stack pointer
-deflabel _(;code)
-deflabel _docolon
-deflabel _?exec
-deflabel _?csp
-deflabel _!csp
 deflabel _&current
-deflabel _&context
-deflabel _create
 deflabel _leftbracket
-deflabel _rightbracket
+\ deflabel _rightbracket
 deflabel _compile
-deflabel _smudge
-deflabel _doconstant
 deflabel _douser
-deflabel _dovariable
 deflabel _,
-: dp; ( -- ) &DP word, ;
 : voc-link; ( -- ) &voc-link word, ;
 : blk; ( -- ) &blk word, ;
 : inn; ( -- ) &IN word, ;
@@ -163,7 +129,7 @@ deflabel _,
 : scr; ( -- ) &scr word, ;
 : offset; ( -- ) &offset word, ;
 : context; ( -- ) &context word, ;
-: current; ( -- ) &current word, ;
+: current; ( -- ) _&current word, ;
 : error; ( -- ) _error word, ;
 : cold; ( -- ) _cold word, ;
 : abort; ( -- ) _abort word, ;
@@ -172,29 +138,9 @@ deflabel _,
 : message; ( -- ) _message word, ;
 : sp0; ( -- ) &s0 word, ;
 : r0; ( -- ) &r0 word, ;
-: tib; ( -- ) &tib word, ;
-: warn; ( -- ) &WARNING word, ;
-: fence; ( -- ) &fence word, ;
-: state; ( -- ) &state word, ;
-: dpl; ( -- ) &dpl word, ;
-: fld; ( -- ) &fld word, ;
-: csp; ( -- ) &csp word, ;
-: r#; ( -- ) &r# word, ;
-: hld; ( -- ) &hld word, ;
-: separator; ( -- ) &separator word, ;
-: terminator; ( -- ) &terminator word, ;
-: base; ( -- ) &base word, ;
-: width; ( -- ) &width word, ;
-: (;code); ( -- ) _(;code) word, ;
-: ?exec; ( -- ) _?exec word, ;
-: ?csp; ( -- ) _?csp word, ;
-: !csp; ( -- ) _!csp word, ;
-: create; ( -- ) _create word, ;
 : leftbracket; ( -- ) _leftbracket word, ;
-: rightbracket; ( -- ) _rightbracket word, ;
+\ : rightbracket; ( -- ) _rightbracket word, ;
 : compile; ( -- ) _compile word, ;
-: smudge; ( -- ) _smudge word, ;
-: dovariable; ( -- ) _dovariable word, ;
 : ,; ( -- ) _, word, ;
 
 : lit, ( n t -- ) xsp pushi, ;
@@ -367,7 +313,7 @@ deflabel-here _uzero
 	input-buffer-start constant, \ tib
 	0 constant, \ csp
 	_interpret ??, .cell \ 'eval
-	_numberq ??, .cell \ 'number
+	_numberq ??, .cell \ 'number 0x13
 	0 constant, \ hld
 	0 constant, \ handler
 	forth1 ??, .cell \ context pointer
@@ -474,7 +420,6 @@ s" @" machineword _at
     xtop xtop ld,
 	1push,
 : @; ( -- ) _at word, ;
-: base@; ( -- ) base; @; ;
 s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
 		 \ lower - value
@@ -558,6 +503,7 @@ deflabel-here dovariable ( -- a )
     \ runtime routine for VARIABLE and CREATE 
     xrp xtop pop, \ this routine will be called from variables, we use the return address as the beginning of values
     1push, \ push the address of the next storage to the data stack and then return to what called the routine two levels up
+: dovariable; ( -- ) dovariable word, ;
 deflabel-here doconstant ( -- n )
     \ runtime routine for CONSTANT and VALUE
     xrp xtop pop, \ get the address of the CONSTANT or VALUE
@@ -587,6 +533,8 @@ s" 'echo" userword _techo
 s" 'prompt" userword _tprompt
 : 'prompt; ( -- ) _tprompt word, ;
 s" base" userword _base
+: base; ( -- ) _base word, ;
+: base@; ( -- ) base; @; ;
 s" tmp" word/compile userword-base _tmp
 : temp; ( -- ) _tmp word, ;
 s" span" userword _span
@@ -600,12 +548,13 @@ s" 'eval" userword _teval
 s" 'number" userword _tnumber
 : 'number; ( -- ) _tnumber word, ;
 s" hld" userword _hld
+: hld; ( -- ) _hld word, ;
 s" handler" userword _handler
 : handler; ( -- ) _handler word, ;
 &context s" context" userword-predef \ already advanced one at this point
 \ consumes eight cells
 user-offset@ 8 + user-offset!
-&current s" current" userword-predef \ advance four cells
+_&current s" current" userword-predef \ advance four cells
 user-offset@ 4 + user-offset!
 s" cp" userword _cp
 : cp; ( -- ) _cp word, ;
@@ -919,6 +868,7 @@ s" tib" machineword _tib ( -- a )
     cell+;
     @;
     exit;
+: tib; ( -- ) _tib word, ;
 s" @execute" machineword _atexec ( a -- )
     \ execute vector stored in address a 
     1pop,
@@ -1148,7 +1098,7 @@ dgtq1 .label
     u<; 
     exit;
 : digit?; ( -- ) _digit? word, ;
-s" number?" machineword _number? ( a -- n T | a F )
+_numberq s" number?" machineword-predef ( a -- n T | a F )
 deflabel numq1
 deflabel numq2
 deflabel numq3
@@ -1784,7 +1734,7 @@ _interpret1 .label
 	exit;
 interpret2 .label \ error
 	throw;
-s" [" immediate-machineword _lbrack ( -- )
+_leftbracket s" [" immediate-machineword-predef ( -- )
 	\ start the text interpreter
 	_interpret ??, xsp pushi,
 	'eval; !;
@@ -1876,7 +1826,7 @@ deflabel quit4
 	\ reset stack pointer and start text interpreter
 	r0; @; rp!; \ reset return stack pointer
 deflabel-here quit1
-	_leftbracket word, \ start interpretation
+	leftbracket; \ start interpretation
 deflabel-here quit2
 	_query word, 	   \ get input
 	_eval ??, xsp pushi,
@@ -2091,6 +2041,7 @@ unique1 .label
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
+_lastn .label \ hack for now
 asm}
 
 bye

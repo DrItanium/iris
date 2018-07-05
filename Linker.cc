@@ -156,7 +156,9 @@ int main(int argc, char** argv) {
                     core.install(address + 1, r->second, iris::Core::InstallToMemory());
                 } else {
 					std::cerr << "Not all labels are defined for given indirect instructions!" << std::endl;
-					std::cerr << "\t\t target index is: " << upperHalf << std::endl;
+                    std::cerr << "\ttarget address is: " << std::hex << e.getAddress() << std::endl;
+                    std::cerr << "\tlower half is: " << std::hex << Address(e.getValue()) << std::endl;
+					std::cerr << "\ttarget index is: " << std::dec << upperHalf << std::endl;
 					return 1;
                 }
             } else if (kind == Kind::IndirectMemory) {
