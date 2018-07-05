@@ -113,7 +113,6 @@ deflabel &SCR      \ Screen number most recently referenced by LIST
 deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
 deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
                    \ will first begin
-deflabel &CURRENT  \ Pointer to the vocabulary in which new definitions are to be added
 deflabel _eprint
 deflabel _up \ user pointer
 deflabel _&current
@@ -2036,9 +2035,32 @@ deflabel unique1
 unique1 .label
     drop;
     exit;
-
-
-    
+s" $,n" machineword _snam ( na -- )
+deflabel pnam1
+    \ build a new dictionary name using the string at na.
+    dup;
+    c@;     \ null input?
+    ?branch; pnam1 word,
+    _unique word, \ redef?
+    dup; last; !; \ save na for vocabulary link
+    here; 
+    aligned;
+    swap;  \ align code address
+    cell-; \ link addresso
+    current;
+    @; @;
+    over;
+    !;
+    cell-;
+    dup;
+    np;
+    !; \ adjust name pointer
+    !; 
+    exit;
+pnam1 .label
+    stqp; s"  name" .string,  \ null input
+    throw;
+\ forth compiler
 _cold s" cold" machineword-predef ( -- ) 
     \ the high level cold start sequence
 deflabel-here cold1
