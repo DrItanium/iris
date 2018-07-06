@@ -109,7 +109,7 @@ namespace iris {
 	 */
 	class Core {
 		public: 
-			static constexpr Address registerCount = 64;
+			static constexpr Address registerCount = 16;
 			static constexpr Address maxAddress = 0xFFFF;
 			static constexpr Address ioSpaceStart = 0xFF00;
 			static constexpr Address ioSpaceEnd = maxAddress; 
@@ -125,7 +125,7 @@ namespace iris {
                 // TODO: add more opcodes and put in system handlers for it
                 Count,
             };
-			using MemoryBlock16 = std::unique_ptr<Number[]>;
+			using MemoryBlock16 = std::unique_ptr<byte[]>;
 			using RegisterFile = std::unique_ptr<Register[]>;
 			struct InstallToRegister final { };
             struct InstallToMemory final { };
@@ -238,7 +238,6 @@ namespace iris {
 		private:
 			// functions to contain the logic for each opcode
 			void dispatchInstruction(const DecodedInstruction& inst);
-			RawInstruction extractInstruction() noexcept;
 #define X(title, style) void perform ( const title & value );
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
@@ -252,7 +251,7 @@ namespace iris {
 			void decodeArguments(RawInstruction, FourRegister&) noexcept;
 			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
 			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
-			DecodedInstruction decodeInstruction(RawInstruction val);
+			DecodedInstruction decodeInstruction();
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
 			inline Number getRegisterValue(RegisterIndex reg) const noexcept { return getRegister(reg).getValue(); }
@@ -301,8 +300,11 @@ namespace iris {
             }
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
-			void store(Address addr, Number value, bool unmapIOSpace = false) noexcept;
-			Address load(Address addr, bool unmapIOSpace = false) noexcept;
+			void store(Address addr, byte value, bool unmapIOSpace = false) noexcept;
+            // all number loads and stores are now aligned loads and stores :)
+            void storeNumber(Address addr, Number value, bool unmapIOSpace = false) noexcept;
+            byte load(Address addr, bool unmapIOSpace = false) noexcept;
+            Number loadNumber(Address addr, bool unmapIOSpace = false) noexcept;
 		private:
 			void cycle();
 		private:

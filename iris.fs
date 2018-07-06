@@ -227,63 +227,16 @@ register: x12
 register: x13
 register: x14
 register: x15
-register: x16
-register: x17
-register: x18
-register: x19
-register: x20
-register: x21
-register: x22
-register: x23
-register: x24
-register: x25
-register: x26
-register: x27
-register: x28
-register: x29
-register: x30
-register: x31
-register: x32
-register: x33
-register: x34
-register: x35
-register: x36
-register: x37
-register: x38
-register: x39
-register: x40
-register: x41
-register: x42
-register: x43
-register: x44
-register: x45
-register: x46
-register: x47
-register: x48
-register: x49
-register: x50
-register: x51
-register: x52
-register: x53
-register: x54
-register: x55
-register: x56
-register: x57
-register: x58
-register: x59
-register: x60
-register: x61
-register: x62
-register: x63
 registers}
+16 constant num-registers 
+: too-many-registers-defined ( addr -- ) num-registers >= ABORT" To many registers used!" ;
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 x0 1+cconstant zero
 1+cconstant cv
 1+cconstant at0
-1+cconstant at1
 1+cconstant io
 1+cconstant unused-start
-drop
+too-many-registers-defined
 : inst-no-reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> @ <<inst ;
@@ -613,10 +566,6 @@ ioaddr}
 
 : io-write ( src -- ) io st, ;
 : io-read ( dest -- ) io swap ld, ;
-: inspect-register ( reg -- )
-  /dev/register #, at0 set,
-  #, at1 set,
-  at1 at0 st, ;
 
 \ core routines
 : @-> ( a b -- ) 

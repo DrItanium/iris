@@ -10,7 +10,6 @@ include iris.fs
 : x.scr ( -- ) 
 	\ display the stack and then print a newline
 hex .s decimal cr ;
-: too-many-vars-defined ( addr -- ) 0x40 >= ABORT" To many registers used!" ;
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
@@ -26,11 +25,8 @@ unused-start 1+cconstant xsp \ data stack pointer
 1+cconstant xfifth \ contents of the fifth stack item or result of a double add
 1+cconstant xsixth \ contents of the sixth stack item or result of a double add
 1+cconstant xtaddr \ temporary storage for an address
-1+cconstant xerror \ error code
-1+cconstant xcoreid \ current core section id
-1+cconstant xtmp \ temporary used only by _next
 1+cconstant xup \ user area pointer
-too-many-vars-defined
+too-many-registers-defined
 xtop cconstant wxtop \ masquerade for double wide operations
 xthird cconstant wxlower \ masquerade for double wide operations
 xfifth cconstant wxthird 

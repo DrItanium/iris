@@ -39,16 +39,16 @@ namespace iris {
         return decodeBits<decltype(i), Opcode, 0x000000FF, 0>(i);
     }
     constexpr RegisterIndex getDestinationIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x1F << 8, 8>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0xF << 8, 8>(i);
     }
     constexpr RegisterIndex getSourceIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x1F << 14, 14>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0xF << 12, 12>(i);
     }
     constexpr RegisterIndex getSource2Index(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x1F << 20, 20>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0xF << 16, 16>(i);
     }
     constexpr RegisterIndex getSource3Index(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0x1F << 26, 26>(i);
+        return decodeBits<decltype(i), RegisterIndex, 0xF << 20, 20>(i);
     }
     constexpr Address getImmediate16(RawInstruction i) noexcept {
         return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
@@ -77,7 +77,7 @@ namespace iris {
     }
 
     Core::Core() : _pc(0) { 
-        _memory = std::make_unique<Number[]>(addressSize);
+        _memory = std::make_unique<byte[]>(addressSize);
         _registers = std::make_unique<Register[]>(registerCount);
     }
     void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
@@ -208,13 +208,17 @@ namespace iris {
 		auto second = getSource2(op).integer;
 		setDestination(op, first > second);
 	}
-    DefExec(GreaterThanOrEqualTo) { setDestination(op, getSource(op).integer >= getSource2(op).integer); }
-    DefExec(Set) { setDestination(op, op._args.imm); }
+    DefExec(GreaterThanOrEqualTo) { 
+        setDestination(op, getSource(op).integer >= getSource2(op).integer); 
+    }
+    DefExec(Set) { 
+        setDestination(op, op._args.imm); 
+    }
     DefExec(Load) { 
-		setDestination(op, load(getSource(op).address));
+		setDestination(op, loadNumber(getSource(op).address));
     }
     DefExec(Store) { 
-		store(getDestination(op).address, getSource(op));
+		storeNumber(getDestination(op).address, getSource(op));
 	}
 	void Core::push(RegisterIndex index, Number value) noexcept {
 		Address stackAddress = getRegister(index).get<Address>() - 1;
@@ -460,17 +464,16 @@ namespace iris {
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
     }
-    RawInstruction Core::extractInstruction() noexcept {
-        // extract the current instruction and then go next
-        auto lower = static_cast<RawInstruction>(_memory[_pc].address);
-        auto upper = static_cast<RawInstruction>(_memory[_pc + 1].address) << 16;
-        _pc += 2;
-        return lower | upper;
-    }
+    // RawInstruction Core::extractInstruction() noexcept {
+    //     // extract the current instruction and then go next
+    //     auto lower = static_cast<RawInstruction>(_memory[_pc].address);
+    //     auto upper = static_cast<RawInstruction>(_memory[_pc + 1].address) << 16;
+    //     _pc += 2;
+    //     return lower | upper;
+    // }
 
     void Core::cycle() {
         // load the current instruction and go to the next address
-        auto inst = extractInstruction(); // automatically increment PC
         auto op = decodeInstruction(inst);
         dispatchInstruction(op);
     }
