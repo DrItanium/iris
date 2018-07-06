@@ -35,26 +35,14 @@
 
 
 namespace iris {
-    constexpr Opcode getOpcode(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), Opcode, 0x000000FF, 0>(i);
+    constexpr RegisterIndex getLowerIndex(byte value) noexcept {
+        return decodeBits<decltype(value), RegisterIndex, 0x0F, 0>(value);
     }
-    constexpr RegisterIndex getDestinationIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0xF << 8, 8>(i);
+    constexpr RegisterIndex getUpperIndex(byte value) noexcept {
+        return decodeBits<decltype(value), RegisterIndex, 0xF0, 4>(value);
     }
-    constexpr RegisterIndex getSourceIndex(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0xF << 12, 12>(i);
-    }
-    constexpr RegisterIndex getSource2Index(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0xF << 16, 16>(i);
-    }
-    constexpr RegisterIndex getSource3Index(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), RegisterIndex, 0xF << 20, 20>(i);
-    }
-    constexpr Address getImmediate16(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), Address, 0xFFFF'0000, 16>(i);
-    }
-    constexpr Address getImmediate12(RawInstruction i) noexcept {
-        return decodeBits<decltype(i), Address, 0xFFF0'0000, 20>(i);
+    constexpr Address makeImmediate16(byte lower, byte upper) noexcept {
+        return ((Address)lower) | (((Address)upper) << 8);
     }
     constexpr DoubleWideInteger makeDoubleWideInteger(Integer lower, Integer upper) noexcept {
         return ((static_cast<DoubleWideInteger>(upper) << 16) & 0xFFFF0000) | 
@@ -80,53 +68,70 @@ namespace iris {
         _memory = std::make_unique<byte[]>(addressSize);
         _registers = std::make_unique<Register[]>(registerCount);
     }
-    void Core::decodeArguments(RawInstruction, Core::NoArguments&) noexcept { }
-    void Core::decodeArguments(RawInstruction i, Core::OneRegister& a) noexcept {
-        a.dest = getDestinationIndex(i);
+    void Core::decodeArguments(Core::NoArguments&) noexcept {
+        // go to the next instruction
     }
-    void Core::decodeArguments(RawInstruction i, Core::TwoRegister& a) noexcept {
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
+    void Core::decodeArguments(Core::OneRegister& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
     }
-    void Core::decodeArguments(RawInstruction i, Core::ThreeRegister& a) noexcept {
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
-        a.src2 = getSource2Index(i);
+    void Core::decodeArguments(Core::TwoRegister& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
+        a.src = getUpperIndex(i);
     }
-    void Core::decodeArguments(RawInstruction i, Core::FourRegister& a) noexcept {
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
-        a.src2 = getSource2Index(i);
-        a.src3 = getSource3Index(i);
+    void Core::decodeArguments(Core::ThreeRegister& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
+        a.src = getUpperIndex(i);
+        ++_pc;
+        i = load(_pc);
+        a.src2 = getLowerIndex(i);
     }
-    void Core::decodeArguments(RawInstruction i, Core::OneRegisterWithImmediate& a) noexcept {
-        a.imm = getImmediate16(i);
-        a.dest = getDestinationIndex(i);
+    void Core::decodeArguments(Core::FourRegister& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
+        a.src = getUpperIndex(i);
+        ++_pc;
+        i = load(_pc);
+        a.src2 = getLowerIndex(i);
+        a.src3 = getUpperIndex(i);
     }
-    void Core::decodeArguments(RawInstruction i, Core::TwoRegisterWithImmediate& a) noexcept {
-        a.addr = getImmediate12(i);
-        a.dest = getDestinationIndex(i);
-        a.src = getSourceIndex(i);
+    void Core::decodeArguments(Core::OneRegisterWithImmediate& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
+        ++_pc;
+        auto lower = load(_pc);
+        ++_pc;
+        auto upper = load(_pc);
+        a.imm = makeImmediate16(lower, upper);
     }
-    Core::DecodedInstruction Core::decodeInstruction(RawInstruction i) {
+    void Core::decodeArguments(Core::TwoRegisterWithImmediate& a) noexcept {
+        auto i = load(_pc);
+        a.dest = getLowerIndex(i);
+        a.src = getUpperIndex(i);
+        ++_pc;
+        auto lower = load(_pc);
+        ++_pc;
+        auto upper = load(_pc);
+        a.imm = makeImmediate16(lower, upper);
+    }
+    Core::DecodedInstruction Core::decodeInstruction() {
+        auto control = static_cast<Opcode>(load(_pc));
         Core::DecodedInstruction tmp;
-        auto op = getOpcode(i);
-        switch (op) {
-#define X(title, style) \
-            case Opcode :: title : \
-                                   tmp = Core::title () ; \
-            break;
+        ++_pc;
+        switch (control) {
+#define X(title, style) case Opcode :: title : tmp = Core::title () ; break;
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
             default:
-                std::cout << "@ " << std::hex << _pc << std::endl;
-                std::cout << "bad instruction: " << std::hex << i << std::endl;
-                std::cout << "bad opcode " << int(op) << std::endl;
+                std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
+                std::cout << "bad opcode " << int(control) << std::endl;
                 throw Problem("Illegal Opcode!");
         }
-        std::visit([this, i](auto&& value) { decodeArguments(i, value._args); }, tmp);
+        std::visit([this](auto&& value) { decodeArguments(value._args); ++_pc; }, tmp);
         return tmp;
     }
 
@@ -474,7 +479,7 @@ namespace iris {
 
     void Core::cycle() {
         // load the current instruction and go to the next address
-        auto op = decodeInstruction(inst);
+        auto op = decodeInstruction();
         dispatchInstruction(op);
     }
     void Core::execute() {

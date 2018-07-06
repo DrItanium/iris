@@ -90,7 +90,7 @@ namespace iris {
 	using RegisterIndex = byte;
 	using DestinationRegister = RegisterIndex;
 	using SourceRegister = RegisterIndex;
-	enum class Opcode : Address {
+	enum class Opcode : byte {
 #define X(title, style) title, 
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
@@ -244,13 +244,13 @@ namespace iris {
 #undef X
 #undef FirstX
 		private:
-			void decodeArguments(RawInstruction, NoArguments&) noexcept;
-			void decodeArguments(RawInstruction, OneRegister&) noexcept;
-			void decodeArguments(RawInstruction, TwoRegister&) noexcept;
-			void decodeArguments(RawInstruction, ThreeRegister&) noexcept;
-			void decodeArguments(RawInstruction, FourRegister&) noexcept;
-			void decodeArguments(RawInstruction, OneRegisterWithImmediate&) noexcept;
-			void decodeArguments(RawInstruction, TwoRegisterWithImmediate&) noexcept;
+			void decodeArguments(NoArguments&) noexcept;
+			void decodeArguments(OneRegister&) noexcept;
+			void decodeArguments(TwoRegister&) noexcept;
+			void decodeArguments(ThreeRegister&) noexcept;
+			void decodeArguments(FourRegister&) noexcept;
+			void decodeArguments(OneRegisterWithImmediate&) noexcept;
+			void decodeArguments(TwoRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction();
 		private:
 			const Register& getRegister(RegisterIndex reg) const noexcept;
