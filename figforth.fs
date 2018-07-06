@@ -117,7 +117,6 @@ deflabel _eprint
 deflabel _up \ user pointer
 deflabel _&current
 deflabel _leftbracket
-\ deflabel _rightbracket
 deflabel _compile
 deflabel _douser
 deflabel _,
@@ -129,7 +128,6 @@ deflabel _,
 : offset; ( -- ) &offset word, ;
 : context; ( -- ) &context word, ;
 : current; ( -- ) _&current word, ;
-\ : error; ( -- ) _error word, ;
 : cold; ( -- ) _cold word, ;
 : abort; ( -- ) _abort word, ;
 : quit; ( -- ) _quit word, ;
@@ -138,10 +136,8 @@ deflabel _,
 : sp0; ( -- ) &s0 word, ;
 : r0; ( -- ) &r0 word, ;
 : leftbracket; ( -- ) _leftbracket word, ;
-\ : rightbracket; ( -- ) _rightbracket word, ;
 : compile; ( -- ) _compile word, ;
 : ,; ( -- ) _, word, ;
-
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
 : ??lit, ( n -- ) ??, lit, ;
@@ -165,12 +161,9 @@ variable user-offset
 : user-offset! ( n -- ) user-offset ! ;
 : user-offset1+ ( -- ) user-offset@ 1+ user-offset! ;
 \ program start
-: .skip ( -- ) 0 #, .cell ; 
 : next, ( -- ) xrp ret, ;
 : 1push, ( -- ) xtop xsp push, next, ;
 : 2push, ( -- ) xlower xsp push, 1push, ;
-\ : machine-code-execute ( -- ) loc@ 1+ constant, ;
-: machine-code-execute ( -- ) ( do nothing ) ;
 : .string, ( addr len -- ) 
     dup constant, \ embed the length as well
     0 \ go from 0 to length
@@ -178,34 +171,7 @@ variable user-offset
       dup i + c@ constant,
     loop
     drop ;
-: variable-embed-name ( str length -- ) .string, ;
-: fixed-embed-name ( str length -- ) 
-  \ fixed length string embedding
-  dup constant, \ embed length into its own storage
-  swap @ swap \ make sure we load the front string address
-  case 
-  	1 of 0xFF and constant, .skip .skip .skip endof
-    2 of dup 
-         0xFF and constant,
-         0xFF00 and 8 rshift constant,
-         .skip .skip endof
-	3 of dup dup 
-         0xFF and constant,
-         0xFF00 and 8 rshift constant,
-         0xFF0000 and 16 rshift constant,
-         .skip 
-         endof
-	swap \ the length must be consumed by endcase :(
-	dup dup dup 
-    0xFF and constant,
-    0xFF00 and 8 rshift constant, 
-    0xFF0000 and 16 rshift constant,
-    0xFF000000 and 24 rshift constant,
-   endcase 
-   ;
-: embed-name ( str length -- ) 
-  \ abstraction because I'm indecisive
-  variable-embed-name ;
+: embed-name ( str length -- ) .string, ;
 
 0x0 constant word/none
 0x1 constant word/compile \ lexicon compile only bit
@@ -242,8 +208,8 @@ word/compile word/immediate or  constant word/all
   ;
 : defword-base ( str length control-bits "name" -- ) defword-header deflabel-here ( then define the label to point at here ) ;
 : defword-base-predef ( label str length control-bits -- ) defword-header .label ;
-: machineword-base ( str length control-bits "name" -- ) defword-base machine-code-execute ;
-: machineword-base-predef ( label str length control-bits -- ) defword-base-predef machine-code-execute ;
+: machineword-base ( str length control-bits "name" -- ) defword-base ;
+: machineword-base-predef ( label str length control-bits -- ) defword-base-predef ;
 : immediate-machineword ( str length "name" -- ) word/immediate machineword-base ;
 : immediate-machineword-predef ( label str length -- ) word/immediate machineword-base-predef ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
@@ -611,10 +577,10 @@ s" 2drop" machineword _2drop ( a b -- )
     2pop, 
     next,
 s" 2dup" machineword _2dup ( a b -- a b a b ) 
-	xsp xtaddr move,
-	xtaddr xtop ld,
-	xtaddr 1+,
-	xtaddr xlower ld,
+    2pop, \ top - b
+          \ lower - a
+    xlower xsp push,
+    xtop xsp push,
     2push,
 s" +" defbinaryop _+ add,
 s" d+" machineword _dplus
@@ -699,7 +665,6 @@ within0 .label
 : rot; ( -- ) _rot word, ;
 : 2drop; ( -- ) _2drop word, ;
 \ division operations
-\ TODO continue here
 s" um/mod" machineword _ummd ( udl udh u -- ur uq ) \ discard udh for the moment
     \ unsigned divide of a double by a single. Return mod and quotient
     1pop,
@@ -790,27 +755,20 @@ s" bl" machineword _blank ( -- 32 )
     next,
 : bl; ( -- ) _blank word, ;
 s" >char" machineword _tchr ( c -- c )
-    \ filter non-printing characters
 deflabel tcha1
-    0x7f #lit,
-    and;
-    dup; \ mask msb
-    bl;
-    0x7f #lit,
-    within; \ check for printable
+    \ filter non-printing characters
+    0x7f #lit, and; dup; \ mask msb
+    bl; 0x7f #lit, within; \ check for printable
     not;
     tcha1 ??branch; 
-    drop;
-    0x2e #lit, \ replace non printables
+    drop; 0x2e #lit, \ replace non printables
 tcha1 .label
     exit;
- 
 s" depth" machineword _depth ( -- n )
 \ return the depth of the data stack
     sp@;
     sp0; @;
-    swap;
-    -;
+    swap; -;
     cell-;
     w/slit, /;
     exit;
@@ -856,15 +814,12 @@ s" here" machineword _here ( -- a )
 : here; ( -- ) _here word, ;
 s" pad" machineword _pad ( -- a )
     \ return the address of a temporary buffer.
-    here;
-    decimal 80 #lit,
-    +;
+    here; decimal 80 #lit, +;
     exit;
 : pad; ( -- ) _pad word, ;
 s" tib" machineword _tib ( -- a )
     \ return the address of the terminal input buffer
-    #tib;
-    cell+; @;
+    #tib; cell+; @;
     exit;
 : tib; ( -- ) _tib word, ;
 s" @execute" machineword _atexec ( a -- )
@@ -896,7 +851,6 @@ cmove1 .label
     next,
 : cmove; ( -- ) _cmove word, ;
 s" fill" machineword _fill ( b u c -- )
-deflabel fill0
 deflabel fill1
     \ fill u words of character c to area beginning at b
     3pop, \ top - character
@@ -904,7 +858,7 @@ deflabel fill1
           \ third - address
     xlower cv eqz,
     fill1 ??, cv bc,
-fill0 .label
+deflabel-here fill0 
     xtop xthird st,
     xthird 1+,
     xlower 1-,
@@ -928,8 +882,7 @@ deflabel-here dtrail1
     1+,,
     exit; \ adjusted count
 dtrail2 .label
-    _donext word,
-    dtrail1 word,
+    donext; dtrail1 word,
     0lit,
     exit;
 : -trailing; ( -- ) _dtrailing word, ;
@@ -940,41 +893,23 @@ s" pack$" machineword _pack$ ( b u a -- a )
     over; dup;
     0lit, \ push zero
     w/slit, \ push cell size
-    um/mod; 
-    drop; \ count mod cell
-    -;
-    over;
-    +;
-    0lit, 
-    swap;
-    !;              \ null fill cell
-    dup;
-    c!; 
-    1+,, \ save count
-    swap;
-    cmove;
-    r>; 
+    um/mod; drop; \ count mod cell
+    -; over; +; 0lit, swap; !;              \ null fill cell
+    dup; c!; 1+,, \ save count
+    swap; cmove; r>; 
     exit; \ move string
 : pack$; ( -- ) _pack$ word, ;
 \ numeric output single precision
 s" digit" machineword _digit ( u -- c )
     \ convert digit u to a character
-    0x9 #lit,
-    over;
-    <;
-    0x7 #lit,
-    and;
-    +;
-    0x30 #lit,
-    +;
+    0x9 #lit, over; <;
+    0x7 #lit, and; +;
+    0x30 #lit, +;
     exit;
 : digit; ( -- ) _digit word, ;
 s" extract" machineword _extract
-    0lit,
-    swap;
-    um/mod;
-    swap;
-    digit;
+    0lit, swap; um/mod;
+    swap; digit;
     exit;
 : extract; ( -- ) _extract word, ;
 s" <#" machineword _bdgs ( -- )
@@ -982,9 +917,7 @@ s" <#" machineword _bdgs ( -- )
     \ following actions are not necessary because there is no cached top of stack
     \ push the cached TOR to return stack
     \ save IP from lr to TOR
-    pad;
-    hld; 
-    !;
+    pad; hld; !;
     exit;
 : <#; ( -- ) _bdgs word, ;
 : 1-,, ( -- ) 
@@ -993,17 +926,12 @@ s" <#" machineword _bdgs ( -- )
 s" hold" machineword _hold ( c -- )
     \ insert a character into the numeric output string
     hld; @; 1-,,
-    dup;
-    hld;
-    !;
-    c!;
+    dup; hld; !; c!;
     exit;
 : hold; ( -- ) _hold word, ;
 s" #" machineword _extractDigit ( u -- u )
     \ extract one digit from u and append the digit to output string.
-    base@;
-    extract;
-    hold;
+    base@; extract; hold;
     exit; 
 : #; ( -- ) _extractDigit word, ;
 
@@ -1011,8 +939,7 @@ s" #s" machineword _exdigs ( u -- 0 )
 deflabel digs2
     \ convert u until all digits are added to the output string
 deflabel-here digs1
-    digit;
-    dup;
+    digit; dup;
     digs2 ??branch;
     digs1 word,
 digs2 .label
@@ -1023,18 +950,13 @@ s" sign" machineword _sign ( n -- )
 deflabel sign1
     0<;
     sign1 ??branch;
-    0x2d #lit,
-    hold;
+    0x2d #lit, hold;
 sign1 .label
     exit;
 : sign; ( -- ) _sign word, ;
 s" #>" machineword _edgs ( w --  b u )
     \ prepare the output string to be typed
-    drop;
-    hld; @;
-    pad;
-    over;
-    -;
+    drop; hld; @; pad; over; -;
     exit;
 : #>; ( -- ) _edgs word, ;
 s" str" machineword _str ( n -- b u )
@@ -1057,8 +979,7 @@ s" decimal" machineword _decimal ( -- )
 s" digit?" machineword _digit? ( c base -- u t )
 deflabel dgtq1
     \ convert a character to its numeric value. A flag indicates success.
-    >r;
-    0x30 #lit, \ '0'
+    >r; 0x30 #lit, \ '0'
     -;
     0x9 #lit, over; <;
     dgtq1 ??branch;
