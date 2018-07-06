@@ -6,7 +6,7 @@
 \ the words I define are meant for adaption purposes as well
 
 include iris.fs
-true iris-debug !
+\ true iris-debug !
 : x.scr ( -- ) 
 	\ display the stack and then print a newline
 hex .s decimal cr ;
@@ -60,7 +60,7 @@ return-stack-start constant input-buffer-start
 input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
-
+1 constant words-per-cell
 
 \ ascii characters used
 0x8 constant cbksp \ backspace
@@ -147,6 +147,9 @@ deflabel _,
 : ??lit, ( n -- ) ??, lit, ;
 : 0lit, ( -- ) zero xsp push, ;
 : 1lit, ( -- ) 0x1 #lit, ;
+: w/slit, ( -- ) words-per-cell #lit, ;
+: #-> ( constant dest -- ) #, swap set, ;
+: ??-> ( label dest -- ) ??, swap set, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -326,7 +329,7 @@ deflabel _eforth1
 .eforth .label
 	_eforth1 word,
 _eforth1 .label
-	_uzero ??, xup set,
+    _uzero xup ??->
 	0x1 #, xup xtop addi,
 	xtop xsp ld,
 	xtop 1+,
@@ -334,24 +337,24 @@ _eforth1 .label
 	_cold ??, b,
 s" bye" machineword _bye ( -- )
 	\ exit simulator 
-	/dev/terminate-vm #, io set,
+	/dev/terminate-vm io #->
 	zero io st,
 _qrx s" ?rx" machineword-predef ( -- c T | F )
 deflabel qrx1
 	\ return input character and true, or a false if no input
-	/dev/console0 #, io set,
+	/dev/console0 io #-> 
 	io xlower ld, 
 	xlower cv eqz,
 	qrx1 ??, cv bc, \ if equal zero then no input
-	0xFFFF #, xtop set,
+    0xFFFF xtop #->
 	2push,
 qrx1 .label
-	zero xsp push,
+    0lit,
 	next,
 _txsto s" tx!" machineword-predef ( c -- )
 	\ send character c to the output device.
 	1pop,
-	/dev/console0 #, io set,
+    /dev/console0 io #->
 	xtop io st,
 	next,
 s" !io" machineword _storeio ( -- )
@@ -632,7 +635,7 @@ s" d+" machineword _dplus
     next,
 s" not" machineword _not
     1pop, 
-    0xFFFF #, xlower set,
+    0xFFFF xlower #->
     xlower xtop xtop xor,
     1push,
 s" negate" machineword _negate
@@ -667,7 +670,8 @@ deflabel within0
     3pop, \ top - uh
           \ lower - ul
           \ third - u
-    within0 ??, xtaddr set,
+
+    within0 xtaddr ??->
     xtop xthird cv gt, \ u > top
     xtaddr cv bcr,
     xlower xthird cv lt, \ u < lower
@@ -800,6 +804,7 @@ deflabel tcha1
     0x2e #lit, \ replace non printables
 tcha1 .label
     exit;
+ 
 s" depth" machineword _depth ( -- n )
 \ return the depth of the data stack
     sp@;
@@ -807,8 +812,7 @@ s" depth" machineword _depth ( -- n )
     swap;
     -;
     cell-;
-    1lit,
-    /;
+    w/slit, /;
     exit;
 : depth; ( -- ) _depth word, ;
 s" pick" machineword _pick ( ... +n --  ... w )
@@ -847,8 +851,7 @@ s" count" machineword _count ( b -- b +n )
 : count; ( -- ) _count word, ;
 s" here" machineword _here ( -- a )
     \ return the top of the code dictionary.
-    cp;
-    @;
+    cp; @;
     exit;
 : here; ( -- ) _here word, ;
 s" pad" machineword _pad ( -- a )
@@ -861,8 +864,7 @@ s" pad" machineword _pad ( -- a )
 s" tib" machineword _tib ( -- a )
     \ return the address of the terminal input buffer
     #tib;
-    cell+;
-    @;
+    cell+; @;
     exit;
 : tib; ( -- ) _tib word, ;
 s" @execute" machineword _atexec ( a -- )
@@ -920,13 +922,8 @@ deflabel dtrail2
     >r;
     dtrail2 word,
 deflabel-here dtrail1
-    bl;
-    over;
-    r@;
-    +;
-    c@;
-    <;
-    dtrail2 ??branch; 
+    bl; over; r@; +; c@;
+    <; dtrail2 ??branch; 
     r>;
     1+,,
     exit; \ adjusted count
@@ -938,13 +935,11 @@ dtrail2 .label
 : -trailing; ( -- ) _dtrailing word, ;
 s" pack$" machineword _pack$ ( b u a -- a )
     \ build a counted string with u characters from b. Null fill
-    aligned;
-    dup;
+    aligned; dup;
     >r; \ strings only on cell boundary
-    over;
-    dup;
+    over; dup;
     0lit, \ push zero
-    1lit, \ push cell size
+    w/slit, \ push cell size
     um/mod; 
     drop; \ count mod cell
     -;
@@ -997,9 +992,7 @@ s" <#" machineword _bdgs ( -- )
   -; ; 
 s" hold" machineword _hold ( c -- )
     \ insert a character into the numeric output string
-    hld;
-    @;
-    1-,,
+    hld; @; 1-,,
     dup;
     hld;
     !;
@@ -1008,8 +1001,7 @@ s" hold" machineword _hold ( c -- )
 : hold; ( -- ) _hold word, ;
 s" #" machineword _extractDigit ( u -- u )
     \ extract one digit from u and append the digit to output string.
-    base;
-    @;
+    base@;
     extract;
     hold;
     exit; 
@@ -1039,8 +1031,7 @@ sign1 .label
 s" #>" machineword _edgs ( w --  b u )
     \ prepare the output string to be typed
     drop;
-    hld;
-    @;
+    hld; @;
     pad;
     over;
     -;
@@ -1048,13 +1039,8 @@ s" #>" machineword _edgs ( w --  b u )
 : #>; ( -- ) _edgs word, ;
 s" str" machineword _str ( n -- b u )
     \ convert a signed integer to a numeric string
-    dup; >r;
-    abs; 
-    <#; 
-    #s;
-    r>;
-    sign;
-    #>;
+    dup; >r; abs; 
+    <#; #s; r>; sign; #>;
     exit;
 : str; ( -- ) _str word, ;
 s" hex" machineword _hex ( -- )
@@ -1074,20 +1060,11 @@ deflabel dgtq1
     >r;
     0x30 #lit, \ '0'
     -;
-    0x9 #lit, 
-    over;
-    <;
+    0x9 #lit, over; <;
     dgtq1 ??branch;
-    7 #lit,
-    -;
-    dup;
-    0xa #lit,
-    <;
-    or;
+    7 #lit, -; dup; 0xa #lit, <; or;
 dgtq1 .label
-    dup;
-    r>;
-    u<; 
+    dup; r>; u<; 
     exit;
 : digit?; ( -- ) _digit? word, ;
 _numberq s" number?" machineword-predef ( a -- n T | a F )
@@ -1100,15 +1077,12 @@ deflabel numq6
     \ convert a number string to integer. Push a flag on tos.
     base@; >r;
     0lit,
-    over;
-    count;
-    over;
-    c@;
+    over; count; 
+    over; c@;
     0x24 #lit, \ '$'
     =;
     numq1 ??branch;
-    hex;
-    swap;
+    hex; swap;
     1+,,
     swap;
     1-,,
@@ -1133,21 +1107,16 @@ numq2 .label
     +;
     r>;
     1+,,
-    donext;
-    numq2 word, 
-    r@;
-    swap;
-    drop;
+    donext; numq2 word, 
+    r@; swap; drop;
     numq3 ??branch;
     negate;
 numq3 .label
     swap;
     numq5 word,
 numq4 .label
-    r>;
-    r>;
-    2drop;
-    2drop;
+    r>; r>;
+    2drop; 2drop;
     0lit,
 numq5 .label
     dup;
@@ -1209,8 +1178,7 @@ deflabel type2
     >r;
     type2 word,
 deflabel-here type1
-    dup;
-    c@;
+    dup; c@;
     emit;
     1+,,
 type2 .label
@@ -1287,7 +1255,7 @@ s" ." machineword _dot ( w -- )
 deflabel dot1
 	\ display an integer in free format, preceeded by a space
 	base@;
-	0xa #, xsp pushi,
+    0xa #lit,
 	xor;			 \ ?decimal
 	dot1 ??branch;
 	u.;
@@ -1324,21 +1292,15 @@ deflabel parse8
 	parse3 ??branch; 
 	>r;
 deflabel-here parse1
-	bl;
-	over;
-	c@; 	\ skip leading blanks only
-	-; 
-	0<;
-	not;
+	bl; over; c@; 	\ skip leading blanks only
+	-; 0<; not;
 	parse2 ??branch; 
-	xsp xtop pop, 
-	xtop 1+,
-	xtop xsp push, 
+    1+,,
 	donext; parse1 word,
 	r>;
 	drop;
-	zero xsp push,
-	zero xsp push, \ originally a dup
+    0lit, 0lit,
+    \ originally a dup
 	exit;
 parse2 .label
 	r>;
@@ -1362,81 +1324,47 @@ parse5 .label
 	dup; >r;
 	parse7 word,
 parse6 .label
-	r>;
-	drop;
-	dup;
-	xsp xtop pop,
-	xtop 1+,
-	xtop xsp push,
-	>r;
+	r>; drop; dup; 1+,, >r;
 parse7 .label
-	over;
-	-;
-	r>;
-	r>;
-	-;
-	exit;
+	over; -; r>; r>; -;
+    exit;
 parse8 .label
-	over;
-	r>;
-	-;
+	over; r>; -;
 	exit;
 s" parse" machineword _parse ( c -- b u ; <string> )
 	\ scan input stream and return counted string delimited by c.
-	>r;
-	tib;
-	inn; @;
-	+; \ current input buffer pointer
-	#tib; @;
-	inn; @;
-	-; 	\ remaining count
-	r>;
-	_parse0 word,
-	inn; 
-	+!;
-	exit;
+	>r; tib; inn; @; +; \ current input buffer pointer
+	#tib; @; inn; @; -; 	\ remaining count
+	r>; _parse0 word, inn; +!;
+    exit;
 : parse; ( -- ) _parse word, ;
 s" .(" immediate-machineword _dotpr ( -- )
 	\ output following string up to next ) .
-	0x29 #, xsp pushi, \ )
-	parse;
-	type;
+	0x29 #lit, \ )
+	parse; type;
 	exit;
 s" (" immediate-machineword _paren ( -- )
 	\ ignore following string up to next ). A comment
-	0x29 #, xsp pushi,	\ )
-	parse;
-	2drop;
+	0x29 #lit, \ )
+	parse; 2drop;
 	exit;
 s" \" immediate-machineword _backslash ( -- )
 	\ ignore following text till the end of line
-	#tib; @;
-	inn; !;
+	#tib; @; inn; !;
 	exit;
 s" char" machineword _char ( -- c )
 	\ parse next word and return its first character
-	bl;
-	parse;
-	drop;
-	c@;
+	bl; parse; drop; c@;
 	exit;
 s" token" machineword _token
-	bl;
-	parse;
-	decimal 31 #, xsp pushi,
-	min;
-	np; @;
-	over;
-	-;
-	cell-;
-	pack$;
+	bl; parse;
+	decimal 31 #lit, min; np; @;
+	over; -; cell-; pack$;
 	exit;
 : token; ( -- ) _token word, ;
 s" word" machineword _word ( c -- a ; <string> )
 	\ parse a word from input stream and copy it to code dictionary.
-	parse;
-	here;
-	pack$;
+	parse; here; pack$;
 	exit;
 : word; ( -- ) _word word, ;
 \ dictionary search
@@ -1449,22 +1377,17 @@ s" name>" machineword _namet ( na -- ca )
 s" same?" machineword _sameq ( a a u -- a a f \ -0+ )
 deflabel same2
 	\ compare u cells in two strings. Return 0 if identical
-	>r;
-	same2 word,
+	>r; same2 word,
 deflabel-here same1
-	over;
-	r@;
-	cells; +; @; \ 32/16 mix-up
-	over; r@;
-	cells; +; @; \ 32/16 mix-up
+	over; r@; cells; +; @; \ 32/16 mix-up
+	over; r@; cells; +; @; \ 32/16 mix-up
 	-; ?dup;
 	same2 ??branch; 
-	r>;
-	drop;
+	r>; drop;
 	exit;	\ strings not equal
 same2 .label
 	donext; same1 word,
-	zero xsp push,
+    0lit,
 	exit;	\ strings equal
 : same?; ( -- ) _sameq word, ;
 s" find" machineword _find ( a va -- ca na | a F )
@@ -1474,51 +1397,27 @@ deflabel find4
 deflabel find5
 deflabel find6
 	\ search a vocabulary for a string. Return ca and na if succeeded
-	swap; dup; c@;
-	0x1 #, xsp pushi,
-	/;
-	temp; !;	\ 32/16 bit mix-up
-	dup; @; >r;
-	cell+;
-	swap;
+	swap; dup; c@; w/slit, /; temp; !;	\ 32/16 bit mix-up
+	dup; @; >r; cell+; swap;
 deflabel-here find1
-	@; 
-	dup; 
-	find6 ??branch; 
-	dup; @;
-	0x1f7f #, xsp pushi,
-	and;
-	r@;
-	xor;
+	@; dup; 
+    find6 ??branch; 
+	dup; @; 0x1f7f #lit, and; r@; xor;
 	find2 ??branch; 
 	cell-; \ backup to link field
 	find1 word,	\ try the next word
 find2 .label
-	cell+;
-	temp; @;
-	same?;
+	cell+; temp; @; same?;
 find3 .label
 	find4 word,
 find6 .label
-	r>;
-	drop;
-	swap;
-	cell-;
-	swap;
+	r>; drop; swap; cell-; swap;
 	exit;
 find4 .label
 	find5 ??branch; 
-	cell-; cell-;
-	find1 word,
+	cell-; cell-; find1 word,
 find5 .label
-	r>;
-	drop;
-	swap;
-	drop;
-	cell-;
-	dup;
-	name>;
-	swap;
+	r>; drop; swap; drop; cell-; dup; name>; swap;
 	exit; \ ca
 
 s" name?" machineword _nameq ( a -- ca na | a F ) 
@@ -1526,89 +1425,61 @@ deflabel nameq1
 deflabel nameq2
 deflabel nameq3
 	\ search all context vocabularies for a string.
-	context;
-	dup;
-	2@;
-	xor;	\ ?context = also
+	context; dup; 2@; xor;	\ ?context = also
 	nameq1 ??branch; 
 	cell-; \ no, start with context
 nameq1 .label
 	>r;
 nameq2 .label
-	r>;
-	cell+;
-	dup;
-	>r; 	\ next in search order
-	@;
-	?dup;
-	nameq3 ??branch; 
+	r>; cell+; dup; >r; 	\ next in search order
+	@; 
+    ?dup; nameq3 ??branch; 
 	_find word,
-	?dup;
-	nameq2 ??branch; 
-	r>;
-	drop;
+	?dup; nameq2 ??branch; 
+	r>; drop;
 	exit;	\ found name
 nameq3 .label
-	r>; 
-	drop; \ name not found
-	zero xsp push,
+	r>; drop; \ name not found
+    0lit,
 	exit; \ false flag
 : name?; ( -- ) _nameq word, ;
+: 'echo->@exec; ( -- ) 'echo; @execute; ;
 s" ^h" machineword _bksp ( bot eot cur -- bot eot cur )
 	\ backup the cursor by one character.
 deflabel back1
-	>r;
-	over;
-	r>;
-	swap;
-	over;
-	xor;
+	>r; over; r>;
+	swap; over; xor;
 	back1 ??branch; 
-	cbksp #, xsp pushi, 
-	'echo;
-	@execute;
-	0x1 #, xsp pushi,
-	-; bl;
-	'echo;
-	@execute;
-	cbksp #, xsp pushi,
-	'echo;
-	@execute;
+    cbksp #lit,
+	'echo->@exec;
+    1-,, bl;
+	'echo->@exec;
+    cbksp #lit,
+	'echo->@exec;
 back1 .label
 	exit;
 s" tap" machineword _tap ( bot eot cur c -- bot eot cur )
 	\ accept and echo the key stroke and bump the cursor.
-	dup;
-	'echo;
-	@execute;
-	over;
-	c!;
-	xsp xtop pop,
-	xtop 1+,
-	xtop xsp push,
+	dup; 
+    'echo->@exec;
+	over; c!; 1+,,
 	exit;
 _ktap s" ktap" machineword-predef ( bot eot cur c -- bot eot cur )
 deflabel ktap1
 deflabel ktap2
 	\ Process a key stroke, cr, or backspace
 	dup;
-	ccr #, xsp pushi,
-	xor;
+    ccr #lit, xor;
 	ktap2 ??branch; 
-	cbksp #, xsp pushi,
-	xor;
+    cbksp #lit, xor;
 	ktap1 ??branch; 
-	bl;
-	_tap word,
+	bl; _tap word,
 	exit;
 ktap1 .label
 	_bksp word,
 	exit;
 ktap2 .label
-	drop;
-	swap;
-	drop;
-	dup;
+	drop; swap; drop; dup;
 	exit;
 _accept s" accept" machineword-predef ( b u -- b u )
 deflabel accept2
@@ -1617,45 +1488,31 @@ deflabel accept4
 	\ accept characters to input buffer. Return with actual count
 	over; +; over; 
 deflabel-here accept1
-	2dup;
-	xor;
+	2dup; xor;
 	accept4 ??branch; 
-	key;
-	dup;
-	bl;
-	decimal 127 #, xsp pushi,
-	within;
+	key; dup; bl; decimal 127 #lit, within;
 	accept2 ??branch; 
 	_tap word,
 	accept3 word,
 accept2 .label
-	_ttap word,
-	@execute;
+	_ttap word, @execute;
 accept3 .label
 	accept1 word,
 accept4 .label
-	drop;
-	over;
-	-;
+	drop; over; -;
 	exit;
 s" except" machineword _except ( b u -- )
 	\ accept input stream and store count in SPAN.
-	_texpect word,
-	@execute;
-	_span word,
-	!;
+	_texpect word, @execute;
+	_span word, !;
 	drop;
 	exit;
 s" query" machineword _query ( -- )
 	\ accept input stream to terminal input buffer.
-	tib;
-	decimal 80 #, xsp pushi,
-	_texpect word,
-	@execute;
-	#tib; !;
+	tib; decimal 80 #lit,
+	_texpect word, @execute; #tib; !;
 	drop;
-	zero xsp push,
-	inn; !;
+    0lit, inn; !;
 	exit;
 \ error handling
 s" catch" machineword _catch ( ca -- 0 | err# )
@@ -1664,7 +1521,7 @@ s" catch" machineword _catch ( ca -- 0 | err# )
 	handler; @; >r; \ save error frame
 	rp@; handler; !; execute; \ execute
 	r>; _handler word; !; \ restore error frame
-	r>; drop; zero xsp pushi, exit; \ no error
+	r>; drop; 0lit, exit; \ no error
 s" throw" machineword _throw ( err# -- err# ) 
 	handler; @;
 	rp!;  \ restore return stack
@@ -1694,8 +1551,7 @@ deflabel abortq1
 	dostr; 
 	throw; \ pass error string
 abortq1 .label
-	dostr;
-	drop;
+	dostr; drop;
 	exit;	\ drop error
 : abortq; ( -- ) _abortq word, ;
 \ the text interpreter
@@ -1703,12 +1559,9 @@ _interpret s" $interpret" machineword-predef ( a -- )
 deflabel _interpret1
 deflabel interpret2
 	\ interpret a word. If failed, try to convert it to an integer.
-	name?;
-	?dup; 	\ ?defined
+	name?; ?dup; 	\ ?defined
 	_interpret1 ??branch; 
-	@;
-	word/compile #, xsp pushi, 
-	and; \ ?compile only lexicon bits
+	@; word/compile #lit, and; \ ?compile only lexicon bits
 	abortq; s" compile only" .string,
 	execute;
 	exit; \ execute defined word
@@ -1721,13 +1574,13 @@ interpret2 .label \ error
 	throw;
 _leftbracket s" [" immediate-machineword-predef ( -- )
 	\ start the text interpreter
-	_interpret ??, xsp pushi,
+    _interpret ??lit,
 	'eval; !;
 	exit;
 _dotok s" .ok" machineword-predef ( -- ) 
 deflabel dotok1
 	\ display ok only while interpreting
-	_interpret ??, xsp pushi,
+	_interpret ??lit,
 	'eval; @; =;
 	dotok1 ??branch; 
 	dtqp; s" ok" .string,
@@ -1737,8 +1590,7 @@ dotok1 .label
 		
 s" ?stack" machineword _qstack ( -- )
 	\ abort if the data stack underflows
-	depth;
-	0<;
+	depth; 0<;
 	abortq; s" underflow" .string, 
 	exit;
 
@@ -1746,50 +1598,40 @@ s" eval" machineword _eval ( -- )
 	\ interpret the input stream
 deflabel-here eval1
 deflabel eval2
-	token;
-	dup;
-	c@; \ input stream empty
+	token; dup; c@; \ input stream empty
 	eval2 ??branch; 
-	'eval;
-	@execute;
-	_qstack word, \ evaluate input, check stack
+	'eval; @execute; _qstack word, \ evaluate input, check stack
 	eval1 word,
 eval2 .label
-	drop;
-	'prompt;
-	@execute;
+	drop; 'prompt; @execute;
 	exit;	\ prompt
 \ shell
 s" preset" machineword _preset ( -- ) 
 	\ reset data stack pointer and the terminal input buffer
 	sp0; @; sp!;
-	input-buffer-start #, xsp pushi, 
-	#tib;
-	cell+;
-	!;
+	input-buffer-start #lit,
+    #tib; cell+; !;
 	exit;
 s" xio" word/compile machineword-base _xio ( a a a -- )
 	\ reset the i/o vectors 'expect, 'tap, 'echo, and 'prompt
 	\ this seems questionable to me :/
-	_accept ??, xsp pushi,
-	'expect;
-	2!;
-	'echo;
-	2!; 
+	_accept ??lit, 
+	'expect; 2!;
+	'echo; 2!; 
 	exit;
 s" file" machineword _file ( -- )
 	\ select io vectors for file download
-	_pace ??, xsp pushi,
-	_drop ??, xsp pushi,
-	_ktap ??, xsp pushi,
+	_pace ??lit,
+	_drop ??lit,
+	_ktap ??lit,
 	_xio word,
 	exit;
 s" hand" machineword _hand ( -- )
 	\ select io vectors for terminal interface
-	_dotok ??, xsp pushi,
-	\ _drop ??, xsp pushi, \ don't repeat characters, macos did it already 4/20/97 - cht
-						   \ doesn't seem to apply to me since I'm not on mac os - jws 
-	_ktap ??, xsp pushi, 
+	_dotok ??lit, 
+	\ _drop ??lit, \ don't repeat characters, macos did it already 4/20/97 - cht
+				   \ doesn't seem to apply to me since I'm not on mac os - jws 
+	_ktap ??lit,
 	_xio word,
 	exit;
 s" i/o" machineword _i/o ( -- a )
@@ -1799,10 +1641,8 @@ s" i/o" machineword _i/o ( -- a )
 	_txsto ??, .cell \ default io vectors for 32 bit systems 3/16/92
 s" console" machineword _console ( -- )
 	\ initiate terminal interface.
-	_i/o word,
-	2@;
-	'qky;
-	2!;
+	_i/o word, 2@;
+	'qky; 2!;
 	_hand word,
 	exit;
 _quit s" quit" machineword-predef ( -- )
@@ -1814,26 +1654,18 @@ deflabel-here quit1
 	leftbracket; \ start interpretation
 deflabel-here quit2
 	_query word, 	   \ get input
-	_eval ??, xsp pushi,
-	_catch word,
-	?dup;			   \ evaluate input
+    _eval ??lit, _catch word, ?dup;			   \ evaluate input
 	quit2 ??branch; \ continue till error
 	'prompt; @; swap;    \ save input device
-	_console word,
-	_nulld word,
-	over;
-	xor; \ display error message?
-	quit3 ??branch; 
-	spaces;
-	count;
-	type; \ error message
+	_console word, _nulld word, over; xor; \ display error message?
+	quit3 ??branch; spaces; count; type; \ error message
 	dtqp; s"  ? " .string, \ error prompt
 	cr;
 quit3 .label
-	_dotok ??, xsp pushi,
+    _dotok ??lit,
 	xor; \ file input?
 	quit4 ??branch; 
-    decimal 27 #, xsp pushi, \ push the error code
+    decimal 27 #lit, \ push the error code
 	emit; \ file error, tell host
 quit4 .label
 	_preset word, \ some cleanup
@@ -1842,25 +1674,18 @@ quit4 .label
 s" '" machineword _tick ( -- ca )
 deflabel tick1
 	\ search context vocabularies for the next word in input stream
-	_token word,
-	_nameq word, \ ?defined
+	_token word, _nameq word, \ ?defined
 	tick1 ??branch; 
 	exit;	\ yes, push code address
 tick1 .label
 	throw;	\ no, error
 s" allot" machineword _allot ( n -- )
 	\ allocate n words to the code dictionary
-	_cp word,
-	+!;
+	_cp word, +!;
 	exit;	\ adjust code pointer
 _, s" ," machineword-predef ( w -- )
 	\ compile an integer into the code dictionary
-	here;
-	dup;
-	cell+;
-	_cp word,
-	!;
-	!;
+	here; dup; cell+; _cp word, !; !;
 	exit; \ adjust code pointer, compile
 deflabel _again
 : again; ( -- ) _again word, ;
@@ -1879,11 +1704,10 @@ _compile s" compile" word/compile machineword-base-predef ( -- )
 	xtop xsp push, ( a bl )
 	over;  \ convert abs addr to rel addr ( not needed for my design )
 	+;
-	\ 0x03FFFFFFC #, xsp pushi,
+	\ 0x03FFFFFFC #lit,
 	\ and; ; a ca -- 
 	again; \ compile bl instruction
-	cell+;
-	>r;
+	cell+; >r;
 	exit;
 
 s" literal" immediate-machineword _literal ( w -- )
@@ -1895,19 +1719,15 @@ s" literal" immediate-machineword _literal ( w -- )
 s\" $,\"" machineword _stcq ( -- )
 	\ compile a literal string up to next " .
 	\ Is this supposed to be compile time?
-	0x22 #, xsp pushi, \ '"'
+	0x22 #lit, \ '"'
 	word; \ move string to code dictionary
-	count; +;
-	_aligned word, \ calculate aligned end of string
-	cp;
-	!;
+	count; +; _aligned word, \ calculate aligned end of string
+	cp; !;
 	exit; \ adjust the code pointer
 : stcq; ( -- ) _stcq word, ;
 s" recurse" machineword _recurse ( -- )
 	\ make the current word available for compilation
-	last; @;
-	name>; 
-	again;
+	last; @; name>; again;
 	exit; \ compile branch instruction
 
 \ structures
@@ -1918,21 +1738,21 @@ s" then" immediate-machineword _then ( a -- )
 	\ is filled by a.
 	here; over; -; \ construct a base address to store to
 	\ need to construct a branch instruction
-	#call #, xsp pushi, over; !; \ stash a zero #call 
-	decimal 1 #, xsp pushi, +; \ go to next address
+	#call #lit, over; !; \ stash a zero #call 
+    1+,, \ go to next address
 	!; \ store the address into this cell
 	exit;
+: then; ( -- ) _then word, ;
 _again s" again" immediate-machineword-predef ( a -- )
 	\ resolve a backwards jump and terminate a loop structure
 	\ compile a branch instruction, with 'a' in the address field.
 	here; -; \ offset from here
-	#call #, xsp pushi, ,; \ stash the call instruction portion
+	#call #lit, ,; \ stash the call instruction portion
 	,; \ stash the address
 	exit;
 s" for" immediate-machineword _for ( -- a )
 	\ start a for-next loop structure in a colon definition
-	compile; >r;
-	here;
+	compile; >r; here;
 	exit;
 s" begin" immediate-machineword _begin ( -- a )
 	\ start an infinite or indefinite loop structure
@@ -1940,107 +1760,76 @@ s" begin" immediate-machineword _begin ( -- a )
 	exit;
 s" next" immediate-machineword _next ( a -- )
 	\ terminate a for-next loop structure
-	compile; donext;
-	again;
+	compile; donext; again;
 	exit;
 s" until" immediate-machineword _until ( a -- )
 	\ terminate a begin-until indefinite loop structure
-	compile; ?branch;
-	again;
+	compile; ?branch; again;
 	exit;
-\ todo continue at if on line 2708
 s" if" immediate-machineword _if ( -- A )
     \ begin a conditional branch
-    compile; ?branch;
-    here;
-    #call #, xsp pushi, \ call with register zero thus it is a branch
+    compile; ?branch; here; #call #lit, \ call with register zero thus it is a branch
     ,;
-    zero xsp push,
-    ,;
+    0lit, ,;
     exit;
 s" ahead" immediate-machineword _ahead ( -- A )
     \ compile a forward branch instruction
-    here;
-    #call #, xsp pushi, \ call with register zero thus it is a branch
+    here; #call #lit, \ call with register zero thus it is a branch
     ,;
-    zero xsp push,
-    ,;
+    0lit, ,;
     exit;
+: ahead; ( -- ) _ahead word, ;
 s" repeat" immediate-machineword _repeat ( A a -- ) 
     \ terminate a begin while-repeat indefinite loop
-    again;
-    _then word,
+    again; then;
     exit;
 
 s" aft" immediate-machineword _aft ( a -- a A )
     \ Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through
-    drop;
-    _ahead word,
-    _begin word,
-    swap;
+    drop; ahead; _begin word, swap;
     exit;
 
 s" else" immediate-machineword _else ( A -- A )
     \ start the false clause in an if-else-then structure
-    _ahead word,
-    swap;
-    _then word,
+    ahead; swap; then;
     exit;
 s" while" immediate-machineword _while ( a -- A a )
     \ Conditional branch out of a begin-while-repeat loop
-    _if word,
-    swap;
+    _if word, swap;
     exit;
 s\" abort\"" immediate-machineword _rabortq ( -- ; <string> )
     \ conditional abort with an error message.
-    compile; abortq;
-    stcq;
+    compile; abortq; stcq;
     exit;
-
 s\" $\"" immediate-machineword _strq ( -- ; <string> )
     \ compile an inline string literal.
-    compile; stqp;
-    stcq;
+    compile; stqp; stcq;
     exit;
 s\" .\"" immediate-machineword _dotq ( -- ; <string> )
     \ compile an inline string literal to be typed out at run time.
-    compile; dtqp;
-    stcq;
+    compile; dtqp; stcq;
     exit;
 \ name compiler
 s" ?unique" machineword _unique ( a -- a )
 deflabel unique1
     \ display a warning message if the word already exists.
-    dup;
-    name?; \ ?name exists
+    dup; name?; \ ?name exists
     unique1 ??branch; \ redefinitions are OK
     dtqp; s" redefined " .string, \ but warn the user
-    over;
-    count;
-    type;   \ just in case it is not planned
+    over; count; type;   \ just in case it is not planned
 unique1 .label
     drop;
     exit;
 s" $,n" machineword _snam ( na -- )
 deflabel pnam1
     \ build a new dictionary name using the string at na.
-    dup;
-    c@;     \ null input?
+    dup; c@;     \ null input?
     pnam1 ??branch; 
     _unique word, \ redef?
     dup; last; !; \ save na for vocabulary link
-    here; 
-    aligned;
-    swap;  \ align code address
+    here; aligned; swap;  \ align code address
     cell-; \ link addresso
-    current;
-    @; @;
-    over;
-    !;
-    cell-;
-    dup;
-    np;
-    !; \ adjust name pointer
+    current; @; @; over; !; cell-; dup; np; !; \ adjust name pointer
     !; 
     exit;
 pnam1 .label
