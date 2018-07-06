@@ -172,6 +172,8 @@ namespace iris {
                     IOWriter _write;
             };
             void installIODevice(IODevice dev);
+        private:
+            Register nullReg;
 		public:
 
 			// the different containers for instruction forms are defined here
@@ -179,40 +181,40 @@ namespace iris {
 			struct OneRegister final { 
 				OneRegister() = default;
 				~OneRegister() = default;
-				DestinationRegister dest;
+				Register& dest = nullReg;
 			};
 			struct TwoRegister final {
 				TwoRegister() = default;
 				~TwoRegister() = default;
-				DestinationRegister dest;
-				SourceRegister src;
+				Register& dest = nullReg;
+				Register& src = nullReg;;
 			};
 			struct ThreeRegister final {
 				ThreeRegister() = default;
 				~ThreeRegister() = default;
-				DestinationRegister dest;
-				SourceRegister src;
-				SourceRegister src2;
+                Register& dest = nullReg;
+                Register& src = nullReg;
+                Register& src2 = nullReg;
 			};
             struct FourRegister final {
 				FourRegister() = default;
 				~FourRegister() = default;
-				DestinationRegister dest;
-				SourceRegister src;
-				SourceRegister src2;
-                SourceRegister src3;
+                Register& dest = nullReg;
+                Register& src = nullReg;
+                Register& src2 = nullReg;
+                Register& src3 = nullReg;
             };
 			struct OneRegisterWithImmediate final {
 				OneRegisterWithImmediate() = default;
 				~OneRegisterWithImmediate() = default;
-				DestinationRegister dest;
+                Register& dest = nullReg;
 				Address imm;
 			};
 			struct TwoRegisterWithImmediate final {
 				TwoRegisterWithImmediate() = default;
 				~TwoRegisterWithImmediate() = default;
-				DestinationRegister dest;
-                SourceRegister src;
+                Register& dest = nullReg;
+                Register& src = nullReg;
                 union {
                     Address addr;
                     Integer imm;
@@ -253,41 +255,7 @@ namespace iris {
 			void decodeArguments(TwoRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction();
 		private:
-			const Register& getRegister(RegisterIndex reg) const noexcept;
-			inline Number getRegisterValue(RegisterIndex reg) const noexcept { return getRegister(reg).getValue(); }
-			void setRegister(RegisterIndex reg, Number value) noexcept;
-			template<typename T>
-			void setDestination(const T& value, Number n) noexcept {
-				setRegister(value._args.dest, n);
-			}
-			template<typename T>
-			void setSource(const T& value, Number n) noexcept {
-				setRegister(value._args.src, n);
-			}
-			template<typename T>
-			void setSource2(const T& value, Number n) noexcept {
-				setRegister(value._args.src2, n);
-			}
-			template<typename T>
-			void setSource3(const T& value, Number n) noexcept {
-				setRegister(value._args.src3, n);
-			}
-			template<typename T>
-			Number getDestination(const T& value) const noexcept {
-				return getRegister(value._args.dest).getValue();
-			}
-			template<typename T>
-			Number getSource(const T& value) const noexcept {
-				return getRegister(value._args.src).getValue();
-			}
-			template<typename T>
-			Number getSource2(const T& value) const noexcept {
-                return getRegister(value._args.src2).getValue();
-			}
-			template<typename T>
-			Number getSource3(const T& value) const noexcept {
-                return getRegister(value._args.src3).getValue();
-			}
+			Register& getRegister(RegisterIndex reg) noexcept;
 			Number pop(RegisterIndex reg) noexcept;
 			void push(RegisterIndex reg, Number value) noexcept;
             template<typename T>

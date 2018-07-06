@@ -73,33 +73,33 @@ namespace iris {
     }
     void Core::decodeArguments(Core::OneRegister& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
     }
     void Core::decodeArguments(Core::TwoRegister& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
-        a.src = getUpperIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
+        a.src = getRegister(getUpperIndex(i));
     }
     void Core::decodeArguments(Core::ThreeRegister& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
-        a.src = getUpperIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
+        a.src = getRegister(getUpperIndex(i));
         ++_pc;
         i = load(_pc);
-        a.src2 = getLowerIndex(i);
+        a.src2 = getRegister(getLowerIndex(i));
     }
     void Core::decodeArguments(Core::FourRegister& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
-        a.src = getUpperIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
+        a.src = getRegister(getUpperIndex(i));
         ++_pc;
         i = load(_pc);
-        a.src2 = getLowerIndex(i);
+        a.src2 = getRegister(getLowerIndex(i));
         a.src3 = getUpperIndex(i);
     }
     void Core::decodeArguments(Core::OneRegisterWithImmediate& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
         ++_pc;
         auto lower = load(_pc);
         ++_pc;
@@ -108,8 +108,8 @@ namespace iris {
     }
     void Core::decodeArguments(Core::TwoRegisterWithImmediate& a) noexcept {
         auto i = load(_pc);
-        a.dest = getLowerIndex(i);
-        a.src = getUpperIndex(i);
+        a.dest = getRegister(getLowerIndex(i));
+        a.src = getRegister(getUpperIndex(i));
         ++_pc;
         auto lower = load(_pc);
         ++_pc;
@@ -138,93 +138,9 @@ namespace iris {
     void Core::dispatchInstruction(const Core::DecodedInstruction& di) {
         std::visit([this](auto&& v) { perform(v); }, di);
     }
-    void Core::setRegister(RegisterIndex index, Number value) noexcept {
-        _registers[index].setValue(value);
-    }
-    const Register& Core::getRegister(RegisterIndex index) const noexcept {
+    Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
-#define DefExec(title) \
-    void Core::perform ( const Core:: title & op ) 
-	DefExec(Illegal) {
-		throw Problem("Illegal Instruction Invoked!");
-	}
-    DefExec(Add) { setDestination(op, getSource(op).integer + getSource2(op).integer); }
-    DefExec(Sub) { 
-        auto a = getSource(op).integer;
-        auto b = getSource2(op).integer;
-		setDestination(op, a - b);
-    }
-    DefExec(Mul) { setDestination(op, getSource(op).integer * getSource2(op).integer); }
-    DefExec(Div) { 
-		auto denom = getSource2(op).integer;
-		if (denom == 0) {
-			setDestination(op, Number(0u));
-		} else {
-			setDestination(op, getSource(op).integer / denom);
-		}
-	}
-    DefExec(Rem) { 
-		auto denom = getSource2(op).integer;
-		if (denom == 0) {
-			setDestination(op, Number(0u));
-		} else {
-			setDestination(op, getSource(op).integer % denom);
-		}
-	}
-    DefExec(ShiftLeft) { setDestination(op, getSource(op).integer << getSource2(op).integer); }
-    DefExec(ShiftRight) { setDestination(op, getSource(op).integer >> getSource2(op).integer); }
-    DefExec(And) { setDestination(op, getSource(op).integer & getSource2(op).integer); }
-    DefExec(Or) { setDestination(op, getSource(op).integer | getSource2(op).integer); }
-    DefExec(Negate) { setDestination(op, ~getSource(op).integer); }
-    DefExec(Xor) { setDestination(op, getSource(op).integer ^ getSource2(op).integer); }
-    DefExec(Min) {
-        auto a = getSource(op).integer;
-        auto b = getSource2(op).integer;
-        setDestination(op, a < b ? a : b);
-    }
-    DefExec(Max) {
-        auto a = getSource(op).integer;
-        auto b = getSource2(op).integer;
-        setDestination(op, a > b ? a : b);
-    }
-    DefExec(Eq) { 
-		auto first = getSource(op).integer;
-		auto second = getSource2(op).integer;
-		setDestination(op, first == second);
-	}
-    DefExec(Neq) { 
-		auto first = getSource(op).integer;
-		auto second = getSource2(op).integer;
-		setDestination(op, first != second);
-	}
-    DefExec(LessThan) { 
-		auto first = getSource(op).integer;
-		auto second = getSource2(op).integer;
-		setDestination(op, first < second);
-	}
-    DefExec(LessThanOrEqualTo) { 
-		auto first = getSource(op).integer;
-		auto second = getSource2(op).integer;
-		setDestination(op, first <= second);
-	}
-    DefExec(GreaterThan) { 
-		auto first = getSource(op).integer;
-		auto second = getSource2(op).integer;
-		setDestination(op, first > second);
-	}
-    DefExec(GreaterThanOrEqualTo) { 
-        setDestination(op, getSource(op).integer >= getSource2(op).integer); 
-    }
-    DefExec(Set) { 
-        setDestination(op, op._args.imm); 
-    }
-    DefExec(Load) { 
-		setDestination(op, loadNumber(getSource(op).address));
-    }
-    DefExec(Store) { 
-		storeNumber(getDestination(op).address, getSource(op));
-	}
 	void Core::push(RegisterIndex index, Number value) noexcept {
 		Address stackAddress = getRegister(index).get<Address>() - 1;
 		store(stackAddress, value);
@@ -235,6 +151,95 @@ namespace iris {
 		auto result = load(addr);
 		setRegister(index, addr + 1);
 		return result;
+	}
+#define DefExec(title) \
+    void Core::perform ( const Core:: title & op ) 
+	DefExec(Illegal) {
+		throw Problem("Illegal Instruction Invoked!");
+	}
+    DefExec(Div) { 
+        auto denom = op._args.src2.get<Integer>();
+        op._args.dest.setValue(denom == 0 ? 0u : op._args.src.get<Integer>() / denom);
+	}
+    DefExec(Rem) { 
+        auto denom = op._args.src2.get<Integer>();
+        op._args.dest.setValue(denom == 0 ? 0u : op._args.src.get<Integer>() % denom);
+	}
+    DefExec(UnsignedDiv) { 
+        auto denom = op._args.src2.get<Address>();
+        op._args.dest.setValue(denom == 0 ? 0u : op._args.src.get<Address>() / denom);
+	}
+    DefExec(UnsignedRem) { 
+        auto denom = op._args.src2.get<Address>();
+        op._args.dest.setValue(denom == 0 ? 0u : op._args.src.get<Address>() % denom);
+	}
+#define DefBinaryOp(opcode, action, x) \
+    DefExec(opcode) { \
+        op._args.dest.setValue(op._args.src.get<x>() action op._args.src2.get<x>()); \
+    }
+#define DefBinaryOpInteger(opc, action) DefBinaryOp(opc, action, Integer)
+#define DefBinaryOpUnsigned(opc, action) DefBinaryOp(opc, action, Address)
+    DefBinaryOpInteger(Add, +);
+    DefBinaryOpInteger(Sub, -);
+    DefBinaryOpInteger(Mul, *);
+    DefBinaryOpInteger(ShiftLeft, <<);
+    DefBinaryOpInteger(ShiftRight, >>);
+    DefBinaryOpInteger(And, &);
+    DefBinaryOpInteger(Or, |);
+    DefBinaryOpInteger(Xor, ^);
+    DefBinaryOpInteger(Eq, == );
+    DefBinaryOpInteger(Neq, != );
+    DefBinaryOpInteger(LessThan, < );
+    DefBinaryOpInteger(LessThanOrEqualTo, <= );
+    DefBinaryOpInteger(GreaterThan, >);
+    DefBinaryOpInteger(GreaterThanOrEqualTo, >=);
+    DefBinaryOpUnsigned(UnsignedEq, == );
+    DefBinaryOpUnsigned(UnsignedNeq, != );
+    DefBinaryOpUnsigned(UnsignedLessThan, < );
+    DefBinaryOpUnsigned(UnsignedLessThanOrEqualTo, <= );
+    DefBinaryOpUnsigned(UnsignedGreaterThan, >);
+    DefBinaryOpUnsigned(UnsignedGreaterThanOrEqualTo, >=);
+    DefBinaryOpUnsigned(UnsignedAnd, &);
+    DefBinaryOpUnsigned(UnsignedOr, |);
+    DefBinaryOpUnsigned(UnsignedXor, ^);
+    DefBinaryOpUnsigned(UnsignedAdd, +);
+    DefBinaryOpUnsigned(UnsignedSub, -);
+    DefBinaryOpUnsigned(UnsignedMul, *);
+    DefBinaryOpUnsigned(UnsignedShiftLeft, <<);
+    DefBinaryOpUnsigned(UnsignedShiftRight, >>);
+#undef DefBinaryOpInteger
+#undef DefBinaryOpUnsigned
+
+    DefExec(Negate) { op._args.dest.setValue(~op._args.src.get<Integer>()); }
+    DefExec(UnsignedNegate) { op._args.dest.setValue(~op._args.src.get<Address>()); }
+    DefExec(Min) {
+        auto a = op._args.src.get<Integer>();
+        auto b = op._args.src2.get<Integer>();
+        op._args.dest.setValue( a < b ? a : b );
+    }
+    DefExec(Min) {
+        auto a = op._args.src.get<Integer>();
+        auto b = op._args.src2.get<Integer>();
+        op._args.dest.setValue( a > b ? a : b );
+    }
+    DefExec(UnsignedMin) {
+        auto a = op._args.src.get<Address>();
+        auto b = op._args.src2.get<Address>();
+        op._args.dest.setValue( a < b ? a : b );
+    }
+    DefExec(UnsignedMin) {
+        auto a = op._args.src.get<Address>();
+        auto b = op._args.src2.get<Address>();
+        op._args.dest.setValue( a > b ? a : b );
+    }
+    DefExec(Set) { 
+        op._args.dest.setValue(op._args.imm);
+    }
+    DefExec(Load) { 
+        op._args.dest.setValue(loadNumber(op._args.src.get<Address>()));
+    }
+    DefExec(Store) { 
+        storeNumber(op._args.dest.get<Address>(), op._args.src.get<Address>());
 	}
     DefExec(Push) {
 		push(op._args.dest, getSource(op));
@@ -268,69 +273,31 @@ namespace iris {
             }
         }
     }
-	void Core::store(Address addr, Number value, bool unmapIO) noexcept {
-		if (!unmapIO && addr >= ioSpaceStart) {
-			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value.address); });
-		} else {
-			_memory[addr] = value.address;
-		}
+	void Core::storeNumber(Address addr, Number value, bool unmapIO) noexcept {
+        store(addr, byte(value.address), unmapIO);
+        store(addr + 1, byte(value.address >> 8), unmapIO);
 	}
-	Address Core::load(Address addr, bool unmapIO) noexcept {
-		if (!unmapIO && addr >= ioSpaceStart) {
-			Address outcome = 0;
+    void Core::store(Address addr, byte value, bool unmapIO) noexcept {
+        if (!unmapIO && addr >= ioSpaceStart) {
+			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value.address); });
+        } else {
+            _memory[addr] = value;
+        }
+    }
+    byte Core::load(Address addr, bool unmapIO) noexcept {
+        if (!unmapIO && addr >= ioSpaceStart) {
+			byte outcome = 0;
         	onIODeviceFound(addr, [addr, &outcome](auto& a) { outcome = a.read(addr); });
 			return outcome;
-		} else {
-			return _memory[addr].address;
-		}
-	}
-    DefExec(UnsignedEq) { setDestination(op, getSource(op).address == getSource2(op).address); }
-    DefExec(UnsignedNeq) { setDestination(op, getSource(op).address != getSource2(op).address); }
-    DefExec(UnsignedLessThan) { setDestination(op, getSource(op).address < getSource2(op).address); }
-    DefExec(UnsignedLessThanOrEqualTo) { setDestination(op, getSource(op).address <= getSource2(op).address); }
-    DefExec(UnsignedGreaterThan) { setDestination(op, getSource(op).address > getSource2(op).address); }
-    DefExec(UnsignedGreaterThanOrEqualTo) { setDestination(op, getSource(op).address >= getSource2(op).address); }
-    DefExec(UnsignedAnd) { setDestination(op, getSource(op).address & getSource2(op).address); }
-    DefExec(UnsignedOr) { setDestination(op, getSource(op).address | getSource2(op).address); }
-    DefExec(UnsignedNegate) { setDestination(op, ~getSource(op).address); }
-    DefExec(UnsignedXor) { setDestination(op, getSource(op).address ^ getSource2(op).address); }
-    DefExec(UnsignedMin) {
-        auto a = getSource(op).address;
-        auto b = getSource2(op).address;
-        setDestination(op, a < b ? a : b);
+        } else {
+            return _memory[addr];
+        }
     }
-    DefExec(UnsignedMax) {
-        auto a = getSource(op).address;
-        auto b = getSource2(op).address;
-        setDestination(op, a > b ? a : b);
-    }
-
-    DefExec(UnsignedAdd) { setDestination(op, getSource(op).address + getSource2(op).address); }
-    DefExec(UnsignedSub) { 
-        auto a = getSource(op).address;
-        auto b = getSource2(op).address;
-        auto c = a - b;
-        setDestination(op, c);
-    }
-    DefExec(UnsignedMul) { setDestination(op, getSource(op).address * getSource2(op).address); }
-	DefExec(UnsignedDiv) { 
-		auto denom = getSource2(op).address;
-		if (denom == 0) {
-			setDestination(op, 0);
-		} else {
-			setDestination(op, getSource(op).address / denom);
-		}
+	Address Core::loadNumber(Address addr, bool unmapIO) noexcept {
+        auto lower = load(addr, unmapIO);
+        auto upper = load(addr + 1, unmapIO);
+        return makeImmediate16(lower, upper);
 	}
-    DefExec(UnsignedRem) { 
-		auto denom = getSource2(op).address;
-		if (denom == 0) {
-			setDestination(op, 0);
-		} else {
-			setDestination(op, getSource(op).address % denom);
-		}
-	}
-    DefExec(UnsignedShiftLeft) { setDestination(op, getSource(op).address << getSource2(op).address); }
-    DefExec(UnsignedShiftRight) { setDestination(op, getSource(op).address >> getSource2(op).address); }
 	DefExec(Increment) { setDestination(op, getSource(op).integer + 1); }
 	DefExec(Decrement) { setDestination(op, getSource(op).integer - 1); }
 	DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
@@ -576,7 +543,7 @@ namespace iris {
                 // Also make git not view the file as a binary file
                 if (outputFile.is_open()) {
                     for (int i = coreCacheStart; i < coreCacheEnd ; ++i) {
-                        outputFile << std::hex << _memory[i].address << std::endl;
+                        outputFile << std::hex << _memory[i] << std::endl;
                     }
                 }
                 outputFile.close();
@@ -586,14 +553,14 @@ namespace iris {
                 if (inputFile.is_open()) {
                     for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
                         if (inputFile.eof()) {
-                            _memory[i].address = 0;
+                            _memory[i] = 0;
                         } else {
-                            inputFile >> std::hex >> _memory[i].address;
+                            inputFile >> std::hex >> _memory[i];
                         }
                     }
                 } else {
                     for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
-                        _memory[i].address = 0;
+                        _memory[i] = 0;
                     }
                 }
                 inputFile.close();
