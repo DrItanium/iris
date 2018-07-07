@@ -396,10 +396,6 @@ too-many-registers-defined
 #urem inst-3reg urem,
 #ulshift inst-3reg ulshift,
 #urshift inst-3reg urshift, 
-#incr inst-2reg incr,
-#decr inst-2reg decr,
-#uincr inst-2reg uincr,
-#udecr inst-2reg udecr,
 : def2argi ( "name" "op" -- )
   create ' , 
   does> ( imm id dest -- n set-op )
@@ -482,6 +478,10 @@ ioaddr}
 ??def3i ??andi, andi, 
 ??def3i ??ori, ori, 
 ??def3i ??xori, xori, 
+#incr inst-2reg incr,
+#decr inst-2reg decr,
+#uincr inst-2reg uincr,
+#udecr inst-2reg udecr,
 : 1+, ( reg -- ) dup incr, ;
 : 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
