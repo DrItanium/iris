@@ -49,18 +49,14 @@ variable mloc \ current memory location
 : cconstant ( byte "name" -- ) create c, does> c@ ;
 
 
-: linker-entry ( kind address value -- n ) 
-  addr32 0x20 lshift ( k a v<<32 )
-  swap ( k v3 a )
-  addr16 0x10 lshift 
-  rot ( v3 a k )
-  0xFF and ( v3 a1 k8 )
-  or ( v3 n )
-  or ( n ) ;
+: linker-entry ( value address kind -- n ) 
+  0xFF and swap
+  addr16 0x10 lshift or swap 
+  addr32 0x20 lshift or ;
 : def-linker-action ( value "name" -- )
   create c, 
-  does> ( addr value -- n )
-  @ -rot linker-entry ;
+  does> ( value addr -- n )
+  @ linker-entry ;
 0 constant ByteWrite
 1 constant WordWrite
 2 constant IndirectEntry
@@ -180,24 +176,6 @@ variable CurrentAssemblyFile
 : curasm@ ( -- file ) CurrentAssemblyFile @ ;
 : curasm! ( n -- ) CurrentAssemblyFile ! ;
 : clearasm ( -- ) 0 curasm! ;
-
-: <<linker ( entry id -- ) 
-  iris-debug @ if ." address: " hex loc@ . ." : " over hex . cr decimal then
-  hex dup >r nout s" " r> write-line throw decimal ;
-: <<byte ( value id -- )
-	loc@ swap action:write-byte
-	curasm@ <<linker
-	loc1+ ;
-: <<word ( value id -- )
-	loc@ swap action:write-word
-	curasm@ <<linker loc2+ ;
-: <<ientry ( value id -- )
-	loc@ swap action:indirect-entry
-	currasm@ <<linker ;
-: <<iword ( value id -- )
-	loc@ swap action:write-indirect-word
-	currasm@ <<linker loc2+ ;
-\ labels must be defined ahead of time before first reference
 : reset-labels ( -- ) 0 labelIndex ! ;
 : print-latest ( -- ) latest name>string type ;
 : print-new-label ( -- ) print-latest ." : " loc@ hex . ." , index#: " labelindex @ . cr ;
@@ -206,35 +184,38 @@ labelIndex @ addr32 , labelIndex @ 1+ labelIndex !
 iris-debug @ if print-new-label then
 does> @ ;
 
+: <<linker ( entry id -- ) 
+  iris-debug @ if ." address: " hex loc@ . ." : " over hex . cr decimal then
+  hex dup >r nout s" " r> write-line throw decimal ;
+: <<byte ( value -- )
+	loc@ action:write-byte
+	curasm@ <<linker
+	loc1+ ;
+: <<word ( value -- )
+	addr16 loc@ action:write-word
+	curasm@ <<linker loc2+ ;
+: <<ientry ( value -- )
+	loc@ action:indirect-entry
+	curasm@ <<linker ;
+: <<iword ( value -- )
+	loc@ action:write-indirect-word
+	curasm@ <<linker loc2+ ;
+\ labels must be defined ahead of time before first reference
 : .org ( n -- ) loc! ;
-: .label ( label -- ) iris-debug @ if dup >r then curasm@ <<label iris-debug @ if r> ." emit label: " . cr then ;
+: .label ( label -- ) <<ientry ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
-: .data16 ( imm id -- ) swap addr16 swap curasm@ swap 0= if <<mem else <<imem endif ;
-: {asm ( path -- ) 
-  w/o create-file throw curasm! 
-  reset-labels ;
+: .data16 ( imm id -- ) #, = if <<word else <<iword endif ;
+: {asm ( path -- ) w/o create-file throw curasm! reset-labels ;
 : asm} ( -- ) curasm@ close-file throw clearasm ;
 
 {registers
-register: x0
-register: x1
-register: x2
-register: x3
-register: x4
-register: x5
-register: x6
-register: x7
-register: x8
-register: x9
-register: x10
-register: x11
-register: x12
-register: x13
-register: x14
-register: x15
+register:  x0 register:  x1 register:  x2 register:  x3 
+register:  x4 register:  x5 register:  x6 register:  x7 
+register:  x8 register:  x9 register: x10 register: x11
+register: x12 register: x13 register: x14 register: x15
 registers}
-16 constant num-registers 
+decimal 16 constant num-registers 
 : too-many-registers-defined ( addr -- ) num-registers >= ABORT" To many registers used!" ;
 : 1+cconstant ( n "name" -- ) dup cconstant 1+ ;
 x0 1+cconstant zero
@@ -243,31 +224,32 @@ x0 1+cconstant zero
 1+cconstant io
 1+cconstant unused-start
 too-many-registers-defined
-: emit-opcode ( addr -- ) @ <<byte ;
+: <<opcode ( value -- ) <<byte ;
+: <<@opcode ( addr -- ) @ <<opcode ;
 : inst-0reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> emit-opcode ;
+  does> <<@opcode ;
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> ( dest addr -- )
-	emit-opcode
+	<<@opcode
 	1reg <<byte ;
 : inst-2reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> ( src dest -- )
-	emit-opcode
+	<<@opcode
 	2reg <<byte ;
 : inst-3reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> ( src2 src dest addr -- )
-  	emit-opcode
+  	<<@opcode
 	3reg ( r2 r1 )
 	<<byte ( r2 )
 	<<byte ;
 : inst-4reg ( opcode-index "name" -- )
   create c, \ embed opcode
   does> ( src3 src2 src dest addr -- )
-		emit-opcode
+		<<@opcode
 		4reg ( r2 r1 )
 		<<byte
 		<<byte ;
