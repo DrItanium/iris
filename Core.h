@@ -181,40 +181,40 @@ namespace iris {
 			struct OneRegister { 
 				OneRegister() = default;
 				~OneRegister() = default;
-				Register& dest = nullReg;
+                std::reference_wrapper<Register> dest = nullReg;
 			};
 			struct TwoRegister {
 				TwoRegister() = default;
 				~TwoRegister() = default;
-				Register& dest = nullReg;
-				Register& src = nullReg;;
+                std::reference_wrapper<Register> dest = nullReg;
+				std::reference_wrapper<Register> src = nullReg;
 			};
 			struct ThreeRegister {
 				ThreeRegister() = default;
 				~ThreeRegister() = default;
-                Register& dest = nullReg;
-                Register& src = nullReg;
-                Register& src2 = nullReg;
+                std::reference_wrapper<Register> dest = nullReg;
+                std::reference_wrapper<Register> src = nullReg;
+                std::reference_wrapper<Register> src2 = nullReg;
 			};
             struct FourRegister {
 				FourRegister() = default;
 				~FourRegister() = default;
-                Register& dest = nullReg;
-                Register& src = nullReg;
-                Register& src2 = nullReg;
-                Register& src3 = nullReg;
+                std::reference_wrapper<Register> dest= nullReg;
+                std::reference_wrapper<Register> src= nullReg;
+                std::reference_wrapper<Register> src2= nullReg;
+                std::reference_wrapper<Register> src3= nullReg;
             };
 			struct OneRegisterWithImmediate {
 				OneRegisterWithImmediate() = default;
 				~OneRegisterWithImmediate() = default;
-                Register& dest = nullReg;
+                std::reference_wrapper<Register> dest = nullReg ;
 				Address imm;
 			};
 			struct TwoRegisterWithImmediate {
 				TwoRegisterWithImmediate() = default;
 				~TwoRegisterWithImmediate() = default;
-                Register& dest = nullReg;
-                Register& src = nullReg;
+                std::reference_wrapper<Register> dest = nullReg;
+                std::reference_wrapper<Register> src = nullReg;
                 union {
                     Address addr;
                     Integer imm;
@@ -222,8 +222,7 @@ namespace iris {
 			};
 #define X(title, style) \
 			struct title final : style { \
-				title ( ) { } \
-				constexpr Opcode opcode() const noexcept { return Opcode :: title ; } \
+                using style::style; \
             } ; 
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
@@ -255,16 +254,10 @@ namespace iris {
 			DecodedInstruction decodeInstruction();
 		private:
 			Register& getRegister(RegisterIndex reg) noexcept;
-			Number pop(RegisterIndex reg) noexcept;
-			void push(RegisterIndex reg, Number value) noexcept;
-            template<typename T>
-            void pushDestination(const T& value, Number n) noexcept {
-                push(value._args.dest, n);
-            }
-            template<typename T>
-            Number popDestination(const T& value) noexcept {
-                return pop(value._args.dest);
-            }
+			byte pop(Register& reg) noexcept;
+			Number popNumber(Register& reg) noexcept;
+			void push(Register& reg, byte value) noexcept;
+			void pushNumber(Register& reg, Number value) noexcept;
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
 			void store(Address addr, byte value, bool unmapIOSpace = false) noexcept;

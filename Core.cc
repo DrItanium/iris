@@ -121,7 +121,9 @@ namespace iris {
         Core::DecodedInstruction tmp;
         ++_pc;
         switch (control) {
-#define X(title, style) case Opcode :: title : tmp = Core::title () ; break;
+#define X(title, style) case Opcode :: title : \
+            tmp = Core:: title () ; \
+            break;
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
@@ -141,16 +143,29 @@ namespace iris {
     Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
-	void Core::push(RegisterIndex index, Number value) noexcept {
-		Address stackAddress = getRegister(index).get<Address>() - 1;
-		store(stackAddress, value);
-		setRegister(index, stackAddress);
+    void Core::push(Register& value, byte value) noexcept {
+        auto addr = value.get<Address>() - 1;
+        store(addr, value);
+        value.setValue(addr);
+    }
+	void Core::pushNumber(Register& index, Number value) noexcept {
+        auto addr = index.get<Address>() - 2;
+        store(addr + 1, byte(value.address >> 8));
+        store(addr, byte(value.address));
+        value.setValue(addr);
 	}
-	Number Core::pop(RegisterIndex index) noexcept {
-		auto addr = getRegister(index).get<Address>();
-		auto result = load(addr);
-		setRegister(index, addr + 1);
-		return result;
+    byte Core::pop(Register& index) noexcept {
+        auto addr = index.get<Address>();
+        auto result = load(addr);
+        index.setValue(addr + 1);
+        return result;
+    }
+	Number Core::popNumber(Register& index) noexcept {
+        auto addr = index.get<Address>();
+        auto lower = load(addr);
+        auto upper = load(addr + 1);
+		setRegister(index, addr + 2);
+		return makeImmediate16(lower, upper);
 	}
 #define DefExec(title) \
     void Core::perform ( const Core:: title & op ) 
