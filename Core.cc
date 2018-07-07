@@ -522,7 +522,7 @@ namespace iris {
     bool Core::IODevice::respondsTo(Address addr) const noexcept {
         return (addr >= _begin) && (addr < _end);
     }
-    Address readFromStandardIn(Address index) {
+    byte readFromStandardIn(Address index) {
         if (index == 0) {
 			auto result = std::cin.get();
             return Address(byte(char(result)));
@@ -531,7 +531,7 @@ namespace iris {
             return 0;
         }
     }
-    void writeToStandardOut(Address index, Address value) {
+    void writeToStandardOut(Address index, byte value) {
         if (index == 0) {
             // print as char code
             std::cout << char(value);
@@ -555,66 +555,6 @@ namespace iris {
         // disable writing to register 0
         _registers[registerZero].setValue(0);
         _registers[registerZero].disableWrites();
-        // setup the basic IO device for console input output
-        auto selectCore = [this](auto index, auto value) {
-            // we use the index to determine what action to perform
-            std::stringstream fileName;
-            fileName << value; // the number becomes the filename to dump to disk
-            std::string path = fileName.str();
-            if (index == 0) {
-                // perform a dump to disk
-                std::ofstream outputFile(path);
-                // dump as plain text instead of binary encoding to prevent 
-                // encoding shenanigans and increase portability. 
-                //
-                // Also make git not view the file as a binary file
-                if (outputFile.is_open()) {
-                    for (int i = coreCacheStart; i < coreCacheEnd ; ++i) {
-                        outputFile << std::hex << _memory[i] << std::endl;
-                    }
-                }
-                outputFile.close();
-            } else if (index == 1) {
-                // load core from disk
-                std::ifstream inputFile(path);
-                if (inputFile.is_open()) {
-                    for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
-                        if (inputFile.eof()) {
-                            _memory[i] = 0;
-                        } else {
-                            inputFile >> std::hex >> _memory[i];
-                        }
-                    }
-                } else {
-                    for (int i = coreCacheStart; i < coreCacheEnd; ++i) {
-                        _memory[i] = 0;
-                    }
-                }
-                inputFile.close();
-            } else {
-                throw Problem("Unimplemented address!");
-            }
-        };
-        auto dumpVM = [this](auto index, auto value) {
-            if (index == 0) {
-                std::stringstream fileName;
-                fileName << "iris_" << std::hex << value << ".core";
-                auto path = fileName.str();
-                std::ofstream file(path, std::ofstream::trunc);
-                if (file.is_open()) {
-                    dump(file);
-                    file.close();
-                } else {
-                    file.close();
-                    std::stringstream msg;
-                    msg << "Could not dump memory to " << path;
-                    auto errmsg = msg.str();
-                    throw Problem(errmsg);
-                }
-            } else {
-                throw Problem("Unimplemented address!");
-            }
-        };
 		auto terminateVM = [this](auto index, auto value) {
 			if (index == 0) {
 				_keepExecuting = value != 0;
@@ -624,25 +564,10 @@ namespace iris {
 		};
         IODevice sink(ioSpaceStart);
         IODevice console(sink.getEnd(), 3, readFromStandardIn, writeToStandardOut);
-        IODevice coreManipulator(console.getEnd(), 2, nullptr, selectCore);
-        IODevice vmDumper(coreManipulator.getEnd(), 1, nullptr, dumpVM);
-		IODevice vmTerminator(vmDumper.getEnd(),1, nullptr, terminateVM);
-        IODevice registerInspector(vmTerminator.getEnd(),1, nullptr, [this](auto index, auto value) {
-                        auto maskedIndex = byte(0b111111 & value);
-                        std::cout << "r" << std::setfill('0') << std::setw(2) << std::dec << int(maskedIndex) << ": " << std::setfill('0') << std::setw(4) << std::hex << getRegister(maskedIndex).get<Address>();
-                    });
-		IODevice hexPrinter(registerInspector.getEnd(),1, nullptr, [](auto index, auto value) { std::cout << std::hex << value; });
-		IODevice decPrinter(hexPrinter.getEnd(), 1, nullptr, [](auto index, auto value) { std::cout << std::dec << value; });
-		IODevice octPrinter(decPrinter.getEnd(), 1, nullptr, [](auto index, auto value) { std::cout << std::oct << value; });
+		IODevice vmTerminator(console.getEnd(),1, nullptr, terminateVM);
         installIODevice(sink);
         installIODevice(console);
-        installIODevice(coreManipulator);
-        installIODevice(vmDumper);
 		installIODevice(vmTerminator);
-        installIODevice(registerInspector);
-		installIODevice(hexPrinter);
-		installIODevice(decPrinter);
-		installIODevice(octPrinter);
     }
     void Core::shutdown() {
 
