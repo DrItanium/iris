@@ -72,15 +72,18 @@ namespace iris {
         // go to the next instruction
     }
     void Core::decodeArguments(const Core::OneRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
     }
     void Core::decodeArguments(const Core::TwoRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
         _src = getRegister(getUpperIndex(i));
     }
     void Core::decodeArguments(const Core::ThreeRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
         _src = getRegister(getUpperIndex(i));
@@ -89,6 +92,7 @@ namespace iris {
         _src2 = getRegister(getLowerIndex(i));
     }
     void Core::decodeArguments(const Core::FourRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
         _src = getRegister(getUpperIndex(i));
@@ -98,6 +102,7 @@ namespace iris {
         _src3 = getRegister(getUpperIndex(i));
     }
     void Core::decodeArguments(const Core::OneRegisterWithImmediate&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
         ++_pc;
@@ -107,6 +112,7 @@ namespace iris {
         _imm = makeImmediate16(lower, upper);
     }
     void Core::decodeArguments(const Core::TwoRegisterWithImmediate&) noexcept {
+        ++_pc;
         auto i = load(_pc);
         _dest = getRegister(getLowerIndex(i));
         _src = getRegister(getUpperIndex(i));
@@ -117,6 +123,7 @@ namespace iris {
         _imm = makeImmediate16(lower, upper);
     }
 	void Core::decodeArguments(const Core::WideTwoRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
 		auto lower = getLowerIndex(i);
 		auto upper = getUpperIndex(i);
@@ -126,6 +133,7 @@ namespace iris {
         _srcNext = getRegister(upper + 1);
 	}
     void Core::decodeArguments(const Core::WideThreeRegister&) noexcept {
+        ++_pc;
         auto i = load(_pc);
 		auto lower = getLowerIndex(i);
 		auto upper = getUpperIndex(i);
@@ -452,7 +460,6 @@ namespace iris {
 
     void Core::cycle() {
         auto control = static_cast<Opcode>(load(_pc));
-        ++_pc;
         switch (control) {
 #define X(title, style) case Opcode :: title : \
             decodeArguments(Core::title () ); \
