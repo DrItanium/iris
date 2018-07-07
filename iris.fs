@@ -158,6 +158,7 @@ opcode: #stbu
 opcode: #ldbl
 opcode: #stbl
 opcode: #nop
+opcode: #setb
 opcode}
 \ registers
 set-current \ go back
@@ -311,10 +312,18 @@ if
 		over 0= if 
 				nip zero swap move, 
 			else
-				\ its not a zero so instead we should do the normal set action
-				#set <<byte \ first emit a set operation, just do it
-				1reg <<byte \ emit the destination
-				<<word \ emit the word operation
+				\ check and see if the value is less than or equal to 0xFF
+				over 0xFF <= if 
+					\ emit set byte instead of a full set to save space
+					#setb <<byte
+					1reg <<byte
+					0xFF and <<byte
+				else
+					\ its not a zero so instead we should do the normal set action
+					#set <<byte \ first emit a set operation, just do it
+					1reg <<byte \ emit the destination
+					<<word \ emit the word operation
+				then
 			then
 	else
 		#set <<byte \ first emit a set operation, just do it
@@ -376,7 +385,6 @@ if
 	<<?word ;
 : #bc, ( imm dest -- ) #, swap bc, ;
 : ??bc, ( imm dest -- ) ??, swap bc, ;
-
 : def2argi ( "name" "op" -- )
   create ' , 
   does> ( imm id dest -- n set-op )

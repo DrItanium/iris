@@ -73,8 +73,7 @@ namespace iris {
     }
     void Core::decodeArguments(const Core::OneRegister&) noexcept {
         ++_pc;
-        auto i = load(_pc);
-        _dest = getRegister(getLowerIndex(i));
+        _dest = getRegister(getLowerIndex(load(_pc)));
     }
     void Core::decodeArguments(const Core::TwoRegister&) noexcept {
         ++_pc;
@@ -147,6 +146,12 @@ namespace iris {
         _src2 = getRegister(lower);
 		_src2Next = getRegister(lower + 1);
     }
+	void Core::decodeArguments(const Core::OneRegisterWithByte&) noexcept {
+		++_pc;
+		_dest = getRegister(getLowerIndex(load(_pc)));
+		++_pc;
+		_half = load(_pc);
+	}
     Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
@@ -454,6 +459,9 @@ namespace iris {
 		store(_dest.get<Address>(), byte(_src.get<Address>() >> 8));
 	}
 	DefExec(Nop) { }
+	DefExec(SetByte) {
+		_dest.setValue(_half);
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
