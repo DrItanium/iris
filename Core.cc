@@ -416,17 +416,17 @@ namespace iris {
 		_dest.setValue(Integer(result));
 		_destNext.setValue(Integer(result >> 16));
     }
-    // DefExec(WideStore) {
-    //     auto dest = getDestination(op).address;
-    //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
-    //     store(dest, Number(Address(src)));
-    //     store(dest+1, Number(Address(src >> 16)));
-    // }
-    // DefExec(WideLoad) {
-    //     auto src = getSource(op).address;
-    //     setDestination(op, load(src));
-    //     setRegister(op.dest + 1, load(src + 1));
-    // }
+    DefExec(WideStore) {
+		auto dest = _dest.get<Address>();
+        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        storeNumber(dest, Address(src));
+        storeNumber(dest+1, Address(src >> 16));
+    }
+	DefExec(WideLoad) {
+		auto src = _src.get<Address>();
+		_dest.setValue(loadNumber(src));
+		_destNext.setValue(loadNumber(src + 1));
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
