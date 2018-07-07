@@ -315,50 +315,50 @@ namespace iris {
         auto upper = load(addr + 1, unmapIO);
         return makeImmediate16(lower, upper);
 	}
-	// DefExec(Increment) { setDestination(op, getSource(op).integer + 1); }
-	// DefExec(Decrement) { setDestination(op, getSource(op).integer - 1); }
-	// DefExec(UnsignedIncrement) { setDestination(op, getSource(op).address + 1); }
-	// DefExec(UnsignedDecrement) { setDestination(op, getSource(op).address - 1); }
-	// DefExec(Call) {
-	// 	push(op.dest, _pc);
-    //     _pc = op.imm;
-	// }
-	// DefExec(ConditionalBranch) {
-	// 	if (getDestination(op).getTruth()) {
-	// 		_pc = op.imm;
-	// 	}
-	// }
-    // DefExec(AddImmediate) { setDestination(op, getSource(op).integer + op.imm); }
-    // DefExec(SubImmediate) { setDestination(op, getSource(op).integer - op.imm); }
-    // DefExec(RightShiftImmediate) { setDestination(op, getSource(op).integer >> op.imm); }
-    // DefExec(LeftShiftImmediate) { setDestination(op, getSource(op).integer << op.imm); }
-    // DefExec(LoadThenIncrement) {
-    //     Core::Load ld;
-    //     ld.dest = op.dest;
-    //     ld.src = op.src;
-    //     perform(ld);
-    //     Core::Increment incr;
-    //     incr.dest = op.src;
-    //     incr.src = op.src;
-    //     perform(incr);
-    // }
-    // DefExec(LessThanImmediate) { 
-    //     setDestination(op, getSource(op).integer < op.imm); 
-    // }
-    // DefExec(Move) {
-    //     setDestination(op, getSource(op).address);
-    // }
-    // DefExec(StoreThenIncrement) {
-    //     Core::Store st;
-    //     st.dest = op.dest;
-    //     st.src = op.src;
-    //     perform(st);
-    //     Core::Increment incr;
-    //     // increment the destination this time
-    //     incr.dest = op.dest;
-    //     incr.src = op.dest;
-    //     perform(incr);
-    // }
+    DefExec(Increment) { _dest.setValue(_src.get<Integer>() + 1); }
+    DefExec(Decrement) { _dest.setValue(_src.get<Integer>() - 1); }
+    DefExec(UnsignedIncrement) { _dest.setValue(_src.get<Address>() + 1); }
+    DefExec(UnsignedDecrement) { _dest.setValue(_src.get<Address>() - 1); }
+    DefExec(Call) { 
+        push(_dest, _pc);
+        _pc = _addr;
+    }
+    DefExec(ConditionalBranch) {
+        if (_dest.get<bool>()) {
+            _pc = _addr;
+        }
+    }
+#define DefBinaryOpImmediate(opc, action, x, ifield) \
+    DefExec(opc) { \
+        _dest.setValue(_src.get<x>() action ifield); \
+    }
+#define DefBinaryOpImmediateInteger(opc, action) DefBinaryOpImmediate(opc, action, Integer, _imm)
+    DefBinaryOpImmediateInteger(AddImmediate, +);
+    DefBinaryOpImmediateInteger(SubImmediate, -);
+    DefBinaryOpImmediateInteger(RightShiftImmediate, >>);
+    DefBinaryOpImmediateInteger(LeftShiftImmediate, <<);
+    DefBinaryOpImmediateInteger(LessThanImmediate, <);
+    DefExec(Move) { _dest.setValue(_src.get<Address>()); }
+    DefExec(Return) {
+        // the destination is the return stack pointer to extract from
+        _pc = popNumber(_dest).address;
+    }
+    DefExec(ConditionalReturn) {
+        if (_src.get<bool>()) {
+            _pc = popNumber(_dest).address;
+        }
+    }
+    DefExec(LoadThenIncrement) {
+        auto addr = _src.get<Address>();
+        _dest.setValue(loadNumber(addr));
+        _src.setValue(addr + 1);
+    }
+    DefExec(StoreThenIncrement) {
+        auto addr = _dest.get<Address>();
+        auto val = _src.get<Address>();
+        storeNumber(addr, val);
+        _dest.setValue(addr + 1);
+    }
     // DefExec(WideAdd) {
     //     // the design means that x255 will couple with zero
     //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
@@ -388,15 +388,6 @@ namespace iris {
     //     auto lower = this->pop(op.src);
     //     setDestination(op, lower);
     //     setRegister(op.dest + 1, upper);
-    // }
-    // DefExec(Return) {
-    //     // the destination is the return stack pointer to extract from
-    //     _pc = this->pop(op.dest).address;
-    // }
-    // DefExec(ConditionalReturn) {
-    //     if (getSource(op).getTruth()) {
-    //         _pc = this->pop(op.dest).address;
-    //     }
     // }
     // DefExec(WideNegate) {
     //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
