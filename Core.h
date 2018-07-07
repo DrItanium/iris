@@ -154,16 +154,16 @@ namespace iris {
 							}
 						}, target);
 			}
-            using IOWriter = std::function<void(Address, Address)>;
-            using IOReader = std::function<Address(Address)>;
+            using IOWriter = std::function<void(Address, byte)>;
+            using IOReader = std::function<byte(Address)>;
             class IODevice {
                 public:
                     IODevice(Address responseBegin, Address length = 1, IOReader read = nullptr, IOWriter write = nullptr) : _begin(responseBegin), _end(responseBegin + length), _read(read), _write(write) { }
                     IODevice(const IODevice& other) : _begin(other._begin), _end(other._end), _read(other._read), _write(other._write) { }
                     ~IODevice() = default;
 					bool respondsTo(Address addr) const noexcept;
-                    Address read(Address addr) ;
-                    void write(Address addr, Address value) ;
+                    byte read(Address addr) ;
+                    void write(Address addr, byte value) ;
                     Address getEnd() const noexcept { return _end; }
                 private:
 					Address _begin;
@@ -174,60 +174,20 @@ namespace iris {
             void installIODevice(IODevice dev);
         private:
             static Register nullReg;
-		public:
-
-			// the different containers for instruction forms are defined here
-			struct NoArguments { };
-			struct OneRegister { 
-				OneRegister() = default;
-				~OneRegister() = default;
-                std::reference_wrapper<Register> dest = nullReg;
-			};
-			struct TwoRegister {
-				TwoRegister() = default;
-				~TwoRegister() = default;
-                std::reference_wrapper<Register> dest = nullReg;
-				std::reference_wrapper<Register> src = nullReg;
-			};
-			struct ThreeRegister {
-				ThreeRegister() = default;
-				~ThreeRegister() = default;
-                std::reference_wrapper<Register> dest = nullReg;
-                std::reference_wrapper<Register> src = nullReg;
-                std::reference_wrapper<Register> src2 = nullReg;
-			};
-            struct FourRegister {
-				FourRegister() = default;
-				~FourRegister() = default;
-                std::reference_wrapper<Register> dest= nullReg;
-                std::reference_wrapper<Register> src= nullReg;
-                std::reference_wrapper<Register> src2= nullReg;
-                std::reference_wrapper<Register> src3= nullReg;
-            };
-			struct OneRegisterWithImmediate {
-				OneRegisterWithImmediate() = default;
-				~OneRegisterWithImmediate() = default;
-                std::reference_wrapper<Register> dest = nullReg ;
-				Address imm;
-			};
-			struct TwoRegisterWithImmediate {
-				TwoRegisterWithImmediate() = default;
-				~TwoRegisterWithImmediate() = default;
-                std::reference_wrapper<Register> dest = nullReg;
-                std::reference_wrapper<Register> src = nullReg;
-                union {
-                    Address addr;
-                    Integer imm;
-                };
-			};
-#define X(title, style) \
-			struct title final : style { \
-                using style::style; \
-            } ; 
-#define FirstX(title, style) X(title, style)
+		private:
+            struct NoArguments { };
+            struct OneRegister { };
+            struct TwoRegister { };
+            struct ThreeRegister { };
+            struct FourRegister { };
+            struct OneRegisterWithImmediate { };
+            struct TwoRegisterWithImmediate { };
+#define FirstX(title, style) struct title final : style { };
+#define X(title, style) FirstX(title, style)
 #include "Opcodes.def"
-#undef FirstX
 #undef X
+#undef FirstX
+            
 			using DecodedInstruction = std::variant<
 #define FirstX(title, style) title
 #define X(title, style) ,title
@@ -235,7 +195,6 @@ namespace iris {
 #undef X
 #undef FirstX
 				>;
-		private:
 			// functions to contain the logic for each opcode
 			void dispatchInstruction(const DecodedInstruction& inst);
 #define X(title, style) void perform ( const title & value );
@@ -244,13 +203,13 @@ namespace iris {
 #undef X
 #undef FirstX
 		private:
-			void decodeArguments(NoArguments&) noexcept;
-			void decodeArguments(OneRegister&) noexcept;
-			void decodeArguments(TwoRegister&) noexcept;
-			void decodeArguments(ThreeRegister&) noexcept;
-			void decodeArguments(FourRegister&) noexcept;
-			void decodeArguments(OneRegisterWithImmediate&) noexcept;
-			void decodeArguments(TwoRegisterWithImmediate&) noexcept;
+			void decodeArguments(const NoArguments&) noexcept;
+			void decodeArguments(const OneRegister&) noexcept;
+			void decodeArguments(const TwoRegister&) noexcept;
+			void decodeArguments(const ThreeRegister&) noexcept;
+			void decodeArguments(const FourRegister&) noexcept;
+			void decodeArguments(const OneRegisterWithImmediate&) noexcept;
+			void decodeArguments(const TwoRegisterWithImmediate&) noexcept;
 			DecodedInstruction decodeInstruction();
 		private:
 			Register& getRegister(RegisterIndex reg) noexcept;
@@ -275,6 +234,15 @@ namespace iris {
 			RegisterFile _registers;
 			bool _keepExecuting = true;
             std::list<IODevice> _io;
+            // arguments as part of decoding
+            Register& _dest = nullReg;
+            Register& _src = nullReg;
+            Register& _src2 = nullReg;
+            Register& _src3 = nullReg;
+            union {
+                Address _addr;
+                Integer _imm;
+            };
 	};
 }
 #endif
