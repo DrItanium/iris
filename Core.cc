@@ -458,9 +458,10 @@ namespace iris {
         _io.emplace_back(dev);
     }
 
-    void Core::cycle() {
-        auto control = static_cast<Opcode>(load(_pc));
-        switch (control) {
+    void Core::execute() {
+        while(_keepExecuting) {
+        	auto control = static_cast<Opcode>(load(_pc));
+        	switch (control) {
 #define X(title, style) case Opcode :: title : \
             decodeArguments(Core::title () ); \
             ++_pc; \
@@ -470,23 +471,17 @@ namespace iris {
 #include "Opcodes.def"
 #undef X
 #undef FirstX
-            default:
-                std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
-                std::cout << "bad opcode " << int(control) << std::endl;
-                throw Problem("Illegal Opcode!");
-        }
-    }
-    void Core::execute() {
-        while(_keepExecuting) {
-            cycle();
+        	    default:
+        	        std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
+        	        std::cout << "bad opcode " << int(control) << std::endl;
+        	        throw Problem("Illegal Opcode!");
+        	}
         }
     }
 
     void Core::dump(std::ostream& out) {
 		for (int i = 0; i < (Core::maxAddress + 1); ++i) {
-			auto value = load(i, true);
-			out.put(decodeBits<Address, char, 0x00FF, 0>(value));
-			out.put(decodeBits<Address, char, 0xFF00, 8>(value));
+			out.put(load(i, true));
 		}
     }
     void Core::install(std::istream& in) {

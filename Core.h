@@ -225,8 +225,6 @@ namespace iris {
             byte load(Address addr, bool unmapIOSpace = false) noexcept;
             Number loadNumber(Address addr, bool unmapIOSpace = false) noexcept;
 		private:
-			void cycle();
-		private:
 			Address _pc;
             MemoryBlock16 _memory;
 			// IO space is special and is really a mapping to native goings
