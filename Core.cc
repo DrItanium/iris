@@ -371,36 +371,30 @@ namespace iris {
 		_dest.setValue(Integer(result));
 		_destNext.setValue(Integer(result >> 16));
     }
-    // DefExec(WidePush) {
-    //     // L SP -> ( -- L H ) 
-    //     auto lower = getSource(op);
-    //     auto upper = getRegister(op.src + 1).getValue();
-    //     push(op.dest, lower);
-    //     push(op.dest, upper);
-    // }
-    // DefExec(WidePop) {
-    //     // SP X ( L H -- ) L -> X, H -> (X + 1 | Y)
-    //     auto upper = this->pop(op.src);
-    //     auto lower = this->pop(op.src);
-    //     setDestination(op, lower);
-    //     setRegister(op.dest + 1, upper);
-    // }
-    // DefExec(WideNegate) {
-    //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
-    //     src = ~src;
-    //     setDestination(op, Integer(src));
-    //     setRegister(op.dest + 1, Integer(src >> 16));
-    // }
+    DefExec(WidePush) {
+        // L SP -> ( -- L H ) 
+        pushNumber(_dest, _src.getValue());
+        pushNumber(_dest, _srcNext.getValue());
+    }
+    DefExec(WidePop) {
+        // SP X ( L H -- ) L -> X, H -> (X + 1 | Y)
+		_destNext.setValue(popNumber(_src));
+		_dest.setValue(popNumber(_src));
+    }
+    DefExec(WideNegate) {
+        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        src = ~src;
+		_dest.setValue(Integer(src));
+		_destNext.setValue(Integer(src >> 16));
+    }
 
-    // DefExec(UMSMOD) {
-    //     // unsigned divide of a double by a single. Return mod and quotient
-    //     auto src = makeDoubleWideAddress(getSource(op).address, getRegister(op.src + 1).getValue().address);
-    //     auto src2 = DoubleWideAddress(getSource2(op).address);
-    //     DoubleWideAddress quotient = src2 == 0 ? 0 : src / src2;
-    //     DoubleWideAddress remainder = src2 == 0 ? 0 : src % src2;
-    //     setDestination(op, Address(quotient));
-    //     setRegister(op.dest + 1, Address(remainder));
-    // }
+    DefExec(UMSMOD) {
+        // unsigned divide of a double by a single. Return mod and quotient
+        auto src = makeDoubleWideAddress(_src.get<Address>(), _srcNext.get<Address>());
+        auto src2 = DoubleWideAddress(_src2.get<Address>());
+		_dest.setValue(Address(src2 == 0 ? 0 : src / src2)); // quotient
+		_destNext.setValue(Address(src2 == 0 ? 0 : src % src2)); // remainder
+    }
     // DefExec(MSMOD) {
     //     // signed floored divide of a double by double. Return mod and quotient
     //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
