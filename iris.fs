@@ -43,17 +43,10 @@ variable mloc \ current memory location
   r>
   0xFF and \ compute the low piece 
   ;
-: imm12 ( imm12 -- value ) addr12 20 lshift ;
 : 2reg-imm16 ( imm16 src dest -- h l regs ) 2reg >r imm16 r> ;
 : 1reg-imm16 ( imm16 dest -- h l regs ) 1reg >r imm16 r> ;
 
 : cconstant ( byte "name" -- ) create c, does> c@ ;
-: xop& ( n a -- k ) c@ or ;
-0 constant MemorySpace
-1 constant InstructionSpace 
-2 constant LabelSpace
-3 constant IndirectInstructionSpace
-4 constant IndirectMemorySpace
 
 
 : linker-entry ( kind address value -- n ) 
@@ -64,10 +57,16 @@ variable mloc \ current memory location
   0xFF and ( v3 a1 k8 )
   or ( v3 n )
   or ( n ) ;
-: def-space-entry ( value "name" -- )
+: def-linker-action ( value "name" -- )
   create c, 
   does> ( addr value -- n )
   @ -rot linker-entry ;
+0 constant ByteWrite
+1 constant WordWrite
+2 constant IndirectEntry
+3 constant IndirectWordWrite
+
+
 : {registers ( -- 0 ) 0 ;
 : registers} ( n -- ) drop ;
 : register: dup cconstant 1+ ;
@@ -158,59 +157,44 @@ opcode: #ldbu
 opcode: #stbu
 opcode: #ldbl
 opcode: #stbl
+opcode: #nop
 opcode}
 \ registers
 set-current \ go back
 
+ByteWrite def-linker-action action:write-byte
+WordWrite def-linker-action action:write-word
+IndirectEntry def-linker-action action:indirect-entry
+IndirectWordWrite def-linker-action action:write-indirect-word
 
-MemorySpace def-space-entry memory-entry
-InstructionSpace def-space-entry instruction-entry
-LabelSpace def-space-entry label-entry 
-IndirectInstructionSpace def-space-entry indirect-instruction-entry 
-IndirectMemorySpace def-space-entry indirect-memory-entry
 variable CurrentAssemblyFile
 
 : curasm@ ( -- file ) CurrentAssemblyFile @ ;
 : curasm! ( n -- ) CurrentAssemblyFile ! ;
+: clearasm ( -- ) 0 curasm! ;
+
 : <<linker ( entry id -- ) 
   iris-debug @ if ." address: " hex loc@ . ." : " over hex . cr decimal then
-  hex
-  dup >r
-  nout
-  s" " r> write-line throw decimal ;
-: clearasm ( -- ) 0 curasm! ;
-: <<inst ( inst id -- ) 
-  \ ." instruction "
-  loc@ swap instruction-entry
-  curasm@ <<linker 
-  loc2+ \ each instruction is two entries
-  ;
-: <<iinst ( inst id -- ) 
-  \ ." indirect instruction "
-  loc@ swap indirect-instruction-entry
-  curasm@ <<linker 
-  loc2+ \ each instruction is two entries
-  ;
-: <<mem ( value id -- )
-  \ ." memory value "
-  >r
-  loc@ swap memory-entry
-  r> <<linker loc1+ ;
-: <<imem ( value id -- )
-  \ ." indirect memory value "
-  >r
-  loc@ swap indirect-memory-entry
-  r> <<linker loc1+ ;
-: <<label ( index id -- ) 
-  \ ." label declaration "
-  >r
-  loc@ swap label-entry
-  r> <<linker ;
+  hex dup >r nout s" " r> write-line throw decimal ;
+: <<byte ( value id -- )
+	loc@ swap action:write-byte
+	curasm@ <<linker
+	loc1+ ;
+: <<word ( value id -- )
+	loc@ swap action:write-word
+	curasm@ <<linker loc2+ ;
+: <<ientry ( value id -- )
+	loc@ swap action:indirect-entry
+	currasm@ <<linker ;
+: <<iword ( value id -- )
+	loc@ swap action:write-indirect-word
+	currasm@ <<linker loc2+ ;
 \ labels must be defined ahead of time before first reference
 : reset-labels ( -- ) 0 labelIndex ! ;
 : print-latest ( -- ) latest name>string type ;
 : print-new-label ( -- ) print-latest ." : " loc@ hex . ." , index#: " labelindex @ . cr ;
-: deflabel ( "name" -- ) create labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! 
+: deflabel ( "name" -- ) create 
+labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! 
 iris-debug @ if print-new-label then
 does> @ ;
 
@@ -251,35 +235,39 @@ x0 1+cconstant zero
 1+cconstant io
 1+cconstant unused-start
 too-many-registers-defined
-: inst-no-reg ( opcode-index "name" -- )
+: emit-opcode ( addr -- ) @ <<byte ;
+: inst-0reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> @ <<inst ;
+  does> emit-opcode ;
 : inst-1reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> >r 
-        1reg
-        r> xop& <<inst ;
+  does> ( dest addr -- )
+	emit-opcode
+	1reg <<byte ;
 : inst-2reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> >r
-        2reg
-        r> xop& <<inst ;
+  does> ( src dest -- )
+	emit-opcode
+	2reg <<byte ;
 : inst-3reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> >r 
-        3reg 
-		r> xop& <<inst ;
+  does> ( src2 src dest addr -- )
+  	emit-opcode
+	3reg ( r2 r1 )
+	<<byte ( r2 )
+	<<byte ;
 : inst-4reg ( opcode-index "name" -- )
   create c, \ embed opcode
-  does> >r 
-        4reg 
-		r> xop& <<inst ;
+  does> ( src3 src2 src dest addr -- )
+		emit-opcode
+		4reg ( r2 r1 )
+		<<byte
+		<<byte ;
        
 
 #add inst-3reg add, 
 #move inst-2reg move,
-
-: nop, ( -- ) zero zero move, ;
+#nop inst-0reg nop,
 : -> ( src dest -- ) move, ;
 \ constant tagging version
 \ #, is a constant version
@@ -317,22 +305,26 @@ if
 	endif 
 	;
 : set, ( imm imm-type dest -- )
-  1reg #set or ( imm it v ) 
-  rot ( it v imm )  
-  imm16 or swap ( v it )
-  ?choose-instruction-kind ;
+	swap #, = 
+	if 
+		\ if we get a zero then do a move instead
+		over 0= if 
+				nip zero swap move, 
+			else
+				\ its not a zero so instead we should do the normal set action
+				#set <<byte \ first emit a set operation, just do it
+				1reg <<byte \ emit the destination
+				<<word \ emit the word operation
+			then
+	else
+		#set <<byte \ first emit a set operation, just do it
+		1reg <<byte \ emit the destination
+		<<iword \ emit the indirect word operation
+	then ;
+: #set, ( imm dest -- ) #, swap set, ;
+: ??set, ( imm dest -- ) ??, swap set, ;
 \ only known constants here!
 : ?imm0 ( imm v -- imm v f ) over 0= ;
-: #set, ( imm dest -- ) 
-  ?imm0
-  if 
-    \ emit a move zero if it turns out we are looking at a constant zero
-    \ zero and 0 translate to the same thing
-    move,
-  else 
-    #, swap set, \ otherwise emit as normal
-  endif ;
-: ??set, ( imm dest -- ) ??, swap set, ;
 : $-> ( imm id dest -- n ) set, ;
 : $->at0 ( imm id -- n ) at0 $-> ;
 : $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
@@ -358,8 +350,6 @@ if
 #uor inst-3reg uor,
 #unegate inst-2reg unegate,
 #uxor inst-3reg uxor,
-\ #unand inst-3reg unand,
-\ #unor inst-3reg unor,
 #umin inst-3reg umin,
 #umax inst-3reg umax,
 #uadd inst-3reg uadd,
@@ -369,48 +359,22 @@ if
 #urem inst-3reg urem,
 #ulshift inst-3reg ulshift,
 #urshift inst-3reg urshift, 
-\ #readtok inst-2reg readtok,
-\ #number inst-3reg number,
 #incr inst-2reg incr,
 #decr inst-2reg decr,
 #uincr inst-2reg uincr,
 #udecr inst-2reg udecr,
-: bl, ( imm imm-type dest -- )
-  1reg #call
-  or ( imm it v ) 
-  rot ( it v imm )  
-  imm16
-  or 
-  swap ( v it )
-  ?choose-instruction-kind ;
-: #bl, ( imm dest -- ) 
-  ?imm0
-  if 
-    \ emit a move zero if it turns out we are looking at a constant zero
-    \ zero and 0 translate to the same thing
-    move,
-  else 
-    #, swap bl, \ otherwise emit as normal
-  endif ;
-: ??bl, ( imm dest -- ) ??, swap bl, ;
-
-: bc, ( imm imm-type dest -- )
-  1reg #condb
-  or ( imm it v ) 
-  rot ( it v imm )  
-  imm16
-  or 
-  swap ( v it )
-  ?choose-instruction-kind ;
-: #bc, ( imm dest -- ) 
-  ?imm0
-  if 
-    \ emit a move zero if it turns out we are looking at a constant zero
-    \ zero and 0 translate to the same thing
-    move,
-  else 
-    #, swap bc, \ otherwise emit as normal
-  endif ;
+: <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
+: call, ( imm imm-type dest -- )
+	#call <<byte
+	1reg <<byte
+	<<?word ;
+: #call, ( imm dest -- ) #, swap call, ;
+: ??call, ( imm dest -- ) ??, swap call, ;
+: bc, ( imm imm-type cond -- )
+	#condb <<byte \ conditional
+	1reg <<byte \ conditional
+	<<?word ;
+: #bc, ( imm dest -- ) #, swap bc, ;
 : ??bc, ( imm dest -- ) ??, swap bc, ;
 
 : def2argi ( "name" "op" -- )

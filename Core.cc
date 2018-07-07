@@ -453,6 +453,7 @@ namespace iris {
 		// store the upper half of a register to the given address
 		store(_dest.get<Address>(), byte(_src.get<Address>() >> 8));
 	}
+	DefExec(Nop) { }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
