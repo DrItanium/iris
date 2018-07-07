@@ -182,6 +182,8 @@ namespace iris {
             struct FourRegister { };
             struct OneRegisterWithImmediate { };
             struct TwoRegisterWithImmediate { };
+			struct WideThreeRegister { };
+			struct WideTwoRegister { };
 #define FirstX(title, style) struct title final : style { };
 #define X(title, style) FirstX(title, style)
 #include "Opcodes.def"
@@ -202,6 +204,8 @@ namespace iris {
 			void decodeArguments(const FourRegister&) noexcept;
 			void decodeArguments(const OneRegisterWithImmediate&) noexcept;
 			void decodeArguments(const TwoRegisterWithImmediate&) noexcept;
+			void decodeArguments(const WideTwoRegister&) noexcept;
+			void decodeArguments(const WideThreeRegister&) noexcept;
 		private:
 			Register& getRegister(RegisterIndex reg) noexcept;
 			byte pop(Register& reg) noexcept;
@@ -227,9 +231,13 @@ namespace iris {
             std::list<IODevice> _io;
             // arguments as part of decoding
             Register& _dest = nullReg;
+			Register& _destNext = nullReg;
             Register& _src = nullReg;
+			Register& _srcNext = nullReg;
             Register& _src2 = nullReg;
+			Register& _src2Next = nullReg;
             Register& _src3 = nullReg;
+			Register& _src3Next = nullReg;
             union {
                 Address _addr;
                 Integer _imm;

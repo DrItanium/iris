@@ -116,6 +116,29 @@ namespace iris {
         auto upper = load(_pc);
         _imm = makeImmediate16(lower, upper);
     }
+	void Core::decodeArguments(const Core::WideTwoRegister&) noexcept {
+        auto i = load(_pc);
+		auto lower = getLowerIndex(i);
+		auto upper = getUpperIndex(i);
+        _dest = getRegister(lower);
+		_destNext = getRegister(lower + 1);
+        _src = getRegister(upper);
+        _srcNext = getRegister(upper + 1);
+	}
+    void Core::decodeArguments(const Core::WideThreeRegister&) noexcept {
+        auto i = load(_pc);
+		auto lower = getLowerIndex(i);
+		auto upper = getUpperIndex(i);
+        _dest = getRegister(lower);
+		_destNext = getRegister(lower + 1);
+        _src = getRegister(upper);
+        _srcNext = getRegister(upper + 1);
+        ++_pc;
+        i = load(_pc);
+		lower = getLowerIndex(i);
+        _src2 = getRegister(lower);
+		_src2Next = getRegister(lower + 1);
+    }
     Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
@@ -333,22 +356,21 @@ namespace iris {
         storeNumber(addr, val);
         _dest.setValue(addr + 1);
     }
-    // DefExec(WideAdd) {
-    //     // the design means that x255 will couple with zero
-    //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
-    //     auto src2 = makeDoubleWideInteger(getSource2(op).integer, getRegister(op.src2 + 1).getValue().integer);
-    //     auto result = src + src2;
-    //     setDestination(op, Integer(result));
-    //     setRegister(op.dest + 1, Integer(result >> 16));
-    // }
-    // DefExec(WideSubtract) {
-    //     // the design means that x255 will couple with zero
-    //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
-    //     auto src2 = makeDoubleWideInteger(getSource2(op).integer, getRegister(op.src2 + 1).getValue().integer);
-    //     auto result = src - src2;
-    //     setDestination(op, Integer(result));
-    //     setRegister(op.dest + 1, Integer(result >> 16));
-    // }
+    DefExec(WideAdd) {
+        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        auto src2 = makeDoubleWideInteger(_src2.get<Integer>(), _src2Next.get<Integer>());
+        auto result = src + src2;
+		_dest.setValue(Integer(result));
+		_destNext.setValue(Integer(result >> 16));
+    }
+    DefExec(WideSubtract) {
+        // the design means that x255 will couple with zero
+        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        auto src2 = makeDoubleWideInteger(_src2.get<Integer>(), _src2Next.get<Integer>());
+        auto result = src - src2;
+		_dest.setValue(Integer(result));
+		_destNext.setValue(Integer(result >> 16));
+    }
     // DefExec(WidePush) {
     //     // L SP -> ( -- L H ) 
     //     auto lower = getSource(op);
