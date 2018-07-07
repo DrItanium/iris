@@ -395,30 +395,27 @@ namespace iris {
 		_dest.setValue(Address(src2 == 0 ? 0 : src / src2)); // quotient
 		_destNext.setValue(Address(src2 == 0 ? 0 : src % src2)); // remainder
     }
-    // DefExec(MSMOD) {
-    //     // signed floored divide of a double by double. Return mod and quotient
-    //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
-    //     auto src2 = DoubleWideInteger(getSource2(op).integer);
-    //     DoubleWideInteger quotient = src2 == 0 ? 0 : src / src2;
-    //     DoubleWideInteger remainder = src2 == 0 ? 0 : src % src2;
-    //     setDestination(op, Integer(quotient));
-    //     setRegister(op.dest + 1, Integer(remainder));
-    // }
-    // DefExec(UMSTAR) {
-    //     auto src = DoubleWideAddress(getSource(op).address);
-    //     auto src2 = DoubleWideAddress(getSource2(op).address);
-    //     auto result = src * src2;
-    //     setDestination(op, Address(result));
-    //     setRegister(op.dest + 1, Address(result >> 16));
-    // }
-    // DefExec(MSTAR) {
-    //     auto src = DoubleWideInteger(getSource(op).integer);
-    //     auto src2 = DoubleWideInteger(getSource2(op).integer);
-    //     auto result = src * src2;
-    //     setDestination(op, Integer(result));
-    //     setRegister(op.dest + 1, Integer(result >> 16));
-    // }
-    // 
+    DefExec(MSMOD) {
+        // signed floored divide of a double by double. Return mod and quotient
+        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        auto src2 = DoubleWideInteger(_src2.get<Integer>());
+		_dest.setValue(Integer(src2 == 0 ? 0 : src / src2)); // quotient
+		_destNext.setValue(Integer(src2 == 0 ? 0 : src % src2)); // remainder
+    }
+    DefExec(UMSTAR) {
+        auto src = DoubleWideAddress(_src.get<Address>());
+        auto src2 = DoubleWideAddress(_src2.get<Address>());
+        auto result = src * src2;
+		_dest.setValue(Address(result));
+		_destNext.setValue(Address(result >> 16));
+    }
+    DefExec(MSTAR) {
+        auto src = DoubleWideInteger(_src.get<Integer>());
+        auto src2 = DoubleWideInteger(_src2.get<Integer>());
+        auto result = src * src2;
+		_dest.setValue(Integer(result));
+		_destNext.setValue(Integer(result >> 16));
+    }
     // DefExec(WideStore) {
     //     auto dest = getDestination(op).address;
     //     auto src = makeDoubleWideInteger(getSource(op).integer, getRegister(op.src + 1).getValue().integer);
