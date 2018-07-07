@@ -334,8 +334,7 @@ if
 : ??set, ( imm dest -- ) ??, swap set, ;
 \ only known constants here!
 : ?imm0 ( imm v -- imm v f ) over 0= ;
-: $-> ( imm id dest -- n ) set, ;
-: $->at0 ( imm id -- n ) at0 $-> ;
+: $->at0 ( imm id -- n ) at0 set, ;
 : $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
 : $->at0-2arg ( imm id b -- at0 b )
   -rot ( b imm id )
@@ -385,6 +384,10 @@ if
 	<<?word ;
 : #bc, ( imm dest -- ) #, swap bc, ;
 : ??bc, ( imm dest -- ) ??, swap bc, ;
+: b, ( imm id -- ) zero bl, ;
+: #b, ( imm -- ) #, b, ;
+: ??b, ( imm -- ) ??, b, ;
+: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 : def2argi ( "name" "op" -- )
   create ' , 
   does> ( imm id dest -- n set-op )
@@ -402,8 +405,6 @@ if
   @ execute \ we should now have the argument correctly setup
   ;
 
-: b, ( imm id -- ) zero bl, ;
-: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 def3argi muli, mul,
 def3argi divi, div,
 def3argi remi, rem,
@@ -422,8 +423,6 @@ def3argi uremi, urem,
 def3argi uandi, uand,
 def3argi uori, uor,
 def3argi uxori, uxor,
-\ def3argi unori, unor,
-\ def3argi unandi, unand,
 def2argi unegatei, unegate,
 def3argi ueqi, ueq,
 def3argi uneqi, uneq, 
@@ -431,106 +430,8 @@ def3argi ulti, ult,
 def3argi ugti, ugt,
 def3argi ulei, ule,
 def3argi ugei, uge,
-: zero-instead, ( src dest -- ) swap drop zero swap -> ;
-: emit-2reg-imm12 ( imm12 src dest opcode -- ) >r 2reg-imm12 r> or <<inst ;
-: ?not-imm12 ( imm id -- imm id f ) over 0x0FFF > ;
-: 3insert# ( imm src dest -- imm # src dest ) 2>r #, 2r> ;
-: 3insert?? ( imm src dest -- imm # src dest ) 2>r ??, 2r> ;
-: addi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> add, ;
-: subi16, ( imm id src dest -- ) 2>r at0 set, at0 2r> sub, ;
-: lshifti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> lshift, ;
-: rshifti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> rshift, ;
-: addi12, ( imm src dest -- ) #addi emit-2reg-imm12 ;
-: subi12, ( imm src dest -- ) #subi emit-2reg-imm12 ;
-: rshifti4, ( imm src dest -- ) 2>r 0xF and 2r> #rshifti emit-2reg-imm12 ;
-: rshifti12, ( imm src dest -- ) 
-  2>r 
-  dup 0xF > 
-  if \ we are going to zero stuff out
-    drop 2r> zero-instead,
-  else
-    2r> rshifti4, 
-  endif ;
-: rshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> rshifti12, else 2r> rshifti16, endif ;
-: #rshifti, ( imm src dest -- ) 2>r #, 2>r rshifti, ;
-: ??rshifti, ( imm src dest -- ) 2>r ??, 2>r rshifti, ;
-
-: lshifti4, ( imm src dest -- ) 2>r 0xF and 2r> #lshifti emit-2reg-imm12 ;
-: lshifti12, ( imm src dest -- ) 
-  2>r 
-  dup 0xF > 
-  if \ we are going to zero stuff out
-    drop 2r> zero-instead,
-  else
-    2r> lshifti4, 
-  endif ;
-
-: lshifti, ( imm id src dest -- ) 2>r dup 0= if drop 2r> lshifti12, else 2r> lshifti16, endif ;
-: #lshifti, ( imm src dest -- ) 2>r #, 2>r lshifti, ;
-: ??lshifti, ( imm src dest -- ) 2>r ??, 2>r lshifti, ;
-
-: #muli, ( imm src dest -- )
-  rot dup 
-  case 
-    0 of drop zero-instead, endof 
-    1 of drop -> endof
-    2 of drop 1 -rot lshifti4, endof \ << 1
-    4 of drop 2 -rot lshifti4, endof \ << 2
-    8 of drop 3 -rot lshifti4, endof \ << 3
-    16 of drop 4 -rot lshifti4, endof \ << 4
-    32 of drop 5 -rot lshifti4, endof \ << 5
-    64 of drop 6 -rot lshifti4, endof \ << 6
-    128 of drop 7 -rot lshifti4, endof \ << 7
-    256 of drop 8 -rot lshifti4, endof \ << 8
-    512 of drop 9 -rot lshifti4, endof \ << 9
-    1024 of drop 10 -rot lshifti4, endof \ << 10
-    2048 of drop 11 -rot lshifti4, endof \ << 11
-    4096 of drop 12 -rot lshifti4, endof \ << 12
-    8192 of drop 13 -rot lshifti4, endof \ << 13
-    16384 of drop 14 -rot lshifti4, endof \ << 14
-    32768 of drop 15 -rot lshifti4, endof \ << 15
-    -rot 3insert# muli, 
-    endcase ;
 
 
-: addi, ( imm id src dest -- ) 
-  2>r dup 0= 
-      if \ check and make sure to only do this if we encounter 12-bit number
-         ?not-imm12
-         if 
-           2r> addi16, 
-         else 
-           drop dup ( imm ) 
-           case 
-              0 of drop 2r> -> endof
-              1 of drop 2r> incr, endof
-              2r> addi12,
-           endcase
-         endif
-      else 
-        2r> addi16,
-      endif ;
-: #addi, ( imm src dest -- ) 3insert# addi, ;
-: ??addi, ( imm src dest -- ) 3insert?? addi, ;
-
-: subi, ( imm id src dest -- ) 
-  2>r dup 0= 
-      if \ check and make sure to only do this if we encounter 12-bit number
-         ?not-imm12
-         if 
-           2r> subi16,
-         else 
-           drop dup ( imm ) 
-           case 
-              0 of drop 2r> -> endof
-              1 of drop 2r> decr, endof
-              2r> subi12,
-           endcase
-         endif
-      else 2r> subi16,
-      endif ;
-: #subi, ( imm src dest -- ) 3insert# subi, ;
-: ??subi, ( imm src dest -- ) 3insert?? subi, ;
 
 {ioaddr
 ioaddr: /dev/null 
@@ -546,32 +447,10 @@ ioaddr: /dev/hexprint
 ioaddr: /dev/decprint
 ioaddr: /dev/octprint
 ioaddr}
-: $->io ( imm id -- ) io $-> ;
-: #->io ( imm -- ) #, $->io ;
-: ??->io ( imm -- ) ??, $->io ;
 
-: io-write ( src -- ) io st, ;
-: io-read ( dest -- ) io swap ld, ;
 
 \ core routines
-: @-> ( a b -- ) 
-  \ the contents of the memory location word whose address is in register A
-  \ are loaded into register B (a 16-bit indirect fetch from A to B )
-  ld, ;
 
-: pop-> ( s a -- )
-  \ the S push down stack top entry is loaded to register A and the stack pointer
-  \ is adjusted
-  pop, ;
-
-: psh-> ( a s -- )
-\ the A register contents are loaded to the S pushdown stack and the stack 
-\ pointer is adjusted
-push, ;
-
-: jmp ( addr id -- ) b, ;
-: #jmp ( addr -- ) #, jmp ;
-: ??jmp ( addr -- ) ??, jmp ;
 : ldi, ( imm id dest -- ) >r $->at0 at0 r> ld, ;
 : #ldi, ( imm dest -- ) ?imm0 if ld, else #, swap ldi, endif ;
 : ??ldi, ( imm dest -- ) ??, swap ldi, ;
@@ -587,7 +466,6 @@ push, ;
 : ??def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r ??, swap 2r> @ execute ;
 
 ??def3i ??muli, muli,
-
 
 : #divi, ( imm src dest -- ) >r #, swap r> divi, ;
 : #remi, ( imm src dest -- ) >r #, swap r> remi, ;
