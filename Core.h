@@ -190,6 +190,7 @@ namespace iris {
 			struct WideThreeRegister { };
 			struct WideTwoRegister { };
             struct OneRegisterWithByte { };
+			struct ImmediateOnly { };
 #define FirstX(title, style) struct title final : style { };
 #define X(title, style) FirstX(title, style)
 #include "Opcodes.def"
@@ -213,6 +214,7 @@ namespace iris {
 			void decodeArguments(const WideTwoRegister&) noexcept;
 			void decodeArguments(const WideThreeRegister&) noexcept;
 			void decodeArguments(const OneRegisterWithByte&) noexcept; 
+			void decodeArguments(const ImmediateOnly&) noexcept;
 		private:
 			Register& getRegister(RegisterIndex reg) noexcept;
 			byte pop(Register& reg) noexcept;

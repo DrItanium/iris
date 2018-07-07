@@ -152,6 +152,13 @@ namespace iris {
 		++_pc;
 		_half = load(_pc);
 	}
+	void Core::decodeArguments(const Core::ImmediateOnly&) noexcept {
+		++_pc;
+		auto lower = load(_pc);
+		++_pc;
+		auto upper = load(_pc);
+		_addr = makeImmediate16(lower, upper);
+	}
     Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
@@ -461,6 +468,9 @@ namespace iris {
 	DefExec(Nop) { }
 	DefExec(SetByte) {
 		_dest.setValue(_half);
+	}
+	DefExec(Branch) {
+		_pc = _addr;
 	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {

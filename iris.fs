@@ -159,6 +159,7 @@ opcode: #ldbl
 opcode: #stbl
 opcode: #nop
 opcode: #setb
+opcode: #bi
 opcode}
 \ registers
 set-current \ go back
@@ -269,7 +270,6 @@ too-many-registers-defined
 #add inst-3reg add, 
 #move inst-2reg move,
 #nop inst-0reg nop,
-: -> ( src dest -- ) move, ;
 \ constant tagging version
 \ #, is a constant version
 : #, ( imm -- imm16 0 ) addr16 0 ; 
@@ -296,15 +296,12 @@ too-many-registers-defined
 #gt inst-3reg gt,
 #le inst-3reg le,
 #ge inst-3reg ge,
-: ?choose-instruction-kind ( v id -- ) 
-0= 
-if 
-( c ) 
-	<<inst 
-	else 
-	<<iinst 
-	endif 
-	;
+: eqz, ( value dest -- ) zero -rot eq, ;
+: neqz, ( value dest -- ) zero -rot neq, ;
+: gtz, ( value dest -- ) zero -rot gt, ;
+: ltz, ( value dest -- ) zero -rot lt, ;
+: gez, ( value dest -- ) zero -rot ge, ;
+: lez, ( value dest -- ) zero -rot le, ;
 : set, ( imm imm-type dest -- )
 	swap #, = 
 	if 
@@ -333,21 +330,53 @@ if
 : #set, ( imm dest -- ) #, swap set, ;
 : ??set, ( imm dest -- ) ??, swap set, ;
 \ only known constants here!
-: ?imm0 ( imm v -- imm v f ) over 0= ;
-: $->at0 ( imm id -- n ) at0 set, ;
-: $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 at0 2r> ;
+: $->at0 ( imm id -- at0 ) at0 set, at0 ;
+: $->at0-3arg ( imm id a b -- at0 a b ) 2>r $->at0 2r> ;
 : $->at0-2arg ( imm id b -- at0 b )
   -rot ( b imm id )
   $->at0 ( b )
-  at0 swap ( at0 b ) ;
+  swap ( at0 b ) ;
 #ld inst-2reg ld,
+: ldi, ( imm id dest -- ) >r $->at0 r> ld, ; 
+: #ldi, ( imm dest -- ) #, swap ldi, ;
+: ??ldi, ( imm dest -- ) ??, swap ldi, ;
 #st inst-2reg st,
+: sti, ( imm id addr -- ) >r $->at0 r> st, ;
+: #sti, ( imm addr -- ) #, swap sti, ;
+: ??sti, ( imm addr -- ) ??, swap sti, ;
+
 #push inst-2reg push,
+
+: pushi, ( imm id sp -- ) >r $->at0 r> push, ;
+: #pushi, ( imm sp -- ) #, swap pushi, ;
+: ??pushi, ( imm sp -- ) ??, swap pushi, ;
 #pop inst-2reg pop,
+
 #br inst-1reg br,
 #brl inst-2reg brl,
 #bcr inst-2reg bcr,
 #bcrl inst-3reg bcrl,
+
+: <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
+: call, ( imm imm-type dest -- )
+	#call <<byte
+	1reg <<byte
+	<<?word ;
+: #call, ( imm dest -- ) #, swap call, ;
+: ??call, ( imm dest -- ) ??, swap call, ;
+: bc, ( imm imm-type cond -- )
+	#condb <<byte \ conditional
+	1reg <<byte \ conditional
+	<<?word ;
+: #bc, ( imm dest -- ) #, swap bc, ;
+: ??bc, ( imm dest -- ) ??, swap bc, ;
+: b, ( imm id -- ) 
+  #bi <<byte
+  <<?word ;
+: #b, ( imm -- ) #, b, ;
+: ??b, ( imm -- ) ??, b, ;
+: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
+
 #ueq inst-3reg ueq,
 #uneq inst-3reg uneq,
 #ult inst-3reg ult,
@@ -371,23 +400,6 @@ if
 #decr inst-2reg decr,
 #uincr inst-2reg uincr,
 #udecr inst-2reg udecr,
-: <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
-: call, ( imm imm-type dest -- )
-	#call <<byte
-	1reg <<byte
-	<<?word ;
-: #call, ( imm dest -- ) #, swap call, ;
-: ??call, ( imm dest -- ) ??, swap call, ;
-: bc, ( imm imm-type cond -- )
-	#condb <<byte \ conditional
-	1reg <<byte \ conditional
-	<<?word ;
-: #bc, ( imm dest -- ) #, swap bc, ;
-: ??bc, ( imm dest -- ) ??, swap bc, ;
-: b, ( imm id -- ) zero bl, ;
-: #b, ( imm -- ) #, b, ;
-: ??b, ( imm -- ) ??, b, ;
-: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 : def2argi ( "name" "op" -- )
   create ' , 
   does> ( imm id dest -- n set-op )
@@ -451,17 +463,6 @@ ioaddr}
 
 \ core routines
 
-: ldi, ( imm id dest -- ) >r $->at0 at0 r> ld, ;
-: #ldi, ( imm dest -- ) ?imm0 if ld, else #, swap ldi, endif ;
-: ??ldi, ( imm dest -- ) ??, swap ldi, ;
-
-: sti, ( imm id addr -- ) >r $->at0 at0 r> st, ;
-: #sti, ( imm addr -- ) ?imm0 if st, else #, swap sti, endif ;
-: ??sti, ( imm addr -- ) ??, swap sti, ;
-
-: pushi, ( imm id sp -- ) >r $->at0 at0 r> push, ;
-: #pushi, ( imm sp -- ) ?imm0 if push, else #, swap pushi, endif ;
-: ??pushi, ( imm sp -- ) ??, swap pushi, ;
 
 : ??def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r ??, swap 2r> @ execute ;
 
@@ -476,21 +477,11 @@ ioaddr}
 : andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
 : ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
 : xori, ( imm id src dest -- ) 2>r $->at0 at0 2r> xor, ;
-\ : nandi, ( imm id src dest -- ) 2>r $->at0 at0 2r> nand, ;
-\ : nori, ( imm id src dest -- ) 2>r $->at0 at0 2r> nor, ;
 
-: eqz, ( value dest -- ) zero -rot eq, ;
-: neqz, ( value dest -- ) zero -rot neq, ;
-: gtz, ( value dest -- ) zero -rot gt, ;
-: ltz, ( value dest -- ) zero -rot lt, ;
-: gez, ( value dest -- ) zero -rot ge, ;
-: lez, ( value dest -- ) zero -rot le, ;
 
 ??def3i ??andi, andi, 
 ??def3i ??ori, ori, 
 ??def3i ??xori, xori, 
-\ ??def3i ??nandi, nandi, 
-\ ??def3i ??nori, nori, 
 : 1+, ( reg -- ) dup incr, ;
 : 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
