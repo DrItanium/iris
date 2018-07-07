@@ -173,30 +173,30 @@ namespace iris {
             };
             void installIODevice(IODevice dev);
         private:
-            Register nullReg;
+            static Register nullReg;
 		public:
 
 			// the different containers for instruction forms are defined here
-			struct NoArguments final { };
-			struct OneRegister final { 
+			struct NoArguments { };
+			struct OneRegister { 
 				OneRegister() = default;
 				~OneRegister() = default;
 				Register& dest = nullReg;
 			};
-			struct TwoRegister final {
+			struct TwoRegister {
 				TwoRegister() = default;
 				~TwoRegister() = default;
 				Register& dest = nullReg;
 				Register& src = nullReg;;
 			};
-			struct ThreeRegister final {
+			struct ThreeRegister {
 				ThreeRegister() = default;
 				~ThreeRegister() = default;
                 Register& dest = nullReg;
                 Register& src = nullReg;
                 Register& src2 = nullReg;
 			};
-            struct FourRegister final {
+            struct FourRegister {
 				FourRegister() = default;
 				~FourRegister() = default;
                 Register& dest = nullReg;
@@ -204,13 +204,13 @@ namespace iris {
                 Register& src2 = nullReg;
                 Register& src3 = nullReg;
             };
-			struct OneRegisterWithImmediate final {
+			struct OneRegisterWithImmediate {
 				OneRegisterWithImmediate() = default;
 				~OneRegisterWithImmediate() = default;
                 Register& dest = nullReg;
 				Address imm;
 			};
-			struct TwoRegisterWithImmediate final {
+			struct TwoRegisterWithImmediate {
 				TwoRegisterWithImmediate() = default;
 				~TwoRegisterWithImmediate() = default;
                 Register& dest = nullReg;
@@ -221,11 +221,10 @@ namespace iris {
                 };
 			};
 #define X(title, style) \
-			struct title final { \
+			struct title final : style { \
 				title ( ) { } \
-				title (const style & v) : _args(v) { } \
 				constexpr Opcode opcode() const noexcept { return Opcode :: title ; } \
-				style _args ; } ; 
+            } ; 
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef FirstX
