@@ -127,9 +127,12 @@ namespace iris {
             };
 			using MemoryBlock16 = std::unique_ptr<byte[]>;
 			using RegisterFile = std::unique_ptr<Register[]>;
-			struct InstallToRegister final { };
-            struct InstallToMemory final { };
-			using SectionInstallationTarget = std::variant<InstallToRegister, InstallToMemory>;
+#define DefInstallationTarget(title) struct title final { }
+			DefInstallationTarget(SetRegister);
+			DefInstallationTarget(WriteByteToMemory);
+			DefInstallationTarget(WriteWordToMemory);
+#undef DefInstallationTarget
+			using SectionInstallationTarget = std::variant<SetRegister, WriteByteToMemory, WriteWordToMemory>;
 		public:
 			Core();
 			void init();
@@ -141,14 +144,16 @@ namespace iris {
 			void install(Address address, T value, SectionInstallationTarget target) {
 				std::visit([this, address, value](auto&& kind) {
 							using K = std::decay_t<decltype(kind)>;
-							if constexpr (std::is_same_v<K, InstallToRegister>) {
+							if constexpr (std::is_same_v<K, SetRegister>) {
 								if (address >= registerCount) {
 									throw Problem("Illegal register index!");
 								} else {
 									_registers[address].setValue(value);
 								}
-                            } else if constexpr (std::is_same_v<K, InstallToMemory>) {
+							} else if constexpr (std::is_same_v<K, WriteByteToMemory>) {
 								store(address, value, true);
+							} else if constexpr (std::is_same_v<K, WriteWordToMemory>) {
+								storeNumber(address, value, true);
 							} else {
 								static_assert(AlwaysFalse<T>::value, "Unimplemented section!");
 							}

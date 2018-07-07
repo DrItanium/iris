@@ -44,11 +44,10 @@ namespace iris {
         public:
             using RawLinkerEntry = uint64_t; // each entry is at most 64 bits wide
             enum class Kind : iris::byte {
-                MemorySpace,
-                Instruction,
-                LabelEntry,
-                IndirectInstruction,
-                IndirectMemory,
+				Byte,
+				Word,
+                IndirectEntry,
+				IndirectWord,
             };
             LinkerEntry(Kind kind, Address addr, RawInstruction val) noexcept : _kind(kind), _address(addr), _value(val) { };
             LinkerEntry(RawLinkerEntry entry) noexcept;
@@ -119,19 +118,17 @@ int main(int argc, char** argv) {
 			}
             iris::LinkerEntry entry(v);
             switch (entry.getKind()) {
-                case Kind::MemorySpace:
-                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
+                case Kind::Byte:
+					core.install(entry.getAddress(), iris::byte(entry.getValue()), iris::Core::WriteByteToMemory { });
                     break;
-                case Kind::Instruction:
+                case Kind::Word:
                     // only 32kb worth of instructions allowed
-                    core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::InstallToMemory());
-                    core.install(entry.getAddress() + 1, Address(entry.getValue() >> 16), iris::Core::InstallToMemory());
+					core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::WriteWordToMemory{});
                     break;
-                case Kind::LabelEntry:
+				case Kind::IndirectEntry:
                      _labelMappings.emplace(entry.getValue(), entry.getAddress());
                      break;
-                case Kind::IndirectInstruction:
-                case Kind::IndirectMemory:
+				case Kind::IndirectWord:
                      // resolve these later
                      _delayedInstructions.emplace_back(entry);
                      break;
@@ -147,23 +144,9 @@ int main(int argc, char** argv) {
         }
         in.close();
         for (auto& e : _delayedInstructions) {
-            if (auto kind = e.getKind() ; kind == Kind::IndirectInstruction) {
-                auto upperHalf = (e.getValue() >> 16) & 0xFFFF;
-                if (auto r = _labelMappings.find(upperHalf); r != _labelMappings.end()) {
-                    auto address = e.getAddress();
-                    auto lowerHalf = Address(e.getValue());
-                    core.install(address, lowerHalf, iris::Core::InstallToMemory());
-                    core.install(address + 1, r->second, iris::Core::InstallToMemory());
-                } else {
-					std::cerr << "Not all labels are defined for given indirect instructions!" << std::endl;
-                    std::cerr << "\ttarget address is: " << std::hex << e.getAddress() << std::endl;
-                    std::cerr << "\tlower half is: " << std::hex << Address(e.getValue()) << std::endl;
-					std::cerr << "\ttarget index is: " << std::dec << upperHalf << std::endl;
-					return 1;
-                }
-            } else if (kind == Kind::IndirectMemory) {
+            if (e.getKind() == Kind::IndirectWord) {
                 if (auto r = _labelMappings.find(e.getValue()); r != _labelMappings.end()) {
-                    core.install(e.getAddress(), r->second, iris::Core::InstallToMemory());
+                    core.install(e.getAddress(), r->second, iris::Core::WriteWordToMemory());
                 } else {
 					std::cerr << "Not all labels are defined for the given indirect memory!" << std::endl;
                     std::cerr << "Address: " << std::hex << e.getAddress() << std::endl;

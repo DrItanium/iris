@@ -11,6 +11,7 @@ dup 0< if 0 and endif
   CREATE , 
   does> @ and ;
 0x3f addr-mask addr6
+0x0F addr-mask addr4
 0xFFFF addr-mask addr16
 0x0FFF addr-mask addr12
 0xFFFFFFFF addr-mask addr32
@@ -23,19 +24,28 @@ variable mloc \ current memory location
 : loc2+ ( -- ) loc@ 2+ loc! ;
 : reg-pos ( shift "name" -- ) 
   create , 
-  does> swap addr6 swap @ lshift ;
-8 reg-pos dest-reg
-14 reg-pos src-reg
-20 reg-pos src2-reg
-26 reg-pos src3-reg
-: 1reg ( dest -- value ) dest-reg ;
-: 2reg ( src dest -- value ) 1reg swap src-reg or ;
-: 3reg ( src2 src dest -- value ) 2reg swap src2-reg or ;
-: 4reg ( src3 src2 src dest -- value ) 3reg swap src3-reg or ;
+  does> swap addr4 swap @ lshift ;
+0 reg-pos lower-reg
+4 reg-pos upper-reg 
+: 1reg ( dest -- value ) lower-reg ;
+: 2reg ( src dest -- value ) 1reg swap upper-reg or ;
+: 3reg ( src2 src dest -- r2 r1 ) 2reg swap lower-reg swap ;
+: 4reg ( src3 src2 src dest -- r2 r1 ) 
+  3reg ( src3 r2 r1 ) 
+  >r ( src3 r2 )
+  swap ( r2 src3 )
+  upper-reg ( r2 value ) 
+  or ( r2 )
+  r> ( r2 r1 )
+  ;
+: imm16 ( imm16 -- H L ) dup >r
+  8 rshift 0xFF and \ compute the high piece 
+  r>
+  0xFF and \ compute the low piece 
+  ;
 : imm12 ( imm12 -- value ) addr12 20 lshift ;
-: imm16 ( imm16 -- value ) addr16 16 lshift ;
-: 2reg-imm12 ( imm12 src dest -- value ) 2reg swap imm12 or ;
-: 1reg-imm16 ( imm16 dest -- value ) 1reg swap imm16 or ;
+: 2reg-imm16 ( imm16 src dest -- h l regs ) 2reg >r imm16 r> ;
+: 1reg-imm16 ( imm16 dest -- h l regs ) 1reg >r imm16 r> ;
 
 : cconstant ( byte "name" -- ) create c, does> c@ ;
 : xop& ( n a -- k ) c@ or ;
@@ -144,6 +154,10 @@ opcode: #umstar
 opcode: #mstar
 opcode: #stw
 opcode: #ldw
+opcode: #ldbu
+opcode: #stbu
+opcode: #ldbl
+opcode: #stbl
 opcode}
 \ registers
 set-current \ go back
@@ -690,3 +704,7 @@ push, ;
 #mstar inst-3reg m*,
 #stw inst-2reg stw,
 #ldw inst-2reg ldw,
+#stbl inst-2reg stbl,
+#stbu inst-2reg stbu,
+#ldbl inst-2reg ldbl,
+#ldbu inst-2reg ldbu,
