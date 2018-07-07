@@ -300,38 +300,6 @@ namespace iris {
 		}
 	}
 
-    void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
-        for (auto& a : _io) {
-            if (a.respondsTo(addr)) {
-                fn(a);
-            }
-        }
-    }
-	void Core::storeNumber(Address addr, Number value, bool unmapIO) noexcept {
-        store(addr, byte(value.address), unmapIO);
-        store(addr + 1, byte(value.address >> 8), unmapIO);
-	}
-    void Core::store(Address addr, byte value, bool unmapIO) noexcept {
-        if (!unmapIO && addr >= ioSpaceStart) {
-			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value); });
-        } else {
-            _memory[addr] = value;
-        }
-    }
-    byte Core::load(Address addr, bool unmapIO) noexcept {
-        if (!unmapIO && addr >= ioSpaceStart) {
-			byte outcome = 0;
-        	onIODeviceFound(addr, [addr, &outcome](auto& a) { outcome = a.read(addr); });
-			return outcome;
-        } else {
-            return _memory[addr];
-        }
-    }
-	Number Core::loadNumber(Address addr, bool unmapIO) noexcept {
-        auto lower = load(addr, unmapIO);
-        auto upper = load(addr + 1, unmapIO);
-        return makeImmediate16(lower, upper);
-	}
     DefExec(Increment) { _dest.setValue(_src.get<Integer>() + 1); }
     DefExec(Decrement) { _dest.setValue(_src.get<Integer>() - 1); }
     DefExec(UnsignedIncrement) { _dest.setValue(_src.get<Address>() + 1); }
@@ -466,12 +434,14 @@ namespace iris {
 		store(_dest.get<Address>(), byte(_src.get<Address>() >> 8));
 	}
 	DefExec(Nop) { }
-	DefExec(SetByte) {
-		_dest.setValue(_half);
-	}
-	DefExec(Branch) {
-		_pc = _addr;
-	}
+	DefExec(SetByte) { _dest.setValue(_half); }
+	DefExec(Branch) { _pc = _addr; }
+	DefExec(EqualZero) { _dest.setValue(_src.get<Integer>() == 0); }
+	DefExec(NotEqualZero) { _dest.setValue(_src.get<Integer>() != 0); }
+	DefExec(LessThanZero) { _dest.setValue(_src.get<Integer>() < 0); }
+	DefExec(GreaterThanZero) { _dest.setValue(_src.get<Integer>() > 0); }
+	DefExec(LessThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() <= 0); }
+	DefExec(GreaterThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() >= 0); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
@@ -583,8 +553,38 @@ namespace iris {
         installIODevice(console);
 		installIODevice(vmTerminator);
     }
-    void Core::shutdown() {
-
+    void Core::shutdown() { }
+    void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
+        for (auto& a : _io) {
+            if (a.respondsTo(addr)) {
+                fn(a);
+            }
+        }
     }
+	void Core::storeNumber(Address addr, Number value, bool unmapIO) noexcept {
+        store(addr, byte(value.address), unmapIO);
+        store(addr + 1, byte(value.address >> 8), unmapIO);
+	}
+    void Core::store(Address addr, byte value, bool unmapIO) noexcept {
+        if (!unmapIO && addr >= ioSpaceStart) {
+			onIODeviceFound(addr, [addr, value](auto& a) { a.write(addr, value); });
+        } else {
+            _memory[addr] = value;
+        }
+    }
+    byte Core::load(Address addr, bool unmapIO) noexcept {
+        if (!unmapIO && addr >= ioSpaceStart) {
+			byte outcome = 0;
+        	onIODeviceFound(addr, [addr, &outcome](auto& a) { outcome = a.read(addr); });
+			return outcome;
+        } else {
+            return _memory[addr];
+        }
+    }
+	Number Core::loadNumber(Address addr, bool unmapIO) noexcept {
+        auto lower = load(addr, unmapIO);
+        auto upper = load(addr + 1, unmapIO);
+        return makeImmediate16(lower, upper);
+	}
 	Register Core::nullReg;
 } // end namespace iris

@@ -160,6 +160,12 @@ opcode: #stbl
 opcode: #nop
 opcode: #setb
 opcode: #bi
+opcode: #eqz
+opcode: #neqz
+opcode: #ltz
+opcode: #gtz
+opcode: #lez
+opcode: #gez
 opcode}
 \ registers
 set-current \ go back
@@ -296,12 +302,12 @@ too-many-registers-defined
 #gt inst-3reg gt,
 #le inst-3reg le,
 #ge inst-3reg ge,
-: eqz, ( value dest -- ) zero -rot eq, ;
-: neqz, ( value dest -- ) zero -rot neq, ;
-: gtz, ( value dest -- ) zero -rot gt, ;
-: ltz, ( value dest -- ) zero -rot lt, ;
-: gez, ( value dest -- ) zero -rot ge, ;
-: lez, ( value dest -- ) zero -rot le, ;
+#eqz inst-2reg eqz,
+#neqz inst-2reg neqz,
+#ltz inst-2reg ltz,
+#gtz inst-2reg gtz,
+#lez inst-2reg lez,
+#gez inst-2reg gez,
 : set, ( imm imm-type dest -- )
 	swap #, = 
 	if 
@@ -497,30 +503,6 @@ ioaddr}
 : mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;
 
 #ldtincr inst-2reg ldtincr,
-: lti16, ( imm id src dest -- ) 2>r at0 set, at0 2r> lt, ;
-: lti12, ( imm src dest -- ) #lti emit-2reg-imm12 ;
-: lti, ( imm id src dest -- ) 
-  2>r dup 0= 
-      if \ check and make sure to only do this if we encounter 12-bit number
-         ?not-imm12
-         if 
-           2r> lti16,  
-         else 
-           drop dup ( imm ) 
-           0= if drop 2r> ltz, else 2r> lti12, endif 
-         endif
-      else 
-        2r> lti16, 
-      endif ;
-: bclti, ( dest id imm id src dest -- ) dup >r lti, r> bc, ;
-: bcgti, ( dest id imm id src dest -- ) dup >r gti, r> bc, ;
-: bceq, ( dest id src2 src dest -- ) dup >r eq, r> bc, ;
-: bcneq, ( dest id src2 src dest -- ) dup >r neq, r> bc, ;
-: bcneqi, ( dest id imm id src dest -- ) dup >r neqi, r> bc, ;
-: bcgt, ( imm id src2 src dest -- ) dup >r gt, r> bc, ;
-: bceqz, ( imm id src dest -- ) dup >r eqz, r> bc, ;
-: bclt, ( imm id src2 src dest -- ) dup >r lt, r> bc, ;
-: bcltz, ( imm id src dest -- ) dup >r ltz, r> bc, ;
 #sttincr inst-2reg sttincr,
 : .cell ( addr id -- ) .data16 ;
 #addw inst-3reg addw,
