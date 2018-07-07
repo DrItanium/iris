@@ -116,32 +116,6 @@ namespace iris {
         auto upper = load(_pc);
         _imm = makeImmediate16(lower, upper);
     }
-    Core::DecodedInstruction Core::decodeInstruction() {
-        auto control = static_cast<Opcode>(load(_pc));
-        Core::DecodedInstruction tmp;
-        ++_pc;
-        switch (control) {
-#define X(title, style) case Opcode :: title : \
-            tmp = Core:: title () ; \
-            decodeArguments(Core::title () ); \
-            ++_pc; \
-            break;
-#define FirstX(title, style) X(title, style)
-#include "Opcodes.def"
-#undef X
-#undef FirstX
-            default:
-                std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
-                std::cout << "bad opcode " << int(control) << std::endl;
-                throw Problem("Illegal Opcode!");
-        }
-        // std::visit([this](auto&& value) { decodeArguments(value); ++_pc; }, tmp);
-        return tmp;
-    }
-
-    void Core::dispatchInstruction(const Core::DecodedInstruction& di) {
-        std::visit([this](auto&& v) { perform(v); }, di);
-    }
     Register& Core::getRegister(RegisterIndex index) noexcept {
         return _registers[index];
     }
@@ -252,36 +226,36 @@ namespace iris {
     DefExec(Set) { 
         _dest.setValue(_imm);
     }
-    // DefExec(Load) { 
-    //     op.setDestination(loadNumber(op.getSource<Address>()));
-    // }
-    // DefExec(Store) { 
-    //     storeNumber(op.dest.get<Address>(), op.getSource<Address>());
-	// }
-    // DefExec(Push) {
-	// 	push(op.dest, getSource(op));
-    // }
-    // DefExec(Pop) {
-	// 	setDestination(op, pop(op.src));
-    // }
-    // DefExec(BranchRegister) {
-	// 	_pc = getDestination(op).address;
-    // }
-    // DefExec(BranchRegisterAndLink) {
-	// 	push(op.src, _pc);
-    //     _pc = getDestination(op).address;
-    // }
-    // DefExec(BranchConditionalRegister) {
-    //     if (getSource(op).getTruth()) {
-	// 		_pc = getDestination(op).address;
-    //     }
-    // }
-    // DefExec(BranchConditionalRegisterLink) {
-    //     if (getSource(op).getTruth()) {
-	// 		push(op.src2, _pc);
-	// 		_pc = getDestination(op).address;
-    //     }
-    // }
+	DefExec(Load) {
+		_dest.setValue(loadNumber(_src.get<Address>()));
+	}
+	DefExec(Store) {
+		storeNumber(_dest.get<Address>(), _src.get<Address>());
+	}
+	DefExec(Push) {
+		pushNumber(_dest, _src.get<Address>());
+	}
+	DefExec(Pop) {
+		_dest.setValue(popNumber(_src));
+	}
+	DefExec(BranchRegister) {
+		_pc = _dest.get<Address>();
+	}
+	DefExec(BranchRegisterAndLink) {
+		pushNumber(_src, _pc);
+		_pc = _dest.get<Address>();
+	}
+	DefExec(BranchConditionalRegister) {
+		if (_src.getTruth()) {
+			_pc = _dest.get<Address>();
+		}
+	}
+	DefExec(BranchConditionalRegisterLink) {
+		if (_src.getTruth()) {
+			pushNumber(_src2, _pc);
+			_pc = _dest.get<Address>();
+		}
+	}
 
     void Core::onIODeviceFound(Address addr, IODeviceOp fn) {
         for (auto& a : _io) {
@@ -444,18 +418,25 @@ namespace iris {
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
     }
-    // RawInstruction Core::extractInstruction() noexcept {
-    //     // extract the current instruction and then go next
-    //     auto lower = static_cast<RawInstruction>(_memory[_pc].address);
-    //     auto upper = static_cast<RawInstruction>(_memory[_pc + 1].address) << 16;
-    //     _pc += 2;
-    //     return lower | upper;
-    // }
 
     void Core::cycle() {
-        // load the current instruction and go to the next address
-        auto op = decodeInstruction();
-        dispatchInstruction(op);
+        auto control = static_cast<Opcode>(load(_pc));
+        ++_pc;
+        switch (control) {
+#define X(title, style) case Opcode :: title : \
+            decodeArguments(Core::title () ); \
+            ++_pc; \
+			perform(Core::title()); \
+            break;
+#define FirstX(title, style) X(title, style)
+#include "Opcodes.def"
+#undef X
+#undef FirstX
+            default:
+                std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
+                std::cout << "bad opcode " << int(control) << std::endl;
+                throw Problem("Illegal Opcode!");
+        }
     }
     void Core::execute() {
         while(_keepExecuting) {
@@ -628,4 +609,5 @@ namespace iris {
     void Core::shutdown() {
 
     }
+	Register Core::nullReg;
 } // end namespace iris

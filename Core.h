@@ -188,15 +188,7 @@ namespace iris {
 #undef X
 #undef FirstX
             
-			using DecodedInstruction = std::variant<
-#define FirstX(title, style) title
-#define X(title, style) ,title
-#include "Opcodes.def"
-#undef X
-#undef FirstX
-				>;
 			// functions to contain the logic for each opcode
-			void dispatchInstruction(const DecodedInstruction& inst);
 #define X(title, style) void perform ( const title & value );
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
@@ -210,7 +202,6 @@ namespace iris {
 			void decodeArguments(const FourRegister&) noexcept;
 			void decodeArguments(const OneRegisterWithImmediate&) noexcept;
 			void decodeArguments(const TwoRegisterWithImmediate&) noexcept;
-			DecodedInstruction decodeInstruction();
 		private:
 			Register& getRegister(RegisterIndex reg) noexcept;
 			byte pop(Register& reg) noexcept;
