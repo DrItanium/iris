@@ -427,6 +427,24 @@ namespace iris {
 		_dest.setValue(loadNumber(src));
 		_destNext.setValue(loadNumber(src + 1));
 	}
+	DefExec(LoadByte_Upper) {
+		// load a byte address and stash it into the upper half of the
+		// destination register. Overwrites the contents
+		_dest.setValue((Address(load(_src.get<Address>())) << 8) & 0xFF00);
+	}
+	DefExec(LoadByte_Lower) {
+		// load a byte address and stash it into the lower half of the
+		// destination register. Overwrites the contents
+		_dest.setValue(Address(load(_src.get<Address>())) & 0x00FF);
+	}
+	DefExec(StoreByte_Lower) {
+		// store the lower half of a register to a given address
+		store(_dest.get<Address>(), _src.get<byte>());
+	}
+	DefExec(StoreByte_Upper) {
+		// store the upper half of a register to the given address
+		store(_dest.get<Address>(), byte(_src.get<Address>() >> 8));
+	}
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
