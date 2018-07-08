@@ -55,31 +55,13 @@ return-stack-start constant input-buffer-start
 input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
-1 constant words-per-cell
+2 constant words-per-cell
 
 \ ascii characters used
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
 0x0d constant ccr \ carriage return
 
-\ memory allocation
-ram-end 1+ constant EM \ end of memory
-
-0x400 constant words/block
-0x80 constant words/sector
-0x400 constant words/track
-0xFFFF 1+ constant tracks/disk
-words/track words/sector / constant sectors/track
-sectors/track tracks/disk * constant sectors/disk
-sectors/track tracks/disk 2* * constant sectors/double-disk \ double density, double the number of tracks per disk
-0x80 constant words/disk-buffer 
-1 constant max-drive-count \ this could change in the future
-words/block words/sector * constant sectors/block
-1 constant num-buffers
-words/sector constant keyboard-buffer
-keyboard-buffer 4 + constant co
-
-\ bootstrap-end constant dictionary-start
 
 \ register reservations
 deflabel forth1
@@ -145,7 +127,7 @@ deflabel _,
 &FIRST constant xfirst
 0x8 constant b/scr
 0x80 constant b/buf 
-1 constant cell-size
+2 constant cell-size
 variable last-word
 variable user-offset
 0 last-word !
