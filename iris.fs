@@ -10,16 +10,16 @@ dup 0< if 0 and endif
 : addr-mask ( mask "name" -- )
   CREATE , 
   does> @ and ;
-0x3f addr-mask addr6
 0x0F addr-mask addr4
+0xFF addr-mask addr8
 0xFFFF addr-mask addr16
-0x0FFF addr-mask addr12
 0xFFFFFFFF addr-mask addr32
 variable labelIndex
 variable mloc \ current memory location
 : 2+ ( n -- 2+n) 2 + ;
 : loc@ ( -- n ) mloc @ ;
 : loc! ( n -- ) addr16 mloc ! ; \ make sure that it doesn't go out of bounds
+: loc+ ( value -- ) loc@ + loc! ;
 : loc1+ ( -- ) loc@ 1+ loc! ;
 : loc2+ ( -- ) loc@ 2+ loc! ;
 : reg-pos ( shift "name" -- ) 
@@ -36,27 +36,20 @@ variable mloc \ current memory location
   swap ( r2 src3 )
   upper-reg ( r2 value ) 
   or ( r2 )
-  r> ( r2 r1 )
-  ;
-: imm16 ( imm16 -- H L ) dup >r
-  8 rshift 0xFF and \ compute the high piece 
-  r>
-  0xFF and \ compute the low piece 
-  ;
-: 2reg-imm16 ( imm16 src dest -- h l regs ) 2reg >r imm16 r> ;
-: 1reg-imm16 ( imm16 dest -- h l regs ) 1reg >r imm16 r> ;
+  r> ( r2 r1 ) ;
 
 : cconstant ( byte "name" -- ) create c, does> c@ ;
-
+: ?debug ( -- f ) iris-debug @ ;
 
 : linker-entry ( value address kind -- n ) 
-  0xFF and swap
-  addr16 0x10 lshift or swap 
-  addr32 0x20 lshift or ;
+	addr8 ?debug if dup ." kind: " hex . endif swap
+	addr16 ?debug if dup ." address: " hex . endif 0x10 lshift or swap 
+	addr32 ?debug if dup ." value: " hex . endif 0x20 lshift or 
+	?debug if dup ." result: " hex . cr endif ;
 : def-linker-action ( value "name" -- )
   create c, 
   does> ( value addr -- n )
-  @ linker-entry ;
+  c@ linker-entry ;
 0 constant ByteWrite
 1 constant WordWrite
 2 constant IndirectEntry
@@ -181,39 +174,26 @@ variable CurrentAssemblyFile
 : reset-labels ( -- ) 0 labelIndex ! ;
 : print-latest ( -- ) latest name>string type ;
 : print-new-label ( -- ) print-latest ." : " loc@ hex . ." , index#: " labelindex @ . cr ;
-: deflabel ( "name" -- ) create 
-labelIndex @ addr32 , labelIndex @ 1+ labelIndex ! 
-iris-debug @ if print-new-label then
-does> @ ;
+: deflabel ( "name" -- ) 
+create 
+labelIndex @ ?debug if dup print-new-label endif addr32 , labelIndex @ 1+ labelIndex !  does> @ ;
 
-: <<linker ( entry id -- ) 
-  iris-debug @ if ." address: " hex loc@ . ." : " over hex . cr decimal then
-  hex dup >r nout s" " r> write-line throw decimal ;
-: <<byte ( value -- )
-	loc@ action:write-byte
-	curasm@ <<linker
-	loc1+ ;
-: <<word ( value -- )
-	addr16 loc@ action:write-word
-	curasm@ <<linker loc2+ ;
-: <<ientry ( value -- )
-	loc@ action:indirect-entry
-	curasm@ <<linker ;
-: <<iword ( value -- )
-	loc@ action:write-indirect-word
-	curasm@ <<linker loc2+ ;
+: <<linker ( entry id -- ) hex dup >r nout s" " r> write-line throw decimal ;
+: <<byte ( value -- ) addr8 loc@ action:write-byte curasm@ <<linker loc1+ ;
+: <<word ( value -- ) addr16 loc@ action:write-word curasm@ <<linker loc2+ ;
+: <<iword ( value -- ) loc@ action:write-indirect-word curasm@ <<linker loc2+ ;
+: <<ientry ( value -- ) loc@ action:indirect-entry curasm@ <<linker ;
 \ labels must be defined ahead of time before first reference
 : .org ( n -- ) loc! ;
 : .label ( label -- ) <<ientry ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
 \ constant tagging version
-\ #, is a constant version
-: #, ( imm -- imm16 0 ) addr16 0 ; 
-\ ??, is an indirect instruction
-: ??, ( -- 1 ) 1 ;
+0 constant #, \ #, is a constant version
+1 constant ??, \ ??, is an indirect instruction
 : <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
 : .data16 ( imm id -- ) <<?word ;
+: .data8 ( imm -- ) <<byte ;
 : {asm ( path -- ) w/o create-file throw curasm! reset-labels ;
 : asm} ( -- ) curasm@ close-file throw clearasm ;
 
@@ -362,13 +342,13 @@ too-many-registers-defined
 : #call, ( imm dest -- ) #, swap call, ;
 : ??call, ( imm dest -- ) ??, swap call, ;
 : bc, ( imm imm-type cond -- )
-	#condb <<byte \ conditional
-	1reg <<byte \ conditional
+	#condb <<opcode \ conditional
+	1reg <<byte     \ conditional
 	<<?word ;
 : #bc, ( imm dest -- ) #, swap bc, ;
 : ??bc, ( imm dest -- ) ??, swap bc, ;
 : b, ( imm id -- ) 
-  #bi <<byte
+  #bi <<opcode
   <<?word ;
 : #b, ( imm -- ) #, b, ;
 : ??b, ( imm -- ) ??, b, ;
@@ -436,6 +416,7 @@ ioaddr}
 #ldtincr inst-2reg ldtincr,
 #sttincr inst-2reg sttincr,
 : .cell ( addr id -- ) .data16 ;
+
 #addw inst-3reg addw,
 #subw inst-3reg subw,
 #pushw inst-2reg pushw,

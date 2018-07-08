@@ -6,7 +6,7 @@
 \ the words I define are meant for adaption purposes as well
 
 include iris.fs
-\ true iris-debug !
+true iris-debug !
 : x.scr ( -- ) 
 	\ display the stack and then print a newline
 hex .s decimal cr ;
@@ -139,8 +139,6 @@ deflabel _,
 : 0lit, ( -- ) zero xsp push, ;
 : 1lit, ( -- ) 0x1 #lit, ;
 : w/slit, ( -- ) words-per-cell #lit, ;
-: #-> ( constant dest -- ) #, swap set, ;
-: ??-> ( label dest -- ) ??, swap set, ;
 
 \ set the constants
 &LIMIT constant xlimit
@@ -163,7 +161,7 @@ variable user-offset
     dup constant, \ embed the length as well
     0 \ go from 0 to length
     ?do
-      dup i + c@ constant,
+      dup i + c@ .data8
     loop
     drop ;
 : embed-name ( str length -- ) .string, ;
@@ -290,7 +288,7 @@ deflabel _eforth1
 .eforth .label
 	_eforth1 word,
 _eforth1 .label
-    _uzero xup ??->
+    _uzero ??, xup set,
 	0x1 #, xup xtop addi,
 	xtop xsp ld,
 	xtop 1+,
@@ -298,16 +296,16 @@ _eforth1 .label
 	_cold ??, b,
 s" bye" machineword _bye ( -- )
 	\ exit simulator 
-	/dev/terminate-vm io #->
+	/dev/terminate-vm io #set,
 	zero io st,
 _qrx s" ?rx" machineword-predef ( -- c T | F )
 deflabel qrx1
 	\ return input character and true, or a false if no input
-	/dev/console0 io #-> 
+	/dev/console0 io #set, 
 	io xlower ld, 
 	xlower cv eqz,
 	qrx1 ??, cv bc, \ if equal zero then no input
-    0xFFFF xtop #->
+    0xFFFF xtop #set,
 	2push,
 qrx1 .label
     0lit,
@@ -315,7 +313,7 @@ qrx1 .label
 _txsto s" tx!" machineword-predef ( c -- )
 	\ send character c to the output device.
 	1pop,
-    /dev/console0 io #->
+    /dev/console0 io #set,
 	xtop io st,
 	next,
 s" !io" machineword _storeio ( -- )
@@ -596,7 +594,7 @@ s" d+" machineword _dplus
     next,
 s" not" machineword _not
     1pop, 
-    0xFFFF xlower #->
+    0xFFFF xlower #set,
     xlower xtop xtop xor,
     1push,
 s" negate" machineword _negate
@@ -632,7 +630,7 @@ deflabel within0
           \ lower - ul
           \ third - u
 
-    within0 xtaddr ??->
+    within0 ??, xtaddr set,
     xtop xthird cv gt, \ u > top
     xtaddr cv bcr,
     xlower xthird cv lt, \ u < lower

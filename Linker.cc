@@ -124,6 +124,7 @@ int main(int argc, char** argv) {
                 case Kind::Word:
                     // only 32kb worth of instructions allowed
 					core.install(entry.getAddress(), Address(entry.getValue()), iris::Core::WriteWordToMemory{});
+					// std::cout << "Installing direct word : " << std::hex << entry.getValue() << " to " << std::hex << entry.getAddress() << " and " << std::hex << (entry.getAddress() + 1) << std::endl;
                     break;
 				case Kind::IndirectEntry:
                      _labelMappings.emplace(entry.getValue(), entry.getAddress());
@@ -147,6 +148,7 @@ int main(int argc, char** argv) {
             if (e.getKind() == Kind::IndirectWord) {
                 if (auto r = _labelMappings.find(e.getValue()); r != _labelMappings.end()) {
                     core.install(e.getAddress(), r->second, iris::Core::WriteWordToMemory());
+					// std::cout << "Installing indirect value: " << std::hex << r->second << " to " << std::hex << e.getAddress() << " and " << std::hex << (e.getAddress() + 1) << std::endl;
                 } else {
 					std::cerr << "Not all labels are defined for the given indirect memory!" << std::endl;
                     std::cerr << "Address: " << std::hex << e.getAddress() << std::endl;
