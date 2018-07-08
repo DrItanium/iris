@@ -14,10 +14,9 @@ hex .s decimal cr ;
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
 \ setup the registers first
-unused-start 1+cconstant xsp \ data stack pointer
+unused-start 
+1+cconstant xsp \ data stack pointer
 1+cconstant xrp \ return stack pointer
-1+cconstant xip \ interpretive pointer
-1+cconstant xw \ current word pointer
 1+cconstant xtop \  contents of the top of stack when a pop is called
 1+cconstant xlower \ contents of the second stack item when a pop is called
 1+cconstant xthird \ contents of the third stack item
@@ -32,7 +31,7 @@ xthird cconstant wxlower \ masquerade for double wide operations
 xfifth cconstant wxthird 
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
-: word, ( v -- ) ??, xrp bl, ;
+: word, ( v -- ) ??, xrp call, ;
 : constant, ( id -- ) #, .cell ;
 0xFFFF constant ram-end
 0xFF00 constant io-start
@@ -211,7 +210,7 @@ word/compile word/immediate or  constant word/all
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
 : embed-douser ( -- ) 
-    _douser ??, xrp bl,
+    _douser ??, xrp call,
     user-offset@ constant,
     user-offset1+ ;
 : userword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
@@ -240,7 +239,7 @@ deflabel _0branch
 : #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
 : execute; ( -- ) _execute word, ;
-: branch; ( location id -- ) xrp bl, ;
+: branch; ( location id -- ) xrp call, ;
 : ?branch; ( -- ) _0branch word, ;
 : ??branch; ( label -- ) ?branch; word, ;
 \ code start
@@ -385,14 +384,14 @@ s" @" machineword _at
 s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
 		 \ lower - value
-    0xFF #, xlower xlower andi,
+    0xFF #, xlower xlower uandi,
     xlower xtop st, \ save it to memory with the upper 8 bits masked
     next,
 : c!; ( -- ) _cstore word, ;
 s" c@" machineword _cat
 	1pop, 
 	xtop xtop ld,
-	0xFF #, xtop xtop andi,
+	0xFF #, xtop xtop uandi,
 	1push,
 : c@; ( -- ) _cat word, ;
 s" rp@" machineword _rpat
@@ -1586,7 +1585,7 @@ quit3 .label
 	emit; \ file error, tell host
 quit4 .label
 	_preset word, \ some cleanup
-	quit1 ??, xrp bl,
+	quit1 ??, xrp call,
 \ compiler routines
 s" '" machineword _tick ( -- ca )
 deflabel tick1

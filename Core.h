@@ -178,6 +178,7 @@ namespace iris {
             };
             void installIODevice(IODevice dev);
         private:
+			void cycle();
             static Register nullReg;
 		private:
             struct NoArguments { };

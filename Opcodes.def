@@ -86,4 +86,5 @@ X(LessThanZero, TwoRegister)
 X(GreaterThanZero, TwoRegister)
 X(LessThanOrEqualToZero, TwoRegister)
 X(GreaterThanOrEqualToZero, TwoRegister)
-
+X(AndImmediate, TwoRegisterWithImmediate)
+X(UnsignedAndImmediate, TwoRegisterWithImmediate)

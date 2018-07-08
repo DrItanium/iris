@@ -442,29 +442,33 @@ namespace iris {
 	DefExec(GreaterThanZero) { _dest.setValue(_src.get<Integer>() > 0); }
 	DefExec(LessThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() <= 0); }
 	DefExec(GreaterThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() >= 0); }
+	DefExec(AndImmediate) { _dest.setValue(_src.get<Integer>() & _imm); }
+	DefExec(UnsignedAndImmediate) { _dest.setValue(_src.get<Address>() & _addr); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
     }
-
-    void Core::execute() {
-        while(_keepExecuting) {
-        	auto control = static_cast<Opcode>(load(_pc));
-        	switch (control) {
+	void Core::cycle() {
+		auto control = static_cast<Opcode>(load(_pc));
+		switch (control) {
 #define X(title, style) case Opcode :: title : \
-            decodeArguments(Core::title () ); \
-            ++_pc; \
+			decodeArguments(Core::title () ); \
+			++_pc; \
 			perform(Core::title()); \
-            break;
+			break;
 #define FirstX(title, style) X(title, style)
 #include "Opcodes.def"
 #undef X
 #undef FirstX
-        	    default:
-        	        std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
-        	        std::cout << "bad opcode " << int(control) << std::endl;
-        	        throw Problem("Illegal Opcode!");
-        	}
+			default:
+				std::cout << "@ " << std::hex << (_pc - 1) << std::endl;
+				std::cout << "bad opcode " << int(control) << std::endl;
+				throw Problem("Illegal Opcode!");
+		}
+	}
+    void Core::execute() {
+        while(_keepExecuting) {
+			cycle();
         }
     }
 

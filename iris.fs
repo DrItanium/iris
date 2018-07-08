@@ -162,6 +162,8 @@ opcode: #ltz
 opcode: #gtz
 opcode: #lez
 opcode: #gez
+opcode: #andi
+opcode: #uandi
 opcode}
 \ registers
 set-current \ go back
@@ -205,7 +207,13 @@ does> @ ;
 : .label ( label -- ) <<ientry ;
 : execute-latest ( -- * ) latest name>int execute ;
 : deflabel-here ( "name" -- ) deflabel execute-latest .label ;
-: .data16 ( imm id -- ) #, = if <<word else <<iword endif ;
+\ constant tagging version
+\ #, is a constant version
+: #, ( imm -- imm16 0 ) addr16 0 ; 
+\ ??, is an indirect instruction
+: ??, ( -- 1 ) 1 ;
+: <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
+: .data16 ( imm id -- ) <<?word ;
 : {asm ( path -- ) w/o create-file throw curasm! reset-labels ;
 : asm} ( -- ) curasm@ close-file throw clearasm ;
 
@@ -253,16 +261,16 @@ too-many-registers-defined
 		4reg ( r2 r1 )
 		<<byte
 		<<byte ;
-       
+: inst-2reg-with-imm16 ( opcode-index "name" -- )
+	create c, \ embed opcode
+	does> ( imm id src dest -- )
+	<<@opcode
+	2reg <<byte 
+	<<?word ;
 
 #add inst-3reg add, 
 #move inst-2reg move,
 #nop inst-0reg nop,
-\ constant tagging version
-\ #, is a constant version
-: #, ( imm -- imm16 0 ) addr16 0 ; 
-\ ??, is an indirect instruction
-: ??, ( -- 1 ) 1 ;
 
 #sub inst-3reg sub, 
 #mul inst-3reg mul, 
@@ -294,24 +302,26 @@ too-many-registers-defined
 	swap #, = 
 	if 
 		\ if we get a zero then do a move instead
-		over 0= if 
-				nip zero swap move, 
+		over 0= 
+		if 
+			nip zero swap move, 
+		else
+			\ check and see if the value is less than or equal to 0xFF
+			over 0xFF <= 
+			if 
+				\ emit set byte instead of a full set to save space
+				#setb <<opcode
+				1reg <<byte
+				0xFF and <<byte
 			else
-				\ check and see if the value is less than or equal to 0xFF
-				over 0xFF <= if 
-					\ emit set byte instead of a full set to save space
-					#setb <<byte
-					1reg <<byte
-					0xFF and <<byte
-				else
-					\ its not a zero so instead we should do the normal set action
-					#set <<byte \ first emit a set operation, just do it
-					1reg <<byte \ emit the destination
-					<<word \ emit the word operation
-				then
+				\ its not a zero so instead we should do the normal set action
+				#set <<opcode \ first emit a set operation, just do it
+				1reg <<byte \ emit the destination
+				<<word \ emit the word operation
 			then
+		then
 	else
-		#set <<byte \ first emit a set operation, just do it
+		#set <<opcode \ first emit a set operation, just do it
 		1reg <<byte \ emit the destination
 		<<iword \ emit the indirect word operation
 	then ;
@@ -345,7 +355,6 @@ too-many-registers-defined
 #bcr inst-2reg bcr,
 #bcrl inst-3reg bcrl,
 
-: <<?word ( imm type -- ) #, = if <<word else <<iword then ; 
 : call, ( imm imm-type dest -- )
 	#call <<byte
 	1reg <<byte
@@ -384,51 +393,6 @@ too-many-registers-defined
 #urem inst-3reg urem,
 #ulshift inst-3reg ulshift,
 #urshift inst-3reg urshift, 
-: def2argi ( "name" "op" -- )
-  create ' , 
-  does> ( imm id dest -- n set-op )
-  >r \ stash the address for now
-  $->at0-2arg 
-  r> \ get the top back
-  @ execute \ execute the stashed operation
-  ;
-: def3argi ( "name" "op" -- )
-  create ' , 
-  does> ( imm id src dest -- n set-op )
-  >r \ stash the address for now
-  $->at0-3arg
-  r> \ get the top back
-  @ execute \ we should now have the argument correctly setup
-  ;
-
-def3argi muli, mul,
-def3argi divi, div,
-def3argi remi, rem,
-def2argi negatei, negate,
-def3argi eqi, eq,
-def3argi neqi, neq,
-def3argi gti, gt,
-def3argi gei, ge,
-def3argi lei, le,
-
-def3argi uaddi, uadd,
-def3argi usubi, usub,
-def3argi umuli, umul,
-def3argi udivi, udiv,
-def3argi uremi, urem,
-def3argi uandi, uand,
-def3argi uori, uor,
-def3argi uxori, uxor,
-def2argi unegatei, unegate,
-def3argi ueqi, ueq,
-def3argi uneqi, uneq, 
-def3argi ulti, ult,
-def3argi ugti, ugt,
-def3argi ulei, ule,
-def3argi ugei, uge,
-
-
-
 {ioaddr
 ioaddr: /dev/null 
 ioaddr: /dev/console0
@@ -444,28 +408,22 @@ ioaddr: /dev/decprint
 ioaddr: /dev/octprint
 ioaddr}
 
+: addi, ( imm id src dest -- ) 
+  #addi <<opcode
+  2reg <<byte
+  <<?word ;
+: #addi, ( imm src dest -- ) 2>r #, 2r> addi, ;
+: ??addi, ( imm src dest -- ) 2>r ??, 2r> addi, ;
+: subi, ( imm id src dest -- )
+  #subi <<opcode
+  2reg <<byte
+  <<?word ;
+: #subi, ( imm src dest -- ) 2>r #, 2r> subi, ;
+: ??subi, ( imm src dest -- ) 2>r ??, 2r> subi, ;
 
 \ core routines
 
 
-: ??def3i ( "name" "op" -- ) create ' , does> ( imm src dest addr -- ) 2>r ??, swap 2r> @ execute ;
-
-??def3i ??muli, muli,
-
-: #divi, ( imm src dest -- ) >r #, swap r> divi, ;
-: #remi, ( imm src dest -- ) >r #, swap r> remi, ;
-
-??def3i ??divi, divi,
-??def3i ??remi, remi, 
-
-: andi, ( imm id src dest -- ) 2>r $->at0 at0 2r> and, ;
-: ori, ( imm id src dest -- ) 2>r $->at0 at0 2r> or, ;
-: xori, ( imm id src dest -- ) 2>r $->at0 at0 2r> xor, ;
-
-
-??def3i ??andi, andi, 
-??def3i ??ori, ori, 
-??def3i ??xori, xori, 
 #incr inst-2reg incr,
 #decr inst-2reg decr,
 #uincr inst-2reg uincr,
@@ -474,16 +432,7 @@ ioaddr}
 : 1-, ( reg -- ) dup decr, ;
 : 2+, ( reg -- ) 2 swap dup #addi, ;
 : 2-, ( reg -- ) 2 swap dup #subi, ;
-: 2*, ( dest -- ) dup dup add, ; \ just add the register with itself
-: 2/, ( dest -- ) 1 swap dup #rshifti, ;
-: 4*, ( dest -- ) 2 swap dup #lshifti, ;
-: 4/, ( dest -- ) 2 swap dup #rshifti, ;
-: next-address ( -- imm id ) loc@ 1+ #, ;
-: ??.data16 ( imm -- ) ??, .data16 ;
-: #.data16 ( imm -- ) #, .data16 ;
-: mask-lower-half, ( src dest -- ) 2>r 0x00FF #, 2r> andi, ;
-: mask-upper-half, ( src dest -- ) 2>r 0xFF00 #, 2r> andi, ;
-
+	
 #ldtincr inst-2reg ldtincr,
 #sttincr inst-2reg sttincr,
 : .cell ( addr id -- ) .data16 ;
@@ -513,3 +462,8 @@ ioaddr}
 #stbu inst-2reg stbu,
 #ldbl inst-2reg ldbl,
 #ldbu inst-2reg ldbu,
+#andi inst-2reg-with-imm16 andi,
+#uandi inst-2reg-with-imm16 uandi,
+#rshifti inst-2reg-with-imm16 rshifti,
+#lshifti inst-2reg-with-imm16 lshifti,
+#lti inst-2reg-with-imm16 lti,
