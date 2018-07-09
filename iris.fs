@@ -180,6 +180,9 @@ variable CurrentAssemblyFile
 create 
 labelIndex @ ?debug if dup print-new-label endif addr32 , labelIndex @ 1+ labelIndex !  does> @ ;
 
+: def2label ( "name" "name2" -- ) deflabel deflabel ;
+: def3label ( "name" "name2" "name3" -- ) def2label deflabel ;
+
 : <<linker ( entry id -- ) hex dup >r nout s" " r> write-line throw decimal ;
 : <<byte ( value -- ) addr8 loc@ action:write-byte curasm@ <<linker loc1+ ;
 : <<word ( value -- ) addr16 loc@ action:write-word curasm@ <<linker loc2+ ;
@@ -354,7 +357,6 @@ too-many-registers-defined
   <<?word ;
 : #b, ( imm -- ) #, b, ;
 : ??b, ( imm -- ) ??, b, ;
-: bcl, ( imm id link cond -- ) 2>r $->at0 2r> at0 bcrl, ;
 
 #ueq inst-3reg ueq,
 #uneq inst-3reg uneq,

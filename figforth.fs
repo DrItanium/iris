@@ -8,6 +8,7 @@
 include iris.fs
 true iris-debug !
 : x.scr ( -- ) 
+: ??cell, ( imm -- ) ??, .cell ;
 	\ display the stack and then print a newline
 hex .s decimal cr ;
 \ contains all of the registers and pieces used for the monitor itself
@@ -66,39 +67,37 @@ output-buffer-start 0x100 + constant output-buffer-end
 : retxrp, ( -- ) xrp ret, ;
 
 \ register reservations
-deflabel forth1
-deflabel _origin
-\ deflabel _error
-deflabel forth_vocabulary_start
-deflabel _cold
-deflabel _abort
-deflabel _quit
-deflabel _interpret
-deflabel _message \ message routine
-deflabel &S0 \ initial value of the data stack pointer
-deflabel &R0 \ initial value of the return stack pointer
-deflabel &VOC-LINK \ address of a field in the definition of the most recently created
-                   \ created vocabulary. All vocabulary names are linked by
-                   \ these fields to allow control for FORGETting through multiple
-                   \ vocabularies
-deflabel &BLK \ current block number under interpretation. If 0, input is
-              \ being taken from the terminal input buffer
-deflabel &IN  \ Byte offset within the current input text buffer (terminal or
+def2label forth1 
+          _origin
+def3label _cold 
+          _abort 
+          _quit
+def2label _interpret
+          _message \ message routine
+def3label &S0 \ initial value of the data stack pointer
+          &R0 \ initial value of the return stack pointer
+          &VOC-LINK \ address of a field in the definition of the most recently created
+                    \ created vocabulary. All vocabulary names are linked by
+                    \ these fields to allow control for FORGETting through multiple
+                    \ vocabularies
+def3label &BLK \ current block number under interpretation. If 0, input is
+               \ being taken from the terminal input buffer
+          &IN  \ Byte offset within the current input text buffer (terminal or
               \ disk) from which the next text will be accepted. WORD uses and
               \ move the value of IN
-deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
-              \ The user may yalter and examine OUT to control output display formatting.
-deflabel &SCR      \ Screen number most recently referenced by LIST
-deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
-deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
-                   \ will first begin
-deflabel _eprint
-deflabel _up \ user pointer
-deflabel _&current
-deflabel _leftbracket
-deflabel _compile
-deflabel _douser
-deflabel _,
+          &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
+               \ The user may yalter and examine OUT to control output display formatting.
+def3label &SCR      \ Screen number most recently referenced by LIST
+          &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
+          &CONTEXT  \ pointer to the vocabulary within which dictionary search
+                    \ will first begin
+def2label _eprint
+          _up \ user pointer
+def3label _&current
+          _leftbracket
+          _compile
+def2label _douser
+          _,
 : voc-link; ( -- ) &voc-link word, ;
 : blk; ( -- ) &blk word, ;
 : inn; ( -- ) &IN word, ;
@@ -169,15 +168,12 @@ word/compile word/immediate or  constant word/all
 \ 6: next 
 \ 7: address (interpreter routine) 
 \ 8-n: body 
-: print-current-word ( str len -- str len )
-  2dup ." current-word: " type cr ;
 : defword-header ( str length control-bits "name" -- )
   loc@ >r \ stash a copy of the current location here!
   \ a shim to make next and docol unaware of encoding layout
   \ it does slow things down but it can't be helped at this point
   \ another revision will fix this but now I don't care
   constant, \ stash the control bits here
-  \ print-current-word
   embed-name \ stash three more bytes
   last-word @ constant, \ stash the previous word here
   r> last-word ! \ stash the top of this dictionary entry to last word
@@ -191,6 +187,11 @@ word/compile word/immediate or  constant word/all
 : immediate-machineword-predef ( label str length -- ) word/immediate machineword-base-predef ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
+: machineword-1arg ( s l "n" -- ) machineword 1pop, ;
+: machineword-2arg ( s l "n" -- ) machineword 2pop, ;
+: machineword-predef-1arg ( s l "n" -- ) machineword-predef 1pop, ;
+: machineword-predef-2arg ( s l "n" -- ) machineword-predef 2pop, ;
+
 : embed-douser ( -- ) 
     _douser ??, xrp call,
     user-offset@ constant,
@@ -205,13 +206,10 @@ word/compile word/immediate or  constant word/all
 : 3pop, ( -- ) 2pop, xsp xthird pop, ;
 : 4pop ( -- ) 3pop, xsp xfourth pop, ;
 : defbinaryop ( str length "name" "op" -- )
-  machineword 
-  2pop,
+  machineword-2arg
   xtop xlower xtop ' execute 
   1push, ;
-deflabel _lit
-deflabel _execute
-deflabel _0branch
+def3label _lit _execute _0branch
 : lit; ( -- ) _lit word, ;
 : execute; ( -- ) _execute word, ;
 : branch; ( location id -- ) xrp call, ;
@@ -222,25 +220,20 @@ deflabel _0branch
 deflabel .eforth
 	.eforth ??, b,
 deflabel-here _coldv
-deflabel _qrx
-deflabel _txsto
-deflabel _accept
-deflabel _ktap 
-deflabel _drop
-deflabel _dotok
-deflabel _numberq
-deflabel _ctop 
-deflabel _lastn
+def2label _qrx _txsto
+def2label _accept _ktap
+def2label _drop _dotok
+def3label _numberq _ctop _lastn
 deflabel-here _uzero
 	0x400 constant, \ reserved
 	data-stack-start constant, \ SP0
 	return-stack-start constant, \ RP0
-	_qrx ??, .cell \ '?key
-	_txsto ??, .cell \ 'emit
-	_accept ??, .cell \ 'expect
-	_ktap ??, .cell \ 'tap
-	_drop ??, .cell \ 'echo
-	_dotok ??, .cell \ 'prompt
+	_qrx ??cell, \ '?key
+	_txsto ??cell, \ 'emit
+	_accept ??cell, \ 'expect
+	_ktap ??cell, \ 'tap
+	_drop ??cell, \ 'echo
+	_dotok ??cell, \ 'prompt
 	decimal 10 constant, \ base
 	0 constant, \ tmp
 	0 constant, \ span
@@ -248,17 +241,17 @@ deflabel-here _uzero
 	0 constant, \ #tib
 	input-buffer-start constant, \ tib
 	0 constant, \ csp
-	_interpret ??, .cell \ 'eval
-	_numberq ??, .cell \ 'number 0x13
+	_interpret ??cell, \ 'eval
+	_numberq ??cell, \ 'number 0x13
 	0 constant, \ hld
 	0 constant, \ handler
-	forth1 ??, .cell \ context pointer
+	forth1 ??cell, \ context pointer
 	0x800 constant, \ vocabulary stack
-	forth1 ??, .cell \ current pointer
+	forth1 ??cell, \ current pointer
 	0 constant, \ vocabulary link pointer
-	_ctop ??, .cell \ code dictionary
+	_ctop ??cell, \ code dictionary
 	input-buffer-start 4 - constant, \ name dictionary
-	_lastn ??, .cell \ last
+	_lastn ??cell, \ last
 deflabel-here _ulast
 deflabel _eforth1
 0x0180 .org
@@ -284,9 +277,8 @@ deflabel qrx1
 qrx1 .label
     0lit,
 	next,
-_txsto s" tx!" machineword-predef ( c -- )
+_txsto s" tx!" machineword-predef-1arg ( c -- )
 	\ send character c to the output device.
-	1pop,
     xtop putc, 
 	next,
 s" !io" machineword _storeio ( -- )
@@ -302,9 +294,9 @@ s" exit" machineword _exit
     xrp spdrop, \ pop the top element off ( where we were )
     retxrp,
 : exit; ( -- ) _exit word, ;
-_execute s" execute" machineword-predef
+_execute s" execute" machineword-predef-1arg
 	\ execute the definition whose code field address cfa is on the data stack
-    1pop, \ top - cfa
+    \ top - cfa
     \ do not use normal call procedure since we don't want to come back here
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
@@ -340,24 +332,22 @@ _zbra1 .label
     0x2 #, xlower xlower addi, \ compute <>0 case
     xlower xrp st, 
 	next,
-s" !" machineword _store ( v a -- ) 
-   2pop, \ top - addr
-         \ lower - value
+s" !" machineword-2arg _store ( v a -- ) 
+   \ top - addr
+   \ lower - value
    xlower xtop st, \ perform the store
    next,
-s" @" machineword _at
-    1pop,
+s" @" machineword-1arg _at
     xtop xtop ld,
 	1push,
 : @; ( -- ) _at word, ;
-s" c!" machineword _cstore  ( value addr -- ) 
-	2pop, \ top - addr
-		  \ lower - value
+s" c!" machineword-2arg _cstore  ( value addr -- ) 
+	\ top - addr
+	\ lower - value
     xlower xtop stb, \ save it to memory with the upper 8 bits masked
     next,
 : c!; ( -- ) _cstore word, ;
-s" c@" machineword _cat
-	1pop, 
+s" c@" machineword-1arg _cat
 	xtop xtop ldb,
 	1push,
 : c@; ( -- ) _cat word, ;
@@ -387,9 +377,8 @@ s" >r" word/compile machineword-base _>r
 s" sp@" machineword _spat
     xsp xsp push,
     next,
-s" sp!" machineword _spstore ( a -- )
+s" sp!" machineword-1arg _spstore ( a -- )
     \ set the data stack pointer
-    1pop,
     xtop xsp move,
     next,
 _drop s" drop" machineword-predef 
@@ -398,20 +387,18 @@ _drop s" drop" machineword-predef
 s" dup" machineword _dup 
 	xsp xtop ld,
 	1push,
-s" swap" machineword _swap
-	2pop, \ top -- b
-		 \ lower -- a
+s" swap" machineword-2arg _swap
+	\ top -- b
+	\ lower -- a
 	xtop xsp push,
 	xlower xsp push,
     next,
-s" over" machineword _over 
-	2pop, 
+s" over" machineword-2arg _over 
 	xlower xsp push,
 	xtop xsp push,
 	xlower xsp push, 
 	next,
-s" 0<" machineword _0<
-    1pop,
+s" 0<" machineword-1arg _0<
     xtop xtop ltz,
 	1push,
 s" and" defbinaryop _and and,
@@ -789,8 +776,7 @@ s" @execute" machineword _atexec ( a -- )
     xtop br,
 : @execute; ( -- ) _atexec word, ;
 s" cmove" machineword _cmove ( b1 b2 u -- )
-deflabel cmove0
-deflabel cmove1
+def2label cmove0 cmove1
     \ copy u words from b1 to b2
     3pop, \ top - u - count
           \ lower - b2 dest-addr
@@ -943,12 +929,8 @@ dgtq1 .label
     exit;
 : digit?; ( -- ) _digit? word, ;
 _numberq s" number?" machineword-predef ( a -- n T | a F )
-deflabel numq1
-deflabel numq2
-deflabel numq3
-deflabel numq4
-deflabel numq5
-deflabel numq6
+def3label numq1 numq2 numq3
+def3label numq4 numq5 numq6
     \ convert a number string to integer. Push a flag on tos.
     base@; >r;
     0lit,
@@ -1148,12 +1130,8 @@ s" ?" machineword _quest ( a -- )
 	exit;
 \ parsing words
 s" parse" machineword _parse0 ( b u c -- b u delta ; <string> )
-deflabel parse2
-deflabel parse3
-deflabel parse5
-deflabel parse6
-deflabel parse7
-deflabel parse8
+def3label parse2 parse3 parse5 
+def3label parse6 parse7 parse8
 	\ scan string delimited by c. Return found string and its offset
 	temp; !;
 	over;
@@ -1266,11 +1244,8 @@ same2 .label
 	exit;	\ strings equal
 : same?; ( -- ) _sameq word, ;
 s" find" machineword _find ( a va -- ca na | a F )
-deflabel find2
-deflabel find3
-deflabel find4
-deflabel find5
-deflabel find6
+def3label find2 find3 find4
+def2label find5 find6
 	\ search a vocabulary for a string. Return ca and na if succeeded
 	swap; dup; c@; w/slit, /; temp; !;	\ 32/16 bit mix-up
 	dup; @; >r; cell+; swap;
@@ -1296,9 +1271,7 @@ find5 .label
 	exit; \ ca
 
 s" name?" machineword _nameq ( a -- ca na | a F ) 
-deflabel nameq1
-deflabel nameq2
-deflabel nameq3
+def3label nameq1 nameq2 nameq3
 	\ search all context vocabularies for a string.
 	context; dup; 2@; xor;	\ ?context = also
 	nameq1 ??branch; 
@@ -1340,8 +1313,7 @@ s" tap" machineword _tap ( bot eot cur c -- bot eot cur )
 	over; c!; 1+,,
 	exit;
 _ktap s" ktap" machineword-predef ( bot eot cur c -- bot eot cur )
-deflabel ktap1
-deflabel ktap2
+def2label ktap1 ktap2
 	\ Process a key stroke, cr, or backspace
 	dup;
     ccr #lit, xor;
@@ -1357,9 +1329,7 @@ ktap2 .label
 	drop; swap; drop; dup;
 	exit;
 _accept s" accept" machineword-predef ( b u -- b u )
-deflabel accept2
-deflabel accept3
-deflabel accept4
+def3label accept2 accept3 accept4
 	\ accept characters to input buffer. Return with actual count
 	over; +; over; 
 deflabel-here accept1
@@ -1431,8 +1401,7 @@ abortq1 .label
 : abortq; ( -- ) _abortq word, ;
 \ the text interpreter
 _interpret s" $interpret" machineword-predef ( a -- )
-deflabel _interpret1
-deflabel interpret2
+def2label _interpret1 interpret2
 	\ interpret a word. If failed, try to convert it to an integer.
 	name?; ?dup; 	\ ?defined
 	_interpret1 ??branch; 
@@ -1512,8 +1481,8 @@ s" hand" machineword _hand ( -- )
 s" i/o" machineword _i/o ( -- a )
 	\ array to store default io vectors
 	dovariable;
-	_qrx ??, .cell
-	_txsto ??, .cell \ default io vectors for 32 bit systems 3/16/92
+	_qrx ??cell,
+	_txsto ??cell, \ default io vectors for 32 bit systems 3/16/92
 s" console" machineword _console ( -- )
 	\ initiate terminal interface.
 	_i/o word, 2@;
@@ -1521,8 +1490,7 @@ s" console" machineword _console ( -- )
 	_hand word,
 	exit;
 _quit s" quit" machineword-predef ( -- )
-deflabel quit3
-deflabel quit4
+def2label quit3 quit4
 	\ reset stack pointer and start text interpreter
 	r0; @; rp!; \ reset return stack pointer
 deflabel-here quit1
@@ -1643,7 +1611,8 @@ s" until" immediate-machineword _until ( a -- )
 	exit;
 s" if" immediate-machineword _if ( -- A )
     \ begin a conditional branch
-    compile; ?branch; here; #call #lit, \ call with register zero thus it is a branch
+    compile; ?branch; here; 
+    #call #lit, \ call with register zero thus it is a branch
     ,;
     0lit, ,;
     exit;
@@ -1711,20 +1680,59 @@ pnam1 .label
     stqp; s"  name" .string,  \ null input
     throw;
 \ forth compiler
-\ s" $compile" machineword _$compile ( a -- )
-\ deflabel scom1
-\ deflabel scom2
-\ deflabel scom3
-\     \ compile next word to code dictionary as a token or literal.
-\     name?;
-\     ?dup;   \ ?defined
-\     scom2 ??branch;
-\     @;
-\     word/immediate
+ s" $compile" machineword _$compile ( a -- )
+def3label scom1 scom2 scom3
+    \ compile next word to code dictionary as a token or literal.
+    name?; ?dup; \ ?defined
+    scom2 ??branch; 
+    @;
+    word/immediate #lit, and; \ ?immediate
+    scom1 ??branch; 
+    execute;
+    exit; \ it's immediate, execute
+scom1 .label
+    again;  \ compile a bl instruction
+    exit;   \ its not immediate, compile
+scom2 .label
+    'number; @exec;  \ try to convert to number
+    scom3 ??branch;  \ 
+    literal;         
+    exit;            \ compile number as integer
+scom3 .label
+    throw;           \ error
+
+s" overt" machineword _overt ( -- )
+    \ link a new word into the current vocabulary
+    last; @: current; @; !;
+    exit;
+: overt; ( -- ) _overt word, ;
+s" ;" word/all machineword-base _semis
+    compile; exit;
+    leftbracket; overt; 
+    exit;
+
+s" ]" machineword _rightbracket ( -- )
+    \ start compiling the words in the input stream
+    _$compile ??lit,
+    'eval; !; 
+    exit;
+s" :" machineword _colon ( -- ; <string> ) 
+    \ start a new colon definition using next word as its name
+    token;
+    _snam word, 
+    _rightbracket word,
+    exit;
+
+s" immediate" machineword _immediate ( -- )
+    \ make the last compiled word an immediate word.
+    word/immediate #lit,
+    last; @; @; or; last; @; !; 
+    exit;
+
+
+
 s" see" machineword _see ( -- ; <string> )
-deflabel see2
-deflabel see3
-deflabel see4
+def3label see2 see3 see4
     _tick word,
     cell+;
     decimal 19 #lit,
@@ -1800,7 +1808,7 @@ s" hi" machineword _hi ( -- )
 
 s" 'boot" machineword _tboot
     dovariable;
-    _hi ??, .cell 
+    _hi ??cell, 
     
 _cold s" cold" machineword-predef ( -- ) 
     \ the high level cold start sequence
@@ -1810,7 +1818,7 @@ deflabel-here cold1
     dup; \ initialize search order
     current; 2!;
     overt; _quit word,
-    cold1 ??, b,
+    cold1 ??b,
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables
