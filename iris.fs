@@ -433,6 +433,10 @@ ioaddr}
 : retgt, ( src2 src sp -- )
   >r cv gt, 
   cv r> cret, ;
+: reteqz, ( reg sp -- )
+  swap cv eqz,
+  cv swap cret, ;
+
 #umsmod inst-3reg um/mod,
 #msmod inst-3reg m/mod,
 #umstar inst-3reg um*,
@@ -452,3 +456,18 @@ ioaddr}
 : stb, ( value addr -- ) stbl, ;
 : ldb, ( addr dest -- ) ldbl, ;
 : spdrop, ( sp -- ) zero pop, ;
+: beq, ( imm id src2 src -- ) 
+  cv eq,
+  cv bc, ;
+: beqz, ( imm id src -- ) 
+  cv eqz,
+  cv bc, ;
+: bneqz, ( imm id src -- )
+  cv neqz,
+  cv bc, ;
+: bgt, ( imm id src2 src -- )
+    cv gt, 
+    cv bc, ;
+: blt, ( imm id src2 src -- )
+    cv lt,
+    cv bc, ;

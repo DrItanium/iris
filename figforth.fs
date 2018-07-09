@@ -23,7 +23,6 @@ unused-start
 1+cconstant xfourth \ contents of the fourth stack item
 1+cconstant xfifth \ contents of the fifth stack item or result of a double add
 1+cconstant xsixth \ contents of the sixth stack item or result of a double add
-1+cconstant xtaddr \ temporary storage for an address
 1+cconstant xup \ user area pointer
 too-many-registers-defined
 xtop cconstant wxtop \ masquerade for double wide operations
@@ -62,7 +61,9 @@ output-buffer-start 0x100 + constant output-buffer-end
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
 0x0d constant ccr \ carriage return
-
+: dropxrp, ( -- ) xrp spdrop, ;
+: dropxsp, ( -- ) xsp spdrop, ;
+: retxrp, ( -- ) xrp ret, ;
 
 \ register reservations
 deflabel forth1
@@ -137,7 +138,7 @@ variable user-offset
 : user-offset! ( n -- ) user-offset ! ;
 : user-offset1+ ( -- ) user-offset@ 2+ user-offset! ;
 \ program start
-: next, ( -- ) xrp ret, ;
+: next, ( -- ) retxrp, ;
 : 1push, ( -- ) xtop xsp push, next, ;
 : 2push, ( -- ) xlower xsp push, 1push, ;
 : .string, ( addr len -- ) 
@@ -280,8 +281,7 @@ deflabel qrx1
 	\ return input character and true, or a false if no input
 	/dev/console0 io #set, 
 	io xlower ld, 
-	xlower cv eqz,
-	qrx1 ??, cv bc, \ if equal zero then no input
+    qrx1 ??, xlower beqz, \ if equal zero then no input
     0xFFFF xtop #set,
 	2push,
 qrx1 .label
@@ -304,7 +304,7 @@ _lit s" lit" word/compile machineword-base-predef
 s" exit" machineword _exit
     \ terminate a colon definition
     xrp spdrop, \ pop the top element off ( where we were )
-    xrp ret,
+    retxrp,
 : exit; ( -- ) _exit word, ;
 _execute s" execute" machineword-predef
 	\ execute the definition whose code field address cfa is on the data stack
@@ -321,24 +321,22 @@ deflabel donext0
     xrp xtop pop, xtop xsp push, \ r>
     xrp xtop pop, xtop xsp push, \ r>
                                  \ implied dup
-    xtop xtop eqz,               \ if
-    donext0 ??, xtop bc,
+    donext0 ??, xtop beqz,       \ if
     xsp xtop pop, xtop 1-,       \ 1 - 
     xtop xrp push,               \ >r
     xsp xtop pop, xtop xtop ld,  \ @
     xtop xrp push,               \ >r
-    xrp ret,
+    retxrp,
 donext0 .label
-    xsp zero pop,                \ drop
+    dropxsp,                     \ drop
     xsp xtop pop, xtop 2+,       \ cell+
     xtop xrp push,               \ >r
-    xrp ret,                     \ ;
+    retxrp,                      \ ;
 : donext; ( -- ) _donext word, ;
 _0branch s" 0branch" word/compile machineword-base-predef
 deflabel _zbra1
 	1pop, \ flag
-	zero xtop cv neq,
-	_zbra1 ??, cv bc, \ 0<>?
+    _zbra1 ??, xtop bneqz, \ 0<>?
     \ do nothing at this point since it is already setup correctly
 	next,
 _zbra1 .label
@@ -604,12 +602,8 @@ deflabel within0
     3pop, \ top - uh
           \ lower - ul
           \ third - u
-
-    within0 ??, xtaddr set,
-    xtop xthird cv gt, \ u > top
-    xtaddr cv bcr,
-    xlower xthird cv lt, \ u < lower
-    xtaddr cv bcr,
+    within0 ??, xtop xthird bgt,   \ u > top
+    within0 ??, xlower xthird blt, \ u < lower
     0xFFFF #lit,
     next,
 within0 .label
@@ -698,13 +692,13 @@ s" */" machineword _stasl ( n1 n2 n3 -- q )
 s" cell+" machineword _cell+ ( a -- b )
     \ add cell size in words to address [ originally this was bytes ]
     1pop,
-    2 #, xtop xtop addi,
+    words-per-cell #, xtop xtop addi,
     1push,
 : cell+; ( -- ) _cell+ word, ;
 s" cell-" machineword _cell- ( a -- b )
     \ subtract cell size in words from address
     1pop,
-    2 #, xtop xtop subi,
+    words-per-cell #, xtop xtop subi,
     1push,
 : cell-; ( -- ) _cell- word, ;
 s" cells" machineword _cells ( n -- n )
@@ -795,8 +789,7 @@ s" @execute" machineword _atexec ( a -- )
     \ execute vector stored in address a 
     1pop,
     xtop xtop ld,
-    xtop cv eqz,
-    cv xsp cret,
+    xtop xsp reteqz,
     xtop br,
 : @execute; ( -- ) _atexec word, ;
 s" cmove" machineword _cmove ( b1 b2 u -- )
@@ -806,16 +799,14 @@ deflabel cmove1
     3pop, \ top - u - count
           \ lower - b2 dest-addr
           \ third - b1 src-addr
-    xtop cv eqz,
-    cmove1 ??, cv bc,
+    cmove1 ??, xtop beqz,
 cmove0 .label
     xthird xfourth ld, \ load from src
     xfourth xlower st, \ store to dest
     xthird 1+,
     xlower 1+,
     xtop 1-,
-    xtop cv neqz,
-    cmove0 ??, cv bc,
+    cmove0 ??, xtop bneqz, 
 cmove1 .label
     next,
 : cmove; ( -- ) _cmove word, ;
@@ -825,14 +816,12 @@ deflabel fill1
     3pop, \ top - character
           \ lower - count
           \ third - address
-    xlower cv eqz,
-    fill1 ??, cv bc,
+    fill1 ??, xlower beqz, 
 deflabel-here fill0 
     xtop xthird st,
     xthird 1+,
     xlower 1-,
-    xlower cv neqz,
-    fill0 ??, cv bc,
+    fill0 ??, xlower bneqz,
 fill1 .label
     next,
 : 1+,, ( -- ) 
@@ -1824,15 +1813,11 @@ s" 'boot" machineword _tboot
 _cold s" cold" machineword-predef ( -- ) 
     \ the high level cold start sequence
 deflabel-here cold1
-    _preset word,
-    _tboot word,
-    @execute;
+    _preset word, _tboot word, @execute;
     _forth word, context; @;
     dup; \ initialize search order
-    current;
-    2!;
-    overt;
-    _quit word,
+    current; 2!;
+    overt; _quit word,
     cold1 ??, b,
 \ always should be last
 last-word @ .org
