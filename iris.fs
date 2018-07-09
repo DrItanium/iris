@@ -448,3 +448,6 @@ ioaddr}
 #rshifti inst-2reg-with-imm16 rshifti,
 #lshifti inst-2reg-with-imm16 lshifti,
 #lti inst-2reg-with-imm16 lti,
+
+: stb, ( value addr -- ) stbl, ;
+: ldb, ( addr dest -- ) ldbl, ;

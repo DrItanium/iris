@@ -56,7 +56,8 @@ input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
 2 constant words-per-cell
-
+0 constant version-major
+1 constant version-minor
 \ ascii characters used
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
@@ -134,7 +135,7 @@ variable user-offset
 0 user-offset !
 : user-offset@ ( -- n ) user-offset @ ;
 : user-offset! ( n -- ) user-offset ! ;
-: user-offset1+ ( -- ) user-offset@ 1+ user-offset! ;
+: user-offset1+ ( -- ) user-offset@ 2+ user-offset! ;
 \ program start
 : next, ( -- ) xrp ret, ;
 : 1push, ( -- ) xtop xsp push, next, ;
@@ -211,12 +212,6 @@ deflabel _lit
 deflabel _execute
 deflabel _0branch
 : two-cell-op ( n id op -- ) word, .cell ;
-: plit; ( n id -- )
-  \ compile the literal into the dictionary by putting the _LIT command followed by
-  \ the number itself
-  _lit two-cell-op ;
-: ??plit; ( n -- ) ??, plit; ;
-: #plit; ( n -- ) #, plit; ;
 : lit; ( -- ) _lit word, ;
 : execute; ( -- ) _execute word, ;
 : branch; ( location id -- ) xrp call, ;
@@ -363,15 +358,13 @@ s" @" machineword _at
 : @; ( -- ) _at word, ;
 s" c!" machineword _cstore  ( value addr -- ) 
 	2pop, \ top - addr
-		 \ lower - value
-    0xFF #, xlower xlower uandi,
-    xlower xtop st, \ save it to memory with the upper 8 bits masked
+		  \ lower - value
+    xlower xtop stb, \ save it to memory with the upper 8 bits masked
     next,
 : c!; ( -- ) _cstore word, ;
 s" c@" machineword _cat
 	1pop, 
-	xtop xtop ld,
-	0xFF #, xtop xtop uandi,
+	xtop xtop ldb,
 	1push,
 : c@; ( -- ) _cat word, ;
 s" rp@" machineword _rpat
@@ -494,9 +487,9 @@ s" handler" userword _handler
 : handler; ( -- ) _handler word, ;
 &context s" context" userword-predef \ already advanced one at this point
 \ consumes eight cells
-user-offset@ 8 + user-offset!
+user-offset@ decimal 16 + user-offset!
 _&current s" current" userword-predef \ advance four cells
-user-offset@ 4 + user-offset!
+user-offset@ decimal 8 + user-offset!
 s" cp" userword _cp
 : cp; ( -- ) _cp word, ;
 s" np" userword _np
@@ -705,24 +698,25 @@ s" */" machineword _stasl ( n1 n2 n3 -- q )
 s" cell+" machineword _cell+ ( a -- b )
     \ add cell size in words to address [ originally this was bytes ]
     1pop,
-    xtop 1+,
+    2 #, xtop xtop addi,
     1push,
 : cell+; ( -- ) _cell+ word, ;
 s" cell-" machineword _cell- ( a -- b )
     \ subtract cell size in words from address
     1pop,
-    xtop 1-,
+    2 #, xtop xtop subi,
     1push,
 : cell-; ( -- ) _cell- word, ;
 s" cells" machineword _cells ( n -- n )
     \ multiply tos by cell size in words
-    \ this is a nop since this is in words
-    next,
+    1pop,
+    words-per-cell #, xtop xtop muli,
+    1push,
 : cells; ( -- ) _cells word, ;
 s" aligned" machineword _aligned ( n -- n )
-    \ align address to the cell boundary
-    \ nop since automatic alignment :D
-    next,
+    1pop,
+    0xFFFE #, xtop xtop andi
+    1push,
 : aligned; ( -- ) _aligned word, ;
 s" bl" machineword _blank ( -- 32 )
     \ return 32, the blank character
@@ -1741,14 +1735,103 @@ pnam1 .label
 \     ?dup;   \ ?defined
 \     scom2 ??branch;
 \     @;
-\     word/immediate 
+\     word/immediate
+s" see" machineword _see ( -- ; <string> )
+deflabel see2
+deflabel see3
+deflabel see4
+    _tick word,
+    cell+;
+    decimal 19 #lit,
+    >r;
+deflabel-here see1
+    cell+;
+    dup;
+    @a; \ ppc subroutine threading
+    dup; \ does it contain a zero**$$$ ?
+    see2 ??branch;
+    'name;  \ is it a name?
+see2 .label
+    ?dup; \ name address or zero
+    see3 ??branch;
+    spaces;
+    .id;    \ display name
+    see4 word,
+see3 .label
+    dup; @; u.; \ display number
+see4 .label
+    donext; \ user control
+    see1 word,
+    drop;
+    exit;
+
+s" words" machineword _words ( -- )
+deflabel words2
+    \ display the names in the context vocabulary.
+    context; @; 
+deflabel-here words0
+    decimal 10 #lit, temp; !;
+    cr; 
+deflabel-here words1
+    @;
+    ?dup; \ ? at end of list
+    words2 ??branch;
+    dup;
+    spaces;
+    .id;
+    cell-;
+    temp; @;
+    0x1 #lit, -;
+    ?dup;
+    words0 ??branch;
+    temp; !;
+    words1 word,
+words2 .label
+    exit;
+
+    
+\ hardware reset
+s" ver" machineword _ver ( -- n )
+    doconstant;
+    version-major decimal 256 * version-minor + constant, 
+: version ; ( -- ) _ver word, ;
+
+s" hi" machineword _hi ( -- )
+    \ display the sign-on message of eForth
+    _storeio word,
+    cr;
+    dtqp; s" ppc eForth v" .string, \ model
+    base@;
+    hex;
+    version;
+    <#;
+    digit;
+    digit;
+    0x2e #lit, \ '.'
+    hold;
+    digits;
+    #>; 
+    type; \ format version number
+    base; 
+    !;
+    cr;
+    exit;
+
+s" 'boot" machineword _tboot
+    dovariable;
+    _hi ??, .cell 
+    
 _cold s" cold" machineword-predef ( -- ) 
     \ the high level cold start sequence
 deflabel-here cold1
-    \ todo finish
+    _preset word,
+    _tboot word,
+    @execute;
     _forth word, context; @;
-    dup;
-    \ todo finish
+    dup; \ initialize search order
+    current;
+    2!;
+    overt;
     _quit word,
     cold1 ??, b,
 \ always should be last
