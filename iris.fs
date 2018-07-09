@@ -471,3 +471,13 @@ ioaddr}
 : blt, ( imm id src2 src -- )
     cv lt,
     cv bc, ;
+: set-io, ( imm id -- ) io set, ;
+: #set-io, ( imm -- ) #, set-io, ;
+: ??set-io, ( imm -- ) ??, set-io, ;
+: iost, ( reg -- ) io st, ;
+: iold, ( reg -- ) io swap ld, ;
+: iostb, ( reg -- ) io stb, ;
+: ioldb, ( reg -- ) io swap ldb, ;
+: putc, ( reg -- ) /dev/console0 #set-io iostb, ;
+: getc, ( reg -- ) /dev/console0 #set-io ioldb, ;
+: terminate, ( -- ) /dev/terminate-vm #set-io zero iostb, ;

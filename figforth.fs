@@ -274,13 +274,11 @@ _eforth1 .label
 	_cold ??, b,
 s" bye" machineword _bye ( -- )
 	\ exit simulator 
-	/dev/terminate-vm io #set,
-	zero io st,
+    terminate,
 _qrx s" ?rx" machineword-predef ( -- c T | F )
 deflabel qrx1
 	\ return input character and true, or a false if no input
-	/dev/console0 io #set, 
-	io xlower ld, 
+    xlower getc, 
     qrx1 ??, xlower beqz, \ if equal zero then no input
     0xFFFF xtop #set,
 	2push,
@@ -290,8 +288,7 @@ qrx1 .label
 _txsto s" tx!" machineword-predef ( c -- )
 	\ send character c to the output device.
 	1pop,
-    /dev/console0 io #set,
-	xtop io st,
+    xtop putc, 
 	next,
 s" !io" machineword _storeio ( -- )
 	\ initialize the serial I/O devices
