@@ -451,3 +451,4 @@ ioaddr}
 
 : stb, ( value addr -- ) stbl, ;
 : ldb, ( addr dest -- ) ldbl, ;
+: spdrop, ( sp -- ) zero pop, ;

@@ -336,13 +336,13 @@ namespace iris {
     DefExec(LoadThenIncrement) {
         auto addr = _src.get<Address>();
         _dest.setValue(loadNumber(addr));
-        _src.setValue(addr + 1);
+        _src.setValue(addr + 2);
     }
     DefExec(StoreThenIncrement) {
         auto addr = _dest.get<Address>();
         auto val = _src.get<Address>();
         storeNumber(addr, val);
-        _dest.setValue(addr + 1);
+        _dest.setValue(addr + 2);
     }
     DefExec(WideAdd) {
         auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());

@@ -298,12 +298,12 @@ s" !io" machineword _storeio ( -- )
 	next,
 _lit s" lit" word/compile machineword-base-predef
     xrp xlower ld, \ address of next which is a literal
-    xlower xtop ld, \ load the value
-    xlower 1+,     \ skip over the cell
+    xlower xtop ldtincr, \ load the value then skip over the cell
     xlower xrp st, \ overwrite the cell
     1push,
 s" exit" machineword _exit
     \ terminate a colon definition
+    xrp spdrop, \ pop the top element off ( where we were )
     xrp ret,
 : exit; ( -- ) _exit word, ;
 _execute s" execute" machineword-predef
@@ -330,7 +330,7 @@ deflabel donext0
     xrp ret,
 donext0 .label
     xsp zero pop,                \ drop
-    xsp xtop pop, xtop 1+,       \ cell+
+    xsp xtop pop, xtop 2+,       \ cell+
     xtop xrp push,               \ >r
     xrp ret,                     \ ;
 : donext; ( -- ) _donext word, ;
