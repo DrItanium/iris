@@ -212,7 +212,6 @@ word/compile word/immediate or  constant word/all
 deflabel _lit
 deflabel _execute
 deflabel _0branch
-: two-cell-op ( n id op -- ) word, .cell ;
 : lit; ( -- ) _lit word, ;
 : execute; ( -- ) _execute word, ;
 : branch; ( location id -- ) xrp call, ;
@@ -1790,13 +1789,9 @@ s" hi" machineword _hi ( -- )
     base@;
     hex;
     version;
-    <#;
-    digit;
-    digit;
+    <#; digit; digit;
     0x2e #lit, \ '.'
-    hold;
-    digits;
-    #>; 
+    hold; digits; #>; 
     type; \ format version number
     base; 
     !;

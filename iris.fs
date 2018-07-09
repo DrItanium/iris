@@ -157,6 +157,8 @@ opcode: #lez
 opcode: #gez
 opcode: #andi
 opcode: #uandi
+opcode: #muli
+opcode: #divi
 opcode}
 \ registers
 set-current \ go back
@@ -478,6 +480,61 @@ ioaddr}
 : iold, ( reg -- ) io swap ld, ;
 : iostb, ( reg -- ) io stb, ;
 : ioldb, ( reg -- ) io swap ldb, ;
-: putc, ( reg -- ) /dev/console0 #set-io iostb, ;
-: getc, ( reg -- ) /dev/console0 #set-io ioldb, ;
-: terminate, ( -- ) /dev/terminate-vm #set-io zero iostb, ;
+: putc, ( reg -- ) /dev/console0 #set-io, iostb, ;
+: getc, ( reg -- ) /dev/console0 #set-io, ioldb, ;
+: terminate, ( -- ) /dev/terminate-vm #set-io, zero iostb, ;
+: muli, ( imm id src dest -- ) 
+    2>r 
+    #, = if 
+       dup 
+       case 
+            0 of drop zero 2r> swap drop move, endof
+            1 of drop 2r> move, endof
+            2 of drop 1 #, 2r> lshifti, endof
+            4 of drop 2 #, 2r> lshifti, endof
+            8 of drop 3 #, 2r> lshifti, endof
+            16 of drop 4 #, 2r> lshifti, endof
+            32 of drop 5 #, 2r> lshifti, endof
+            64 of drop 6 #, 2r> lshifti, endof
+            128 of drop 7 #, 2r> lshifti, endof
+            256 of drop 8 #, 2r> lshifti, endof
+            swap 
+            2r>
+            #muli <<byte
+            2reg <<byte
+            <<word
+           endcase
+    else
+       2r>
+       #muli <<byte
+       2reg <<byte
+       <<iword 
+    endif
+;
+: divi, ( imm id src dest -- )
+    2>r 
+    #, = if 
+       dup 
+       case 
+            0 of drop zero 2r> swap drop move, endof
+            1 of drop 2r> move, endof
+            2 of drop 1 #, 2r> rshifti, endof
+            4 of drop 2 #, 2r> rshifti, endof
+            8 of drop 3 #, 2r> rshifti, endof
+            16 of drop 4 #, 2r> rshifti, endof
+            32 of drop 5 #, 2r> rshifti, endof
+            64 of drop 6 #, 2r> rshifti, endof
+            128 of drop 7 #, 2r> rshifti, endof
+            256 of drop 8 #, 2r> rshifti, endof
+            swap 
+            2r>
+            #divi <<byte
+            2reg <<byte
+            <<word
+           endcase
+    else
+       2r>
+       #divi <<byte
+       2reg <<byte
+       <<iword 
+    endif
