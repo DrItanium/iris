@@ -133,7 +133,10 @@ namespace iris {
 			DefInstallationTarget(WriteByteToMemory);
 			DefInstallationTarget(WriteWordToMemory);
 #undef DefInstallationTarget
-			using SectionInstallationTarget = std::variant<SetRegister, WriteByteToMemory, WriteWordToMemory>;
+			using SectionInstallationTarget = std::variant<
+                SetRegister, 
+                WriteByteToMemory, 
+                WriteWordToMemory>;
 		public:
 			Core();
 			void init();
@@ -253,6 +256,7 @@ namespace iris {
             };
             bool _enableDebugging = false;
             void printRegisters() noexcept;
+            const std::string& opcodeToName(Opcode op);
 	};
 }
 #endif

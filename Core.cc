@@ -453,11 +453,33 @@ namespace iris {
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
     }
+    const std::string& Core::opcodeToName(Opcode opcode) {
+        static std::map<Opcode, std::string> translation = {
+#define FirstX(title, style) { Opcode:: title , #title }
+#define X(title, style) , FirstX(title, style) 
+#include "Opcodes.def"
+#undef X
+#undef FirstX
+        };
+        static std::string illegalOperation = "Illegal Operation!";
+            if (auto r = translation.find(opcode); r != translation.end()) {
+                return r->second;
+            } else {
+                return illegalOperation;
+            }
+    }
     void Core::printRegisters() noexcept {
+        static std::vector<std::string> _names = {
+            "zero", "cv", "at0", "io",
+            "xsp", "xrp", "xtop", "xlower",
+            "xthird", "xfourth", "xfifth", "xsixth",
+            "xup", "x13", "x14", "x15",
+        };
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
                 auto index = (i * 4) + j;
-                std::cout << std::showbase << "x" << std::dec << std::setfill('0') << std::setw(2) << index << ": " << std::setfill(' ') << std::setw(7) << std::hex << _registers[index].get<Address>() << "  ";
+
+                std::cout << std::showbase << std::setw(8) << _names[index] << ": " << std::setfill(' ') << std::setw(7) << std::hex << _registers[index].get<Address>() << "  ";
             }
             std::cout << std::endl;
         }
@@ -465,12 +487,11 @@ namespace iris {
     }
 	void Core::cycle() {
         if (_enableDebugging) {
-            //std::cout << __FILE__ << ": " << std::dec << __LINE__ << " -> " << __PRETTY_FUNCTION__ << " : pc: " << std::hex << _pc << std::endl;
             printRegisters();
         }
 		auto control = static_cast<Opcode>(load(_pc));
         if (_enableDebugging) {
-            std::cout << "Control bit: " << std::hex << short(control) << std::endl;
+            std::cout << "opcode: " << opcodeToName(control) << std::endl;
         }
 		switch (control) {
 #define X(title, style) case Opcode :: title : \
