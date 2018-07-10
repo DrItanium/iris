@@ -14,6 +14,10 @@ true iris-debug !
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
+2 constant bytes-per-word
+1 constant words-per-cell
+0 constant version-major
+1 constant version-minor
 \ setup the registers first
 unused-start 
 1+cconstant xsp \ data stack pointer
@@ -32,15 +36,8 @@ xfifth cconstant wxthird
 \ the core memory is a disk buffer of a kind so it will become the disk buffer 
 \ of legend that is being discussed in the forth book.
 : word, ( v -- ) ??, xrp call, ;
-: constant, ( id -- ) #, .cell ;
-: ??cell, ( imm -- ) ??, .cell ;
-0xFFFF constant ram-end
-0xFF00 constant io-start
+: defalias ( l "name" -- ) create , does> @ word, ;
 0xF000 constant system-start
-0x0000 constant ram-start
-\ 0x0100 constant bootstrap-end
-0xF000 constant &LIMIT
-0xE000 constant &FIRST \ address of the first byte of the disk buffers
 \ 0xF000 - 0xF100 \ system variables
 \ 0xF100 - 0xF400 \ data stack
 \ 0xF400 - 0xF600 \ return stack
@@ -56,9 +53,6 @@ return-stack-start constant input-buffer-start
 input-buffer-start 0x100 + constant input-buffer-end
 input-buffer-end constant output-buffer-start
 output-buffer-start 0x100 + constant output-buffer-end
-2 constant words-per-cell
-0 constant version-major
-1 constant version-minor
 \ ascii characters used
 0x8 constant cbksp \ backspace
 0x0a constant clf \ line feed
@@ -88,23 +82,24 @@ deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
 def2label _eprint _up \ user pointer
 def3label _&current _leftbracket _compile
 def2label _douser _,
-: voc-link; ( -- ) &voc-link word, ;
-: inn; ( -- ) &IN word, ;
-: out; ( -- ) &OUT word, ;
-: scr; ( -- ) &scr word, ;
-: offset; ( -- ) &offset word, ;
-: context; ( -- ) &context word, ;
-: current; ( -- ) _&current word, ;
-: cold; ( -- ) _cold word, ;
-: abort; ( -- ) _abort word, ;
-: quit; ( -- ) _quit word, ;
-: interpret; ( -- ) _interpret word, ;
-: message; ( -- ) _message word, ;
-: sp0; ( -- ) &s0 word, ;
-: r0; ( -- ) &r0 word, ;
-: leftbracket; ( -- ) _leftbracket word, ;
-: compile; ( -- ) _compile word, ;
-: ,; ( -- ) _, word, ;
+&voc-link defalias voc-link;
+&in defalias inn;
+&out defalias out;
+&scr defalias scr;
+&offset defalias offset;
+&context defalias context;
+_&current defalias current;
+_cold defalias cold;
+_abort defalias abort;
+_quit defalias quit;
+_interpret defalias interpret;
+_message defalias message;
+&s0 defalias sp0;
+&r0 defalias r0;
+_leftbracket defalias leftbracket;
+_compile defalias compile;
+_, defalias ,;
+
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
 : ??lit, ( n -- ) ??, lit, ;
@@ -113,11 +108,6 @@ def2label _douser _,
 : w/slit, ( -- ) words-per-cell #lit, ;
 
 \ set the constants
-&LIMIT constant xlimit
-&FIRST constant xfirst
-0x8 constant b/scr
-0x80 constant b/buf 
-2 constant cell-size
 variable last-word
 variable user-offset
 0 last-word !
@@ -199,11 +189,11 @@ word/compile word/immediate or  constant word/all
   xtop xlower xtop ' execute 
   1push, ;
 def3label _lit _execute _0branch
-: lit; ( -- ) _lit word, ;
-: execute; ( -- ) _execute word, ;
-: branch; ( location id -- ) xrp call, ;
-: ?branch; ( -- ) _0branch word, ;
+_lit defalias lit;
+_0branch defalias ?branch;
+_execute defalias execute;
 : ??branch; ( label -- ) ?branch; word, ;
+: branch; ( location id -- ) xrp call, ;
 \ code start
 0x0000 .org
 deflabel .eforth

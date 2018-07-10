@@ -62,7 +62,8 @@ variable mloc \ current memory location
 : {opcode ( -- 0 ) {registers ;
 : opcode: dup cconstant 1+ ;
 : opcode} ( n -- ) registers} ;
-: {ioaddr ( -- 0 ) 0xFF00 ;
+0xFF00 constant io-start
+: {ioaddr ( -- 0 ) io-start ;
 : ioaddr} ( n -- ) drop ;
 : ioaddr: ( n -- k ) dup constant 1+ ;
 
@@ -418,6 +419,9 @@ ioaddr}
 #ldtincr inst-2reg ldtincr,
 #sttincr inst-2reg sttincr,
 : .cell ( addr id -- ) .data16 ;
+: #cell, ( addr -- ) #, .cell ;
+: ??cell, ( addr -- ) ??, .cell ;
+: constant, ( addr -- ) #cell, ;
 
 #addw inst-3reg addw,
 #subw inst-3reg subw,
@@ -559,3 +563,6 @@ ioaddr}
     endif ;
 : #pushi, ( imm sp -- ) #, swap pushi, ;
 : ??pushi, ( imm sp -- ) ??, swap pushi, ;
+
+0xFFFF constant ram-end
+0x0000 constant ram-start
