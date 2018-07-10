@@ -7,10 +7,10 @@
 
 include iris.fs
 true iris-debug !
-: x.scr ( -- ) 
-: ??cell, ( imm -- ) ??, .cell ;
-	\ display the stack and then print a newline
-hex .s decimal cr ;
+
+: x.scr ( -- )
+  \ display the stack and then print a newline
+  hex .s decimal cr ;
 \ contains all of the registers and pieces used for the monitor itself
 \ the monitor is now also the forth system itself
 s" figforth.o" {asm
@@ -33,6 +33,7 @@ xfifth cconstant wxthird
 \ of legend that is being discussed in the forth book.
 : word, ( v -- ) ??, xrp call, ;
 : constant, ( id -- ) #, .cell ;
+: ??cell, ( imm -- ) ??, .cell ;
 0xFFFF constant ram-end
 0xFF00 constant io-start
 0xF000 constant system-start
@@ -67,39 +68,27 @@ output-buffer-start 0x100 + constant output-buffer-end
 : retxrp, ( -- ) xrp ret, ;
 
 \ register reservations
-def2label forth1 
-          _origin
-def3label _cold 
-          _abort 
-          _quit
-def2label _interpret
-          _message \ message routine
-def3label &S0 \ initial value of the data stack pointer
-          &R0 \ initial value of the return stack pointer
-          &VOC-LINK \ address of a field in the definition of the most recently created
+def2label forth1 _origin
+def3label _cold _abort _quit
+def2label _interpret _message \ message routine
+def2label &S0 &R0 ( initial values of the data and return stack pointer ) 
+deflabel  &VOC-LINK \ address of a field in the definition of the most recently created
                     \ created vocabulary. All vocabulary names are linked by
                     \ these fields to allow control for FORGETting through multiple
                     \ vocabularies
-def3label &BLK \ current block number under interpretation. If 0, input is
-               \ being taken from the terminal input buffer
-          &IN  \ Byte offset within the current input text buffer (terminal or
+deflabel &IN  \ Byte offset within the current input text buffer (terminal or
               \ disk) from which the next text will be accepted. WORD uses and
               \ move the value of IN
-          &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
-               \ The user may yalter and examine OUT to control output display formatting.
-def3label &SCR      \ Screen number most recently referenced by LIST
-          &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
-          &CONTEXT  \ pointer to the vocabulary within which dictionary search
+deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
+              \ The user may yalter and examine OUT to control output display formatting.
+deflabel &SCR      \ Screen number most recently referenced by LIST
+deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
+deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
                     \ will first begin
-def2label _eprint
-          _up \ user pointer
-def3label _&current
-          _leftbracket
-          _compile
-def2label _douser
-          _,
+def2label _eprint _up \ user pointer
+def3label _&current _leftbracket _compile
+def2label _douser _,
 : voc-link; ( -- ) &voc-link word, ;
-: blk; ( -- ) &blk word, ;
 : inn; ( -- ) &IN word, ;
 : out; ( -- ) &OUT word, ;
 : scr; ( -- ) &scr word, ;
@@ -187,10 +176,6 @@ word/compile word/immediate or  constant word/all
 : immediate-machineword-predef ( label str length -- ) word/immediate machineword-base-predef ;
 : machineword ( str length "name" -- ) word/none machineword-base ;
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
-: machineword-1arg ( s l "n" -- ) machineword 1pop, ;
-: machineword-2arg ( s l "n" -- ) machineword 2pop, ;
-: machineword-predef-1arg ( s l "n" -- ) machineword-predef 1pop, ;
-: machineword-predef-2arg ( s l "n" -- ) machineword-predef 2pop, ;
 
 : embed-douser ( -- ) 
     _douser ??, xrp call,
@@ -205,6 +190,10 @@ word/compile word/immediate or  constant word/all
 : 2pop, ( -- ) 1pop, xsp xlower pop, ;
 : 3pop, ( -- ) 2pop, xsp xthird pop, ;
 : 4pop ( -- ) 3pop, xsp xfourth pop, ;
+: machineword-1arg ( s l "n" -- ) machineword 1pop, ;
+: machineword-2arg ( s l "n" -- ) machineword 2pop, ;
+: machineword-predef-1arg ( s l "n" -- ) machineword-predef 1pop, ;
+: machineword-predef-2arg ( s l "n" -- ) machineword-predef 2pop, ;
 : defbinaryop ( str length "name" "op" -- )
   machineword-2arg
   xtop xlower xtop ' execute 
@@ -289,6 +278,14 @@ _lit s" lit" word/compile machineword-base-predef
     xlower xtop ldtincr, \ load the value then skip over the cell
     xlower xrp st, \ overwrite the cell
     1push,
+s" lit2" word/compile machineword-base _lit2 ( -- h l )
+    \ push the next two words onto the stack
+    xrp xthird ld, \ address of next which is a literal
+    xthird xtop ldtincr, \ load the lower half then skip over the cell
+    xthird xlower ldtincr, \ load the upper half then skip over the cell
+    xlower xrp st, \ overwrite the return address
+    2push,
+
 s" exit" machineword _exit
     \ terminate a colon definition
     xrp spdrop, \ pop the top element off ( where we were )
@@ -458,6 +455,7 @@ s" #tib" userword _ntib
 user-offset1+ \ since it is doublewide advance by one again
 : #tib; ( -- ) _ntib word, ;
 s" csp" userword _csp
+: csp; ( -- ) _csp word, ;
 s" 'eval" userword _teval
 : 'eval; ( -- ) _teval word, ;
 s" 'number" userword _tnumber
@@ -692,7 +690,7 @@ s" cells" machineword _cells ( n -- n )
 : cells; ( -- ) _cells word, ;
 s" aligned" machineword _aligned ( n -- n )
     1pop,
-    0xFFFE #, xtop xtop andi
+    0xFFFE #, xtop xtop andi,
     1push,
 : aligned; ( -- ) _aligned word, ;
 s" bl" machineword _blank ( -- 32 )
@@ -710,6 +708,7 @@ deflabel tcha1
     drop; 0x2e #lit, \ replace non printables
 tcha1 .label
     exit;
+: >char; ( -- ) _tchr word, ;
 s" depth" machineword _depth ( -- n )
 \ return the depth of the data stack
     sp@;
@@ -1558,7 +1557,7 @@ s" literal" immediate-machineword _literal ( w -- )
 	compile; lit; \ _lit will be compiled into the dictionary
 	,;
 	exit;
-
+: literal; ( -- ) _literal word, ;
 s\" $,\"" machineword _stcq ( -- )
 	\ compile a literal string up to next " .
 	\ Is this supposed to be compile time?
@@ -1694,7 +1693,7 @@ scom1 .label
     again;  \ compile a bl instruction
     exit;   \ its not immediate, compile
 scom2 .label
-    'number; @exec;  \ try to convert to number
+    'number; @execute;  \ try to convert to number
     scom3 ??branch;  \ 
     literal;         
     exit;            \ compile number as integer
@@ -1703,7 +1702,7 @@ scom3 .label
 
 s" overt" machineword _overt ( -- )
     \ link a new word into the current vocabulary
-    last; @: current; @; !;
+    last; @; current; @; !;
     exit;
 : overt; ( -- ) _overt word, ;
 s" ;" word/all machineword-base _semis
@@ -1729,8 +1728,74 @@ s" immediate" machineword _immediate ( -- )
     last; @; @; or; last; @; !; 
     exit;
 
-
-
+\ defining words
+s" user" machineword _user ( u -- ; <string> )
+    \ compile a new user variable.
+    token; _snam word,
+    overt;
+    _douser ??lit,
+    again;
+    ,;
+    exit;
+s" create" machineword _create ( -- ; <string> )
+    \ compile a new array entry without allocating code space.
+    token; _snam word,
+    overt;
+    dovariable ??lit,
+    again;
+    exit;
+: create; ( -- ) _create word, ;
+s" variable" machineword _variable ( -- ; <string> )
+    create; 0lit, ,; exit;
+\ tools 
+s" _type" machineword _utype ( b u -- )
+    \ display a string. Filter non-printing characters
+def2label utype1 utype2
+    >r;  \ start count down loop
+    utype2 word,    \ skip first pass
+utype1 .label
+    dup; c@; >char; 
+    emit; \ display only printable
+    1 #lit,
+    +;
+utype2 .label
+    donext; 
+    utype1 word, \ loop till done
+    drop;
+    exit;
+s" dump" machineword _dump ( a u -- )
+    \ dump u bytes from a, in a formatted manner
+    \ TODO this
+    exit;
+s" .s" machineword _dots ( ... -- ... )
+    \ display the contents of the data stack
+    \ todo this
+    exit;
+s" !csp" machineword stcsp ( -- )
+    \ save stack pointer in CSP for erro rchecking.
+    sp@; csp; !;
+    exit;
+s" ?csp" machineword qcsp ( -- )
+    sp@;
+    csp; @;
+    xor; \ compare pointers
+    abortq; s" stacks" .string, \ abort if different
+    exit;
+s" >name" machineword _tname ( ca -- na | F )
+    \ convert code address to a name address.
+    \ todo finish
+    exit;
+: >name; ( -- ) _tname word, ;
+s" .id" machineword _dotid ( na -- ) 
+    \ display the name at address
+    \ todo this
+    exit;
+: .id; ( -- ) _dotid word, ;
+s" @a" machineword _ata ( a -- n | ca )
+    \ fetch contents. If it is a branch instruction, convert to ca
+    \ todo this
+    exit;
+: @a; ( -- ) _ata word, ;
 s" see" machineword _see ( -- ; <string> )
 def3label see2 see3 see4
     _tick word,
@@ -1743,7 +1808,7 @@ deflabel-here see1
     @a; \ ppc subroutine threading
     dup; \ does it contain a zero**$$$ ?
     see2 ??branch;
-    'name;  \ is it a name?
+    >name;  \ is it a name?
 see2 .label
     ?dup; \ name address or zero
     see3 ??branch;
@@ -1785,9 +1850,9 @@ words2 .label
     
 \ hardware reset
 s" ver" machineword _ver ( -- n )
-    doconstant;
+    doconstant word,
     version-major decimal 256 * version-minor + constant, 
-: version ; ( -- ) _ver word, ;
+: version; ( -- ) _ver word, ;
 
 s" hi" machineword _hi ( -- )
     \ display the sign-on message of eForth
@@ -1799,7 +1864,7 @@ s" hi" machineword _hi ( -- )
     version;
     <#; digit; digit;
     0x2e #lit, \ '.'
-    hold; digits; #>; 
+    hold; #s; #>; 
     type; \ format version number
     base; 
     !;
