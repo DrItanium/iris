@@ -184,6 +184,9 @@ def3label _lit _execute _0branch
 \ code start
 0x0000 .org
 deflabel .eforth
+\ setup the stacks as well
+    data-stack-start #, xsp set,
+    return-stack-start #, xrp set, 
 	.eforth ??, b,
 deflabel-here _coldv
 def2label _qrx _txsto
@@ -612,8 +615,7 @@ deflabel tcha1
     \ filter non-printing characters
     0x7f #lit, and; dup; \ mask msb
     bl; 0x7f #lit, within; \ check for printable
-    not;
-    tcha1 ??branch; 
+    not; tcha1 ??branch; 
     drop; 0x2e #lit, \ replace non printables
 tcha1 .label
     exit;
@@ -776,8 +778,7 @@ digs2 .label
 s" sign" machineword _sign sign; ( n -- )
     \ add a minus sign to the numeric output string
 deflabel sign1
-    0<;
-    sign1 ??branch;
+    0<; sign1 ??branch;
     0x2d #lit, hold;
 sign1 .label
     exit;
@@ -804,8 +805,7 @@ deflabel dgtq1
     \ convert a character to its numeric value. A flag indicates success.
     >r; 0x30 #lit, \ '0'
     -;
-    0x9 #lit, over; <;
-    dgtq1 ??branch;
+    0x9 #lit, over; <; dgtq1 ??branch;
     7 #lit, -; dup; 0xa #lit, <; or;
 dgtq1 .label
     dup; r>; u<; 
@@ -819,8 +819,7 @@ def3label numq4 numq5 numq6
     over; count; 
     over; c@;
     0x24 #lit, \ '$'
-    =;
-    numq1 ??branch;
+    =; numq1 ??branch;
     hex; swap;
     1+,,
     swap;
@@ -830,16 +829,14 @@ numq1 .label
     0x2d #lit, =;
     >r; swap; r@; -;
     swap; r@; +;
-    ?dup;
-    numq6 ??branch;
+    ?dup; numq6 ??branch;
     1-,,
     >r;
 numq2 .label
     dup;
     >r; c@;
     base@;
-    digit?;
-    numq4 ??branch;
+    digit?; numq4 ??branch;
     swap;
     base@;
     *; +; r>;
@@ -873,8 +870,7 @@ s" ?key" machineword _qkey ?key; ( -- c T | F )
 s" key" machineword _key key; ( -- c )
     \ wait for and return an input character
 deflabel-here key1
-    ?key;
-    key1 ??branch;
+    ?key; key1 ??branch;
     exit;
 s" emit" machineword _emit emit; ( c -- )
     \ send a character to the output device
@@ -1001,13 +997,13 @@ def3label parse6 parse7 parse8
 	xsp xtop pop,
 	xtop 1-,
 	xtop xsp push,
-	temp; @; bl; =;
-	parse3 ??branch; 
+	temp; @; bl; 
+    =; parse3 ??branch; 
 	>r;
 deflabel-here parse1
 	bl; over; c@; 	\ skip leading blanks only
-	-; 0<; not;
-	parse2 ??branch; 
+	-; 
+    0<; not; parse2 ??branch; 
     1+,,
 	donext; parse1 word,
 	r>;
@@ -1022,8 +1018,8 @@ parse3 .label
 	swap;
 	>r;
 deflabel-here parse4 
-	temp; @; bl; =;
-	parse5 ??branch; 
+	temp; @; bl; 
+    =; parse5 ??branch; 
 	0<;
 parse5 .label
 	parse6 ??branch; 
@@ -1087,8 +1083,8 @@ deflabel same2
 deflabel-here same1
 	over; r@; cells; +; @; \ 32/16 mix-up
 	over; r@; cells; +; @; \ 32/16 mix-up
-	-; ?dup;
-	same2 ??branch; 
+	-; 
+    ?dup; same2 ??branch; 
 	r>; drop;
 	exit;	\ strings not equal
 same2 .label
@@ -1186,8 +1182,8 @@ def3label accept2 accept3 accept4
 deflabel-here accept1
 	2dup; xor;
 	accept4 ??branch; 
-	key; dup; bl; decimal 127 #lit, within;
-	accept2 ??branch; 
+	key; dup; bl; decimal 127 #lit, 
+    within; accept2 ??branch; 
     tap;
 	accept3 word,
 accept2 .label
@@ -1252,7 +1248,8 @@ abortq1 .label
 _interpret s" $interpret" machineword-predef $interpret; ( a -- )
 def2label _interpret1 interpret2
 	\ interpret a word. If failed, try to convert it to an integer.
-	name?; ?dup; 	\ ?defined
+	name?; 
+    ?dup; 	\ ?defined
 	_interpret1 ??branch; 
 	@; word/compile #lit, and; \ ?compile only lexicon bits
 	abortq; s" compile only" .string,
@@ -1274,8 +1271,8 @@ _dotok s" .ok" machineword-predef .ok; ( -- )
 deflabel dotok1
 	\ display ok only while interpreting
 	_interpret ??lit,
-	'eval; @; =;
-	dotok1 ??branch; 
+	'eval; @; 
+    =; dotok1 ??branch; 
 	dtqp; s" ok" .string,
 dotok1 .label
 	cr;
@@ -1705,8 +1702,7 @@ s" hi" machineword _hi hi; ( -- )
     0x2e #lit, \ '.'
     hold; #s; #>; 
     type; \ format version number
-    base; 
-    !;
+    base; !;
     cr;
     exit;
 
@@ -1723,6 +1719,7 @@ deflabel-here cold1
     current; 2!;
     overt; quit;
     cold1 ??b,
+\ did not include the file operations as we don't normally have access to them
 \ always should be last
 last-word @ .org
 _ctop .label \ a hack to stash the correct address in the user variables

@@ -489,13 +489,8 @@ namespace iris {
             tmp.c = in.get();
             return tmp.b;
         };
-        auto getAddress = [getByte]() {
-            auto lower = Address(getByte());
-            auto upper = Address(getByte()) << 8;
-            return lower | upper;
-        };
 		for (int i = 0 ; i < (Core::maxAddress + 1); ++i) {
-			store(i, getAddress(), true);
+			store(i, getByte(), true);
 		}
     }
     byte Core::IODevice::read(Address addr) {
