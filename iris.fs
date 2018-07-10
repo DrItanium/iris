@@ -429,9 +429,6 @@ ioaddr}
 #popw inst-2reg popw,
 #return inst-1reg ret,
 #creturn inst-2reg cret,
-: reteqz, ( reg sp -- ) 
-  swap cv eqz, 
-  cv swap cret, ;
 #negatew inst-2reg negatew,
 : retgez, ( reg sp -- )
   swap cv gez,
