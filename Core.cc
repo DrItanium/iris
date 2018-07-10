@@ -159,31 +159,31 @@ namespace iris {
 		auto upper = load(_pc);
 		_addr = makeImmediate16(lower, upper);
 	}
-    Register& Core::getRegister(RegisterIndex index) noexcept {
-        return _registers[index];
+    Register* Core::getRegister(RegisterIndex index) noexcept {
+        return &_registers[index];
     }
-    void Core::push(Register& reg, byte value) noexcept {
-        auto addr = reg.get<Address>() - 1;
+    void Core::push(Register* reg, byte value) noexcept {
+        auto addr = reg->get<Address>() - 1;
         store(addr, value);
-        reg.setValue(addr);
+        reg->setValue(addr);
     }
-	void Core::pushNumber(Register& index, Number value) noexcept {
-        auto addr = index.get<Address>() - 2;
+	void Core::pushNumber(Register* index, Number value) noexcept {
+        auto addr = index->get<Address>() - 2;
         store(addr + 1, byte(value.address >> 8));
         store(addr, byte(value.address));
-        index.setValue(addr);
+        index->setValue(addr);
 	}
-    byte Core::pop(Register& index) noexcept {
-        auto addr = index.get<Address>();
+    byte Core::pop(Register* index) noexcept {
+        auto addr = index->get<Address>();
         auto result = load(addr);
-        index.setValue(addr + 1);
+        index->setValue(addr + 1);
         return result;
     }
-	Number Core::popNumber(Register& index) noexcept {
-        auto addr = index.get<Address>();
+	Number Core::popNumber(Register* index) noexcept {
+        auto addr = index->get<Address>();
         auto lower = load(addr);
         auto upper = load(addr + 1);
-        index.setValue(addr + 2);
+        index->setValue(addr + 2);
 		return makeImmediate16(lower, upper);
 	}
 #define DefExec(title) \
@@ -192,24 +192,24 @@ namespace iris {
 		throw Problem("Illegal Instruction Invoked!");
 	}
     DefExec(Div) { 
-        auto denom = _src2.get<Integer>();
-        _dest.setValue(denom == 0 ? 0u : _src.get<Integer>() / denom);
+        auto denom = _src2->get<Integer>();
+        _dest->setValue(denom == 0 ? 0u : _src->get<Integer>() / denom);
 	}
     DefExec(Rem) { 
-        auto denom = _src2.get<Integer>();
-        _dest.setValue(denom == 0 ? 0u : _src.get<Integer>() % denom);
+        auto denom = _src2->get<Integer>();
+        _dest->setValue(denom == 0 ? 0u : _src->get<Integer>() % denom);
 	}
     DefExec(UnsignedDiv) { 
-        auto denom = _src2.get<Address>();
-        _dest.setValue(denom == 0 ? 0u : _src.get<Address>() / denom);
+        auto denom = _src2->get<Address>();
+        _dest->setValue(denom == 0 ? 0u : _src->get<Address>() / denom);
 	}
     DefExec(UnsignedRem) { 
-        auto denom = _src2.get<Address>();
-        _dest.setValue(denom == 0 ? 0u : _src.get<Address>() % denom);
+        auto denom = _src2->get<Address>();
+        _dest->setValue(denom == 0 ? 0u : _src->get<Address>() % denom);
 	}
 #define DefBinaryOp(opcode, action, x) \
     DefExec(opcode) { \
-        _dest.setValue(_src.get<x>() action _src2.get<x>()); \
+        _dest->setValue(_src->get<x>() action _src2->get<x>()); \
     }
 #define DefBinaryOpInteger(opc, action) DefBinaryOp(opc, action, Integer)
 #define DefBinaryOpUnsigned(opc, action) DefBinaryOp(opc, action, Address)
@@ -244,78 +244,78 @@ namespace iris {
 #undef DefBinaryOpInteger
 #undef DefBinaryOpUnsigned
 
-    DefExec(Negate) { _dest.setValue(~_src.get<Integer>()); }
-    DefExec(UnsignedNegate) { _dest.setValue(~_src.get<Address>()); }
+    DefExec(Negate) { _dest->setValue(~_src->get<Integer>()); }
+    DefExec(UnsignedNegate) { _dest->setValue(~_src->get<Address>()); }
     DefExec(Min) {
-        auto a = _src.get<Integer>();
-        auto b = _src2.get<Integer>();
-        _dest.setValue(a < b ? a : b );
+        auto a = _src->get<Integer>();
+        auto b = _src2->get<Integer>();
+        _dest->setValue(a < b ? a : b );
     }
     DefExec(Max) {
-        auto a = _src.get<Integer>();
-        auto b = _src2.get<Integer>();
-        _dest.setValue( a > b ? a : b );
+        auto a = _src->get<Integer>();
+        auto b = _src2->get<Integer>();
+        _dest->setValue( a > b ? a : b );
     }
     DefExec(UnsignedMin) {
-        auto a = _src.get<Address>();
-        auto b = _src2.get<Address>();
-        _dest.setValue( a < b ? a : b );
+        auto a = _src->get<Address>();
+        auto b = _src2->get<Address>();
+        _dest->setValue( a < b ? a : b );
     }
     DefExec(UnsignedMax) {
-        auto a = _src.get<Address>();
-        auto b = _src2.get<Address>();
-        _dest.setValue( a > b ? a : b );
+        auto a = _src->get<Address>();
+        auto b = _src2->get<Address>();
+        _dest->setValue( a > b ? a : b );
     }
     DefExec(Set) { 
-        _dest.setValue(_imm);
+        _dest->setValue(_imm);
     }
 	DefExec(Load) {
-		_dest.setValue(loadNumber(_src.get<Address>()));
+		_dest->setValue(loadNumber(_src->get<Address>()));
 	}
 	DefExec(Store) {
-		storeNumber(_dest.get<Address>(), _src.get<Address>());
+		storeNumber(_dest->get<Address>(), _src->get<Address>());
 	}
 	DefExec(Push) {
-		pushNumber(_dest, _src.get<Address>());
+		pushNumber(_dest, _src->get<Address>());
 	}
 	DefExec(Pop) {
-		_dest.setValue(popNumber(_src));
+		_dest->setValue(popNumber(_src));
 	}
 	DefExec(BranchRegister) {
-		_pc = _dest.get<Address>();
+		_pc = _dest->get<Address>();
 	}
 	DefExec(BranchRegisterAndLink) {
 		pushNumber(_src, _pc);
-		_pc = _dest.get<Address>();
+		_pc = _dest->get<Address>();
 	}
 	DefExec(BranchConditionalRegister) {
-		if (_src.getTruth()) {
-			_pc = _dest.get<Address>();
+		if (_src->getTruth()) {
+			_pc = _dest->get<Address>();
 		}
 	}
 	DefExec(BranchConditionalRegisterLink) {
-		if (_src.getTruth()) {
+		if (_src->getTruth()) {
 			pushNumber(_src2, _pc);
-			_pc = _dest.get<Address>();
+			_pc = _dest->get<Address>();
 		}
 	}
 
-    DefExec(Increment) { _dest.setValue(_src.get<Integer>() + 1); }
-    DefExec(Decrement) { _dest.setValue(_src.get<Integer>() - 1); }
-    DefExec(UnsignedIncrement) { _dest.setValue(_src.get<Address>() + 1); }
-    DefExec(UnsignedDecrement) { _dest.setValue(_src.get<Address>() - 1); }
+    DefExec(Increment) { _dest->setValue(_src->get<Integer>() + 1); }
+    DefExec(Decrement) { _dest->setValue(_src->get<Integer>() - 1); }
+    DefExec(UnsignedIncrement) { _dest->setValue(_src->get<Address>() + 1); }
+    DefExec(UnsignedDecrement) { _dest->setValue(_src->get<Address>() - 1); }
     DefExec(Call) { 
-        push(_dest, _pc);
+        pushNumber(_dest, _pc);
         _pc = _addr;
     }
     DefExec(ConditionalBranch) {
-        if (_dest.get<bool>()) {
+        if (_dest->get<bool>()) {
             _pc = _addr;
         }
     }
 #define DefBinaryOpImmediate(opc, action, x, ifield) \
     DefExec(opc) { \
-        _dest.setValue(_src.get<x>() action ifield); \
+        _dest->setValue(_src->get<x>() action ifield); \
     }
 #define DefBinaryOpImmediateInteger(opc, action) DefBinaryOpImmediate(opc, action, Integer, _imm)
     DefBinaryOpImmediateInteger(AddImmediate, +);
@@ -323,136 +323,155 @@ namespace iris {
     DefBinaryOpImmediateInteger(RightShiftImmediate, >>);
     DefBinaryOpImmediateInteger(LeftShiftImmediate, <<);
     DefBinaryOpImmediateInteger(LessThanImmediate, <);
-    DefExec(Move) { _dest.setValue(_src.get<Address>()); }
+    DefExec(Move) { _dest->setValue(_src->get<Address>()); }
     DefExec(Return) {
         // the destination is the return stack pointer to extract from
         _pc = popNumber(_dest).address;
+        std::cout << "return: _pc: " << std::hex << _pc << std::endl;
     }
     DefExec(ConditionalReturn) {
-        if (_src.get<bool>()) {
+        if (_src->get<bool>()) {
             _pc = popNumber(_dest).address;
+            std::cout << "cond return: _pc: " << std::hex << _pc << std::endl;
         }
     }
     DefExec(LoadThenIncrement) {
-        auto addr = _src.get<Address>();
-        _dest.setValue(loadNumber(addr));
-        _src.setValue(addr + 2);
+        auto addr = _src->get<Address>();
+        _dest->setValue(loadNumber(addr));
+        _src->setValue(addr + 2);
     }
     DefExec(StoreThenIncrement) {
-        auto addr = _dest.get<Address>();
-        auto val = _src.get<Address>();
+        auto addr = _dest->get<Address>();
+        auto val = _src->get<Address>();
         storeNumber(addr, val);
-        _dest.setValue(addr + 2);
+        _dest->setValue(addr + 2);
     }
     DefExec(WideAdd) {
-        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
-        auto src2 = makeDoubleWideInteger(_src2.get<Integer>(), _src2Next.get<Integer>());
+        auto src = makeDoubleWideInteger(_src->get<Integer>(), _srcNext->get<Integer>());
+        auto src2 = makeDoubleWideInteger(_src2->get<Integer>(), _src2Next->get<Integer>());
         auto result = src + src2;
-		_dest.setValue(Integer(result));
-		_destNext.setValue(Integer(result >> 16));
+		_dest->setValue(Integer(result));
+		_destNext->setValue(Integer(result >> 16));
     }
     DefExec(WideSubtract) {
         // the design means that x255 will couple with zero
-        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
-        auto src2 = makeDoubleWideInteger(_src2.get<Integer>(), _src2Next.get<Integer>());
+        auto src = makeDoubleWideInteger(_src->get<Integer>(), _srcNext->get<Integer>());
+        auto src2 = makeDoubleWideInteger(_src2->get<Integer>(), _src2Next->get<Integer>());
         auto result = src - src2;
-		_dest.setValue(Integer(result));
-		_destNext.setValue(Integer(result >> 16));
+		_dest->setValue(Integer(result));
+		_destNext->setValue(Integer(result >> 16));
     }
     DefExec(WidePush) {
         // L SP -> ( -- L H ) 
-        pushNumber(_dest, _src.getValue());
-        pushNumber(_dest, _srcNext.getValue());
+        pushNumber(_dest, _src->getValue());
+        pushNumber(_dest, _srcNext->getValue());
     }
     DefExec(WidePop) {
         // SP X ( L H -- ) L -> X, H -> (X + 1 | Y)
-		_destNext.setValue(popNumber(_src));
-		_dest.setValue(popNumber(_src));
+		_destNext->setValue(popNumber(_src));
+		_dest->setValue(popNumber(_src));
     }
     DefExec(WideNegate) {
-        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+        auto src = makeDoubleWideInteger(_src->get<Integer>(), _srcNext->get<Integer>());
         src = ~src;
-		_dest.setValue(Integer(src));
-		_destNext.setValue(Integer(src >> 16));
+		_dest->setValue(Integer(src));
+		_destNext->setValue(Integer(src >> 16));
     }
 
     DefExec(UMSMOD) {
         // unsigned divide of a double by a single. Return mod and quotient
-        auto src = makeDoubleWideAddress(_src.get<Address>(), _srcNext.get<Address>());
-        auto src2 = DoubleWideAddress(_src2.get<Address>());
-		_dest.setValue(Address(src2 == 0 ? 0 : src / src2)); // quotient
-		_destNext.setValue(Address(src2 == 0 ? 0 : src % src2)); // remainder
+        auto src = makeDoubleWideAddress(_src->get<Address>(), _srcNext->get<Address>());
+        auto src2 = DoubleWideAddress(_src2->get<Address>());
+		_dest->setValue(Address(src2 == 0 ? 0 : src / src2)); // quotient
+		_destNext->setValue(Address(src2 == 0 ? 0 : src % src2)); // remainder
     }
     DefExec(MSMOD) {
         // signed floored divide of a double by double. Return mod and quotient
-        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
-        auto src2 = DoubleWideInteger(_src2.get<Integer>());
-		_dest.setValue(Integer(src2 == 0 ? 0 : src / src2)); // quotient
-		_destNext.setValue(Integer(src2 == 0 ? 0 : src % src2)); // remainder
+        auto src = makeDoubleWideInteger(_src->get<Integer>(), _srcNext->get<Integer>());
+        auto src2 = DoubleWideInteger(_src2->get<Integer>());
+		_dest->setValue(Integer(src2 == 0 ? 0 : src / src2)); // quotient
+		_destNext->setValue(Integer(src2 == 0 ? 0 : src % src2)); // remainder
     }
     DefExec(UMSTAR) {
-        auto src = DoubleWideAddress(_src.get<Address>());
-        auto src2 = DoubleWideAddress(_src2.get<Address>());
+        auto src = DoubleWideAddress(_src->get<Address>());
+        auto src2 = DoubleWideAddress(_src2->get<Address>());
         auto result = src * src2;
-		_dest.setValue(Address(result));
-		_destNext.setValue(Address(result >> 16));
+		_dest->setValue(Address(result));
+		_destNext->setValue(Address(result >> 16));
     }
     DefExec(MSTAR) {
-        auto src = DoubleWideInteger(_src.get<Integer>());
-        auto src2 = DoubleWideInteger(_src2.get<Integer>());
+        auto src = DoubleWideInteger(_src->get<Integer>());
+        auto src2 = DoubleWideInteger(_src2->get<Integer>());
         auto result = src * src2;
-		_dest.setValue(Integer(result));
-		_destNext.setValue(Integer(result >> 16));
+		_dest->setValue(Integer(result));
+		_destNext->setValue(Integer(result >> 16));
     }
     DefExec(WideStore) {
-		auto dest = _dest.get<Address>();
-        auto src = makeDoubleWideInteger(_src.get<Integer>(), _srcNext.get<Integer>());
+		auto dest = _dest->get<Address>();
+        auto src = makeDoubleWideInteger(_src->get<Integer>(), _srcNext->get<Integer>());
         storeNumber(dest, Address(src));
         storeNumber(dest+1, Address(src >> 16));
     }
 	DefExec(WideLoad) {
-		auto src = _src.get<Address>();
-		_dest.setValue(loadNumber(src));
-		_destNext.setValue(loadNumber(src + 1));
+		auto src = _src->get<Address>();
+		_dest->setValue(loadNumber(src));
+		_destNext->setValue(loadNumber(src + 1));
 	}
 	DefExec(LoadByte_Upper) {
 		// load a byte address and stash it into the upper half of the
 		// destination register. Overwrites the contents
-		_dest.setValue((Address(load(_src.get<Address>())) << 8) & 0xFF00);
+		_dest->setValue((Address(load(_src->get<Address>())) << 8) & 0xFF00);
 	}
 	DefExec(LoadByte_Lower) {
 		// load a byte address and stash it into the lower half of the
 		// destination register. Overwrites the contents
-		_dest.setValue(Address(load(_src.get<Address>())) & 0x00FF);
+		_dest->setValue(Address(load(_src->get<Address>())) & 0x00FF);
 	}
 	DefExec(StoreByte_Lower) {
 		// store the lower half of a register to a given address
-		store(_dest.get<Address>(), _src.get<byte>());
+		store(_dest->get<Address>(), _src->get<byte>());
 	}
 	DefExec(StoreByte_Upper) {
 		// store the upper half of a register to the given address
-		store(_dest.get<Address>(), byte(_src.get<Address>() >> 8));
+		store(_dest->get<Address>(), byte(_src->get<Address>() >> 8));
 	}
 	DefExec(Nop) { }
-	DefExec(SetByte) { _dest.setValue(_half); }
+	DefExec(SetByte) { _dest->setValue(_half); }
 	DefExec(Branch) { _pc = _addr; }
-	DefExec(EqualZero) { _dest.setValue(_src.get<Integer>() == 0); }
-	DefExec(NotEqualZero) { _dest.setValue(_src.get<Integer>() != 0); }
-	DefExec(LessThanZero) { _dest.setValue(_src.get<Integer>() < 0); }
-	DefExec(GreaterThanZero) { _dest.setValue(_src.get<Integer>() > 0); }
-	DefExec(LessThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() <= 0); }
-	DefExec(GreaterThanOrEqualToZero) { _dest.setValue(_src.get<Integer>() >= 0); }
-	DefExec(AndImmediate) { _dest.setValue(_src.get<Integer>() & _imm); }
-	DefExec(UnsignedAndImmediate) { _dest.setValue(_src.get<Address>() & _addr); }
-    DefExec(MultiplyImmediate) { _dest.setValue(_src.get<Integer>() * _imm); }
-    DefExec(DivideImmediate) { _dest.setValue(_imm == 0 ? 0 : _src.get<Integer>() / _imm); }
+	DefExec(EqualZero) { _dest->setValue(_src->get<Integer>() == 0); }
+	DefExec(NotEqualZero) { _dest->setValue(_src->get<Integer>() != 0); }
+	DefExec(LessThanZero) { _dest->setValue(_src->get<Integer>() < 0); }
+	DefExec(GreaterThanZero) { _dest->setValue(_src->get<Integer>() > 0); }
+	DefExec(LessThanOrEqualToZero) { _dest->setValue(_src->get<Integer>() <= 0); }
+	DefExec(GreaterThanOrEqualToZero) { _dest->setValue(_src->get<Integer>() >= 0); }
+	DefExec(AndImmediate) { _dest->setValue(_src->get<Integer>() & _imm); }
+	DefExec(UnsignedAndImmediate) { _dest->setValue(_src->get<Address>() & _addr); }
+    DefExec(MultiplyImmediate) { _dest->setValue(_src->get<Integer>() * _imm); }
+    DefExec(DivideImmediate) { _dest->setValue(_imm == 0 ? 0 : _src->get<Integer>() / _imm); }
     DefExec(PushImmediate) { pushNumber(_dest, _addr); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);
     }
+    void Core::printRegisters() noexcept {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                auto index = (i * 4) + j;
+                std::cout << std::showbase << "x" << std::dec << std::setfill('0') << std::setw(2) << index << ": " << std::setfill(' ') << std::setw(7) << std::hex << _registers[index].get<Address>() << "  ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "pc: " << std::hex << _pc << std::endl;
+    }
 	void Core::cycle() {
+        if (_enableDebugging) {
+            //std::cout << __FILE__ << ": " << std::dec << __LINE__ << " -> " << __PRETTY_FUNCTION__ << " : pc: " << std::hex << _pc << std::endl;
+            printRegisters();
+        }
 		auto control = static_cast<Opcode>(load(_pc));
+        if (_enableDebugging) {
+            std::cout << "Control bit: " << std::hex << short(control) << std::endl;
+        }
 		switch (control) {
 #define X(title, style) case Opcode :: title : \
 			decodeArguments(Core::title () ); \
@@ -588,5 +607,4 @@ namespace iris {
         auto upper = load(addr + 1, unmapIO);
         return makeImmediate16(lower, upper);
 	}
-	Register Core::nullReg;
 } // end namespace iris

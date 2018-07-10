@@ -159,7 +159,7 @@ word/compile word/immediate or  constant word/all
 : machineword-predef ( label str length -- ) word/none machineword-base-predef ;
 
 : embed-douser ( -- ) 
-    _douser ??, xrp call,
+    _douser ??, xrp call, 
     user-offset@ constant,
     user-offset1+ ;
 : userword-base ( str length control-bits "name" -- ) defword-base embed-douser ;
@@ -185,8 +185,6 @@ def3label _lit _execute _0branch
 0x0000 .org
 deflabel .eforth
 \ setup the stacks as well
-    data-stack-start #, xsp set,
-    return-stack-start #, xrp set, 
 	.eforth ??, b,
 deflabel-here _coldv
 def2label _qrx _txsto
@@ -225,13 +223,12 @@ deflabel-here _ulast
 deflabel _eforth1
 0x0180 .org
 .eforth .label
-	_eforth1 word,
+	_eforth1 ??, b, 
 _eforth1 .label
     _uzero ??, xup set,
-	0x1 #, xup xtop addi,
-	xtop xsp ld,
-	xtop 1+,
-	xtop xrp ld,
+	0x2 #, xup xtop addi,
+	xtop xsp ldtincr,
+	xtop xrp ldtincr,
 	_cold ??, b,
 s" bye" machineword _bye bye; ( -- )
 	\ exit simulator 
@@ -621,8 +618,7 @@ tcha1 .label
     exit;
 s" depth" machineword _depth depth; ( -- n )
 \ return the depth of the data stack
-    sp@;
-    sp0; @;
+    sp@; sp0; @;
     swap; -;
     cell-;
     w/slit, /;
@@ -1357,7 +1353,7 @@ quit3 .label
     decimal 27 #lit, \ push the error code
 	emit; \ file error, tell host
 quit4 .label
-	_preset word, \ some cleanup
+    preset; \ some cleanup
 	quit1 ??, xrp call,
 \ compiler routines
 s" '" machineword _tick '; ( -- ca )

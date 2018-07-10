@@ -35,6 +35,7 @@
 #include <iostream>
 #include "Types.h"
 #include "Problem.h"
+#include <map>
 
 namespace iris {
 	union Number {
@@ -179,7 +180,6 @@ namespace iris {
             void installIODevice(IODevice dev);
         private:
 			void cycle();
-            static Register nullReg;
 		private:
             struct NoArguments { };
             struct OneRegister { };
@@ -217,11 +217,11 @@ namespace iris {
 			void decodeArguments(const OneRegisterWithByte&) noexcept; 
 			void decodeArguments(const ImmediateOnly&) noexcept;
 		private:
-			Register& getRegister(RegisterIndex reg) noexcept;
-			byte pop(Register& reg) noexcept;
-			Number popNumber(Register& reg) noexcept;
-			void push(Register& reg, byte value) noexcept;
-			void pushNumber(Register& reg, Number value) noexcept;
+			Register* getRegister(RegisterIndex reg) noexcept;
+			byte pop(Register* reg) noexcept;
+			Number popNumber(Register* reg) noexcept;
+			void push(Register* reg, byte value) noexcept;
+			void pushNumber(Register* reg, Number value) noexcept;
             using IODeviceOp = std::function<void(IODevice&)>;
             void onIODeviceFound(Address addr, IODeviceOp fn);
 			void store(Address addr, byte value, bool unmapIOSpace = false) noexcept;
@@ -238,19 +238,21 @@ namespace iris {
 			bool _keepExecuting = true;
             std::list<IODevice> _io;
             // arguments as part of decoding
-            Register& _dest = nullReg;
-			Register& _destNext = nullReg;
-            Register& _src = nullReg;
-			Register& _srcNext = nullReg;
-            Register& _src2 = nullReg;
-			Register& _src2Next = nullReg;
-            Register& _src3 = nullReg;
-			Register& _src3Next = nullReg;
+            Register* _dest = nullptr;
+            Register* _destNext = nullptr;
+            Register* _src = nullptr;
+			Register* _srcNext = nullptr;
+            Register* _src2 = nullptr;
+			Register* _src2Next = nullptr;
+            Register* _src3 = nullptr;
+			Register* _src3Next = nullptr;
             union {
                 Address _addr;
                 Integer _imm;
 				byte _half;
             };
+            bool _enableDebugging = false;
+            void printRegisters() noexcept;
 	};
 }
 #endif
