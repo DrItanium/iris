@@ -446,6 +446,7 @@ namespace iris {
 	DefExec(UnsignedAndImmediate) { _dest.setValue(_src.get<Address>() & _addr); }
     DefExec(MultiplyImmediate) { _dest.setValue(_src.get<Integer>() * _imm); }
     DefExec(DivideImmediate) { _dest.setValue(_imm == 0 ? 0 : _src.get<Integer>() / _imm); }
+    DefExec(PushImmediate) { pushNumber(_dest, _addr); }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

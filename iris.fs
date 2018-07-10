@@ -159,6 +159,7 @@ opcode: #andi
 opcode: #uandi
 opcode: #muli
 opcode: #divi
+opcode: #pushi
 opcode}
 \ registers
 set-current \ go back
@@ -330,9 +331,6 @@ too-many-registers-defined
 
 #push inst-2reg push,
 
-: pushi, ( imm id sp -- ) >r $->at0 r> push, ;
-: #pushi, ( imm sp -- ) #, swap pushi, ;
-: ??pushi, ( imm sp -- ) ??, swap pushi, ;
 #pop inst-2reg pop,
 
 #br inst-1reg br,
@@ -502,13 +500,13 @@ ioaddr}
             256 of drop 8 #, 2r> lshifti, endof
             swap 
             2r>
-            #muli <<byte
+            #muli <<opcode
             2reg <<byte
             <<word
            endcase
     else
        2r>
-       #muli <<byte
+       #muli <<opcode
        2reg <<byte
        <<iword 
     endif
@@ -530,14 +528,34 @@ ioaddr}
             256 of drop 8 #, 2r> rshifti, endof
             swap 
             2r>
-            #divi <<byte
+            #divi <<opcode
             2reg <<byte
             <<word
            endcase
     else
        2r>
-       #divi <<byte
+       #divi <<opcode
        2reg <<byte
        <<iword 
     endif
     ;
+: pushi, ( imm id sp -- ) 
+    swap ( imm sp id ) 
+    #, = 
+    if
+        over 0= 
+        if 
+            swap drop
+            zero swap push,
+        else
+            #pushi <<opcode
+            1reg <<byte
+            <<word
+        endif
+    else
+        #pushi <<opcode
+        1reg <<byte
+        <<iword
+    endif ;
+: #pushi, ( imm sp -- ) #, swap pushi, ;
+: ??pushi, ( imm sp -- ) ??, swap pushi, ;
