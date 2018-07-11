@@ -336,12 +336,16 @@ namespace iris {
     DefExec(Return) {
         // the destination is the return stack pointer to extract from
         _pc = popNumber(_dest).address;
-        std::cout << "return: _pc: " << std::hex << _pc << std::endl;
+        if (_enableDebugging) {
+            std::cout << "return: _pc: " << std::hex << _pc << std::endl;
+        }
     }
     DefExec(ConditionalReturn) {
         if (_src->get<bool>()) {
             _pc = popNumber(_dest).address;
-            std::cout << "cond return: _pc: " << std::hex << _pc << std::endl;
+            if (_enableDebugging) {
+                std::cout << "cond return: _pc: " << std::hex << _pc << std::endl;
+            }
         }
     }
     DefExec(LoadThenIncrement) {
@@ -605,9 +609,25 @@ namespace iris {
         IODevice sink(ioSpaceStart);
         IODevice console(sink.getEnd(), 3, readFromStandardIn, writeToStandardOut);
 		IODevice vmTerminator(console.getEnd(),1, nullptr, terminateVM);
+        IODevice debugInterface(vmTerminator.getEnd(), 1, 
+                [this](auto index) {
+                    if (index == 0) {
+                        return byte(_enableDebugging);
+                    } else {
+                        throw Problem("Unimplemented address!");
+                    }
+                },
+                [this](auto index, auto value) {
+                    if (index == 0) {
+                        _enableDebugging = (value != 0);
+                    } else {
+                        throw Problem("Unimplemented address!");
+                    }
+                });
         installIODevice(sink);
         installIODevice(console);
 		installIODevice(vmTerminator);
+        installIODevice(debugInterface);
     }
     void Core::shutdown() { }
     void Core::onIODeviceFound(Address addr, IODeviceOp fn) {

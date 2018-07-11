@@ -381,14 +381,8 @@ ioaddr: /dev/null
 ioaddr: /dev/console0
 ioaddr: /dev/console1
 ioaddr: /dev/console2
-ioaddr: /dev/core-dump
-ioaddr: /dev/core-load
-ioaddr: /dev/dump-vm
 ioaddr: /dev/terminate-vm
-ioaddr: /dev/register
-ioaddr: /dev/hexprint
-ioaddr: /dev/decprint
-ioaddr: /dev/octprint
+ioaddr: /dev/debug-enable
 ioaddr}
 
 : addi, ( imm id src dest -- ) 
@@ -563,3 +557,14 @@ ioaddr}
 
 0xFFFF constant ram-end
 0x0000 constant ram-start
+: ?debug, ( dest -- )
+  /dev/debug-enable #set-io,
+  ioldb, ;
+: enable-debug, ( -- ) 
+  /dev/debug-enable #set-io,
+  0xFFFF #, at0 set, 
+  at0 iostb, ;
+: disable-debug, ( -- )
+  /dev/debug-enable #set-io,
+  zero iostb, ;
+

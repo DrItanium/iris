@@ -224,6 +224,7 @@ deflabel-here _ulast
 deflabel _eforth1
 0x0180 .org
 .eforth .label
+     iris-debug @ if enable-debug, else disable-debug, endif
 	_eforth1 ??, b, 
 _eforth1 .label
     _uzero ??, xup set,
