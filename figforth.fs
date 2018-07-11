@@ -63,30 +63,12 @@ output-buffer-start 0x100 + constant output-buffer-end
 : retxrp, ( -- ) xrp ret, ;
 
 \ register reservations
-def2label forth1 _origin
-def3label _cold _abort _quit
+deflabel forth1 
+deflabel _cold 
 def2label _interpret _message \ message routine
-def2label &S0 &R0 ( initial values of the data and return stack pointer ) 
-deflabel  &VOC-LINK \ address of a field in the definition of the most recently created
-                    \ created vocabulary. All vocabulary names are linked by
-                    \ these fields to allow control for FORGETting through multiple
-                    \ vocabularies
-deflabel &IN  \ Byte offset within the current input text buffer (terminal or
-              \ disk) from which the next text will be accepted. WORD uses and
-              \ move the value of IN
-deflabel &OUT \ Offset in the text output buffer. Its value is incremented by EMIT
-              \ The user may yalter and examine OUT to control output display formatting.
-deflabel &SCR      \ Screen number most recently referenced by LIST
-deflabel &OFFSET   \ Block offset disk drives. Contents of OFFSET is added to the stack number by BLOCK
-deflabel &CONTEXT  \ pointer to the vocabulary within which dictionary search
-                    \ will first begin
 def2label _eprint _up \ user pointer
 def3label _&current _leftbracket _compile
 deflabel _douser
-&voc-link defalias voc-link;
-&out defalias out;
-&scr defalias scr;
-&offset defalias offset;
 
 : lit, ( n t -- ) xsp pushi, ;
 : #lit, ( n -- ) #, lit, ;
@@ -180,7 +162,6 @@ word/compile word/immediate or  constant word/all
   machineword-2arg
   xtop xlower xtop ' execute 
   1push, ;
-def3label _lit _execute _0branch
 : branch; ( location id -- ) xrp call, ;
 \ code start
 0x0000 .org
@@ -252,7 +233,7 @@ _txsto s" tx!" machineword-predef-1arg tx!; ( c -- )
 s" !io" machineword _storeio !io; ( -- )
 	\ initialize the serial I/O devices
 	next,
-_lit s" lit" word/compile machineword-base-predef lit; 
+s" lit" word/compile machineword-base _lit lit; 
     xrp xlower ld, \ address of next which is a literal
     xlower xtop ldtincr, \ load the value then skip over the cell
     xlower xrp st, \ overwrite the cell
@@ -269,7 +250,7 @@ s" exit" machineword _exit exit;
     \ terminate a colon definition
     xrp spdrop, \ pop the top element off ( where we were )
     retxrp,
-_execute s" execute" machineword-predef-1arg execute;
+s" execute" machineword-1arg _execute execute;
 	\ execute the definition whose code field address cfa is on the data stack
     \ top - cfa
     \ do not use normal call procedure since we don't want to come back here
@@ -319,7 +300,7 @@ donext0 .label
     cell+; cell+; 
     >r;
     next,
-_0branch s" 0branch" word/compile machineword-base-predef ?branch;
+s" 0branch" word/compile machineword-base _0branch ?branch;
 deflabel _zbra1
 	1pop, \ flag
     _zbra1 ??, xtop bneqz, \ 0<>?
@@ -412,8 +393,8 @@ _douser .label ( -- a )
     xtop xtop ld, \ get the offset from memory
     xup xtop xtop add,
     1push,
-&S0 s" sp0" userword-predef sp0;
-&R0 s" rp0" userword-predef rp0;
+s" sp0" userword &s0 sp0;
+s" rp0" userword &r0 rp0;
 s" '?key" userword _tqky '?key;
 s" 'emit" userword _temit 'emit;
 s" 'expect" userword _texpect 'expect;
@@ -424,7 +405,7 @@ s" base" userword _base base;
 : base@; ( -- ) base; @; ;
 s" tmp" word/compile userword-base _tmp temp;
 s" span" userword _span span;
-&in s" >in" userword-predef inn;
+s" >in" userword &in inn;
 s" #tib" userword _ntib #tib;
 user-offset1+ \ since it is doublewide advance by one again
 s" csp" userword _csp csp;
@@ -432,7 +413,7 @@ s" 'eval" userword _teval 'eval;
 s" 'number" userword _tnumber 'number;
 s" hld" userword _hld hld;
 s" handler" userword _handler handler;
-&context s" context" userword-predef context; \ already advanced one at this point
+s" context" userword &context context; \ already advanced one at this point
 \ consumes eight cells
 user-offset@ decimal 16 + user-offset!
 
@@ -1228,7 +1209,7 @@ s" null$" machineword _nulld null$; ( -- a )
 	111 constant, \ o
 	116 constant, \ t 
 	101 constant, \ e
-_abort s" abort" machineword-predef abort; ( -- )
+s" abort" machineword _abort abort; ( -- )
 	\ reset data stack and jump to quit
     null$;
 	throw;
@@ -1333,7 +1314,7 @@ s" console" machineword _console console; ( -- )
 	'?key; 2!;
     hand;
 	exit;
-_quit s" quit" machineword-predef quit; ( -- )
+s" quit" machineword _quit quit; ( -- )
 def2label quit3 quit4
 	\ reset stack pointer and start text interpreter
 	rp0; @; rp!; \ reset return stack pointer
