@@ -567,4 +567,5 @@ ioaddr}
 : disable-debug, ( -- )
   /dev/debug-enable #set-io,
   zero iostb, ;
-
+: activate-debug-if-logical, ( -- )
+  iris-debug @ if enable-debug, else disable-debug, endif ;

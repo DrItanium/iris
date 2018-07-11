@@ -224,7 +224,7 @@ deflabel-here _ulast
 deflabel _eforth1
 0x0180 .org
 .eforth .label
-     iris-debug @ if enable-debug, else disable-debug, endif
+    activate-debug-if-logical,
 	_eforth1 ??, b, 
 _eforth1 .label
     _uzero ??, xup set,
@@ -364,9 +364,6 @@ s" sp!" machineword-1arg _spstore sp!; ( a -- )
     \ set the data stack pointer
     xtop xsp move,
     next,
-s" dup" machineword _dup  dup;
-	xsp xtop ld,
-	1push,
 s" swap" machineword-2arg _swap swap;
 	\ top -- b
 	\ lower -- a
