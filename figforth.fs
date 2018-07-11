@@ -29,6 +29,7 @@ unused-start
 1+cconstant xfifth \ contents of the fifth stack item or result of a double add
 1+cconstant xsixth \ contents of the sixth stack item or result of a double add
 1+cconstant xup \ user area pointer
+1+cconstant xlink \ used when we need to do some crazy manipulations of the stack top
 too-many-registers-defined
 xtop cconstant wxtop \ masquerade for double wide operations
 xthird cconstant wxlower \ masquerade for double wide operations
@@ -98,7 +99,7 @@ deflabel _douser
 variable last-word
 variable user-offset
 0 last-word !
-0 user-offset !
+2 user-offset ! \ skip reserved section
 : user-offset@ ( -- n ) user-offset @ ;
 : user-offset! ( n -- ) user-offset ! ;
 : user-offset1+ ( -- ) user-offset@ 2+ user-offset! ;
@@ -273,26 +274,50 @@ _execute s" execute" machineword-predef-1arg execute;
     \ do not use normal call procedure since we don't want to come back here
     \ and muck up the return stack
     xtop br, \ go there, the return stack has not been touched
+
+s" -" defbinaryop _- -; sub,
+s" r>" machineword _rfrm r>; \ retrieve item from top of return stack
+    xrp xlink pop, \ get the return address separately
+    xrp xtop pop, \ now get the value we actually want
+    xtop xsp push,
+    xlink br, \ get out of here
+s" >r" word/compile machineword-base _>r >r;
+    \ push the data stack to the return stack
+    ( w -- )
+    xrp xlink ld, \ load the top element
+    1pop, 
+    xtop xrp st, \ replace the top with this value
+    xlink br,
+s" dup" machineword _dup  dup;
+	xsp xtop ld,
+	1push,
+_drop s" drop" machineword-predef drop;
+    xsp zero pop,
+    next,
+s" cell+" machineword-1arg _cell+ cell+; ( a -- b )
+    \ add cell size in words to address [ originally this was bytes ]
+    words-per-cell #, xtop xtop addi,
+    1push,
+s" @" machineword-1arg _at @;
+    xtop xtop ld,
+	1push,
 s" next" word/compile machineword-base _donext donext; ( -- )
 deflabel donext0
     \ runtime code for the single index loop.
     \ : next ( -- ) \ hilevel model
     \   r> r> dup if 1 - >r @ >r exit then drop cell+ >r ;
     \ After next is a bl instruction, not an address.
-    xrp xtop pop, xtop xsp push, \ r>
-    xrp xtop pop, xtop xsp push, \ r>
-                                 \ implied dup
-    donext0 ??, xtop beqz,       \ if
-    xsp xtop pop, xtop 1-,       \ 1 - 
-    xtop xrp push,               \ >r
-    xsp xtop pop, xtop xtop ld,  \ @
-    xtop xrp push,               \ >r
-    retxrp,
+    r>; r>; dup;
+    1pop,
+    donext0 ??, xtop beqz,
+    0x1 #lit, -;
+    >r; @; >r; 
+    next,
 donext0 .label
-    dropxsp,                     \ drop
-    xsp xtop pop, xtop 2+,       \ cell+
-    xtop xrp push,               \ >r
-    retxrp,                      \ ;
+    drop;
+    cell+; cell+; 
+    >r;
+    next,
 _0branch s" 0branch" word/compile machineword-base-predef ?branch;
 deflabel _zbra1
 	1pop, \ flag
@@ -309,9 +334,6 @@ s" !" machineword-2arg _store !; ( v a -- )
    \ lower - value
    xlower xtop st, \ perform the store
    next,
-s" @" machineword-1arg _at @;
-    xtop xtop ld,
-	1push,
 s" c!" machineword-2arg _cstore c!; ( value addr -- ) 
 	\ top - addr
 	\ lower - value
@@ -331,27 +353,15 @@ s" rp!" word/compile machineword-base _rpstore rp!;
     1pop, \ top - new stack pointer
     xtop xrp move, 
     next,
-s" r>" machineword _rfrm r>; \ retrieve item from top of return stack
-    xrp xtop pop,
-	1push,
 s" r@" machineword _rat r@; \ copy top of return stack onto stack
 	xrp xtop ld,
 	1push,
-s" >r" word/compile machineword-base _>r >r;
-    \ push the data stack to the return stack
-    ( w -- )
-    1pop, 
-    xtop xrp push,
-    next,
 s" sp@" machineword _spat sp@;
     xsp xsp push,
     next,
 s" sp!" machineword-1arg _spstore sp!; ( a -- )
     \ set the data stack pointer
     xtop xsp move,
-    next,
-_drop s" drop" machineword-predef drop;
-    xsp zero pop,
     next,
 s" dup" machineword _dup  dup;
 	xsp xtop ld,
@@ -501,7 +511,6 @@ s" dnegate" machineword _dnegate dnegate;
     wxtop wxtop negatew,
     wxtop xsp pushw, 
     next,
-s" -" defbinaryop _- -; sub,
 s" abs" machineword _abs abs;
     xsp xtop ld,
     xtop xrp retgez,
@@ -582,11 +591,6 @@ s" */" machineword _stasl */; ( n1 n2 n3 -- q )
           \ third - n1
     xlower xthird xlower mul,
     xtop xlower xtop div,
-    1push,
-s" cell+" machineword _cell+ cell+; ( a -- b )
-    \ add cell size in words to address [ originally this was bytes ]
-    1pop,
-    words-per-cell #, xtop xtop addi,
     1push,
 s" cell-" machineword _cell- cell-; ( a -- b )
     \ subtract cell size in words from address

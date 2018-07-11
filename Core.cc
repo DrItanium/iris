@@ -270,7 +270,13 @@ namespace iris {
         _dest->setValue(_imm);
     }
 	DefExec(Load) {
-		_dest->setValue(loadNumber(_src->get<Address>()));
+        auto addr = _src->get<Address>();
+        auto result = loadNumber(addr);
+		_dest->setValue(result);
+        if (_enableDebugging) {
+            std::cout << "Loaded " << std::hex << result.address << " from " 
+                << std::hex << addr << std::endl;
+        }
 	}
 	DefExec(Store) {
 		storeNumber(_dest->get<Address>(), _src->get<Address>());
@@ -307,6 +313,9 @@ namespace iris {
     DefExec(Call) { 
         pushNumber(_dest, _pc);
         _pc = _addr;
+        if (_enableDebugging) {
+            std::cout << "Calling: " << std::hex << _addr << std::endl;
+        }
     }
     DefExec(ConditionalBranch) {
         if (_dest->get<bool>()) {
@@ -487,6 +496,7 @@ namespace iris {
     }
 	void Core::cycle() {
         if (_enableDebugging) {
+            std::cout << "Cycle Begin!" << std::endl;
             printRegisters();
         }
 		auto control = static_cast<Opcode>(load(_pc));
@@ -508,6 +518,10 @@ namespace iris {
 				std::cout << "bad opcode " << int(control) << std::endl;
 				throw Problem("Illegal Opcode!");
 		}
+        if (_enableDebugging) {
+            std::cout << "Cycle End!" << std::endl;
+            printRegisters();
+        }
 	}
     void Core::execute() {
         while(_keepExecuting) {
