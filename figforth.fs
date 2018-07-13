@@ -98,6 +98,8 @@ variable user-offset
     drop ;
 : embed-name ( str length -- ) .string, ;
 
+: 1-; ( -- ) xsp memdecr, ;
+: 1+; ( -- ) xsp memincr, ;
 0x0 constant word/none
 0x1 constant word/compile \ lexicon compile only bit
 0x2 constant word/immediate \ lexicon immediate bit
@@ -233,18 +235,6 @@ _txsto s" tx!" machineword-predef-1arg tx!; ( c -- )
 s" !io" machineword _storeio !io; ( -- )
 	\ initialize the serial I/O devices
 	next,
-s" lit" word/compile machineword-base _lit lit; 
-    xrp xlower ld, \ address of next which is a literal
-    xlower xtop ldtincr, \ load the value then skip over the cell
-    xlower xrp st, \ overwrite the cell
-    1push,
-s" lit2" word/compile machineword-base _lit2 lit2; ( -- h l )
-    \ push the next two words onto the stack
-    xrp xthird ld, \ address of next which is a literal
-    xthird xtop ldtincr, \ load the lower half then skip over the cell
-    xthird xlower ldtincr, \ load the upper half then skip over the cell
-    xlower xrp st, \ overwrite the return address
-    2push,
 
 s" exit" machineword _exit exit;
     \ terminate a colon definition
@@ -292,7 +282,7 @@ deflabel donext0
     r>; r>; dup;
     1pop,
     donext0 ??, xtop beqz,
-    1-,,
+    1-;
     >r; @; >r; 
     next,
 donext0 .label
@@ -351,10 +341,11 @@ s" swap" machineword-2arg _swap swap;
 	xtop xsp push,
 	xlower xsp push,
     next,
-s" over" machineword-2arg _over over;
-	xlower xsp push,
-	xtop xsp push,
-	xlower xsp push, 
+s" over" machineword _over over; ( a b -- a b a )
+    \ pull the lower element over the top element on the stack
+    0x2 #, xsp xtop addi, \ go to the previous element
+    xtop xlower ld,       \ load that value 
+    xlower xsp push,      \ done
 	next,
 s" 0<" machineword-1arg _0< 0<;
     xtop xtop ltz,
@@ -376,12 +367,12 @@ deflabel-here dovariable ( -- a )
     \ runtime routine for VARIABLE and CREATE 
     xrp xtop pop, \ this routine will be called from variables, we use the return address as the beginning of values
     1push, \ push the address of the next storage to the data stack and then return to what called the routine two levels up
-dovariable defalias dovariable;
 deflabel-here doconstant ( -- n )
     \ runtime routine for CONSTANT and VALUE
     xrp xtop pop, \ get the address of the CONSTANT or VALUE
     xtop xtop ld, \ load the value at this location
     1push, \ push the value onto the stack
+dovariable defalias dovariable;
 doconstant defalias doconstant;
 _up s" up" machineword-predef up; ( -- a )
     \ pointer to the user area
@@ -425,9 +416,7 @@ s" np" userword _np np;
 s" last" userword _last last;
 s" dovoc" word/compile machineword-base _dovocab  dovocab; ( -- )
     \ runtime action of vocabularies
-   r>; 
-   context; 
-   !; 
+   r>; context; !; 
    exit; 
 s" forth" machineword _forth forth; ( -- )
     dovocab;
@@ -451,7 +440,7 @@ s" rot" machineword _rot rot; ( a b c -- b c a )
 	xthird xsp push, 
     next,
 s" 2drop" machineword _2drop 2drop; ( a b -- ) 
-    2pop, 
+    0x4 #, xsp xsp addi,
     next,
 s" 2dup" machineword _2dup 2dup; ( a b -- a b a b ) 
     2pop, \ top - b
@@ -476,13 +465,11 @@ s" d+" machineword _dplus d+;
     wxtop wxlower wxtop addw, \ result will be in xtop,xlower
     wxtop xsp pushw, \ push xtop then xlower
     next,
-s" not" machineword _not not;
-    1pop, 
+s" not" machineword-1arg _not not;
     0xFFFF xlower #set,
     xlower xtop xtop xor,
     1push,
-s" negate" machineword _negate negate;
-    1pop, 
+s" negate" machineword-1arg _negate negate;
     xtop xtop negate,
     1push,
 s" dnegate" machineword _dnegate dnegate;
@@ -517,11 +504,9 @@ deflabel within0
           \ third - u
     within0 ??, xtop xthird bgt,   \ u > top
     within0 ??, xlower xthird blt, \ u < lower
-    0xFFFF #lit,
-    next,
+    0xFFFF #lit, next,
 within0 .label
-    0lit,
-    next,
+    0lit, next,
 \ division operations
 s" um/mod" machineword _ummd um/mod; ( udl udh u -- ur uq ) \ discard udh for the moment
     \ unsigned divide of a double by a single. Return mod and quotient
@@ -575,18 +560,15 @@ s" */" machineword _stasl */; ( n1 n2 n3 -- q )
     xlower xthird xlower mul,
     xtop xlower xtop div,
     1push,
-s" cell-" machineword _cell- cell-; ( a -- b )
+s" cell-" machineword-1arg _cell- cell-; ( a -- b )
     \ subtract cell size in words from address
-    1pop,
     words-per-cell #, xtop xtop subi,
     1push,
-s" cells" machineword _cells cells; ( n -- n )
+s" cells" machineword-1arg _cells cells; ( n -- n )
     \ multiply tos by cell size in words
-    1pop,
     words-per-cell #, xtop xtop muli,
     1push,
-s" aligned" machineword _aligned aligned; ( n -- n )
-    1pop,
+s" aligned" machineword-1arg _aligned aligned; ( n -- n )
     0xFFFE #, xtop xtop andi,
     1push,
 s" bl" machineword _blank bl; ( -- 32 )
@@ -610,22 +592,21 @@ s" depth" machineword _depth depth; ( -- n )
     cell-;
     w/slit, /;
     exit;
-s" pick" machineword _pick pick; ( ... +n --  ... w )
+s" pick" machineword-1arg _pick pick; ( ... +n --  ... w )
     \ copy the nth stack item to tos
-    1pop, \ top - index
+    \ top - index
     xsp xtop xlower add, \ make the address to load from
     xlower xtop ld, \ load the address
     1push,
-s" +!" machineword _pstore +!; ( n a -- )
+s" +!" machineword-2arg _pstore +!; ( n a -- )
     \ add n to the contents at address a
-    2pop,
     xtop xthird ld,
     xlower xthird xlower add,
     xlower xtop st,
     next,
-s" 2!" machineword _dstore 2!; ( d a -- )
+s" 2!" machineword-1arg _dstore 2!; ( d a -- )
     \ store the double integer to address a
-    1pop, \ top - 
+    \ top - 
     xsp wxlower popw,
     wxlower xtop stw,
     next,
@@ -634,9 +615,8 @@ s" 2@" machineword _dat 2@; ( a -- d )
     xsp xthird pop,
     xthird wxtop ldw,
     2push,
-s" count" machineword _count count; ( b -- b +n )
+s" count" machineword-1arg _count count; ( b -- b +n )
     \ return count byte of a string and add 1 to byte address.
-    1pop,
     1 #, xtop xlower addi,
     xtop xtop ld,
     2push,
@@ -652,9 +632,8 @@ s" tib" machineword _tib tib; ( -- a )
     \ return the address of the terminal input buffer
     #tib; cell+; @;
     exit;
-s" @execute" machineword _atexec @execute; ( a -- )
+s" @execute" machineword-1arg _atexec @execute; ( a -- )
     \ execute vector stored in address a 
-    1pop,
     xtop xtop ld,
     xtop xsp reteqz,
     xtop br,
@@ -689,10 +668,6 @@ deflabel-here fill0
     fill0 ??, xlower bneqz,
 fill1 .label
     next,
-: 1+,, ( -- ) 
-  \ push a 1 onto the stack and then do the plus operation 
-  1lit,
-  +; ;
 s" -trailing" machineword _dtrailing -trailing; ( b u -- b u )
 deflabel dtrail2
     \ adjust the count ot eliminate trailing white space
@@ -702,7 +677,7 @@ deflabel-here dtrail1
     bl; over; r@; +; c@;
     <; dtrail2 ??branch; 
     r>;
-    1+,,
+    1+;
     exit; \ adjusted count
 dtrail2 .label
     donext; dtrail1 word,
@@ -717,7 +692,7 @@ s" pack$" machineword _pack$ pack$; ( b u a -- a )
     w/slit, \ push cell size
     um/mod; drop; \ count mod cell
     -; over; +; 0lit, swap; !;              \ null fill cell
-    dup; c!; 1+,, \ save count
+    dup; c!; 1+; \ save count
     swap; cmove; r>; 
     exit; \ move string
 \ numeric output single precision
@@ -738,10 +713,9 @@ s" <#" machineword _bdgs <#; ( -- )
     \ save IP from lr to TOR
     pad; hld; !;
     exit;
-: 1-,, ( -- ) 1lit, -; ; 
 s" hold" machineword _hold hold; ( c -- )
     \ insert a character into the numeric output string
-    hld; @; 1-,,
+    hld; @; 1-;
     dup; hld; !; c!;
     exit;
 s" #" machineword _extractDigit #; ( u -- u )
@@ -801,22 +775,21 @@ def3label numq1 numq2 numq3
 def3label numq4 numq5 numq6
     \ convert a number string to integer. Push a flag on tos.
     base@; >r;
-    0lit,
-    over; count; 
+    0lit, over; count; 
     overc@;
     0x24 #lit, \ '$'
     =; numq1 ??branch;
     hex; swap;
-    1+,,
+    1+;
     swap;
-    1-,,
+    1-;
 numq1 .label
     overc@;
     0x2d #lit, =;
     >r; swap; r@; -;
     swap; r@; +;
     ?dup; numq6 ??branch;
-    1-,,
+    1-;
     >r;
 numq2 .label
     dup;
@@ -826,7 +799,7 @@ numq2 .label
     swap;
     base@;
     *; +; r>;
-    1+,,
+    1+;
     donext; numq2 word, 
     r@; nip;
     numq3 ??branch;
@@ -877,8 +850,7 @@ s" space" machineword _space space; ( -- )
 s" spaces" machineword _spaces spaces; ( +n -- ) 
 deflabel char2
     \ send n spaces to the output device.
-    0lit,
-    max;
+    0lit, max;
     >r;
     char2 word,
 deflabel-here char1
@@ -895,7 +867,7 @@ deflabel type2
 deflabel-here type1
     dup; c@;
     emit;
-    1+,,
+    1+;
 type2 .label
     donext;
     type1 word,
@@ -908,17 +880,11 @@ s" cr" machineword _cr cr; ( -- )
     exit;
 s" do$" word/compile machineword-base _dostr do$; ( -- a )
     \ return the address of a compiled string
-    r>; r@; 
-    dup; \ one copy must be returned
-    count; 
-    r>;
-    +;
-    1+,, \ go to the end of string
+    r>; r@; dup; \ one copy must be returned
+    count; r>; +; 1+; \ go to the end of string
     aligned; \ absolute addr after string
-    >r;
-    drop;    \ discard counted address
-    swap;
-    >r;
+    >r; drop;    \ discard counted address
+    swap; >r;
     exit;
 s\" $\"|" word/compile machineword-base _stqp stqp; ( -- a )
     \ runtime routine compiled by $". Return address of a compiled string.
@@ -986,9 +952,8 @@ def3label parse6 parse7 parse8
 	>r;
 deflabel-here parse1
 	bl; overc@; 	\ skip leading blanks only
-	-; 
-    0<; not; parse2 ??branch; 
-    1+,,
+	-; 0<; not; parse2 ??branch; 
+    1+;
 	donext; parse1 word,
 	r>;
 	drop;
@@ -1013,7 +978,7 @@ parse5 .label
 	dup; >r;
 	parse7 word,
 parse6 .label
-	r>; drop; dup; 1+,, >r;
+	r>; drop; dup; 1+; >r;
 parse7 .label
 	over-; r>; r>; -;
     exit;
@@ -1130,7 +1095,7 @@ deflabel back1
 	back1 ??branch; 
     cbksp #lit,
 	'echo->@exec;
-    1-,, bl;
+    1-; bl;
 	'echo->@exec;
     cbksp #lit,
 	'echo->@exec;
@@ -1140,7 +1105,7 @@ s" tap" machineword _tap tap; ( bot eot cur c -- bot eot cur )
 	\ accept and echo the key stroke and bump the cursor.
 	dup; 
     'echo->@exec;
-	over; c!; 1+,,
+	over; c!; 1+;
 	exit;
 _ktap s" ktap" machineword-predef ktap; ( bot eot cur c -- bot eot cur )
 def2label ktap1 ktap2
@@ -1377,10 +1342,11 @@ s" load-int16" machineword ldint16 ldint16; ( address -- v )
    \ load a 16-bit number and return it plus an updated address
    dup; c@; 
    swap; 
-   1+,, c@; \ higher part 
+   1+; c@; \ higher part 
    mkint16;
    exit;
 #call 0x00FF and xrp 8 lshift 0x0F00 and or constant #call-header
+#pushi 0x00FF and xsp 8 lshift 0x0F00 and or constant #pushi-header
 : #call,; ( -- ) #call-header #lit, ;
 
 _compile s" compile" word/compile machineword-base-predef compile; ( -- )
@@ -1396,8 +1362,9 @@ _compile s" compile" word/compile machineword-base-predef compile; ( -- )
 
 s" literal" immediate-machineword _literal literal; ( w -- )
 	\ compile top of stack to code dictionary as an integer literal
-	compile; lit; \ _lit will be compiled into the dictionary
-	,;
+    \ compile a push immediate instruction to the code dictionary
+    #pushi-header #lit, ,; \ stash the word into the target cell
+    ,;                     \ stash the word into the next cell
 	exit;
 s\" $,\"" machineword _stcq stcq; ( -- )
 	\ compile a literal string up to next " .
@@ -1420,7 +1387,7 @@ s" then" immediate-machineword _then then; ( a -- )
 	\ is filled by a.
     #call,; over; !; \ stash the header
     cell+; \ skip over
-    0lit, !; \ stash zero there
+    0lit, swap; !; \ stash zero there
 	exit;
 _again s" again" immediate-machineword-predef again; ( a -- )
 	\ resolve a backwards jump and terminate a loop structure
@@ -1606,7 +1573,7 @@ deflabel-here dmp1
     dup; c@;
     0x3 #lit,
     u.r; \ display numeric data
-    1+,, \ increment address
+    1+; \ increment address
 dmp2 .label
     donext; dmp1 word, \ loop till done
     exit; 
@@ -1670,14 +1637,10 @@ tname3 .label
     nip;
     ?dup;
     tname1 ??branch;
-    swap;
-    drop;
-    swap;
-    drop;
+    nip; nip;
     exit;
 tname4 .label
-    drop;
-    0lit,
+    drop; 0lit,
     exit;
 s" .id" machineword _dotid .id; ( na -- ) 
 deflabel .id1
@@ -1743,7 +1706,7 @@ deflabel-here words1
     dup; spaces; .id;
     cell-;
     temp; @;
-    1-,,
+    1-;
     ?dup;
     words0 ??branch;
     temp; !;

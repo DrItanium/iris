@@ -462,6 +462,16 @@ namespace iris {
     DefExec(MultiplyImmediate) { _dest->setValue(_src->get<Integer>() * _imm); }
     DefExec(DivideImmediate) { _dest->setValue(_imm == 0 ? 0 : _src->get<Integer>() / _imm); }
     DefExec(PushImmediate) { pushNumber(_dest, _addr); }
+    DefExec(MemoryIncrement) {
+        // load a value from memory, increment it, and then store it back
+        auto addr = _dest->get<Address>();
+        storeNumber(addr, loadNumber(addr).integer + 1);
+    }
+    DefExec(MemoryDecrement) {
+        // load a value from memory, decrement it, and then store it back
+        auto addr = _dest->get<Address>();
+        storeNumber(addr, loadNumber(addr).integer - 1);
+    }
 #undef DefExec
     void Core::installIODevice(Core::IODevice dev) {
         _io.emplace_back(dev);

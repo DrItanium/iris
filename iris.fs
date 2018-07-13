@@ -161,6 +161,8 @@ opcode: #uandi
 opcode: #muli
 opcode: #divi
 opcode: #pushi
+opcode: #memincr
+opcode: #memdecr
 opcode}
 \ registers
 set-current \ go back
@@ -569,3 +571,5 @@ ioaddr}
   zero iostb, ;
 : activate-debug-if-logical, ( -- )
   iris-debug @ if enable-debug, else disable-debug, endif ;
+#memincr inst-1reg memincr,
+#memdecr inst-1reg memdecr,
