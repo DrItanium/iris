@@ -1740,9 +1740,7 @@ deflabel-here words1
     @;
     ?dup; \ ? at end of list
     words2 ??branch;
-    dup;
-    spaces;
-    .id;
+    dup; spaces; .id;
     cell-;
     temp; @;
     1-,,
