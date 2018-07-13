@@ -24,4 +24,170 @@
 \  
 
 
+get-current vocabulary iris also iris definitions
 
+: {opcode ( -- 0 ) 0 ;
+: opcode} ( n -- ) drop ;
+{opcode
+opcode: #illegal,
+opcode: #add 
+opcode: #sub 
+opcode: #mul 
+opcode: #div 
+opcode: #rem 
+opcode: #lshift
+opcode: #rshift
+opcode: #and 
+opcode: #or 
+opcode: #negate
+opcode: #xor 
+opcode: #min
+opcode: #max
+opcode: #eq
+opcode: #neq
+opcode: #lt
+opcode: #gt
+opcode: #le
+opcode: #ge
+opcode: #set
+opcode: #ld
+opcode: #st
+opcode: #push
+opcode: #pop
+opcode: #br
+opcode: #brl
+opcode: #bcr
+opcode: #bcrl
+opcode: #ueq
+opcode: #uneq
+opcode: #ult
+opcode: #ugt
+opcode: #ule
+opcode: #uge
+opcode: #uand
+opcode: #uor
+opcode: #unegate
+opcode: #uxor
+opcode: #umin
+opcode: #umax
+opcode: #uadd
+opcode: #usub
+opcode: #umul
+opcode: #udiv
+opcode: #urem
+opcode: #ulshift
+opcode: #urshift
+opcode: #incr
+opcode: #decr
+opcode: #uincr
+opcode: #udecr
+opcode: #call
+opcode: #condb
+opcode: #addi
+opcode: #subi
+opcode: #rshifti
+opcode: #lshifti
+opcode: #ldtincr
+opcode: #lti
+opcode: #move
+opcode: #sttincr
+opcode: #addw
+opcode: #subw
+opcode: #pushw
+opcode: #popw
+opcode: #return
+opcode: #creturn
+opcode: #negatew
+opcode: #umsmod
+opcode: #msmod
+opcode: #umstar
+opcode: #mstar
+opcode: #stw
+opcode: #ldw
+opcode: #ldbu
+opcode: #stbu
+opcode: #ldbl
+opcode: #stbl
+opcode: #setb
+opcode: #bi
+opcode: #eqz
+opcode: #neqz
+opcode: #ltz
+opcode: #gtz
+opcode: #lez
+opcode: #gez
+opcode: #andi
+opcode: #uandi
+opcode: #muli
+opcode: #divi
+opcode: #pushi
+opcode: #memincr
+opcode: #memdecr
+opcode}
+
+: hardwired-register ( value "name" -- ) constant ;
+: register ( "name" -- ) variable 0 latest name>int execute ! ;
+
+register x0
+register x1 
+register x2
+register x3
+register x4
+register x5
+register x6
+register x7
+register x8
+register x9
+register x10
+register x11
+register x12
+register x13
+register x14
+register x15
+register pc
+: addr16 ( a -- b ) 0xFFFF and ;
+: set-register ( value dest -- ) swap addr16 swap ! ;
+: get-register ( reg -- value ) @ addr16 ;
+: set-pc ( value -- ) pc set-register ;
+: get-pc ( -- value ) pc get-register ;
+: idx>reg ( idx -- addr )
+  0xF and 
+  case
+    0 of x0 endof 1 of x1 endof 2 of x2 endof 3 of x3 endof
+    4 of x4 endof 5 of x5 endof 6 of x6 endof 7 of x7 endof
+    8 of x8 endof 9 of x9 endof 10 of x10 endof 11 of x11 endof
+    12 of x12 endof 13 of x13 endof 14 of x14 endof 15 of x15 endof
+    abort" Illegal Register!"
+  endcase 
+  ;
+: reg>idx ( addr -- idx ) 
+  case
+    x0 of 0 endof x1 of 1 endof x2 of 2 endof x3 of 3 endof
+    x4 of 4 endof x5 of 5 endof x6 of 6 endof x7 of 7 endof
+    x8 of 8 endof x9 of 9 endof x10 of 10 endof x11 of 11 endof
+    x12 of 12 endof x13 of 13 endof x14 of 14 endof x15 of 15 endof
+    abort" Illegal Register Address!"
+  endcase
+  ;
+
+: binary-op-exec ( src2 src dest op -- ) 
+  swap
+  >r  \ dest
+  >r  \ op
+  get-register swap 
+  get-register swap 
+  r> execute 
+  r> set-register ;
+
+: defbinaryop ( "name" "action" -- ) 
+  create ' ,
+  does> ( src2 src dest -- ) 
+  @ binary-op-exec ;
+defbinaryop add; +
+defbinaryop sub; -
+defbinaryop mul; *
+defbinaryop div; /
+defbinaryop rem; mod
+
+: 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
+: 1-; ( src dest -- ) >r get-register 1- r> set-register ;
