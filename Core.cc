@@ -448,7 +448,6 @@ namespace iris {
 		// store the upper half of a register to the given address
 		store(_dest->get<Address>(), byte(_src->get<Address>() >> 8));
 	}
-	DefExec(Nop) { }
 	DefExec(SetByte) { _dest->setValue(_half); }
 	DefExec(Branch) { _pc = _addr; }
 	DefExec(EqualZero) { _dest->setValue(_src->get<Integer>() == 0); }

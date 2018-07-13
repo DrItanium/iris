@@ -147,7 +147,6 @@ opcode: #ldbu
 opcode: #stbu
 opcode: #ldbl
 opcode: #stbl
-opcode: #nop
 opcode: #setb
 opcode: #bi
 opcode: #eqz
@@ -259,7 +258,6 @@ too-many-registers-defined
 
 #add inst-3reg add, 
 #move inst-2reg move,
-#nop inst-0reg nop,
 
 #sub inst-3reg sub, 
 #mul inst-3reg mul, 
