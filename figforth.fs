@@ -749,13 +749,15 @@ s" str" machineword _str str; ( n -- b u )
     dup; >r; abs; 
     <#; #s; r>; sign; #>;
     exit;
+: base!; ( -- ) base; !; ;
+: restore-base; ( -- ) r>; base!; ;
 s" hex" machineword _hex hex; ( -- )
     \ use radix 16 as base for numeric conversions
-    0x10 #lit, base; !;
+    0x10 #lit, base!;
     exit;
 s" decimal" machineword _decimal decimal; ( -- )
     \ use radix 10 as base for numeric conversions
-    0xa #lit, base; !; 
+    0xa #lit, base!; 
     exit; 
 \ numeric input single precision
 : overc@; ( -- ) over; c@; ;
@@ -765,7 +767,8 @@ deflabel dgtq1
     >r; 0x30 #lit, \ '0'
     -;
     0x9 #lit, over; <; dgtq1 ??branch;
-    7 #lit, -; dup; 0xa #lit, <; or;
+    7 #lit, -; dup; 
+    0xa #lit, <; or;
 dgtq1 .label
     dup; r>; u<; 
     exit;
@@ -779,9 +782,10 @@ def3label numq4 numq5 numq6
     overc@;
     0x24 #lit, \ '$'
     =; numq1 ??branch;
-    hex; swap;
+    hex; 
+    swap; 
     1+;
-    swap;
+    swap; 
     1-;
 numq1 .label
     overc@;
@@ -816,8 +820,7 @@ numq5 .label
 numq6 .label
     r>;
     2drop;
-    r>;
-    base; !;
+    restore-base;
     exit;
 
 \ basic io
@@ -892,29 +895,22 @@ s\" $\"|" word/compile machineword-base _stqp stqp; ( -- a )
     exit;
 s\" .\"|" word/compile machineword-base _dtqp dtqp; ( -- )
     \ runtime routine of ." . output a compile string.
-    do$;
-    count;
-    type;
+    do$; count; type;
     exit;
 s" .r" machineword _dotr .r; ( n +n -- )
 	\ display an integer in a field of n columsn, right justified
-	>r; str; r>;
-	over-;
-	spaces;
-	type;
+	>r; str; r>; 
+    over-; spaces; type;
 	exit;
 s" u.r" machineword _udotr u.r; ( u +n -- )
 	\ display an unsigned integer in n column, right justified
 	>r; <#; #s; #>; r>;
-	over-;
-	spaces;
-	type;
+	over-; spaces; type;
 	exit;
 s" u." machineword _udot u.; ( u -- ) 
 	\ display an unsigned integer in free format
 	<#; #s; #>;
-	spaces;
-	type;
+	spaces; type;
 	exit;
 s" ." machineword _dot .; ( w -- )
 deflabel dot1
@@ -927,13 +923,11 @@ deflabel dot1
 	exit;
 dot1 .label
 	str;
-	spaces;
-	type;
+	spaces; type;
 	exit;
 s" ?" machineword _quest ?; ( a -- )
 	\ display the contents in a memory cell
-	@;
-	.;
+	@; .;
 	exit;
 \ parsing words
 s" parse" machineword _parse0 parse0; ( b u c -- b u delta ; <string> )
@@ -944,10 +938,7 @@ def3label parse6 parse7 parse8
 	over; >r;
 	dup;
 	parse8 ??branch; 
-	xsp xtop pop,
-	xtop 1-,
-	xtop xsp push,
-	temp; @; bl; 
+    1-; temp; @; bl; 
     =; parse3 ??branch; 
 	>r;
 deflabel-here parse1
@@ -971,9 +962,7 @@ deflabel-here parse4
 	0<;
 parse5 .label
 	parse6 ??branch; 
-	xsp xtop pop,
-	xtop 1+,
-	xtop xsp push,
+    1+;
 	donext; parse4 word,
 	dup; >r;
 	parse7 word,
@@ -1591,7 +1580,7 @@ dump1 .label
 dump4 .label
     donext; dump1 word, \ loop till done
 dump3 .label
-    drop; r>; base; !; \ restore radix
+    drop; restore-base; \ restore radix
     exit;
 s" .s" machineword _dots .s; ( ... -- ... )
 def2label .s2 .s1
@@ -1730,7 +1719,7 @@ s" hi" machineword _hi hi; ( -- )
     0x2e #lit, \ '.'
     hold; #s; #>; 
     type; \ format version number
-    base; !;
+    base!;
     cr;
     exit;
 
