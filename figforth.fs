@@ -292,7 +292,7 @@ deflabel donext0
     r>; r>; dup;
     1pop,
     donext0 ??, xtop beqz,
-    0x1 #lit, -;
+    1-,,
     >r; @; >r; 
     next,
 donext0 .label
@@ -505,6 +505,10 @@ s" min" defbinaryop _min min; min,
 s" max" defbinaryop _max max; max, 
 s" umin" defbinaryop _umin umin; umin,
 s" umax" defbinaryop _umax umax; umax,
+s" lshift" defbinaryop _lshift lshift; lshift,
+s" rshift" defbinaryop _rshift rshift; rshift,
+s" ulshift" defbinaryop _ulshift ulshift; ulshift,
+s" urshift" defbinaryop _urshift urshift; urshift,
 s" within" machineword _within within; ( u ul uh -- t )
 deflabel within0
     \ return true if u is within the range of ul and uh
@@ -761,9 +765,10 @@ deflabel sign1
     0x2d #lit, hold;
 sign1 .label
     exit;
+: over-; ( -- ) over; -; ;
 s" #>" machineword _edgs #>; ( w --  b u )
     \ prepare the output string to be typed
-    drop; hld; @; pad; over; -;
+    drop; hld; @; pad; over-;
     exit;
 s" str" machineword _str str; ( n -- b u )
     \ convert a signed integer to a numeric string
@@ -779,6 +784,7 @@ s" decimal" machineword _decimal decimal; ( -- )
     0xa #lit, base; !; 
     exit; 
 \ numeric input single precision
+: overc@; ( -- ) over; c@; ;
 s" digit?" machineword _digit? digit?; ( c base -- u t )
 deflabel dgtq1
     \ convert a character to its numeric value. A flag indicates success.
@@ -789,6 +795,7 @@ deflabel dgtq1
 dgtq1 .label
     dup; r>; u<; 
     exit;
+: nip; ( -- ) swap; drop; ;
 _numberq s" number?" machineword-predef number?; ( a -- n T | a F )
 def3label numq1 numq2 numq3
 def3label numq4 numq5 numq6
@@ -796,7 +803,7 @@ def3label numq4 numq5 numq6
     base@; >r;
     0lit,
     over; count; 
-    over; c@;
+    overc@;
     0x24 #lit, \ '$'
     =; numq1 ??branch;
     hex; swap;
@@ -804,7 +811,7 @@ def3label numq4 numq5 numq6
     swap;
     1-,,
 numq1 .label
-    over; c@;
+    overc@;
     0x2d #lit, =;
     >r; swap; r@; -;
     swap; r@; +;
@@ -821,7 +828,7 @@ numq2 .label
     *; +; r>;
     1+,,
     donext; numq2 word, 
-    r@; swap; drop;
+    r@; nip;
     numq3 ??branch;
     negate;
 numq3 .label
@@ -926,15 +933,14 @@ s\" .\"|" word/compile machineword-base _dtqp dtqp; ( -- )
 s" .r" machineword _dotr .r; ( n +n -- )
 	\ display an integer in a field of n columsn, right justified
 	>r; str; r>;
-	over;
-	-;
+	over-;
 	spaces;
 	type;
 	exit;
 s" u.r" machineword _udotr u.r; ( u +n -- )
 	\ display an unsigned integer in n column, right justified
 	>r; <#; #s; #>; r>;
-	over; -;
+	over-;
 	spaces;
 	type;
 	exit;
@@ -969,8 +975,7 @@ def3label parse2 parse3 parse5
 def3label parse6 parse7 parse8
 	\ scan string delimited by c. Return found string and its offset
 	temp; !;
-	over;
-	>r;
+	over; >r;
 	dup;
 	parse8 ??branch; 
 	xsp xtop pop,
@@ -980,7 +985,7 @@ def3label parse6 parse7 parse8
     =; parse3 ??branch; 
 	>r;
 deflabel-here parse1
-	bl; over; c@; 	\ skip leading blanks only
+	bl; overc@; 	\ skip leading blanks only
 	-; 
     0<; not; parse2 ??branch; 
     1+,,
@@ -993,8 +998,7 @@ deflabel-here parse1
 parse2 .label
 	r>;
 parse3 .label
-	over;
-	swap;
+	over; swap;
 	>r;
 deflabel-here parse4 
 	temp; @; bl; 
@@ -1011,7 +1015,7 @@ parse5 .label
 parse6 .label
 	r>; drop; dup; 1+,, >r;
 parse7 .label
-	over; -; r>; r>; -;
+	over-; r>; r>; -;
     exit;
 parse8 .label
 	over; r>; -;
@@ -1043,7 +1047,7 @@ s" char" machineword _char char; ( -- c )
 s" token" machineword _token token;
 	bl; parse;
 	decimal 31 #lit, min; np; @;
-	over; -; cell-; pack$;
+	over-; cell-; pack$;
 	exit;
 s" word" machineword _word word; ( c -- a ; <string> )
 	\ parse a word from input stream and copy it to code dictionary.
@@ -1094,7 +1098,7 @@ find4 .label
 	find5 ??branch; 
 	cell-; cell-; find1 word,
 find5 .label
-	r>; drop; swap; drop; cell-; dup; name>; swap;
+	r>; drop; nip; cell-; dup; name>; swap;
 	exit; \ ca
 
 s" name?" machineword _nameq name?; ( a -- ca na | a F ) 
@@ -1152,7 +1156,7 @@ ktap1 .label
     bksp;
 	exit;
 ktap2 .label
-	drop; swap; drop; dup;
+	drop; nip; dup;
 	exit;
 _accept s" accept" machineword-predef accept; ( b u -- b u )
 def3label accept2 accept3 accept4
@@ -1170,7 +1174,7 @@ accept2 .label
 accept3 .label
 	accept1 word,
 accept4 .label
-	drop; over; -;
+	drop; over-;
 	exit;
 s" except" machineword _except except; ( b u -- )
 	\ accept input stream and store count in SPAN.
@@ -1361,21 +1365,34 @@ s" [compile]" immediate-machineword _bcompile [compile]; ( -- ; <string> )
 	\ compile the next immediate word into code dictionary
     '; again;
 	exit;
+s" make-int16" machineword mkint16 mkint16; ( l h -- n )
+    \ convert upper and lower halves to a single 16-bit word
+    0x8 #lit, lshift; 
+    0xFF00 #lit, and;
+    swap; 
+    0x00FF #lit, and;
+    or; 
+    exit;
+s" load-int16" machineword ldint16 ldint16; ( address -- v )
+   \ load a 16-bit number and return it plus an updated address
+   dup; c@; 
+   swap; 
+   1+,, c@; \ higher part 
+   mkint16;
+   exit;
+#call 0x00FF and xrp 8 lshift 0x0F00 and or constant #call-header
+: #call,; ( -- ) #call-header #lit, ;
 
 _compile s" compile" word/compile machineword-base-predef compile; ( -- )
 	\ compile the next address in colon list to code dictionary
-	r>; ( a )
-	dup; ( a a )
-	1pop, \ xtop - a
-	xtop xtop ld, 
-	xtop xsp push, ( a bl )
-	over;  \ convert abs addr to rel addr ( not needed for my design )
-	+;
-	\ 0x03FFFFFFC #lit,
-	\ and; ; a ca -- 
+	r>; ( a ) \ get the next location
+	dup; ( a a ) \ duplicate it 
+    cell+; ( a a+2 ) \ jump over two cells
+    @; ( a v ) \ load the address there
 	again; \ compile bl instruction
-	cell+; >r;
-	exit;
+    cell+; cell+; \ jump ahead two cells
+	>r; \ put that back on the stack
+	exit; \ return
 
 s" literal" immediate-machineword _literal literal; ( w -- )
 	\ compile top of stack to code dictionary as an integer literal
@@ -1401,17 +1418,14 @@ s" then" immediate-machineword _then then; ( a -- )
 	\ terminate a forward branch structure.
 	\ the forward reference deposits a branch instruction. The address
 	\ is filled by a.
-	here; over; -; \ construct a base address to store to
-	\ need to construct a branch instruction
-	#call #lit, over; !; \ stash a zero #call 
-    1+,, \ go to next address
-	!; \ store the address into this cell
+    #call,; over; !; \ stash the header
+    cell+; \ skip over
+    0lit, !; \ stash zero there
 	exit;
 _again s" again" immediate-machineword-predef again; ( a -- )
 	\ resolve a backwards jump and terminate a loop structure
 	\ compile a branch instruction, with 'a' in the address field.
-	here; -; \ offset from here
-	#call #lit, ,; \ stash the call instruction portion
+    #call,; ,; \ put the header out first
 	,; \ stash the address
 	exit;
 s" for" immediate-machineword _for for; ( -- a )
@@ -1582,13 +1596,47 @@ utype2 .label
     utype1 word, \ loop till done
     drop;
     exit;
+s" dm+" machineword _dmp dm+; ( a u -- a )
+deflabel dmp2
+    \ dump u bytes from , leaving a + u on the stack
+    over; 0x4 #lit, u.r; \ display address
+    space; >r; \ start count down loop
+    dmp2 word,
+deflabel-here dmp1
+    dup; c@;
+    0x3 #lit,
+    u.r; \ display numeric data
+    1+,, \ increment address
+dmp2 .label
+    donext; dmp1 word, \ loop till done
+    exit; 
 s" dump" machineword _dump dump; ( a u -- )
+def3label dump1 dump3 dump4
     \ dump u bytes from a, in a formatted manner
-    \ TODO this
+    base@; >r;
+    hex; decimal 16 #lit, \ save radix, set hex
+    /; >r;
+dump1 .label
+    cr decimal 16 #lit, 2dup; dm+; \ display numeric
+    rot; rot;
+    space; space;
+    _type; \ display printable characters
+dump4 .label
+    donext; dump1 word, \ loop till done
+dump3 .label
+    drop; r>; base; !; \ restore radix
     exit;
 s" .s" machineword _dots .s; ( ... -- ... )
+def2label .s2 .s1
     \ display the contents of the data stack
-    \ todo this
+    space; depth; \ stack depth
+    >r; \ start count down loop
+    .s2 word, \ skip first pass
+.s1 .label
+    r@; pick; .; \ index stack, display contents
+.s2 .label
+    donext; .s1 word, \ loop till done
+    space;
     exit;
 s" !csp" machineword stcsp !csp; ( -- )
     \ save stack pointer in CSP for erro rchecking.
@@ -1601,16 +1649,58 @@ s" ?csp" machineword qcsp ?csp; ( -- )
     abortq; s" stacks" .string, \ abort if different
     exit;
 s" >name" machineword _tname >name; ( ca -- na | F )
+def3label tname1 tname2 tname3
+deflabel tname4
     \ convert code address to a name address.
-    \ todo finish
+    current;  \ vocabulary link
+tname1 .label
+    cell+; @;
+    ?dup; \ check all vocabularies
+    tname4 ??branch; 
+    2dup;
+tname2 .label
+    @; dup;  \ ?last word in vocabulary
+    tname3 ??branch;
+    2dup; name>;
+    xor;  \ compare
+    tname3 ??branch;
+    cell-;      \ continue with next word
+    tname2 word, 
+tname3 .label
+    nip;
+    ?dup;
+    tname1 ??branch;
+    swap;
+    drop;
+    swap;
+    drop;
+    exit;
+tname4 .label
+    drop;
+    0lit,
     exit;
 s" .id" machineword _dotid .id; ( na -- ) 
+deflabel .id1
     \ display the name at address
-    \ todo this
+    ?dup; \ if zero no name
+    .id1 ??branch;
+    count; 0x1f #lit, and; \ mask lexicon bits
+    _type;
+    exit; \ display name string
+.id1 .label
+    dtqp; s"  {noName}" .string, 
     exit;
 s" @a" machineword _ata @a; ( a -- n | ca )
+deflabel @a1
     \ fetch contents. If it is a branch instruction, convert to ca
-    \ todo this
+    dup; c@;
+    #call #lit, \ we need to load the command code
+    =;  @a1 ??branch;
+    dup; 0x2 #lit, +; \ goto the immediate
+    ldint16; \ get the address
+    exit;
+@a1 .label
+    nip; 
     exit;
 s" see" machineword _see see; ( -- ; <string> )
 def3label see2 see3 see4
@@ -1655,7 +1745,7 @@ deflabel-here words1
     .id;
     cell-;
     temp; @;
-    0x1 #lit, -;
+    1-,,
     ?dup;
     words0 ??branch;
     temp; !;
@@ -1671,11 +1761,9 @@ s" ver" machineword _ver version; ( -- n )
 
 s" hi" machineword _hi hi; ( -- )
     \ display the sign-on message of eForth
-    !io;
-    cr;
+    !io; cr;
     dtqp; s" ppc eForth v" .string, \ model
-    base@;
-    hex;
+    base@; hex;
     version;
     <#; digit; digit;
     0x2e #lit, \ '.'
