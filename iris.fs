@@ -130,40 +130,40 @@ opcode}
 
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
-register x0
-register x1 
-register x2
-register x3
-register x4
-register x5
-register x6
-register x7
-register x8
-register x9
-register x10
-register x11
-register x12
-register x13
-register x14
-register x15
+register r0
+register r1 
+register r2
+register r3
+register r4
+register r5
+register r6
+register r7
+register r8
+register r9
+register r10
+register r11
+register r12
+register r13
+register r14
+register r15
 register pc
 
 : idx>reg ( idx -- addr )
   0xF and 
   case
-    0 of x0 endof 1 of x1 endof 2 of x2 endof 3 of x3 endof
-    4 of x4 endof 5 of x5 endof 6 of x6 endof 7 of x7 endof
-    8 of x8 endof 9 of x9 endof 10 of x10 endof 11 of x11 endof
-    12 of x12 endof 13 of x13 endof 14 of x14 endof 15 of x15 endof
+    0 of r0 endof 1 of r1 endof 2 of r2 endof 3 of r3 endof
+    4 of r4 endof 5 of r5 endof 6 of r6 endof 7 of r7 endof
+    8 of r8 endof 9 of r9 endof 10 of r10 endof 11 of r11 endof
+    12 of r12 endof 13 of r13 endof 14 of r14 endof 15 of r15 endof
     abort" Illegal Register!"
   endcase 
   ;
 : reg>idx ( addr -- idx ) 
   case
-    x0 of 0 endof x1 of 1 endof x2 of 2 endof x3 of 3 endof
-    x4 of 4 endof x5 of 5 endof x6 of 6 endof x7 of 7 endof
-    x8 of 8 endof x9 of 9 endof x10 of 10 endof x11 of 11 endof
-    x12 of 12 endof x13 of 13 endof x14 of 14 endof x15 of 15 endof
+    r0 of 0 endof r1 of 1 endof r2 of 2 endof r3 of 3 endof
+    r4 of 4 endof r5 of 5 endof r6 of 6 endof r7 of 7 endof
+    r8 of 8 endof r9 of 9 endof r10 of 10 endof r11 of 11 endof
+    r12 of 12 endof r13 of 13 endof r14 of 14 endof r15 of 15 endof
     abort" Illegal Register Address!"
   endcase
   ;
@@ -342,8 +342,24 @@ defbinaryop max; max
   r> 2+-register ;
 
 set-current
+r0 constant x0 
+r1 constant x1 
+r2 constant x2 
+r3 constant x3 
+r5 constant x5 
+r6 constant x6 
+r7 constant x7 
+r8 constant x8 
+r9 constant x9 
+r10 constant x10
+r11 constant x11
+r12 constant x12
+r13 constant x13
+r14 constant x14
+r15 constant x15
+: print-pc ( -- ) ." pc: " get-pc . cr ;
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : execute-core ( -- ) ;
 
-previous
+previous 
