@@ -29,6 +29,7 @@ get-current vocabulary iris also iris definitions
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
 : {opcode ( -- 0 ) 0 ;
+: opcode: dup addr8 constant 1+ ;
 : opcode} ( n -- ) drop ;
 {opcode
 opcode: #illegal,
@@ -127,7 +128,6 @@ opcode: #memincr
 opcode: #memdecr
 opcode}
 
-: hardwired-register ( value "name" -- ) constant ;
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
 register x0
@@ -148,30 +148,6 @@ register x14
 register x15
 register pc
 
-0x10000 constant memory-size
-memory-size 1 cells / constant memory-size-in-cells
-create data-memory memory-size-in-cells cells allot
-: clear-data-memory ( -- )
-  memory-size-in-cells 0 ?do
-    0 I cells data-memory + ! 
-  loop ;
-: dump-data-memory ( -- )
-  data-memory memory-size-in-cells cells dump ;
-: upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
-: store-byte ( v a -- ) addr16 data-memory + c! ;
-: store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
-: load-byte ( addr -- value ) addr16 data-memory + c@ ;
-: load-word ( addr -- value ) 
-  dup load-byte 0xFF and ( addr l )
-  swap 1+ load-byte ( l h )
-  8 lshift  0xFF00 and ( l h<<8 )
-  or addr16 ;
-: set-register ( value dest -- ) swap addr16 swap ! ;
-: get-register ( reg -- value ) @ addr16 ;
-: set-pc ( value -- ) pc set-register ;
-: get-pc ( -- value ) pc get-register ;
-: advance-pc ( -- ) pc get-register 1+ set-register ;
-: load-byte ( addr -- value ) 
 : idx>reg ( idx -- addr )
   0xF and 
   case
@@ -191,6 +167,56 @@ create data-memory memory-size-in-cells cells allot
     abort" Illegal Register Address!"
   endcase
   ;
+
+: set-register ( value dest -- ) swap addr16 swap ! ;
+: get-register ( reg -- value ) @ addr16 ;
+: 1+-register ( reg -- ) dup get-register 1+ swap set-register ;
+: 2+-register ( reg -- ) dup get-register 2 + swap set-register ;
+: 1--register ( reg -- ) dup get-register 1- swap set-register ;
+: set-pc ( value -- ) pc set-register ;
+: get-pc ( -- value ) pc get-register ;
+: advance-pc ( -- ) pc get-register 1+ set-register ;
+
+\ memory block
+0x10000 constant memory-size
+memory-size 1 cells / constant memory-size-in-cells
+create data-memory memory-size-in-cells cells allot
+: clear-data-memory ( -- )
+  memory-size-in-cells 0 ?do
+    0 I cells data-memory + ! 
+  loop ;
+: dump-data-memory ( -- )
+  data-memory memory-size-in-cells cells dump ;
+: upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
+: store-byte ( v a -- ) addr16 data-memory + c! ;
+: store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
+: load-byte ( addr -- value ) addr16 data-memory + c@ ;
+: load-word ( addr -- value ) 
+  dup load-byte 0xFF and ( addr l )
+  swap 1+ load-byte ( l h )
+  8 lshift  0xFF00 and ( l h<<8 )
+  or addr16 ;
+: load-double-word ( addr -- value ) 
+  dup 2 + addr16 load-word \ get the upper half
+  16 lshift 0xFFFF0000 and \ finish setting up the upper half
+  swap 
+  addr16 load-word \ get the lower half
+  0x0000FFFF and  \ make sure
+  or \ combine it 
+  0xFFFFFFFF and ;
+: push-byte ( value addr -- addr-1 )
+  \ move the address down one addr and then store the value there
+  1 - swap over store-byte ;
+: pop-byte ( addr -- value addr+1 )
+  dup load-byte swap 1+ ;
+: push-word ( value addr -- addr-2 ) 
+  2 - dup 
+  -rot 
+  store-word ;
+: pop-word ( addr -- value addr+2 ) 
+  dup load-word 
+  swap 2 + ; 
+
 \ execution logic
 : binary-op-exec ( src2 src dest op -- ) 
   swap
@@ -208,8 +234,113 @@ create data-memory memory-size-in-cells cells allot
 defbinaryop add; +
 defbinaryop sub; -
 defbinaryop mul; *
-defbinaryop div; /
-defbinaryop rem; mod
+defbinaryop div; / \ todo add support for denominator checking
+defbinaryop rem; mod \ todo add support for denominator checking
+defbinaryop and; and
+defbinaryop or; or
+defbinaryop xor; xor
+defbinaryop lshift; lshift
+defbinaryop rshift; rshift
+defbinaryop =; =
+defbinaryop <>; <>
+defbinaryop <; <
+defbinaryop >; >
+defbinaryop <=; <=
+defbinaryop >=; >=
+defbinaryop min; min
+defbinaryop max; max
 
 : 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
 : 1-; ( src dest -- ) >r get-register 1- r> set-register ;
+: set; ( constant dest -- ) set-register ;
+: ld; ( src dest -- ) 
+  swap ( dest src )
+  get-register ( dest src-value )
+  load-word ( dest value ) 
+  swap ( value dest ) 
+  set-register ; 
+: st; ( src dest -- ) 
+  swap get-register 
+  swap get-register 
+  store-word ;
+: pushi; ( imm dest -- ) 
+  swap over 
+  get-register 
+  push-word ( n ) 
+  set-register ;
+: push; ( src dest -- ) 
+  swap ( dest src )
+  get-register swap pushi ;
+
+: pop; ( src dest -- )
+  over get-register pop-word ( src dest value addr+2 )
+  >r ( src dest value )
+  swap set-register r>
+  swap set-register ;
+: ibranch; ( addr -- ) set-pc ;
+: call; ( imm dest -- )
+  get-pc swap pushi;
+  ibranch; ;
+: rbranch; ( dest -- ) get-register ibranch; ;
+: rbranch-link; ( src dest -- ) 
+  \ branch to the dest register and push _pc onto the stack at src
+  get-register swap ( imm src )
+  call; ;
+
+
+: ?rbranch; ( src dest -- ) 
+  \ conditional register branch
+  swap 
+  get-register 
+  if 
+    rbranch;
+  else
+    drop
+  endif ;
+
+: ?rbranch-link; ( src2 src dest -- )
+  >r
+  get-register 
+  if 
+    r> rbranch-link;
+  else
+    drop r> drop 
+  endif ;
+: ?branch; ( imm dest -- ) 
+  get-register 
+  if 
+    set-pc
+  else
+    drop
+  endif ;
+
+: move; ( src dest -- ) swap get-register swap set-register ; 
+: return; ( dest -- ) 
+  \ pop the top element from the stack pointer and store it in _pc
+  dup pop-word ( dest value addr ) 
+  swap ( dest addr value )
+  set-pc ( dest addr )
+  swap set-register ;
+: ?return; ( src dest -- )
+  swap get-register 
+  if 
+     return;
+  else
+    drop
+  endif ;
+
+: load-then-increment; ( src dest -- ) 
+  \ perform a load operation then increment source to the next word address
+  over >r 
+  ld; 
+  r> 2+-register ;
+
+: store-then-increment; ( src dest -- ) 
+  \ perform a store operation then increment dest to the next word address
+  dup >r
+  st;
+  r> 2+-register; ;
+
+definitions
+: execute-core ( -- ) ;
+previous set-current
