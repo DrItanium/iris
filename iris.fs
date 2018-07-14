@@ -26,6 +26,8 @@
 
 get-current vocabulary iris also iris definitions
 
+: addr16 ( a -- b ) 0xFFFF and ;
+: addr8 ( a -- b ) 0x00FF and ;
 : {opcode ( -- 0 ) 0 ;
 : opcode} ( n -- ) drop ;
 {opcode
@@ -145,11 +147,31 @@ register x13
 register x14
 register x15
 register pc
-: addr16 ( a -- b ) 0xFFFF and ;
+
+0x10000 constant memory-size
+memory-size 1 cells / constant memory-size-in-cells
+create data-memory memory-size-in-cells cells allot
+: clear-data-memory ( -- )
+  memory-size-in-cells 0 ?do
+    0 I cells data-memory + ! 
+  loop ;
+: dump-data-memory ( -- )
+  data-memory memory-size-in-cells cells dump ;
+: upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
+: store-byte ( v a -- ) addr16 data-memory + c! ;
+: store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
+: load-byte ( addr -- value ) addr16 data-memory + c@ ;
+: load-word ( addr -- value ) 
+  dup load-byte 0xFF and ( addr l )
+  swap 1+ load-byte ( l h )
+  8 lshift  0xFF00 and ( l h<<8 )
+  or addr16 ;
 : set-register ( value dest -- ) swap addr16 swap ! ;
 : get-register ( reg -- value ) @ addr16 ;
 : set-pc ( value -- ) pc set-register ;
 : get-pc ( -- value ) pc get-register ;
+: advance-pc ( -- ) pc get-register 1+ set-register ;
+: load-byte ( addr -- value ) 
 : idx>reg ( idx -- addr )
   0xF and 
   case
@@ -169,7 +191,7 @@ register pc
     abort" Illegal Register Address!"
   endcase
   ;
-
+\ execution logic
 : binary-op-exec ( src2 src dest op -- ) 
   swap
   >r  \ dest
