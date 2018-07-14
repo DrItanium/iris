@@ -270,7 +270,7 @@ defbinaryop max; max
   set-register ;
 : push; ( src dest -- ) 
   swap ( dest src )
-  get-register swap pushi ;
+  get-register swap pushi; ;
 
 : pop; ( src dest -- )
   over get-register pop-word ( src dest value addr+2 )
@@ -339,8 +339,11 @@ defbinaryop max; max
   \ perform a store operation then increment dest to the next word address
   dup >r
   st;
-  r> 2+-register; ;
+  r> 2+-register ;
 
-definitions
+set-current
+: examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
+: examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : execute-core ( -- ) ;
-previous set-current
+
+previous
