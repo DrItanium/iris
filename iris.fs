@@ -28,106 +28,8 @@ get-current vocabulary iris also iris definitions
 
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
-: {opcode ( -- 0 ) 0 ;
-: opcode: dup addr8 constant 1+ ;
-: opcode} ( n -- ) drop ;
-{opcode
-opcode: #illegal,
-opcode: #add 
-opcode: #sub 
-opcode: #mul 
-opcode: #div 
-opcode: #rem 
-opcode: #lshift
-opcode: #rshift
-opcode: #and 
-opcode: #or 
-opcode: #negate
-opcode: #xor 
-opcode: #min
-opcode: #max
-opcode: #eq
-opcode: #neq
-opcode: #lt
-opcode: #gt
-opcode: #le
-opcode: #ge
-opcode: #set
-opcode: #ld
-opcode: #st
-opcode: #push
-opcode: #pop
-opcode: #br
-opcode: #brl
-opcode: #bcr
-opcode: #bcrl
-opcode: #ueq
-opcode: #uneq
-opcode: #ult
-opcode: #ugt
-opcode: #ule
-opcode: #uge
-opcode: #uand
-opcode: #uor
-opcode: #unegate
-opcode: #uxor
-opcode: #umin
-opcode: #umax
-opcode: #uadd
-opcode: #usub
-opcode: #umul
-opcode: #udiv
-opcode: #urem
-opcode: #ulshift
-opcode: #urshift
-opcode: #incr
-opcode: #decr
-opcode: #uincr
-opcode: #udecr
-opcode: #call
-opcode: #condb
-opcode: #addi
-opcode: #subi
-opcode: #rshifti
-opcode: #lshifti
-opcode: #ldtincr
-opcode: #lti
-opcode: #move
-opcode: #sttincr
-opcode: #addw
-opcode: #subw
-opcode: #pushw
-opcode: #popw
-opcode: #return
-opcode: #creturn
-opcode: #negatew
-opcode: #umsmod
-opcode: #msmod
-opcode: #umstar
-opcode: #mstar
-opcode: #stw
-opcode: #ldw
-opcode: #ldbu
-opcode: #stbu
-opcode: #ldbl
-opcode: #stbl
-opcode: #setb
-opcode: #bi
-opcode: #eqz
-opcode: #neqz
-opcode: #ltz
-opcode: #gtz
-opcode: #lez
-opcode: #gez
-opcode: #andi
-opcode: #uandi
-opcode: #muli
-opcode: #divi
-opcode: #pushi
-opcode: #memincr
-opcode: #memdecr
-opcode}
-
+: addr4 ( a -- b ) 0x000F and ;
+: addr12 ( a -- b ) 0x0FFF and ; 
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
 register r0
@@ -231,6 +133,7 @@ create data-memory memory-size-in-cells cells allot
   create ' ,
   does> ( src2 src dest -- ) 
   @ binary-op-exec ;
+
 defbinaryop add; +
 defbinaryop sub; -
 defbinaryop mul; *
@@ -249,7 +152,12 @@ defbinaryop <=; <=
 defbinaryop >=; >=
 defbinaryop min; min
 defbinaryop max; max
-
+defbinaryop u<; u<
+defbinaryop u>; u>
+defbinaryop u<=; u<=
+defbinaryop u>=; u>=
+defbinaryop u<>; u<>
+defbinaryop umin; umin
 : 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
 : 1-; ( src dest -- ) >r get-register 1- r> set-register ;
 : set; ( constant dest -- ) set-register ;
@@ -277,11 +185,11 @@ defbinaryop max; max
   >r ( src dest value )
   swap set-register r>
   swap set-register ;
-: ibranch; ( addr -- ) set-pc ;
+: branch; ( addr -- ) set-pc ;
 : call; ( imm dest -- )
   get-pc swap pushi;
-  ibranch; ;
-: rbranch; ( dest -- ) get-register ibranch; ;
+  branch; ;
+: rbranch; ( dest -- ) get-register branch; ;
 : rbranch-link; ( src dest -- ) 
   \ branch to the dest register and push _pc onto the stack at src
   get-register swap ( imm src )
@@ -315,6 +223,16 @@ defbinaryop max; max
   endif ;
 
 : move; ( src dest -- ) swap get-register swap set-register ; 
+: swap; ( src dest -- ) 
+  \ swap the contents of the top two registers
+  2dup ( src dest src dest )
+  get-register >r \ load dest onto the return stack
+  get-register \ get the src value
+  swap set-register \ set dest
+  r> \ get dest value back
+  swap set-register ;
+
+
 : return; ( dest -- ) 
   \ pop the top element from the stack pointer and store it in _pc
   dup pop-word ( dest value addr ) 
@@ -340,7 +258,10 @@ defbinaryop max; max
   dup >r
   st;
   r> 2+-register ;
-
+: negate; ( src dest -- ) 
+  swap get-register 
+  negate swap set-register ;
+  
 set-current
 r0 constant x0 
 r1 constant x1 
