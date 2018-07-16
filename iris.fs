@@ -26,6 +26,7 @@
 
 get-current vocabulary iris also iris definitions
 
+: make
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
 : {opcode ( -- 0 ) 0 ;
@@ -340,23 +341,87 @@ defbinaryop max; max
   dup >r
   st;
   r> 2+-register ;
+: normalize-register-idx ( v -- idx ) 0x0f and ;
+: decode-lower-half ( v -- reg ) normalize-register-idx idx>reg ;
+: decode-upper-half ( v -- reg ) 4 rshift decode-lower-half ;
+: get-dest ( v -- reg ) decode-lower-half ;
+: get-src ( v -- reg ) decode-upper-half ;
+: get-dest-src ( v -- src dest ) 
+  dup ( v v )
+  get-src ( v src ) 
+  swap ( src v ) 
+  get-dest ( src dest ) ;
+: get-src2-src3 ( v -- src3 src2 ) get-dest-src ;
+: get-src2 ( v -- src2 ) decode-lower-half ;
+: decode-no-register ( b -- ) drop ;
+: decode-one-register ( b -- dest ) get-dest ; 
+: decode-two-register ( b1 -- src dest ) get-dest-src ;
+: decode-three-register ( b2 b1 -- src2 src dest ) 
+  >r ( b2 )
+  get-src2 ( b1 src2 )
+  r> ( src2 b1 ) 
+  get-dest-src ;
+: decode-four-register ( b2 b1 -- src3 src2 src dest )
+  >r ( b2 )
+  get-src2-src3
+  r>
+  get-dest-src ;
+: make-imm16 ( u l -- v ) swap 8 rshift swap or addr16 ;
+: decode-one-register-immediate ( b3 b2 b1 -- imm dest )
+  >r ( b3 b2 ) 
+  make-imm16 ( imm )
+  r> ( imm b1 )
+  get-dest ;
+: decode-two-register-immediate ( b3 b2 b1 -- imm src dest ) 
+  >r ( b3 b2 )
+  make-imm16 ( imm )
+  r> ( imm b1 )
+  get-dest-src ;
+: get-upper-register ( position -- reg-addr )
+  1+ 0x0f and idx>reg ;
+: compute-reg-pair ( n -- u l ) 
+  dup ( n n )
+  1+ 0x0f and idx>reg ( n u )
+  swap idx>reg ( u l ) ;
+: decode-wide-two-register ( b1 -- srcu srcl destu destl )
+  dup normalize-register-idx ( b1 dest )
+  >r ( b1 )
+  4 rshift normalize-register-idx ( srcl )
+  compute-reg-pair ( srcu srcl )
+  r> ( srcu srcl dest )
+  compute-reg-pair ( srcu srcl destu destl ) ;
+: decode-wide-three-register ( b2 b1 -- src2u src2l srcu srcl destu destl ) 
+  >r \ first compute src2u and src2l
+  normalize-register-idx ( src2i ) 
+  compute-reg-pair ( src2u src2l )
+  r> 
+  decode-wide-two-register ;
+: decode-imm-only ( b2 b1 -- imm ) make-imm16 ;
+: decode-one-reg-imm8 ( b2 b1 -- imm8 dest ) 
+  swap addr8 swap 
+  normalize-register-idx idx>reg ; 
+: decode-two-reg-imm8 ( b2 b1 -- imm8 src dest ) 
+  dup >r 
+  swap addr8 swap 
+  4 rshift normalize-register-idx idx>reg 
+  r> normalize-register-idx idx>reg ;
 
 set-current
-r0 constant x0 
-r1 constant x1 
-r2 constant x2 
-r3 constant x3 
-r5 constant x5 
-r6 constant x6 
-r7 constant x7 
-r8 constant x8 
-r9 constant x9 
-r10 constant x10
-r11 constant x11
-r12 constant x12
-r13 constant x13
-r14 constant x14
-r15 constant x15
+0 constant x0 
+1 constant x1 
+2 constant x2 
+3 constant x3 
+5 constant x5 
+6 constant x6 
+7 constant x7 
+8 constant x8 
+9 constant x9 
+10 constant x10
+11 constant x11
+12 constant x12
+13 constant x13
+14 constant x14
+15 constant x15
 : print-pc ( -- ) ." pc: " get-pc . cr ;
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
