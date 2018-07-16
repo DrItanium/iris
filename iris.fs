@@ -120,6 +120,11 @@ create data-memory memory-size-in-cells cells allot
   dup load-word 
   swap 2 + ; 
 
+: pc@ ( -- value ) get-pc load-byte ;
+: pc@1+ ( -- value )
+  \ load and then advance the pc
+  pc@ advance-pc ;
+
 \ execution logic
 : binary-op-exec ( src2 src dest op -- ) 
   swap
@@ -271,63 +276,75 @@ defbinaryop umin; umin
   get-dest ( src dest ) ;
 : get-src2-src3 ( v -- src3 src2 ) get-dest-src ;
 : get-src2 ( v -- src2 ) decode-lower-half ;
-: decode-no-register ( b -- ) drop ;
-: decode-one-register ( b -- dest ) get-dest ; 
-: decode-two-register ( b1 -- src dest ) get-dest-src ;
-: decode-three-register ( b2 b1 -- src2 src dest ) 
-  >r ( b2 )
-  get-src2 ( b1 src2 )
-  r> ( src2 b1 ) 
-  get-dest-src ;
-: decode-four-register ( b2 b1 -- src3 src2 src dest )
-  >r ( b2 )
-  get-src2-src3
-  r>
-  get-dest-src ;
-: make-imm16 ( u l -- v ) swap 8 rshift swap or addr16 ;
-: decode-one-register-immediate ( b3 b2 b1 -- imm dest )
-  >r ( b3 b2 ) 
-  make-imm16 ( imm )
-  r> ( imm b1 )
-  get-dest ;
-: decode-two-register-immediate ( b3 b2 b1 -- imm src dest ) 
-  >r ( b3 b2 )
-  make-imm16 ( imm )
-  r> ( imm b1 )
-  get-dest-src ;
+: decode-no-register ( -- ) advance-pc ;
+: decode-one-register ( -- dest ) pc@1+ get-dest ; 
+: decode-two-register ( -- src dest ) 
+  pc@1+ get-dest-src ;
+: decode-three-register ( -- src2 src dest ) 
+  pc@1+ ( b1 )
+  get-dest-src ( src dest )
+  pc@1+ ( src dest b2 )
+  get-src2 ( src dest src2 )
+  -rot ;
+: decode-four-register ( -- src3 src2 src dest )
+  pc@1+ ( b1 )
+  get-dest-src ( src dest ) 2>r
+  pc@1+ ( b2 ) 
+  get-src2-src3 ( src3 src2 ) 2r> ;
+: make-imm16 ( u l -- v ) 
+  pc@1+ pc@1+ ( l u ) 8 rshift swap or addr16 ;
+: decode-one-register-immediate ( -- imm dest )
+  pc@1+ ( b1 )
+  get-dest >r 
+  make-imm16 r> ;
+: decode-two-register-immediate ( -- imm src dest ) 
+  pc@1+ ( b1 )
+  get-dest-src 2>r 
+  make-imm16 2r> ;
 : get-upper-register ( position -- reg-addr )
   1+ addr4 idx>reg ;
 : compute-reg-pair ( n -- u l ) 
   dup ( n n )
-  1+ addr4 idx>reg ( n u )
+  get-upper-register ( n u )
   swap idx>reg ( u l ) ;
-: decode-wide-two-register ( b1 -- srcu srcl destu destl )
+: decode-wide-two-register ( -- srcu srcl destu destl )
+  pc@1+ ( b1 ) 
   dup addr4 ( b1 dest )
   >r ( b1 )
   4 rshift addr4 ( srcl )
   compute-reg-pair ( srcu srcl )
   r> ( srcu srcl dest )
   compute-reg-pair ( srcu srcl destu destl ) ;
-: decode-wide-three-register ( b2 b1 -- src2u src2l srcu srcl destu destl ) 
-  >r \ first compute src2u and src2l
-  addr4 ( src2i ) 
-  compute-reg-pair ( src2u src2l )
-  r> 
-  decode-wide-two-register ;
-: decode-imm-only ( b2 b1 -- imm ) make-imm16 ;
-: decode-one-reg-imm8 ( b2 b1 -- imm8 dest ) 
-  swap addr8 swap 
-  addr4 idx>reg ; 
-: decode-two-reg-imm8 ( b2 b1 -- imm8 src dest ) 
-  dup >r 
-  swap addr8 swap 
-  4 rshift addr4 idx>reg 
-  r> addr4 idx>reg ;
+: decode-wide-three-register ( -- src2u src2l srcu srcl destu destl ) 
+  pc@1+ ( b1 ) >r 
+  pc@1+ ( b2 ) addr4
+  compute-reg-pair ( src2u src2l ) r> ( src2u src2l b1 )
+  dup ( s2u s2l b1 b1 ) >r ( s2u s2l b1 )
+  4 rshift addr ( s2u s2l src )
+  compute-reg-pair ( s2u s2l su sl )
+  r> ( s2u s2l su sl b1 )
+  addr4 compute-reg-pair ; 
+
+: decode-imm-only ( -- imm ) make-imm16 ;
+: decode-one-reg-imm8 ( -- imm8 dest ) 
+  pc@1+ ( b1 )
+  pc@1+ ( b1 b2 )
+  addr8 swap ( imm8 b1 )
+  addr4 idx>reg ;
+: decode-two-reg-imm8 ( -- imm8 dest ) 
+  pc@1+ ( b1 )
+  pc@1+ ( b1 b2 )
+  addr8 swap ( imm8 b1 )
+  dup 4 rshift addr4 idx>reg swap 
+  addr4 idx>reg ;
+
 
 : negate; ( src dest -- ) 
   swap get-register 
   negate swap set-register ;
-  
+
+: 
+
 set-current
 0 constant x0 
 1 constant x1 

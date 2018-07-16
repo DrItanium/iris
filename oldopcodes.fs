@@ -29,59 +29,59 @@
 : opcode} ( n -- ) drop ;
 {opcode
 opcode: #illegal,
-\ opcode: #add 
-\ opcode: #sub 
-\ opcode: #mul 
-\ opcode: #div 
-\ opcode: #rem 
-\ opcode: #lshift
-\ opcode: #rshift
-\ opcode: #and 
-\ opcode: #or 
-\ opcode: #negate
-\ opcode: #xor 
-\ opcode: #min
-\ opcode: #max
-\ opcode: #eq
-\ opcode: #neq
-\ opcode: #lt
-\ opcode: #gt
-\ opcode: #le
-\ opcode: #ge
-\ opcode: #set
-\ opcode: #ld
-\ opcode: #st
-\ opcode: #push
-\ opcode: #pop
-\ opcode: #br
-\ opcode: #brl
-\ opcode: #bcr
-\ opcode: #bcrl
-\ opcode: #ueq
-\ opcode: #uneq
-\ opcode: #ult
-\ opcode: #ugt
-\ opcode: #ule
-\ opcode: #uge
-\ opcode: #uand
-\ opcode: #uor
-\ opcode: #unegate
-\ opcode: #uxor
-\ opcode: #umin
-\ opcode: #umax
-\ opcode: #uadd
-\ opcode: #usub
-\ opcode: #umul
-\ opcode: #udiv
-\ opcode: #urem
-\ opcode: #ulshift
-\ opcode: #urshift
-\ opcode: #incr
-\ opcode: #decr
-\ opcode: #uincr
-\ opcode: #udecr
-\ opcode: #call
-\ opcode: #condb
+opcode: #add 
+opcode: #sub 
+opcode: #mul 
+opcode: #div 
+opcode: #rem 
+opcode: #lshift
+opcode: #rshift
+opcode: #and 
+opcode: #or 
+opcode: #negate
+opcode: #xor 
+opcode: #min
+opcode: #max
+opcode: #eq
+opcode: #neq
+opcode: #lt
+opcode: #gt
+opcode: #le
+opcode: #ge
+opcode: #set
+opcode: #ld
+opcode: #st
+opcode: #push
+opcode: #pop
+opcode: #br
+opcode: #brl
+opcode: #bcr
+opcode: #bcrl
+opcode: #ueq
+opcode: #uneq
+opcode: #ult
+opcode: #ugt
+opcode: #ule
+opcode: #uge
+opcode: #uand
+opcode: #uor
+opcode: #unegate
+opcode: #uxor
+opcode: #umin
+opcode: #umax
+opcode: #uadd
+opcode: #usub
+opcode: #umul
+opcode: #udiv
+opcode: #urem
+opcode: #ulshift
+opcode: #urshift
+opcode: #incr
+opcode: #decr
+opcode: #uincr
+opcode: #udecr
+opcode: #call
+opcode: #condb
 opcode: #addi
 opcode: #subi
 opcode: #rshifti
