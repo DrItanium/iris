@@ -52,7 +52,7 @@ register r15
 register pc
 
 : idx>reg ( idx -- addr )
-  0xF and 
+  addr4
   case
     0 of r0 endof 1 of r1 endof 2 of r2 endof 3 of r3 endof
     4 of r4 endof 5 of r5 endof 6 of r6 endof 7 of r7 endof
@@ -260,8 +260,7 @@ defbinaryop umin; umin
   st;
   r> 2+-register ;
 
-: normalize-register-idx ( v -- idx ) 0x0f and ;
-: decode-lower-half ( v -- reg ) normalize-register-idx idx>reg ;
+: decode-lower-half ( v -- reg ) addr4 idx>reg ;
 : decode-upper-half ( v -- reg ) 4 rshift decode-lower-half ;
 : get-dest ( v -- reg ) decode-lower-half ;
 : get-src ( v -- reg ) decode-upper-half ;
@@ -297,33 +296,33 @@ defbinaryop umin; umin
   r> ( imm b1 )
   get-dest-src ;
 : get-upper-register ( position -- reg-addr )
-  1+ 0x0f and idx>reg ;
+  1+ addr4 idx>reg ;
 : compute-reg-pair ( n -- u l ) 
   dup ( n n )
-  1+ 0x0f and idx>reg ( n u )
+  1+ addr4 idx>reg ( n u )
   swap idx>reg ( u l ) ;
 : decode-wide-two-register ( b1 -- srcu srcl destu destl )
-  dup normalize-register-idx ( b1 dest )
+  dup addr4 ( b1 dest )
   >r ( b1 )
-  4 rshift normalize-register-idx ( srcl )
+  4 rshift addr4 ( srcl )
   compute-reg-pair ( srcu srcl )
   r> ( srcu srcl dest )
   compute-reg-pair ( srcu srcl destu destl ) ;
 : decode-wide-three-register ( b2 b1 -- src2u src2l srcu srcl destu destl ) 
   >r \ first compute src2u and src2l
-  normalize-register-idx ( src2i ) 
+  addr4 ( src2i ) 
   compute-reg-pair ( src2u src2l )
   r> 
   decode-wide-two-register ;
 : decode-imm-only ( b2 b1 -- imm ) make-imm16 ;
 : decode-one-reg-imm8 ( b2 b1 -- imm8 dest ) 
   swap addr8 swap 
-  normalize-register-idx idx>reg ; 
+  addr4 idx>reg ; 
 : decode-two-reg-imm8 ( b2 b1 -- imm8 src dest ) 
   dup >r 
   swap addr8 swap 
-  4 rshift normalize-register-idx idx>reg 
-  r> normalize-register-idx idx>reg ;
+  4 rshift addr4 idx>reg 
+  r> addr4 idx>reg ;
 
 : negate; ( src dest -- ) 
   swap get-register 
