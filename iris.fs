@@ -26,7 +26,6 @@
 
 get-current vocabulary iris also iris definitions
 
-: make
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
 : addr4 ( a -- b ) 0x000F and ;
@@ -320,7 +319,7 @@ defbinaryop umin; umin
   pc@1+ ( b2 ) addr4
   compute-reg-pair ( src2u src2l ) r> ( src2u src2l b1 )
   dup ( s2u s2l b1 b1 ) >r ( s2u s2l b1 )
-  4 rshift addr ( s2u s2l src )
+  4 rshift addr4 ( s2u s2l src )
   compute-reg-pair ( s2u s2l su sl )
   r> ( s2u s2l su sl b1 )
   addr4 compute-reg-pair ; 
@@ -343,7 +342,6 @@ defbinaryop umin; umin
   swap get-register 
   negate swap set-register ;
 
-: 
 
 set-current
 0 constant x0 
