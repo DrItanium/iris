@@ -429,6 +429,35 @@ def0src2op gtz; gti;
 def0src2op gez; gei; 
 def0src2op lez; lei; 
 
+: umax ( a b -- a | b ) 
+  2dup u< 
+  if swap
+  then 
+  drop ; 
+defbinaryop umax; umax 
+
+: memincr; ( dest -- ) 
+  dup imm ld; ( dest ) \ load into the imm register
+  imm imm 1+; imm ( dest imm ) \ increment the contents
+  swap ( imm dest ) st;  \ store it back into memory
+  ;
+: memdecr; ( dest -- ) 
+  dup imm ld; ( dest ) \ load into the imm register
+  imm imm 1-; imm ( dest imm ) \ increment the contents
+  swap ( imm dest ) st;  \ store it back into memory
+  ;
+
+: ldtincr; ( src dest -- ) 
+  \ load into dest and then increment src
+  over >r ld; \ perform the load
+  r> dup 1+; \ go to the next location
+  ;
+: sttincr; ( src dest -- ) 
+  \ store into dest and then increment dest
+  dup >r st; \ perform the store
+  r> dup 1+; \ perform the increment 
+  ;
+
 
 set-current
 {opcode
@@ -472,7 +501,7 @@ set-current
 ' negate; opcode2: #unegate
 ' xor; opcode3: #uxor
 ' umin; opcode3: #umin
-skip-opcode \ opcode: #umax
+' umax; opcode3: #umax
 ' add; opcode3: #uadd
 ' sub; opcode3: #usub
 ' mul; opcode3: #umul
@@ -482,18 +511,18 @@ skip-opcode \ opcode: #umax
 ' rshift; opcode3: #urshift
 ' 1+; opcode2: #incr
 ' 1-; opcode2: #decr
-skip-opcode \ opcode: #uincr
-skip-opcode \ opcode: #udecr
+' 1+; opcode2: #uincr
+' 1-; opcode2: #udecr
 ' decode-one-register-immediate ' call; opcode: #call
 ' decode-one-register-immediate ' ?branch; opcode: #condb
 ' decode-two-register-immediate ' addi; opcode: #addi
 ' decode-two-register-immediate ' subi; opcode: #subi
 ' decode-two-register-immediate ' rshifti; opcode: #rshifti
 ' decode-two-register-immediate ' lshifti; opcode: #lshifti
-skip-opcode \ opcode: #ldtincr
+' ldtincr; opcode2: #ldtincr
 ' decode-two-register-immediate ' lti; opcode: #lti
 ' move; opcode2: #move
-skip-opcode \ opcode: #sttincr
+' sttincr; opcode2: #sttincr
 skip-opcode \ opcode: #addw
 skip-opcode \ opcode: #subw
 skip-opcode \ opcode: #pushw
@@ -513,19 +542,19 @@ skip-opcode \ opcode: #ldbl
 skip-opcode \ opcode: #stbl
 skip-opcode \ opcode: #setb
 ' decode-imm-only  ' branch; opcode: #bi
-' decode-two-register ' eqz; opcode: #eqz
-' decode-two-register ' neqz; opcode: #neqz
-' decode-two-register ' ltz; opcode: #ltz
-' decode-two-register ' gtz; opcode: #gtz
-' decode-two-register ' lez; opcode: #lez
-' decode-two-register ' gez; opcode: #gez
+' eqz; opcode2: #eqz
+' neqz; opcode2: #neqz
+' ltz; opcode2: #ltz
+' gtz; opcode2: #gtz
+' lez; opcode2: #lez
+' gez; opcode2: #gez
 ' decode-two-register-immediate ' andi; opcode: #andi
 ' decode-two-register-immediate ' andi; opcode: #uandi
 ' decode-two-register-immediate ' muli; opcode: #muli
 ' decode-two-register-immediate ' divi; opcode: #divi
 ' decode-one-register-immediate ' pushi; opcode: #pushi
-skip-opcode \ opcode: #memincr
-skip-opcode \ opcode: #memdecr
+' memincr; opcode1: #memincr
+' memdecr; opcode1: #memdecr
 opcode}
 0 constant x0 
 1 constant x1 
