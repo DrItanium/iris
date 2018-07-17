@@ -138,11 +138,12 @@ create data-memory memory-size-in-cells cells allot
 
 \ execution logic
 : binary-op-exec ( src2 src dest op -- ) 
-  swap
-  >r  \ dest
-  >r  \ op
-  get-reg swap 
-  get-reg swap 
+  swap ( src2 src op dest )
+  >r  ( src2 src op )
+  >r  ( src2 src )
+  get-reg ( src2 sreg )
+  swap ( sreg src2 )
+  get-reg ( sreg s2reg )
   r> execute 
   r> set-reg ;
 
@@ -355,22 +356,25 @@ defbinaryop umin; umin
   swap get-reg 
   negate swap set-reg ;
 : break-apart-num32 ( s -- u l )
+  addr32 
   dup ( s s )
   addr16 ( s l )
   swap ( l s )
   16 rshift addr16 swap ( u l ) ;
-
+: make-num32 ( ru rl -- n )
+  get-reg swap get-reg ( l u )
+  16 lshift ( l u<<16 )
+  or ( s )
+  addr32 ;
+: set-reg32 ( u l du dl -- ) 
+  swap ( u l dl du ) >r ( u l dl )
+  set-reg ( u ) r> set-reg ;
 : negatew; ( srcu srcl destu destl ) 
   2>r ( srcu srcl ) 
-  get-reg ( srcu sl )
-  swap get-reg ( sl su )
-  16 lshift ( sl su<<16 )
-  or ( s ) 
-  negate addr32 ( s' )
+  make-num32 
+  negate ( s' )
   break-apart-num32 ( su sl )
-  2r> swap >r ( su sl dl ) 
-  set-reg r> ( su du ) 
-  set-reg ;
+  2r> set-reg32 ;
 
 : ueq; ( src2 src dest -- ) 
   dup >r ( src2 src dest ) uneq; 
@@ -457,6 +461,30 @@ defbinaryop umax; umax
   dup >r st; \ perform the store
   r> dup 1+; \ perform the increment 
   ;
+: extract-2wide ( src2u src2l srcu srcl -- n n2 ) 
+  make-num32 ( src2u src2l n )
+  r>  ( src2u src2l )
+  make-num32  ( n2 )
+  >r  swap ( n n2 ) ;
+: addw; ( src2u src2l srcu srcl destu destl -- ) 
+  2>r ( s2u s2l s1u s1l )
+  extract-2wide + 
+  break-apart-num32 ( u l )
+  2r> ( u l destu destl ) set-reg32 ;
+: subw; ( s2u s2l su sl du dl -- )
+  2>r ( s2u s2l su sl )
+  extract-2wide - 
+  break-apart-num32 ( u l )
+  2r> set-reg32 ;
+: pushw; ( su sl du dl -- ) 
+  swap drop ( su sl dl )
+  -rot ( dl su sl ) 
+  get-reg swap ( dl l su )
+  get-reg rot swap over ( l dl u dl )
+  pushi;
+  pushi; ;
+
+
 
 
 set-current
@@ -523,9 +551,9 @@ set-current
 ' decode-two-register-immediate ' lti; opcode: #lti
 ' move; opcode2: #move
 ' sttincr; opcode2: #sttincr
-skip-opcode \ opcode: #addw
-skip-opcode \ opcode: #subw
-skip-opcode \ opcode: #pushw
+' decode-wide-three-register ' addw; opcode: #addw
+' decode-wide-three-register ' subw; opcode: #addw
+' decode-wide-two-register ' pushw; opcode: #pushw
 skip-opcode \ opcode: #popw
 ' return;  opcode1: #return
 ' ?return; opcode2: #creturn
