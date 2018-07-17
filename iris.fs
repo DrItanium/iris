@@ -76,7 +76,6 @@ register ?running
 false ?running !
 
 
-: stop; ( -- ) false ?running ! ;
 : use-imm ( value -- imm ) imm ! imm ; 
 : idx>reg ( idx -- addr )
   addr4
@@ -105,7 +104,7 @@ false ?running !
 : 1--register ( reg -- ) dup get-reg 1- swap set-reg ;
 : set-pc ( value -- ) pc set-reg ;
 : get-pc ( -- value ) pc get-reg ;
-: advance-pc ( -- ) pc get-reg 1+ set-reg ;
+: advance-pc ( -- ) get-pc 1+ set-pc ;
 
 \ memory block
 0x10000 constant memory-size
@@ -368,9 +367,9 @@ defbinaryop umin; umin
   addr4 idx>reg ;
 
 
-: negate; ( src dest -- ) 
+: invert; ( src dest -- ) 
   swap get-reg 
-  negate swap set-reg ;
+  invert swap set-reg ;
 : break-apart-num32 ( s -- u l )
   addr32 
   dup ( s s )
@@ -385,21 +384,23 @@ defbinaryop umin; umin
 : set-reg32 ( u l du dl -- ) 
   swap ( u l dl du ) >r ( u l dl )
   set-reg ( u ) r> set-reg ;
-: negatew; ( srcu srcl destu destl ) 
+: invertw; ( srcu srcl destu destl ) 
   2>r ( srcu srcl ) 
   make-num32 
-  negate ( s' )
+  invert ( s' )
   break-apart-num32 ( su sl )
   2r> set-reg32 ;
 
 : ueq; ( src2 src dest -- ) 
   dup >r ( src2 src dest ) uneq; 
-  r> dup negate; ;
+  r> dup invert; ;
 : {opcode ( -- 0 ) 0 ;
 : opcode: ( n decoder body "name" -- n+1 ) 
   rot ( decoder body n )
   dup >r addr8 dup ( decoder body n8 n8 )
-  constant ( decoder body n8 ) swap ( d n8 b ) over ( d n8 b n8 )
+  constant ( decoder body n8 ) 
+  swap ( d n8 b ) 
+  over ( d n8 b n8 )
   bodies !
   decoders !
   r> 1+ ;
@@ -414,8 +415,8 @@ defbinaryop umin; umin
   bodies @ execute ;
 : decode-and-execute-instruction ( -- ) 
   pc@1+ dup ( control control )
-  >r ( bodies control )
-  decode-instruction
+  >r ( control )
+  decode-instruction 
   r> execute-instruction ;
 : defimmop ( "name" "operation" ) 
   create ' , 
@@ -519,6 +520,7 @@ defbinaryop umax; umax
   r> ( sl du ) 
   pop; ;
 
+: stop; ( dest -- ) get-reg ?running ! ;
 
 set-current
 {opcode
@@ -532,7 +534,7 @@ set-current
 ' rshift; opcode3: #rshift
 ' and; opcode3: #and 
 ' or; opcode3: #or 
-' negate; opcode2: #negate
+' invert; opcode2: #invert
 ' xor; opcode3: #xor 
 ' min; opcode3: #min
 ' max; opcode3: #max
@@ -559,7 +561,7 @@ set-current
 ' uge; opcode3: #uge
 ' and; opcode3: #uand
 ' or; opcode3: #uor
-' negate; opcode2: #unegate
+' invert; opcode2: #uinvert
 ' xor; opcode3: #uxor
 ' umin; opcode3: #umin
 ' umax; opcode3: #umax
@@ -590,7 +592,7 @@ set-current
 ' decode-wide-two-register ' popw; opcode: #popw
 ' return;  opcode1: #return
 ' ?return; opcode2: #creturn
-' decode-wide-two-register ' negatew; opcode: #negatew
+' decode-wide-two-register ' invertw; opcode: #invertw
 ' illegal-instruction ' illegal-instruction  opcode: #umsmod
 ' illegal-instruction ' illegal-instruction  opcode: #msmod
 ' illegal-instruction ' illegal-instruction  opcode: #umstar
@@ -616,7 +618,7 @@ set-current
 ' decode-one-register-immediate ' pushi; opcode: #pushi
 ' memincr; opcode1: #memincr
 ' memdecr; opcode1: #memdecr
-' decode-no-register ' stop; opcode: #stop \ stop execution
+' decode-one-register ' stop; opcode: #stop \ stop execution
 opcode}
 _r0 constant x0 
 _r1 constant x1 
@@ -666,5 +668,10 @@ _r15 constant x15
 : invoke-instruction ( args* control -- )
   execute-instruction ;
 
-: execute-core ( -- ) ;
+: execute-core ( -- ) 
+  true ?running ! \ mark that we are indeed executing
+  begin
+  decode-and-execute-instruction \ cycle execution
+  ?running @ invert until ;
+
 previous 
