@@ -172,6 +172,7 @@ defbinaryop ule; u<=
 defbinaryop uge; u>=
 defbinaryop uneq; u<>
 defbinaryop umin; umin
+
 : 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
 : 1-; ( src dest -- ) >r get-register 1- r> set-register ;
 : set; ( constant dest -- ) set-register ;
@@ -350,8 +351,10 @@ defbinaryop umin; umin
 : negate; ( src dest -- ) 
   swap get-register 
   negate swap set-register ;
+: ueq; ( src2 src dest -- ) 
+  dup >r ( src2 src dest ) uneq; 
+  r> dup negate; ;
 : {opcode ( -- 0 ) 0 ;
-: execute-latest ( -- * ) latest name>int execute ;
 : opcode: ( n decoder body "name" -- n+1 ) 
   rot ( decoder body n )
   dup >r addr8 dup ( decoder body n8 n8 )
@@ -363,8 +366,8 @@ defbinaryop umin; umin
 : opcode2: ( n body "name" -- n+1 ) ['] decode-two-register swap opcode: ;
 : opcode1: ( n body "name" -- n+1 ) ['] decode-one-register swap opcode: ;
 : opcode} ( n -- ) drop ;
+: skip-opcode ( n -- n+1 ) 1+ ;
 {opcode
-
 ' illegal-instruction ' illegal-instruction opcode: #illegal 
 ' add; opcode3: #add 
 ' sub; opcode3: #sub 
@@ -386,80 +389,87 @@ defbinaryop umin; umin
 ' le; opcode3: #le
 ' ge; opcode3: #ge
 ' decode-one-register-immediate ' set; opcode: #set
-' load-word opcode2: #ld
-' store-word opcode2: #st
-' push-word opcode2: #push
-' pop-word opcode2: #pop
-\ opcode: #br
-\ opcode: #brl
-\ opcode: #bcr
-\ opcode: #bcrl
-\ opcode: #ueq
-\ opcode: #uneq
-\ opcode: #ult
-\ opcode: #ugt
-\ opcode: #ule
-\ opcode: #uge
-\ opcode: #uand
-\ opcode: #uor
-\ opcode: #unegate
-\ opcode: #uxor
-\ opcode: #umin
-\ opcode: #umax
-\ opcode: #uadd
-\ opcode: #usub
-\ opcode: #umul
-\ opcode: #udiv
-\ opcode: #urem
-\ opcode: #ulshift
-\ opcode: #urshift
-\ opcode: #incr
-\ opcode: #decr
-\ opcode: #uincr
-\ opcode: #udecr
-\ opcode: #call
-\ opcode: #condb
-\ opcode: #addi
-\ opcode: #subi
-\ opcode: #rshifti
-\ opcode: #lshifti
-\ opcode: #ldtincr
-\ opcode: #lti
-\ opcode: #move
-\ opcode: #sttincr
-\ opcode: #addw
-\ opcode: #subw
-\ opcode: #pushw
-\ opcode: #popw
-\ opcode: #return
-\ opcode: #creturn
-\ opcode: #negatew
-\ opcode: #umsmod
-\ opcode: #msmod
-\ opcode: #umstar
-\ opcode: #mstar
-\ opcode: #stw
-\ opcode: #ldw
-\ opcode: #ldbu
-\ opcode: #stbu
-\ opcode: #ldbl
-\ opcode: #stbl
-\ opcode: #setb
-\ opcode: #bi
-\ opcode: #eqz
-\ opcode: #neqz
-\ opcode: #ltz
-\ opcode: #gtz
-\ opcode: #lez
-\ opcode: #gez
-\ opcode: #andi
-\ opcode: #uandi
-\ opcode: #muli
-\ opcode: #divi
-\ opcode: #pushi
-\ opcode: #memincr
-\ opcode: #memdecr
+' ld; opcode2: #ld
+' st; opcode2: #st
+' push; opcode2: #push
+' pop; opcode2: #pop
+' rbranch; opcode1: #br
+' rbranch-link; opcode2: #brl
+' ?rbranch; opcode2: #bcr
+' ?rbranch-link; opcode3: #bcrl
+' ueq;  opcode3: #ueq
+' uneq; opcode3: #uneq
+' ult;  opcode3: #ult
+' ugt;  opcode3: #ugt
+' ule;  opcode3: #ule
+' uge; opcode3: #uge
+skip-opcode \ ' and; opcode3: #uand
+skip-opcode \ ' or; opcode3: #uor
+skip-opcode \ ' negate; opcode2: #unegate
+skip-opcode \ ' xor; opcode3: #uxor
+' umin; opcode3: #umin
+skip-opcode \ opcode: #umax
+skip-opcode \ opcode: #uadd
+skip-opcode \ opcode: #usub
+skip-opcode \ opcode: #umul
+skip-opcode \ opcode: #udiv
+skip-opcode \ opcode: #urem
+skip-opcode \ opcode: #ulshift
+skip-opcode \ opcode: #urshift
+' 1+; opcode2: #incr
+' 1-; opcode2: #decr
+skip-opcode \ opcode: #uincr
+skip-opcode \ opcode: #udecr
+' decode-one-register-immediate ' call; opcode: #call
+' decode-one-register-immediate ' ?branch; opcode: #condb
+skip-opcode \ opcode: #addi
+skip-opcode \ opcode: #subi
+skip-opcode \ opcode: #rshifti
+skip-opcode \ opcode: #lshifti
+skip-opcode \ opcode: #ldtincr
+skip-opcode \ opcode: #lti
+' move; opcode2: #move
+skip-opcode \ opcode: #sttincr
+skip-opcode \ opcode: #addw
+skip-opcode \ opcode: #subw
+skip-opcode \ opcode: #pushw
+skip-opcode \ opcode: #popw
+' return;  opcode1: #return
+' ?return; opcode2: #creturn
+skip-opcode \ opcode: #negatew
+skip-opcode \ opcode: #umsmod
+skip-opcode \ opcode: #msmod
+skip-opcode \ opcode: #umstar
+skip-opcode \ opcode: #mstar
+skip-opcode \ opcode: #stw
+skip-opcode \ opcode: #ldw
+skip-opcode \ opcode: #ldbu
+skip-opcode \ opcode: #stbu
+skip-opcode \ opcode: #ldbl
+skip-opcode \ opcode: #stbl
+skip-opcode \ opcode: #setb
+' decode-imm-only  ' branch; opcode: #bi
+skip-opcode \ opcode: #eqz
+skip-opcode \ opcode: #neqz
+skip-opcode \ opcode: #ltz
+skip-opcode \ opcode: #gtz
+skip-opcode \ opcode: #lez
+skip-opcode \ opcode: #gez
+skip-opcode \ opcode: #andi
+skip-opcode \ opcode: #uandi
+skip-opcode \ opcode: #muli
+skip-opcode \ opcode: #divi
+skip-opcode \ opcode: #pushi
+skip-opcode \ opcode: #memincr
+skip-opcode \ opcode: #memdecr
 opcode}
+: decode-and-execute ( -- ) 
+  pc@1+ dup ( control control )
+  bodies ( control bodies ) >r ( bodies control )
+  decoders @ execute 
+  r> @ execute ;
+
+  
   
 
 set-current
