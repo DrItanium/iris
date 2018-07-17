@@ -35,6 +35,7 @@ does> ( u -- addr )
     swap cells + ; 
 0x100 dispatch-table decoders 
 0x100 dispatch-table bodies
+: addr32 ( a -- b ) 0xFFFFFFFF and ;
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
 : addr4 ( a -- b ) 0x000F and ;
@@ -351,6 +352,24 @@ defbinaryop umin; umin
 : negate; ( src dest -- ) 
   swap get-reg 
   negate swap set-reg ;
+: break-apart-num32 ( s -- u l )
+  dup ( s s )
+  addr16 ( s l )
+  swap ( l s )
+  16 rshift addr16 swap ( u l ) ;
+
+: negatew; ( srcu srcl destu destl ) 
+  2>r ( srcu srcl ) 
+  get-reg ( srcu sl )
+  swap get-reg ( sl su )
+  16 lshift ( sl su<<16 )
+  or ( s ) 
+  negate addr32 ( s' )
+  break-apart-num32 ( su sl )
+  2r> swap >r ( su sl dl ) 
+  set-reg r> ( su du ) 
+  set-reg ;
+
 : ueq; ( src2 src dest -- ) 
   dup >r ( src2 src dest ) uneq; 
   r> dup negate; ;
@@ -376,7 +395,20 @@ defbinaryop umin; umin
   >r ( bodies control )
   decode-instruction
   r> execute-instruction ;
+: defimmop ( "name" "operation" ) 
+  create ' , 
+  does> ( imm src dest -- )
+        swap >r ( imm src addr )
+        swap get-reg swap ( imm sval addr )
+        execute ( result ) r> set-reg ; 
 
+defimmop andi; and 
+defimmop addi; +
+defimmop subi; -
+defimmop muli; *
+defimmop divi; /
+defimmop rshifti; rshift
+defimmop lshifti; lshift
 
 set-current
 {opcode
@@ -415,29 +447,30 @@ set-current
 ' ugt;  opcode3: #ugt
 ' ule;  opcode3: #ule
 ' uge; opcode3: #uge
-skip-opcode \ ' and; opcode3: #uand
-skip-opcode \ ' or; opcode3: #uor
-skip-opcode \ ' negate; opcode2: #unegate
-skip-opcode \ ' xor; opcode3: #uxor
+
+' and; opcode3: #uand
+' or; opcode3: #uor
+' negate; opcode2: #unegate
+' xor; opcode3: #uxor
 ' umin; opcode3: #umin
 skip-opcode \ opcode: #umax
-skip-opcode \ opcode: #uadd
-skip-opcode \ opcode: #usub
-skip-opcode \ opcode: #umul
-skip-opcode \ opcode: #udiv
-skip-opcode \ opcode: #urem
-skip-opcode \ opcode: #ulshift
-skip-opcode \ opcode: #urshift
+' add; opcode3: #uadd
+' sub; opcode3: #usub
+' mul; opcode3: #umul
+' div; opcode3: #udiv
+' rem; opcode3: #urem
+' lshift; opcode3: #ulshift
+' rshift; opcode3: #urshift
 ' 1+; opcode2: #incr
 ' 1-; opcode2: #decr
 skip-opcode \ opcode: #uincr
 skip-opcode \ opcode: #udecr
 ' decode-one-register-immediate ' call; opcode: #call
 ' decode-one-register-immediate ' ?branch; opcode: #condb
-skip-opcode \ opcode: #addi
-skip-opcode \ opcode: #subi
-skip-opcode \ opcode: #rshifti
-skip-opcode \ opcode: #lshifti
+' decode-two-register-immediate ' addi; opcode: #addi
+' decode-two-register-immediate ' subi; opcode: #subi
+' decode-two-register-immediate ' rshifti; opcode: #rshifti
+' decode-two-register-immediate ' lshifti; opcode: #lshifti
 skip-opcode \ opcode: #ldtincr
 skip-opcode \ opcode: #lti
 ' move; opcode2: #move
@@ -448,7 +481,7 @@ skip-opcode \ opcode: #pushw
 skip-opcode \ opcode: #popw
 ' return;  opcode1: #return
 ' ?return; opcode2: #creturn
-skip-opcode \ opcode: #negatew
+' decode-wide-two-register ' negatew; opcode: #negatew
 skip-opcode \ opcode: #umsmod
 skip-opcode \ opcode: #msmod
 skip-opcode \ opcode: #umstar
@@ -467,11 +500,11 @@ skip-opcode \ opcode: #ltz
 skip-opcode \ opcode: #gtz
 skip-opcode \ opcode: #lez
 skip-opcode \ opcode: #gez
-skip-opcode \ opcode: #andi
-skip-opcode \ opcode: #uandi
-skip-opcode \ opcode: #muli
-skip-opcode \ opcode: #divi
-skip-opcode \ opcode: #pushi
+' decode-two-register-immediate ' andi; opcode: #andi
+' decode-two-register-immediate ' andi; opcode: #uandi
+' decode-two-register-immediate ' muli; opcode: #muli
+' decode-two-register-immediate ' divi; opcode: #divi
+' decode-one-register-immediate ' pushi; opcode: #pushi
 skip-opcode \ opcode: #memincr
 skip-opcode \ opcode: #memdecr
 opcode}
