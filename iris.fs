@@ -26,6 +26,8 @@
 
 get-current vocabulary iris also iris definitions
 : illegal-instruction ( -- ) abort" Illegal Instruction!" ;
+: generic-load ( addr -- value ) drop 0 ;
+: generic-store ( value addr -- ) drop drop ;
 : dispatch-table ( n "name" -- )
     \ initialize table with n entries with disasm-illegal
     create 0 ?do
@@ -33,6 +35,16 @@ get-current vocabulary iris also iris definitions
     loop
 does> ( u -- addr )
     swap cells + ; 
+\ : devspace-define ( n "name" -- ) 
+\   create 2 / 0 ?do 
+\   ['] generic-load ,
+\   ['] generic-store ,
+\   loop
+\ does> ( u -- addr )
+\   swap 2* cells + ;
+
+
+
 0x100 dispatch-table decoders 
 0x100 dispatch-table bodies
 : addr32 ( a -- b ) 0xFFFFFFFF and ;
@@ -42,42 +54,46 @@ does> ( u -- addr )
 : addr12 ( a -- b ) 0x0FFF and ; 
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
-register r0
-register r1 
-register r2
-register r3
-register r4
-register r5
-register r6
-register r7
-register r8
-register r9
-register r10
-register r11
-register r12
-register r13
-register r14
-register r15
+register _r0
+register _r1 
+register _r2
+register _r3
+register _r4
+register _r5
+register _r6
+register _r7
+register _r8
+register _r9
+register _r10
+register _r11
+register _r12
+register _r13
+register _r14
+register _r15
 register pc
 register imm
+register ?running
+false ?running !
 
+
+: stop; ( -- ) false ?running ! ;
 : use-imm ( value -- imm ) imm ! imm ; 
 : idx>reg ( idx -- addr )
   addr4
   case
-    0 of r0 endof 1 of r1 endof 2 of r2 endof 3 of r3 endof
-    4 of r4 endof 5 of r5 endof 6 of r6 endof 7 of r7 endof
-    8 of r8 endof 9 of r9 endof 10 of r10 endof 11 of r11 endof
-    12 of r12 endof 13 of r13 endof 14 of r14 endof 15 of r15 endof
+    0 of _r0 endof 1 of _r1 endof 2 of _r2 endof 3 of _r3 endof
+    4 of _r4 endof 5 of _r5 endof 6 of _r6 endof 7 of _r7 endof
+    8 of _r8 endof 9 of _r9 endof 10 of _r10 endof 11 of _r11 endof
+    12 of _r12 endof 13 of _r13 endof 14 of _r14 endof 15 of _r15 endof
     abort" Illegal Register!"
   endcase 
   ;
 : reg>idx ( addr -- idx ) 
   case
-    r0 of 0 endof r1 of 1 endof r2 of 2 endof r3 of 3 endof
-    r4 of 4 endof r5 of 5 endof r6 of 6 endof r7 of 7 endof
-    r8 of 8 endof r9 of 9 endof r10 of 10 endof r11 of 11 endof
-    r12 of 12 endof r13 of 13 endof r14 of 14 endof r15 of 15 endof
+    _r0 of 0 endof _r1 of 1 endof     _r2 of 2 endof   _r3 of 3 endof
+    _r4 of 4 endof _r5 of 5 endof     _r6 of 6 endof   _r7 of 7 endof
+    _r8 of 8 endof _r9 of 9 endof     _r10 of 10 endof _r11 of 11 endof
+    _r12 of 12 endof _r13 of 13 endof _r14 of 14 endof _r15 of 15 endof
     abort" Illegal Register Address!"
   endcase
   ;
@@ -504,8 +520,6 @@ defbinaryop umax; umax
   pop; ;
 
 
-
-
 set-current
 {opcode
 ' illegal-instruction ' illegal-instruction opcode: #illegal 
@@ -602,54 +616,55 @@ set-current
 ' decode-one-register-immediate ' pushi; opcode: #pushi
 ' memincr; opcode1: #memincr
 ' memdecr; opcode1: #memdecr
+' decode-no-register ' stop; opcode: #stop \ stop execution
 opcode}
-0 constant x0 
-1 constant x1 
-2 constant x2 
-3 constant x3 
-4 constant x4
-5 constant x5 
-6 constant x6 
-7 constant x7 
-8 constant x8 
-9 constant x9 
-10 constant x10
-11 constant x11
-12 constant x12
-13 constant x13
-14 constant x14
-15 constant x15
+_r0 constant x0 
+_r1 constant x1 
+_r2 constant x2 
+_r3 constant x3 
+_r4 constant x4 
+_r5 constant x5 
+_r6 constant x6 
+_r7 constant x7 
+_r8 constant x8 
+_r9 constant x9 
+_r10 constant x10 
+_r11 constant x11 
+_r12 constant x12 
+_r13 constant x13 
+_r14 constant x14 
+_r15 constant x15 
 : print-pc ( -- ) ." pc: " get-pc . cr ;
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
-: execute-core ( -- ) ;
-: set-register ( imm idx -- ) idx>reg swap addr16 swap ( imm16 reg ) set; ;
-: get-register ( idx -- value ) idx>reg get-reg ; 
+: i>x ( idx -- reg ) idx>reg ;
+: x>i ( reg -- idx ) reg>idx ;
+: x@ ( reg -- value ) get-reg ;
+: x! ( value reg -- ) set-reg ;
+: pc@ ( -- value ) get-pc ;
+: pc! ( value -- ) set-pc ;
 : print-registers ( -- ) cr
   base @ >r
-  ." x0: " x0 get-register hex . cr 
-  ." x1: " x1 get-register hex . cr 
-  ." x2: " x2 get-register hex . cr
-  ." x3: " x3 get-register hex . cr 
-  ." x4: " x4 get-register hex . cr 
-  ." x5: " x5 get-register hex . cr
-  ." x6: " x6 get-register hex . cr 
-  ." x7: " x7 get-register hex . cr 
-  ." x8: " x8 get-register hex . cr
-  ." x9: " x8 get-register hex . cr 
-  ." x10: " x10 get-register hex . cr
-  ." x11: " x11 get-register hex . cr
-  ." x12: " x12 get-register hex . cr 
-  ." x13: " x13 get-register hex . cr
-  ." x14: " x14 get-register hex . cr
-  ." x15: " x12 get-register hex . cr
-  ." pc:  " get-pc hex . cr 
+  ." x0: 0x" x0 x@ hex . cr 
+  ." x1: 0x" x1 x@ hex . cr 
+  ." x2: 0x" x2 x@ hex . cr
+  ." x3: 0x" x3 x@ hex . cr 
+  ." x4: 0x" x4 x@ hex . cr 
+  ." x5: 0x" x5 x@ hex . cr
+  ." x6: 0x" x6 x@ hex . cr 
+  ." x7: 0x" x7 x@ hex . cr 
+  ." x8: 0x" x8 x@ hex . cr
+  ." x9: 0x" x9 x@ hex . cr 
+  ." x10: 0x" x10 x@ hex . cr
+  ." x11: 0x" x11 x@ hex . cr
+  ." x12: 0x" x12 x@ hex . cr 
+  ." x13: 0x" x13 x@ hex . cr
+  ." x14: 0x" x14 x@ hex . cr
+  ." x15: 0x" x12 x@ hex . cr
+  ." pc:  0x" pc@ hex . cr 
   r> base ! ;
-: check-expected ( value reg -- t | f ) @ = ;
-: x>r ( idx -- reg ) idx>reg ;
-: r>x ( reg -- idx ) reg>idx ;
 : invoke-instruction ( args* control -- )
   execute-instruction ;
 
-
+: execute-core ( -- ) ;
 previous 
