@@ -411,8 +411,9 @@ defbinaryop umin; umin
 defimmop andi; and;
 defimmop addi; add;
 defimmop subi; sub;
-defimmop muli; mul;
-defimmop divi; div;
+defimmop _muli; mul;
+defimmop _divi; div;
+
 defimmop rshifti; rshift;
 defimmop lshifti; lshift;
 defimmop lti; lt;
@@ -421,7 +422,18 @@ defimmop neqi; neq;
 defimmop gti; gt;
 defimmop lei; le;
 defimmop gei; ge;
-
+: divi; ( imm src dest -- )
+  2>r dup 2 = if 
+      drop 1 2r> rshifti;
+      else
+      2r> _divi;
+      endif ;
+: muli; ( imm src dest -- )
+  2>r dup 2 = if 
+      drop 1 2r> lshifti;
+      else
+      2r> _muli;
+      endif ;
 : def0src2op ( "name" "op" -- )
   create ' , 
   does> ( src dest -- )
@@ -483,6 +495,13 @@ defbinaryop umax; umax
   get-reg rot swap over ( l dl u dl )
   pushi;
   pushi; ;
+
+: popw; ( su sl du dl -- )
+  2>r swap drop dup 2r> ( sl sl du dl ) \ get rid of the double source registers 
+  swap >r ( sl sl dl ) 
+  pop; ( sl ) 
+  r> ( sl du ) 
+  pop; ;
 
 
 
@@ -552,23 +571,23 @@ set-current
 ' move; opcode2: #move
 ' sttincr; opcode2: #sttincr
 ' decode-wide-three-register ' addw; opcode: #addw
-' decode-wide-three-register ' subw; opcode: #addw
+' decode-wide-three-register ' subw; opcode: #subw
 ' decode-wide-two-register ' pushw; opcode: #pushw
-skip-opcode \ opcode: #popw
+' decode-wide-two-register ' popw; opcode: #popw
 ' return;  opcode1: #return
 ' ?return; opcode2: #creturn
 ' decode-wide-two-register ' negatew; opcode: #negatew
-skip-opcode \ opcode: #umsmod
-skip-opcode \ opcode: #msmod
-skip-opcode \ opcode: #umstar
-skip-opcode \ opcode: #mstar
-skip-opcode \ opcode: #stw
-skip-opcode \ opcode: #ldw
-skip-opcode \ opcode: #ldbu
-skip-opcode \ opcode: #stbu
-skip-opcode \ opcode: #ldbl
-skip-opcode \ opcode: #stbl
-skip-opcode \ opcode: #setb
+' illegal-instruction ' illegal-instruction  opcode: #umsmod
+' illegal-instruction ' illegal-instruction  opcode: #msmod
+' illegal-instruction ' illegal-instruction  opcode: #umstar
+' illegal-instruction ' illegal-instruction  opcode: #mstar
+' illegal-instruction ' illegal-instruction  opcode: #stw
+' illegal-instruction ' illegal-instruction  opcode: #ldw
+' illegal-instruction ' illegal-instruction  opcode: #ldbu
+' illegal-instruction ' illegal-instruction  opcode: #stbu
+' illegal-instruction ' illegal-instruction  opcode: #ldbl
+' illegal-instruction ' illegal-instruction  opcode: #stbl
+' illegal-instruction ' illegal-instruction  opcode: #setb
 ' decode-imm-only  ' branch; opcode: #bi
 ' eqz; opcode2: #eqz
 ' neqz; opcode2: #neqz
@@ -588,6 +607,7 @@ opcode}
 1 constant x1 
 2 constant x2 
 3 constant x3 
+4 constant x4
 5 constant x5 
 6 constant x6 
 7 constant x7 
@@ -605,6 +625,27 @@ opcode}
 : execute-core ( -- ) ;
 : set-register ( imm idx -- ) idx>reg swap addr16 swap ( imm16 reg ) set; ;
 : get-register ( idx -- value ) idx>reg get-reg ; 
+: print-registers ( -- ) cr
+  base @ >r
+  ." x0: " x0 get-register hex . cr 
+  ." x1: " x1 get-register hex . cr 
+  ." x2: " x2 get-register hex . cr
+  ." x3: " x3 get-register hex . cr 
+  ." x4: " x4 get-register hex . cr 
+  ." x5: " x5 get-register hex . cr
+  ." x6: " x6 get-register hex . cr 
+  ." x7: " x7 get-register hex . cr 
+  ." x8: " x8 get-register hex . cr
+  ." x9: " x8 get-register hex . cr 
+  ." x10: " x10 get-register hex . cr
+  ." x11: " x11 get-register hex . cr
+  ." x12: " x12 get-register hex . cr 
+  ." x13: " x13 get-register hex . cr
+  ." x14: " x14 get-register hex . cr
+  ." x15: " x12 get-register hex . cr
+  ." pc:  " get-pc hex . cr 
+  r> base ! ;
+: check-expected ( value reg -- t | f ) @ = ;
 : x>r ( idx -- reg ) idx>reg ;
 : r>x ( reg -- idx ) reg>idx ;
 : invoke-instruction ( args* control -- )
