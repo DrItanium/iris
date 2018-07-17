@@ -59,7 +59,9 @@ register r13
 register r14
 register r15
 register pc
+register imm
 
+: use-imm ( value -- imm ) imm ! imm ; 
 : idx>reg ( idx -- addr )
   addr4
   case
@@ -398,17 +400,35 @@ defbinaryop umin; umin
 : defimmop ( "name" "operation" ) 
   create ' , 
   does> ( imm src dest -- )
-        swap >r ( imm src addr )
-        swap get-reg swap ( imm sval addr )
-        execute ( result ) r> set-reg ; 
+        swap 2>r ( imm src )
+        swap use-imm swap ( immreg srcreg )
+        2r> ( immreg srcreg destreg addr ) @ execute ;
 
-defimmop andi; and 
-defimmop addi; +
-defimmop subi; -
-defimmop muli; *
-defimmop divi; /
-defimmop rshifti; rshift
-defimmop lshifti; lshift
+defimmop andi; and;
+defimmop addi; add;
+defimmop subi; sub;
+defimmop muli; mul;
+defimmop divi; div;
+defimmop rshifti; rshift;
+defimmop lshifti; lshift;
+defimmop lti; lt;
+defimmop eqi; eq;
+defimmop neqi; neq;
+defimmop gti; gt;
+defimmop lei; le;
+defimmop gei; ge;
+
+: def0src2op ( "name" "op" -- )
+  create ' , 
+  does> ( src dest -- )
+  >r 0 -rot r> @ execute ;
+def0src2op eqz; eqi; 
+def0src2op neqz; neqi; 
+def0src2op ltz; lti; 
+def0src2op gtz; gti; 
+def0src2op gez; gei; 
+def0src2op lez; lei; 
+
 
 set-current
 {opcode
@@ -447,7 +467,6 @@ set-current
 ' ugt;  opcode3: #ugt
 ' ule;  opcode3: #ule
 ' uge; opcode3: #uge
-
 ' and; opcode3: #uand
 ' or; opcode3: #uor
 ' negate; opcode2: #unegate
@@ -472,7 +491,7 @@ skip-opcode \ opcode: #udecr
 ' decode-two-register-immediate ' rshifti; opcode: #rshifti
 ' decode-two-register-immediate ' lshifti; opcode: #lshifti
 skip-opcode \ opcode: #ldtincr
-skip-opcode \ opcode: #lti
+' decode-two-register-immediate ' lti; opcode: #lti
 ' move; opcode2: #move
 skip-opcode \ opcode: #sttincr
 skip-opcode \ opcode: #addw
@@ -494,12 +513,12 @@ skip-opcode \ opcode: #ldbl
 skip-opcode \ opcode: #stbl
 skip-opcode \ opcode: #setb
 ' decode-imm-only  ' branch; opcode: #bi
-skip-opcode \ opcode: #eqz
-skip-opcode \ opcode: #neqz
-skip-opcode \ opcode: #ltz
-skip-opcode \ opcode: #gtz
-skip-opcode \ opcode: #lez
-skip-opcode \ opcode: #gez
+' decode-two-register ' eqz; opcode: #eqz
+' decode-two-register ' neqz; opcode: #neqz
+' decode-two-register ' ltz; opcode: #ltz
+' decode-two-register ' gtz; opcode: #gtz
+' decode-two-register ' lez; opcode: #lez
+' decode-two-register ' gez; opcode: #gez
 ' decode-two-register-immediate ' andi; opcode: #andi
 ' decode-two-register-immediate ' andi; opcode: #uandi
 ' decode-two-register-immediate ' muli; opcode: #muli
