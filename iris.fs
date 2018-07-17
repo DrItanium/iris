@@ -79,14 +79,14 @@ register pc
   endcase
   ;
 
-: set-register ( value dest -- ) swap addr16 swap ! ;
-: get-register ( reg -- value ) @ addr16 ;
-: 1+-register ( reg -- ) dup get-register 1+ swap set-register ;
-: 2+-register ( reg -- ) dup get-register 2 + swap set-register ;
-: 1--register ( reg -- ) dup get-register 1- swap set-register ;
-: set-pc ( value -- ) pc set-register ;
-: get-pc ( -- value ) pc get-register ;
-: advance-pc ( -- ) pc get-register 1+ set-register ;
+: set-reg ( value dest -- ) swap addr16 swap ! ;
+: get-reg ( reg -- value ) @ addr16 ;
+: 1+-register ( reg -- ) dup get-reg 1+ swap set-reg ;
+: 2+-register ( reg -- ) dup get-reg 2 + swap set-reg ;
+: 1--register ( reg -- ) dup get-reg 1- swap set-reg ;
+: set-pc ( value -- ) pc set-reg ;
+: get-pc ( -- value ) pc get-reg ;
+: advance-pc ( -- ) pc get-reg 1+ set-reg ;
 
 \ memory block
 0x10000 constant memory-size
@@ -138,10 +138,10 @@ create data-memory memory-size-in-cells cells allot
   swap
   >r  \ dest
   >r  \ op
-  get-register swap 
-  get-register swap 
+  get-reg swap 
+  get-reg swap 
   r> execute 
-  r> set-register ;
+  r> set-reg ;
 
 : defbinaryop ( "name" "action" -- ) 
   create ' ,
@@ -173,48 +173,48 @@ defbinaryop uge; u>=
 defbinaryop uneq; u<>
 defbinaryop umin; umin
 
-: 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
-: 1-; ( src dest -- ) >r get-register 1- r> set-register ;
-: set; ( constant dest -- ) set-register ;
+: 1+; ( src dest -- ) >r get-reg 1+ r> set-reg ;
+: 1-; ( src dest -- ) >r get-reg 1- r> set-reg ;
+: set; ( constant dest -- ) set-reg ;
 : ld; ( src dest -- ) 
   swap ( dest src )
-  get-register ( dest src-value )
+  get-reg ( dest src-value )
   load-word ( dest value ) 
   swap ( value dest ) 
-  set-register ; 
+  set-reg ; 
 : st; ( src dest -- ) 
-  swap get-register 
-  swap get-register 
+  swap get-reg 
+  swap get-reg 
   store-word ;
 : pushi; ( imm dest -- ) 
   swap over 
-  get-register 
+  get-reg 
   push-word ( n ) 
-  set-register ;
+  set-reg ;
 : push; ( src dest -- ) 
   swap ( dest src )
-  get-register swap pushi; ;
+  get-reg swap pushi; ;
 
 : pop; ( src dest -- )
-  over get-register pop-word ( src dest value addr+2 )
+  over get-reg pop-word ( src dest value addr+2 )
   >r ( src dest value )
-  swap set-register r>
-  swap set-register ;
+  swap set-reg r>
+  swap set-reg ;
 : branch; ( addr -- ) set-pc ;
 : call; ( imm dest -- )
   get-pc swap pushi;
   branch; ;
-: rbranch; ( dest -- ) get-register branch; ;
+: rbranch; ( dest -- ) get-reg branch; ;
 : rbranch-link; ( src dest -- ) 
   \ branch to the dest register and push _pc onto the stack at src
-  get-register swap ( imm src )
+  get-reg swap ( imm src )
   call; ;
 
 
 : ?rbranch; ( src dest -- ) 
   \ conditional register branch
   swap 
-  get-register 
+  get-reg 
   if 
     rbranch;
   else
@@ -223,29 +223,29 @@ defbinaryop umin; umin
 
 : ?rbranch-link; ( src2 src dest -- )
   >r
-  get-register 
+  get-reg 
   if 
     r> rbranch-link;
   else
     drop r> drop 
   endif ;
 : ?branch; ( imm dest -- ) 
-  get-register 
+  get-reg 
   if 
     set-pc
   else
     drop
   endif ;
 
-: move; ( src dest -- ) swap get-register swap set-register ; 
+: move; ( src dest -- ) swap get-reg swap set-reg ; 
 : swap; ( src dest -- ) 
   \ swap the contents of the top two registers
   2dup ( src dest src dest )
-  get-register >r \ load dest onto the return stack
-  get-register \ get the src value
-  swap set-register \ set dest
+  get-reg >r \ load dest onto the return stack
+  get-reg \ get the src value
+  swap set-reg \ set dest
   r> \ get dest value back
-  swap set-register ;
+  swap set-reg ;
 
 
 : return; ( dest -- ) 
@@ -253,9 +253,9 @@ defbinaryop umin; umin
   dup pop-word ( dest value addr ) 
   swap ( dest addr value )
   set-pc ( dest addr )
-  swap set-register ;
+  swap set-reg ;
 : ?return; ( src dest -- )
-  swap get-register 
+  swap get-reg 
   if 
      return;
   else
@@ -349,8 +349,8 @@ defbinaryop umin; umin
 
 
 : negate; ( src dest -- ) 
-  swap get-register 
-  negate swap set-register ;
+  swap get-reg 
+  negate swap set-reg ;
 : ueq; ( src2 src dest -- ) 
   dup >r ( src2 src dest ) uneq; 
   r> dup negate; ;
@@ -367,6 +367,18 @@ defbinaryop umin; umin
 : opcode1: ( n body "name" -- n+1 ) ['] decode-one-register swap opcode: ;
 : opcode} ( n -- ) drop ;
 : skip-opcode ( n -- n+1 ) 1+ ;
+: decode-instruction ( control -- args* )
+  decoders @ execute ;
+: execute-instruction ( args* control -- )
+  bodies @ execute ;
+: decode-and-execute-instruction ( -- ) 
+  pc@1+ dup ( control control )
+  >r ( bodies control )
+  decode-instruction
+  r> execute-instruction ;
+
+
+set-current
 {opcode
 ' illegal-instruction ' illegal-instruction opcode: #illegal 
 ' add; opcode3: #add 
@@ -463,16 +475,6 @@ skip-opcode \ opcode: #pushi
 skip-opcode \ opcode: #memincr
 skip-opcode \ opcode: #memdecr
 opcode}
-: decode-and-execute ( -- ) 
-  pc@1+ dup ( control control )
-  bodies ( control bodies ) >r ( bodies control )
-  decoders @ execute 
-  r> @ execute ;
-
-  
-  
-
-set-current
 0 constant x0 
 1 constant x1 
 2 constant x2 
@@ -492,5 +494,12 @@ set-current
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : execute-core ( -- ) ;
+: set-register ( imm idx -- ) idx>reg swap addr16 swap ( imm16 reg ) set; ;
+: get-register ( idx -- value ) idx>reg get-reg ; 
+: x>r ( idx -- reg ) idx>reg ;
+: r>x ( reg -- idx ) reg>idx ;
+: invoke-instruction ( args* control -- )
+  execute-instruction ;
+
 
 previous 
