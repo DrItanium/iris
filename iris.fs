@@ -25,7 +25,16 @@
 
 
 get-current vocabulary iris also iris definitions
-
+: illegal-instruction ( -- ) abort" Illegal Instruction!" ;
+: dispatch-table ( n "name" -- )
+    \ initialize table with n entries with disasm-illegal
+    create 0 ?do
+    ['] illegal-instruction ,
+    loop
+does> ( u -- addr )
+    swap cells + ; 
+0x100 dispatch-table decoders 
+0x100 dispatch-table bodies
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
 : addr4 ( a -- b ) 0x000F and ;
@@ -149,19 +158,19 @@ defbinaryop or; or
 defbinaryop xor; xor
 defbinaryop lshift; lshift
 defbinaryop rshift; rshift
-defbinaryop =; =
-defbinaryop <>; <>
-defbinaryop <; <
-defbinaryop >; >
-defbinaryop <=; <=
-defbinaryop >=; >=
+defbinaryop eq; =
+defbinaryop neq; <>
+defbinaryop lt; <
+defbinaryop gt; >
+defbinaryop le; <=
+defbinaryop ge; >=
 defbinaryop min; min
 defbinaryop max; max
-defbinaryop u<; u<
-defbinaryop u>; u>
-defbinaryop u<=; u<=
-defbinaryop u>=; u>=
-defbinaryop u<>; u<>
+defbinaryop ult; u<
+defbinaryop ugt; u>
+defbinaryop ule; u<=
+defbinaryop uge; u>=
+defbinaryop uneq; u<>
 defbinaryop umin; umin
 : 1+; ( src dest -- ) >r get-register 1+ r> set-register ;
 : 1-; ( src dest -- ) >r get-register 1- r> set-register ;
@@ -341,7 +350,117 @@ defbinaryop umin; umin
 : negate; ( src dest -- ) 
   swap get-register 
   negate swap set-register ;
+: {opcode ( -- 0 ) 0 ;
+: execute-latest ( -- * ) latest name>int execute ;
+: opcode: ( n decoder body "name" -- n+1 ) 
+  rot ( decoder body n )
+  dup >r addr8 dup ( decoder body n8 n8 )
+  constant ( decoder body n8 ) swap ( d n8 b ) over ( d n8 b n8 )
+  bodies !
+  decoders !
+  r> 1+ ;
+: opcode3: ( n body "name" -- n+1 ) ['] decode-three-register swap opcode: ;
+: opcode2: ( n body "name" -- n+1 ) ['] decode-two-register swap opcode: ;
+: opcode1: ( n body "name" -- n+1 ) ['] decode-one-register swap opcode: ;
+: opcode} ( n -- ) drop ;
+{opcode
 
+' illegal-instruction ' illegal-instruction opcode: #illegal 
+' add; opcode3: #add 
+' sub; opcode3: #sub 
+' mul; opcode3: #mul 
+' div; opcode3: #div 
+' rem; opcode3: #rem 
+' lshift; opcode3: #lshift
+' rshift; opcode3: #rshift
+' and; opcode3: #and 
+' or; opcode3: #or 
+' negate; opcode2: #negate
+' xor; opcode3: #xor 
+' min; opcode3: #min
+' max; opcode3: #max
+' eq; opcode3: #eq
+' neq; opcode3: #neq
+' lt; opcode3: #lt
+' gt; opcode3: #gt
+' le; opcode3: #le
+' ge; opcode3: #ge
+' decode-one-register-immediate ' set; opcode: #set
+' load-word opcode2: #ld
+' store-word opcode2: #st
+' push-word opcode2: #push
+' pop-word opcode2: #pop
+\ opcode: #br
+\ opcode: #brl
+\ opcode: #bcr
+\ opcode: #bcrl
+\ opcode: #ueq
+\ opcode: #uneq
+\ opcode: #ult
+\ opcode: #ugt
+\ opcode: #ule
+\ opcode: #uge
+\ opcode: #uand
+\ opcode: #uor
+\ opcode: #unegate
+\ opcode: #uxor
+\ opcode: #umin
+\ opcode: #umax
+\ opcode: #uadd
+\ opcode: #usub
+\ opcode: #umul
+\ opcode: #udiv
+\ opcode: #urem
+\ opcode: #ulshift
+\ opcode: #urshift
+\ opcode: #incr
+\ opcode: #decr
+\ opcode: #uincr
+\ opcode: #udecr
+\ opcode: #call
+\ opcode: #condb
+\ opcode: #addi
+\ opcode: #subi
+\ opcode: #rshifti
+\ opcode: #lshifti
+\ opcode: #ldtincr
+\ opcode: #lti
+\ opcode: #move
+\ opcode: #sttincr
+\ opcode: #addw
+\ opcode: #subw
+\ opcode: #pushw
+\ opcode: #popw
+\ opcode: #return
+\ opcode: #creturn
+\ opcode: #negatew
+\ opcode: #umsmod
+\ opcode: #msmod
+\ opcode: #umstar
+\ opcode: #mstar
+\ opcode: #stw
+\ opcode: #ldw
+\ opcode: #ldbu
+\ opcode: #stbu
+\ opcode: #ldbl
+\ opcode: #stbl
+\ opcode: #setb
+\ opcode: #bi
+\ opcode: #eqz
+\ opcode: #neqz
+\ opcode: #ltz
+\ opcode: #gtz
+\ opcode: #lez
+\ opcode: #gez
+\ opcode: #andi
+\ opcode: #uandi
+\ opcode: #muli
+\ opcode: #divi
+\ opcode: #pushi
+\ opcode: #memincr
+\ opcode: #memdecr
+opcode}
+  
 
 set-current
 0 constant x0 
