@@ -25,7 +25,7 @@
 
 
 get-current vocabulary iris also iris definitions
-: illegal-instruction ( -- ) abort" Illegal Instruction!" ;
+: illegal-instruction ( -- ) 1 abort" Illegal Instruction!" ;
 : generic-load ( addr -- value ) drop 0 ;
 : generic-store ( value addr -- ) drop drop ;
 : dispatch-table ( n "name" -- )
@@ -117,7 +117,7 @@ create data-memory memory-size-in-cells cells allot
 : dump-data-memory ( -- )
   data-memory memory-size-in-cells cells dump ;
 : upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
-: store-byte ( v a -- ) addr16 data-memory + c! ;
+: store-byte ( v a -- ) addr8 data-memory + c! ;
 : store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
 : load-byte ( addr -- value ) addr16 data-memory + c@ ;
 : load-word ( addr -- value ) 
@@ -665,9 +665,11 @@ _r15 constant x15
   ." x15: 0x" x12 x@ hex . cr
   ." pc:  0x" pc@ hex . cr 
   r> base ! ;
-: invoke-instruction ( args* control -- )
-  execute-instruction ;
-
+: invoke-instruction ( args* control -- ) execute-instruction ;
+: set-memory ( value address -- ) swap addr8 swap store-byte ;
+: encode-2reg ( src dest -- v ) x>i addr4 swap x>i 4 lshift or addr8 ;
+: encode-1reg ( dest -- v ) x0 swap encode-2reg ;
+: encode-0reg ( -- v ) x0 x0 encode-2reg ;
 : execute-core ( -- ) 
   true ?running ! \ mark that we are indeed executing
   begin
