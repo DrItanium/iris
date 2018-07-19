@@ -316,7 +316,8 @@ defbinaryop umin; umin
   get-src2 ( src dest src2 )
   -rot ;
 : make-imm16 ( u l -- v ) 
-  @pc@1+ @pc@1+ ( l u ) 8 rshift swap or addr16 ;
+  @pc@1+ @pc@1+ ( l u ) 
+  8 lshift swap or addr16 ;
 : decode-1reg-imm16 ( -- imm dest )
   @pc@1+ ( b1 )
   get-dest >r 
@@ -541,13 +542,26 @@ defbinaryop umax; umax
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
+: i>x ( idx -- reg ) idx>reg ;
+: x>i ( reg -- idx ) reg>idx ;
+: x@ ( reg -- value ) get-reg ;
+: x! ( value reg -- ) set-reg ;
+: pc@ ( -- value ) pc get-reg ;
+: pc! ( value -- ) set-pc ;
+: pc1+ ( value -- ) advance-pc ;
 : mem@ ( addr -- value ) load-byte ;
 : inst! ( args* length addr -- ) 
   addr16 swap over + addr16 swap ( args* end addr )
   ?do 
     I store-byte 
   loop ;
-  
+: inst@ ( addr -- args* ) 
+  pc@ >r \ save pc
+  dup 1+ pc! \ goto the next location
+  mem@ dup >r decode-instruction 
+  r> 
+  r> pc! \ restore pc 
+  ;
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 {opcode 
 (       name      operation           encoder             decoder            )
@@ -656,13 +670,6 @@ _r15 constant x15
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : examine-byte ( address -- ) dup load-byte swap . ." : " . cr ;
-: i>x ( idx -- reg ) idx>reg ;
-: x>i ( reg -- idx ) reg>idx ;
-: x@ ( reg -- value ) get-reg ;
-: x! ( value reg -- ) set-reg ;
-: pc@ ( -- value ) pc get-reg ;
-: pc! ( value -- ) set-pc ;
-: pc1+ ( value -- ) advance-pc ;
 : print-registers ( -- ) cr
   base @ >r
   ." pc: 0x" pc@ hex . cr
