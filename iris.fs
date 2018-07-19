@@ -47,6 +47,7 @@ does> ( u -- addr )
 
 0x100 dispatch-table decoders 
 0x100 dispatch-table bodies
+0x100 dispatch-table encoders
 : addr32 ( a -- b ) 0xFFFFFFFF and ;
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
@@ -146,10 +147,10 @@ create data-memory memory-size-in-cells cells allot
   dup load-word 
   swap 2 + ; 
 
-: pc@ ( -- value ) get-pc load-byte ;
-: pc@1+ ( -- value )
+: @pc@ ( -- value ) get-pc load-byte ;
+: @pc@1+ ( -- value )
   \ load and then advance the pc
-  pc@ advance-pc ;
+  @pc@ advance-pc ;
 
 \ execution logic
 : binary-op-exec ( src2 src dest op -- ) 
@@ -305,28 +306,23 @@ defbinaryop umin; umin
 : get-src2-src3 ( v -- src3 src2 ) get-dest-src ;
 : get-src2 ( v -- src2 ) decode-lower-half ;
 : decode-no-register ( -- ) advance-pc ;
-: decode-one-register ( -- dest ) pc@1+ get-dest ; 
-: decode-two-register ( -- src dest ) 
-  pc@1+ get-dest-src ;
-: decode-three-register ( -- src2 src dest ) 
-  pc@1+ ( b1 )
+: decode-1reg ( -- dest ) @pc@1+ get-dest ; 
+: decode-2reg ( -- src dest ) 
+  @pc@1+ get-dest-src ;
+: decode-3reg ( -- src2 src dest ) 
+  @pc@1+ ( b1 )
   get-dest-src ( src dest )
-  pc@1+ ( src dest b2 )
+  @pc@1+ ( src dest b2 )
   get-src2 ( src dest src2 )
   -rot ;
-: decode-four-register ( -- src3 src2 src dest )
-  pc@1+ ( b1 )
-  get-dest-src ( src dest ) 2>r
-  pc@1+ ( b2 ) 
-  get-src2-src3 ( src3 src2 ) 2r> ;
 : make-imm16 ( u l -- v ) 
-  pc@1+ pc@1+ ( l u ) 8 rshift swap or addr16 ;
-: decode-one-register-immediate ( -- imm dest )
-  pc@1+ ( b1 )
+  @pc@1+ @pc@1+ ( l u ) 8 rshift swap or addr16 ;
+: decode-1reg-imm16 ( -- imm dest )
+  @pc@1+ ( b1 )
   get-dest >r 
   make-imm16 r> ;
-: decode-two-register-immediate ( -- imm src dest ) 
-  pc@1+ ( b1 )
+: decode-2reg-imm16 ( -- imm src dest ) 
+  @pc@1+ ( b1 )
   get-dest-src 2>r 
   make-imm16 2r> ;
 : get-upper-register ( position -- reg-addr )
@@ -335,17 +331,17 @@ defbinaryop umin; umin
   dup ( n n )
   get-upper-register ( n u )
   swap idx>reg ( u l ) ;
-: decode-wide-two-register ( -- srcu srcl destu destl )
-  pc@1+ ( b1 ) 
+: decode-wide-2reg ( -- srcu srcl destu destl )
+  @pc@1+ ( b1 ) 
   dup addr4 ( b1 dest )
   >r ( b1 )
   4 rshift addr4 ( srcl )
   compute-reg-pair ( srcu srcl )
   r> ( srcu srcl dest )
   compute-reg-pair ( srcu srcl destu destl ) ;
-: decode-wide-three-register ( -- src2u src2l srcu srcl destu destl ) 
-  pc@1+ ( b1 ) >r 
-  pc@1+ ( b2 ) addr4
+: decode-wide-3reg ( -- src2u src2l srcu srcl destu destl ) 
+  @pc@1+ ( b1 ) >r 
+  @pc@1+ ( b2 ) addr4
   compute-reg-pair ( src2u src2l ) r> ( src2u src2l b1 )
   dup ( s2u s2l b1 b1 ) >r ( s2u s2l b1 )
   4 rshift addr4 ( s2u s2l src )
@@ -353,15 +349,15 @@ defbinaryop umin; umin
   r> ( s2u s2l su sl b1 )
   addr4 compute-reg-pair ; 
 
-: decode-imm-only ( -- imm ) make-imm16 ;
+: decode-imm16 ( -- imm ) make-imm16 ;
 : decode-one-reg-imm8 ( -- imm8 dest ) 
-  pc@1+ ( b1 )
-  pc@1+ ( b1 b2 )
+  @pc@1+ ( b1 )
+  @pc@1+ ( b1 b2 )
   addr8 swap ( imm8 b1 )
   addr4 idx>reg ;
 : decode-two-reg-imm8 ( -- imm8 dest ) 
-  pc@1+ ( b1 )
-  pc@1+ ( b1 b2 )
+  @pc@1+ ( b1 )
+  @pc@1+ ( b1 b2 )
   addr8 swap ( imm8 b1 )
   dup 4 rshift addr4 idx>reg swap 
   addr4 idx>reg ;
@@ -395,18 +391,6 @@ defbinaryop umin; umin
   dup >r ( src2 src dest ) uneq; 
   r> dup invert; ;
 : {opcode ( -- 0 ) 0 ;
-: opcode: ( n decoder body "name" -- n+1 ) 
-  rot ( decoder body n )
-  dup >r addr8 dup ( decoder body n8 n8 )
-  constant ( decoder body n8 ) 
-  swap ( d n8 b ) 
-  over ( d n8 b n8 )
-  bodies !
-  decoders !
-  r> 1+ ;
-: opcode3: ( n body "name" -- n+1 ) ['] decode-three-register swap opcode: ;
-: opcode2: ( n body "name" -- n+1 ) ['] decode-two-register swap opcode: ;
-: opcode1: ( n body "name" -- n+1 ) ['] decode-one-register swap opcode: ;
 : opcode} ( n -- ) drop ;
 : skip-opcode ( n -- n+1 ) 1+ ;
 : decode-instruction ( control -- args* )
@@ -414,7 +398,7 @@ defbinaryop umin; umin
 : execute-instruction ( args* control -- )
   bodies @ execute ;
 : decode-and-execute-instruction ( -- ) 
-  pc@1+ dup ( control control )
+  @pc@1+ dup ( control control )
   >r ( control )
   decode-instruction 
   r> execute-instruction ;
@@ -522,103 +506,119 @@ defbinaryop umax; umax
 
 : stop; ( dest -- ) get-reg ?running ! ;
 
+: encode-2reg ( src dest -- v ) reg>idx addr4 swap reg>idx 4 lshift or addr8 ;
+: encode-1reg ( dest -- v ) 0 swap encode-2reg ;
+: encode-0reg ( -- v ) 0 ;
+: encode-3reg ( src2 src dest -- v2 v1 ) 
+  2>r encode-1reg 2r> encode-2reg ; 
+: encode-4reg ( src3 src2 src dest -- v2 v1 )
+  2>r encode-2reg 2r> encode-2reg ; 
+: encode-imm16 ( imm16 -- u l ) 
+  dup >r 
+  rshift 8 addr8 
+  r> addr8 ;
+: encode-1reg-imm16 ( imm16 dest -- v3 v2 v1 )
+  encode-1reg ( imm16 v1 ) >r ( imm16 )
+  encode-imm16 ( v3 v2 ) r> ( v3 v2 v1 ) ;
+: encode-2reg-imm16 ( imm16 src dest -- v3 v2 v1 ) 
+  encode-2reg ( imm16 v1 ) >r ( imm16 )
+  encode-imm16 ( v3 v2 ) r> ( v3 v2 v1 ) ;
+: execute-latest ( -- * ) latest name>int execute ;
+: opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
+  addr8 dup ( n8 n8 n8 )
+  constant ( n8 n8 ) 
+  ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
+  ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
+  ' swap ( n8 "decoder" n8 ) decoders ! ( n8 )
+  1+ ;
+
+: set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
 {opcode
-' illegal-instruction ' illegal-instruction opcode: #illegal 
-' add; opcode3: #add 
-' sub; opcode3: #sub 
-' mul; opcode3: #mul 
-' div; opcode3: #div 
-' rem; opcode3: #rem 
-' lshift; opcode3: #lshift
-' rshift; opcode3: #rshift
-' and; opcode3: #and 
-' or; opcode3: #or 
-' invert; opcode2: #invert
-' xor; opcode3: #xor 
-' min; opcode3: #min
-' max; opcode3: #max
-' eq; opcode3: #eq
-' neq; opcode3: #neq
-' lt; opcode3: #lt
-' gt; opcode3: #gt
-' le; opcode3: #le
-' ge; opcode3: #ge
-' decode-one-register-immediate ' set; opcode: #set
-' ld; opcode2: #ld
-' st; opcode2: #st
-' push; opcode2: #push
-' pop; opcode2: #pop
-' rbranch; opcode1: #br
-' rbranch-link; opcode2: #brl
-' ?rbranch; opcode2: #bcr
-' ?rbranch-link; opcode3: #bcrl
-' ueq;  opcode3: #ueq
-' uneq; opcode3: #uneq
-' ult;  opcode3: #ult
-' ugt;  opcode3: #ugt
-' ule;  opcode3: #ule
-' uge; opcode3: #uge
-' and; opcode3: #uand
-' or; opcode3: #uor
-' invert; opcode2: #uinvert
-' xor; opcode3: #uxor
-' umin; opcode3: #umin
-' umax; opcode3: #umax
-' add; opcode3: #uadd
-' sub; opcode3: #usub
-' mul; opcode3: #umul
-' div; opcode3: #udiv
-' rem; opcode3: #urem
-' lshift; opcode3: #ulshift
-' rshift; opcode3: #urshift
-' 1+; opcode2: #incr
-' 1-; opcode2: #decr
-' 1+; opcode2: #uincr
-' 1-; opcode2: #udecr
-' decode-one-register-immediate ' call; opcode: #call
-' decode-one-register-immediate ' ?branch; opcode: #condb
-' decode-two-register-immediate ' addi; opcode: #addi
-' decode-two-register-immediate ' subi; opcode: #subi
-' decode-two-register-immediate ' rshifti; opcode: #rshifti
-' decode-two-register-immediate ' lshifti; opcode: #lshifti
-' ldtincr; opcode2: #ldtincr
-' decode-two-register-immediate ' lti; opcode: #lti
-' move; opcode2: #move
-' sttincr; opcode2: #sttincr
-' decode-wide-three-register ' addw; opcode: #addw
-' decode-wide-three-register ' subw; opcode: #subw
-' decode-wide-two-register ' pushw; opcode: #pushw
-' decode-wide-two-register ' popw; opcode: #popw
-' return;  opcode1: #return
-' ?return; opcode2: #creturn
-' decode-wide-two-register ' invertw; opcode: #invertw
-' illegal-instruction ' illegal-instruction  opcode: #umsmod
-' illegal-instruction ' illegal-instruction  opcode: #msmod
-' illegal-instruction ' illegal-instruction  opcode: #umstar
-' illegal-instruction ' illegal-instruction  opcode: #mstar
-' illegal-instruction ' illegal-instruction  opcode: #stw
-' illegal-instruction ' illegal-instruction  opcode: #ldw
-' illegal-instruction ' illegal-instruction  opcode: #ldbu
-' illegal-instruction ' illegal-instruction  opcode: #stbu
-' illegal-instruction ' illegal-instruction  opcode: #ldbl
-' illegal-instruction ' illegal-instruction  opcode: #stbl
-' illegal-instruction ' illegal-instruction  opcode: #setb
-' decode-imm-only  ' branch; opcode: #bi
-' eqz; opcode2: #eqz
-' neqz; opcode2: #neqz
-' ltz; opcode2: #ltz
-' gtz; opcode2: #gtz
-' lez; opcode2: #lez
-' gez; opcode2: #gez
-' decode-two-register-immediate ' andi; opcode: #andi
-' decode-two-register-immediate ' andi; opcode: #uandi
-' decode-two-register-immediate ' muli; opcode: #muli
-' decode-two-register-immediate ' divi; opcode: #divi
-' decode-one-register-immediate ' pushi; opcode: #pushi
-' memincr; opcode1: #memincr
-' memdecr; opcode1: #memdecr
-' decode-one-register ' stop; opcode: #stop \ stop execution
+opcode: #illegal  illegal-instruction illegal-instruction illegal-instruction
+opcode: #add      add;                encode-3reg         decode-3reg
+opcode: #sub      sub;                encode-3reg         decode-3reg
+opcode: #mul      mul;                encode-3reg         decode-3reg
+opcode: #div      div;                encode-3reg         decode-3reg
+opcode: #rem      rem;                encode-3reg         decode-3reg
+opcode: #lshift   lshift;             encode-3reg         decode-3reg
+opcode: #rshift   rshift;             encode-3reg         decode-3reg
+opcode: #and      and;                encode-3reg         decode-3reg
+opcode: #or       or;                 encode-3reg         decode-3reg
+opcode: #invert   invert;             encode-2reg         decode-2reg
+opcode: #xor      xor;                encode-3reg         decode-3reg
+opcode: #min      min;                encode-3reg         decode-3reg
+opcode: #max      max;                encode-3reg         decode-3reg
+opcode: #eq       eq;                 encode-3reg         decode-3reg
+opcode: #neq      neq;                encode-3reg         decode-3reg
+opcode: #lt       lt;                 encode-3reg         decode-3reg
+opcode: #gt       gt;                 encode-3reg         decode-3reg
+opcode: #le       le;                 encode-3reg         decode-3reg
+opcode: #ge       ge;                 encode-3reg         decode-3reg
+opcode: #set      set;                encode-1reg-imm16   decode-1reg-imm16
+opcode: #ld       ld;                 encode-2reg         decode-2reg
+opcode: #st       st;                 encode-2reg         decode-2reg
+opcode: #push     push;               encode-2reg         decode-2reg
+opcode: #pop      pop;                encode-2reg         decode-2reg
+opcode: #br       rbranch;            encode-1reg         decode-1reg
+opcode: #brl      rbranch-link;       encode-2reg         decode-2reg
+opcode: #bcr      ?rbranch;           encode-2reg         decode-2reg
+opcode: #bcrl     ?rbranch-link;      encode-3reg         decode-3reg
+opcode: #ueq      ueq;                encode-3reg         decode-3reg
+opcode: #uneq     uneq;               encode-3reg         decode-3reg
+opcode: #ult      ult;                encode-3reg         decode-3reg
+opcode: #ugt      ugt;                encode-3reg         decode-3reg
+opcode: #ule      ule;                encode-3reg         decode-3reg
+opcode: #uge      uge;                encode-3reg         decode-3reg
+opcode: #uand     and;                encode-3reg         decode-3reg
+opcode: #uor      or;                 encode-3reg         decode-3reg
+opcode: #uinvert  invert;             encode-2reg         decode-2reg
+opcode: #uxor     xor;                encode-3reg         decode-3reg
+opcode: #umin     umin;               encode-3reg         decode-3reg
+opcode: #umax     umax;               encode-3reg         decode-3reg
+opcode: #uadd     add;                encode-3reg         decode-3reg
+opcode: #usub     sub;                encode-3reg         decode-3reg
+opcode: #umul     mul;                encode-3reg         decode-3reg
+opcode: #udiv     div;                encode-3reg         decode-3reg
+opcode: #urem     rem;                encode-3reg         decode-3reg
+opcode: #ulshift  lshift;             encode-3reg         decode-3reg
+opcode: #urshift  rshift;             encode-3reg         decode-3reg
+opcode: #incr     1+;                 encode-2reg         decode-2reg
+opcode: #decr     1-;                 encode-2reg         decode-2reg
+opcode: #uincr    1+;                 encode-2reg         decode-2reg
+opcode: #udecr    1-;                 encode-2reg         decode-2reg
+opcode: #call     call;               encode-1reg-imm16   decode-1reg-imm16
+opcode: #condb    ?branch;            encode-1reg-imm16   decode-1reg-imm16
+opcode: #addi     addi;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #subi     subi;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #rshifti  rshifti;            encode-2reg-imm16   decode-2reg-imm16
+opcode: #lshifti  lshifti;            encode-2reg-imm16   decode-2reg-imm16
+opcode: #ldtincr  ldtincr;            encode-2reg         decode-2reg
+opcode: #lti      lti;                encode-2reg-imm16   decode-2reg-imm16
+opcode: #move     move;               encode-2reg         decode-2reg
+opcode: #sttincr  sttincr;            encode-2reg         decode-2reg
+opcode: #addw     addw;               encode-3reg         decode-wide-3reg
+opcode: #subw     subw;               encode-3reg         decode-wide-3reg
+opcode: #pushw    pushw;              encode-2reg         decode-wide-2reg
+opcode: #popw     popw;               encode-2reg         decode-wide-2reg
+opcode: #return   return;             encode-1reg         decode-1reg
+opcode: #creturn  ?return;            encode-2reg         decode-2reg
+opcode: #invertw  invertw;            encode-2reg         decode-wide-2reg
+opcode: #bi       branch;             encode-imm16        decode-imm16
+opcode: #eqz      eqz;                encode-2reg         decode-2reg
+opcode: #neqz     neqz;               encode-2reg         decode-2reg
+opcode: #ltz      ltz;                encode-2reg         decode-2reg
+opcode: #gtz      gtz;                encode-2reg         decode-2reg
+opcode: #lez      lez;                encode-2reg         decode-2reg
+opcode: #gez      gez;                encode-2reg         decode-2reg
+opcode: #andi     andi;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #uandi    andi;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #muli     muli;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #divi     divi;               encode-2reg-imm16   decode-2reg-imm16
+opcode: #pushi    pushi;              encode-1reg-imm16   decode-1reg-imm16
+opcode: #memincr  memincr;            encode-1reg         decode-1reg
+opcode: #memdecr  memdecr;            encode-1reg         decode-1reg
+opcode: #stop     stop;               encode-1reg         decode-1reg \ stop execution
 opcode}
 _r0 constant x0 
 _r1 constant x1 
@@ -643,10 +643,12 @@ _r15 constant x15
 : x>i ( reg -- idx ) reg>idx ;
 : x@ ( reg -- value ) get-reg ;
 : x! ( value reg -- ) set-reg ;
-: pc@ ( -- value ) get-pc ;
+: pc@ ( -- value ) pc get-reg ;
 : pc! ( value -- ) set-pc ;
+: pc1+ ( value -- ) advance-pc ;
 : print-registers ( -- ) cr
   base @ >r
+  ." pc: 0x" pc@ hex . cr
   ." x0: 0x" x0 x@ hex . cr 
   ." x1: 0x" x1 x@ hex . cr 
   ." x2: 0x" x2 x@ hex . cr
@@ -662,14 +664,11 @@ _r15 constant x15
   ." x12: 0x" x12 x@ hex . cr 
   ." x13: 0x" x13 x@ hex . cr
   ." x14: 0x" x14 x@ hex . cr
-  ." x15: 0x" x12 x@ hex . cr
-  ." pc:  0x" pc@ hex . cr 
+  ." x15: 0x" x15 x@ hex . cr
   r> base ! ;
 : invoke-instruction ( args* control -- ) execute-instruction ;
-: set-memory ( value address -- ) swap addr8 swap store-byte ;
-: encode-2reg ( src dest -- v ) x>i addr4 swap x>i 4 lshift or addr8 ;
-: encode-1reg ( dest -- v ) x0 swap encode-2reg ;
-: encode-0reg ( -- v ) x0 x0 encode-2reg ;
+
+  
 : execute-core ( -- ) 
   true ?running ! \ mark that we are indeed executing
   begin
