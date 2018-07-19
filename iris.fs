@@ -550,11 +550,12 @@ set-current
 : pc! ( value -- ) set-pc ;
 : pc1+ ( value -- ) advance-pc ;
 : mem@ ( addr -- value ) load-byte ;
-: inst! ( args* length addr -- ) 
+: inst! ( args* length addr -- length ) 
+  over >r 
   addr16 swap over + addr16 swap ( args* end addr )
   ?do 
     I store-byte 
-  loop ;
+  loop r> ;
 : inst@ ( addr -- args* ) 
   pc@ >r \ save pc
   dup 1+ pc! \ goto the next location
@@ -562,6 +563,8 @@ set-current
   r> 
   r> pc! \ restore pc 
   ;
+: inst!->pc ( args* length -- length ) 
+  pc@ inst! pc@ + pc! ;
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 {opcode 
 (       name      operation           encoder             decoder            )
@@ -692,7 +695,6 @@ _r15 constant x15
   r> base ! ;
 : invoke-instruction ( args* control -- ) execute-instruction ;
 
-  
 : execute-core ( -- ) 
   true ?running ! \ mark that we are indeed executing
   begin
