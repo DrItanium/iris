@@ -524,17 +524,25 @@ defbinaryop umax; umax
   encode-2reg ( imm16 v1 ) >r ( imm16 )
   encode-imm16 ( v3 v2 ) r> ( v3 v2 v1 ) ;
 : execute-latest ( -- * ) latest name>int execute ;
+
 : opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
-  addr8 dup ( n8 n8 n8 )
-  constant ( n8 n8 ) 
+  create addr8 dup , ( n8 n8 )
+
   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
   ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
-  1+ ;
+  1+ 
+  does> ( args* -- encoded-args* control )
+  ( args* addr )
+  .s cr
+  @ ( args* c ) dup ( args* c c ) >r ( args* c )
+  encoders @ execute r> addr8 ;
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
-{opcode
+: opcode>idx ( opcode -- idx ) 2 cells + @ ;
+{opcode 
+(       name      operation           encoder             decoder            )
 opcode: #illegal  illegal-instruction illegal-instruction illegal-instruction
 opcode: #add      add;                encode-3reg         decode-3reg
 opcode: #sub      sub;                encode-3reg         decode-3reg
