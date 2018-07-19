@@ -506,40 +506,48 @@ defbinaryop umax; umax
 
 : stop; ( dest -- ) get-reg ?running ! ;
 
-: encode-2reg ( src dest -- v ) reg>idx addr4 swap reg>idx 4 lshift or addr8 ;
-: encode-1reg ( dest -- v ) 0 swap encode-2reg ;
-: encode-0reg ( -- v ) 0 ;
-: encode-3reg ( src2 src dest -- v2 v1 ) 
-  2>r encode-1reg 2r> encode-2reg ; 
-: encode-4reg ( src3 src2 src dest -- v2 v1 )
-  2>r encode-2reg 2r> encode-2reg ; 
-: encode-imm16 ( imm16 -- u l ) 
+: encode-2reg ( src dest -- v 1 ) 
+  reg>idx addr4 swap 
+  reg>idx 4 lshift or 
+  addr8 1 ;
+: encode-1reg ( dest -- v 1 ) _r0 swap encode-2reg ;
+: encode-0reg ( -- 0 1 ) 0 1 ;
+: encode-3reg ( src2 src dest -- v2 v1 2 ) 
+  2>r encode-1reg drop 2r> encode-2reg 1+ ; 
+: encode-4reg ( src3 src2 src dest -- v2 v1 2 )
+  2>r encode-2reg drop 2r> encode-2reg 1+ ; 
+: encode-imm16 ( imm16 -- u l 2 ) 
   dup >r 
-  rshift 8 addr8 
-  r> addr8 ;
-: encode-1reg-imm16 ( imm16 dest -- v3 v2 v1 )
-  encode-1reg ( imm16 v1 ) >r ( imm16 )
-  encode-imm16 ( v3 v2 ) r> ( v3 v2 v1 ) ;
-: encode-2reg-imm16 ( imm16 src dest -- v3 v2 v1 ) 
-  encode-2reg ( imm16 v1 ) >r ( imm16 )
-  encode-imm16 ( v3 v2 ) r> ( v3 v2 v1 ) ;
-: execute-latest ( -- * ) latest name>int execute ;
+  8 rshift  addr8 
+  r> addr8 2 ;
+: encode-1reg-imm16 ( imm16 dest -- v3 v2 v1 3 )
+  encode-1reg drop ( imm16 v1 ) >r ( imm16 )
+  encode-imm16 drop ( v3 v2 ) r> ( v3 v2 v1 ) 3 ;
+: encode-2reg-imm16 ( imm16 src dest -- v3 v2 v1 3 ) 
+  encode-2reg drop ( imm16 v1 ) >r ( imm16 )
+  encode-imm16 drop ( v3 v2 ) r> ( v3 v2 v1 ) 3 ;
 
+  
 : opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
   create addr8 dup , ( n8 n8 )
-
   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
   ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
   1+ 
-  does> ( args* -- encoded-args* control )
+  does> ( args* -- encoded-args* control count )
   ( args* addr )
-  .s cr
-  @ ( args* c ) dup ( args* c c ) >r ( args* c )
-  encoders @ execute r> addr8 ;
+  @ ( args* c ) dup ( args* c c ) >r ( args* c count )
+  encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
+: mem@ ( addr -- value ) load-byte ;
+: inst! ( args* length addr -- ) 
+  addr16 swap over + addr16 swap ( args* end addr )
+  ?do 
+    I store-byte 
+  loop ;
+  
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 {opcode 
 (       name      operation           encoder             decoder            )
@@ -647,6 +655,7 @@ _r15 constant x15
 : print-pc ( -- ) ." pc: " get-pc . cr ;
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
+: examine-byte ( address -- ) dup load-byte swap . ." : " . cr ;
 : i>x ( idx -- reg ) idx>reg ;
 : x>i ( reg -- idx ) reg>idx ;
 : x@ ( reg -- value ) get-reg ;
