@@ -529,7 +529,7 @@ defbinaryop umax; umax
   constant ( n8 n8 ) 
   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
   ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
-  ' swap ( n8 "decoder" n8 ) decoders ! ( n8 )
+  ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
   1+ ;
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
