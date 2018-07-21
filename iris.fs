@@ -47,22 +47,22 @@ does> ( u -- addr )
 : addr12 ( a -- b ) 0x0FFF and ; 
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
-register _r0
-register _r1 
-register _r2
-register _r3
-register _r4
-register _r5
-register _r6
-register _r7
-register _r8
-register _r9
-register _r10
-register _r11
-register _r12
-register _r13
-register _r14
-register _r15
+register x0
+register x1 
+register x2
+register x3
+register x4
+register x5
+register x6
+register x7
+register x8
+register x9
+register x10
+register x11
+register x12
+register x13
+register x14
+register x15
 register pc
 register imm
 register ?running
@@ -74,19 +74,19 @@ include ./opcodes.fs
 : idx>reg ( idx -- addr )
   addr4
   case
-    0 of _r0 endof 1 of _r1 endof 2 of _r2 endof 3 of _r3 endof
-    4 of _r4 endof 5 of _r5 endof 6 of _r6 endof 7 of _r7 endof
-    8 of _r8 endof 9 of _r9 endof 10 of _r10 endof 11 of _r11 endof
-    12 of _r12 endof 13 of _r13 endof 14 of _r14 endof 15 of _r15 endof
+    0 of x0 endof 1 of x1 endof 2 of x2 endof 3 of x3 endof
+    4 of x4 endof 5 of x5 endof 6 of x6 endof 7 of x7 endof
+    8 of x8 endof 9 of x9 endof 10 of x10 endof 11 of x11 endof
+    12 of x12 endof 13 of x13 endof 14 of x14 endof 15 of x15 endof
     abort" Illegal Register!"
   endcase 
   ;
 : reg>idx ( addr -- idx ) 
   case
-    _r0 of 0 endof _r1 of 1 endof     _r2 of 2 endof   _r3 of 3 endof
-    _r4 of 4 endof _r5 of 5 endof     _r6 of 6 endof   _r7 of 7 endof
-    _r8 of 8 endof _r9 of 9 endof     _r10 of 10 endof _r11 of 11 endof
-    _r12 of 12 endof _r13 of 13 endof _r14 of 14 endof _r15 of 15 endof
+    x0 of 0 endof x1 of 1 endof     x2 of 2 endof   x3 of 3 endof
+    x4 of 4 endof x5 of 5 endof     x6 of 6 endof   x7 of 7 endof
+    x8 of 8 endof x9 of 9 endof     x10 of 10 endof x11 of 11 endof
+    x12 of 12 endof x13 of 13 endof x14 of 14 endof x15 of 15 endof
     abort" Illegal Register Address!"
   endcase
   ;
@@ -502,16 +502,15 @@ defbinaryop umax; umax
   swap over ( body n decoder n )
   decoders ! 
   bodies ! ;
-: opcode0 ( n body -- ) ['] decode-no-register opcode: ;
-: opcode1 ( n body -- ) ['] decode-1reg opcode: ;
-: opcode2 ( n body -- ) ['] decode-2reg opcode: ;
-: opcode3 ( n body -- ) ['] decode-3reg opcode: ;
-: opcode4 ( n body -- ) ['] decode-4reg opcode: ;
-: opcode1i16 ( n body -- ) ['] decode-1reg-imm16 opcode: ;
-: opcode2i16 ( n body -- ) ['] decode-2reg-imm16 opcode: ;
-: opcode2w ( n body -- ) ['] decode-wide-2reg opcode: ;
-: opcode3w ( n body -- ) ['] decode-wide-3reg opcode: ;
-: opcodei16 ( n body -- ) ['] decode-imm16 opcode: ;
+: opcode0 ( n body -- ) ['] decode-no-register opcode ;
+: opcode1 ( n body -- ) ['] decode-1reg opcode ;
+: opcode2 ( n body -- ) ['] decode-2reg opcode ;
+: opcode3 ( n body -- ) ['] decode-3reg opcode ;
+: opcode1i16 ( n body -- ) ['] decode-1reg-imm16 opcode ;
+: opcode2i16 ( n body -- ) ['] decode-2reg-imm16 opcode ;
+: opcode2w ( n body -- ) ['] decode-wide-2reg opcode ;
+: opcode3w ( n body -- ) ['] decode-wide-3reg opcode ;
+: opcodei16 ( n body -- ) ['] decode-imm16 opcode ;
 \ wiring 
 #illegal ' illegal-instruction ' illegal-instruction opcode
 #add      ' add;           opcode3
@@ -638,22 +637,6 @@ set-current
   pc@ inst! pc@ + pc! ;
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 \ used for the purposes of data definitions
-_r0 constant x0 
-_r1 constant x1 
-_r2 constant x2 
-_r3 constant x3 
-_r4 constant x4 
-_r5 constant x5 
-_r6 constant x6 
-_r7 constant x7 
-_r8 constant x8 
-_r9 constant x9 
-_r10 constant x10 
-_r11 constant x11 
-_r12 constant x12 
-_r13 constant x13 
-_r14 constant x14 
-_r15 constant x15 
 : print-pc ( -- ) ." pc: " get-pc . cr ;
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
