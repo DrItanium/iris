@@ -68,6 +68,7 @@ register imm
 register ?running
 false ?running !
 
+include ./opcodes.fs
 
 : use-imm ( value -- imm ) imm ! imm ; 
 : idx>reg ( idx -- addr )
@@ -383,9 +384,6 @@ defbinaryop umin; umin
 : ueq; ( src2 src dest -- ) 
   dup >r ( src2 src dest ) uneq; 
   r> dup invert; ;
-: {opcode ( -- 0 ) 0 ;
-: opcode} ( n -- ) drop ;
-: skip-opcode ( n -- n+1 ) 1+ ;
 : decode-instruction ( control -- args* )
   decoders @ execute ;
 : execute-instruction ( args* control -- )

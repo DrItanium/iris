@@ -114,16 +114,17 @@ does> ( addr w -- )
 
 
 \ all of the following words have the stack effect ( u "name" )
-' disasm-noargs ' instruction-table define-format asm-noargs 
-' disasm-1reg ' instruction-table define-format asm-1reg
-' disasm-2reg ' instruction-table define-format asm-2reg
-' disasm-3reg ' instruction-table define-format asm-3reg
-' disasm-4reg ' instruction-table define-format asm-4reg
-' disasm-1reg-imm16 ' instruction-table define-format asm-1reg-imm16
-' disasm-2reg-imm16 ' instruction-table define-format asm-2reg-imm16
-' disasm-1reg-imm8 ' instruction-table define-format asm-1reg-imm8
-' disasm-2wreg ' instruction-table define-format asm-2wreg 
-' disasm-3wreg ' instruction-table define-format asm-3wreg 
+' disasm-noargs ' instruction-table define-format  asm0;
+' disasm-1reg ' instruction-table define-format asm1:
+' disasm-2reg ' instruction-table define-format asm2:
+' disasm-3reg ' instruction-table define-format asm3:
+' disasm-4reg ' instruction-table define-format asm4:
+' disasm-1reg-imm16 ' instruction-table define-format asm1i16:
+' disasm-2reg-imm16 ' instruction-table define-format asm2i16:
+' disasm-1reg-imm8 ' instruction-table define-format asm1i8
+' disasm-2wreg ' instruction-table define-format asm2w: 
+' disasm-3wreg ' instruction-table define-format asm3w:
+' disasm-imm16-only ' instruction-table define-format asmi16:
 
 \ todo update opcodes.fs so that it can be used in both execution, assembly, and disassembly
 \ : {opcode ( -- 0 ) 0 ;
@@ -139,6 +140,7 @@ does> ( addr w -- )
 \   @ ( args* c ) dup ( args* c c ) >r ( args* c count )
 \   encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
 \ include ./opcodes.fs
+
 include ./asmops.fs
 
  previous set-current
