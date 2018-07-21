@@ -59,32 +59,32 @@ definitions
 : disasm-noargs ( addr w -- ) 2drop ;
 : disasm-1reg ( addr w -- ) disasm-rdest . drop ; 
 : disasm-2reg ( addr w -- ) 
-  dup disasm-rdest .
-  disasm-rsrc . drop ;
+  dup disasm-rsrc . 
+  disasm-rdest .  drop ;
 : disasm-3reg ( addr w -- ) 
-  dup disasm-rdest .
+  dup disasm-rsrc2 . 
   dup disasm-rsrc .
-  disasm-rsrc2 . drop ;
+  disasm-rdest . drop ;
 : disasm-4reg ( addr w  -- )
-  dup disasm-rdest .
-  dup disasm-rsrc .
+  dup disasm-rsrc3 .
   dup disasm-rsrc2 .
-  disasm-rsrc3 . drop ;
+  dup disasm-rsrc .
+  disasm-rdest .  drop ;
 
 : disasm-1reg-imm16 ( addr w -- )
-  dup disasm-rdest .
-  disasm-imm16 . drop ;
+  dup disasm-imm16 . 
+  disasm-rdest .  drop ;
 : disasm-imm16-only ( addr w -- )
   disasm-imm16-noreg . drop ;
 
 : disasm-2reg-imm16 ( addr w -- )
-  dup disasm-rdest .
+  dup disasm-imm16 .
   dup disasm-rsrc .
-  disasm-imm16 . drop ;
+  disasm-rdest .  drop ;
 
 : disasm-1reg-imm8 ( addr w -- )
-  dup disasm-rdest .
-  disasm-imm8-with-reg . drop ;
+  dup disasm-imm8-with-reg . 
+  disasm-rdest .  drop ;
 
 : disasm-2wreg ( addr w -- ) disasm-2reg ;
 : disasm-3wreg ( addr w -- ) disasm-3reg ;
@@ -114,7 +114,7 @@ does> ( addr w -- )
 
 
 \ all of the following words have the stack effect ( u "name" )
-' disasm-noargs ' instruction-table define-format  asm0;
+' disasm-noargs ' instruction-table define-format  asm0:
 ' disasm-1reg ' instruction-table define-format asm1:
 ' disasm-2reg ' instruction-table define-format asm2:
 ' disasm-3reg ' instruction-table define-format asm3:
@@ -126,21 +126,7 @@ does> ( addr w -- )
 ' disasm-3wreg ' instruction-table define-format asm3w:
 ' disasm-imm16-only ' instruction-table define-format asmi16:
 
-\ todo update opcodes.fs so that it can be used in both execution, assembly, and disassembly
-\ : {opcode ( -- 0 ) 0 ;
-\ : opcode} ( n -- ) drop ;
-\ : opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
-\   create addr8 dup , ( n8 n8 )
-\   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
-\   ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
-\   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
-\   1+ 
-\   does> ( args* -- encoded-args* control count )
-\   ( args* addr )
-\   @ ( args* c ) dup ( args* c c ) >r ( args* c count )
-\   encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
-\ include ./opcodes.fs
-
+include ./opcodes.fs
 include ./asmops.fs
 
  previous set-current
