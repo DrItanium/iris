@@ -139,5 +139,6 @@ does> ( addr w -- )
 \   @ ( args* c ) dup ( args* c c ) >r ( args* c count )
 \   encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
 \ include ./opcodes.fs
+include ./asmops.fs
 
  previous set-current

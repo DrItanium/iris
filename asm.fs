@@ -1,7 +1,7 @@
 \ iris assembler for gforth
 get-current
 also assembler definitions
-
+include ./registers.fs
 : encode-2reg ( src dest -- v 1 ) 
   reg>idx addr4 swap 
   reg>idx 4 lshift or 
