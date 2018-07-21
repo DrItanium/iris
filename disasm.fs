@@ -125,10 +125,19 @@ does> ( addr w -- )
 ' disasm-2wreg ' instruction-table define-format asm-2wreg 
 ' disasm-3wreg ' instruction-table define-format asm-3wreg 
 
-
- \ include ./opcodes.fs
- 0 asm-noargs illegal,
- 1 asm-3reg add,
- 2 asm-3reg sub,
+\ todo update opcodes.fs so that it can be used in both execution, assembly, and disassembly
+\ : {opcode ( -- 0 ) 0 ;
+\ : opcode} ( n -- ) drop ;
+\ : opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
+\   create addr8 dup , ( n8 n8 )
+\   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
+\   ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
+\   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
+\   1+ 
+\   does> ( args* -- encoded-args* control count )
+\   ( args* addr )
+\   @ ( args* c ) dup ( args* c c ) >r ( args* c count )
+\   encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
+\ include ./opcodes.fs
 
  previous set-current
