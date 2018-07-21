@@ -35,15 +35,6 @@ get-current vocabulary iris also iris definitions
     loop
 does> ( u -- addr )
     swap cells + ; 
-\ : devspace-define ( n "name" -- ) 
-\   create 2 / 0 ?do 
-\   ['] generic-load ,
-\   ['] generic-store ,
-\   loop
-\ does> ( u -- addr )
-\   swap 2* cells + ;
-
-
 
 0x100 dispatch-table decoders 
 0x100 dispatch-table bodies

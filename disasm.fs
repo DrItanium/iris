@@ -4,7 +4,6 @@
 get-current 
 vocabulary disassembler
 also disassembler definitions
-: {opcode
 \ instruction fields
 : disasm-op ( w -- u )
   \ lowest eight bits
@@ -54,7 +53,7 @@ definitions
 
 : disasm-instruction ( addr w -- )
   \ disassemble instruction with no arguments
-  dup disasm-opcode instruction-table-entry @ execute ;
+  dup disasm-op instruction-table @ execute ;
 
 \ disassemble various formats
 : disasm-noargs ( addr w -- ) 2drop ;
@@ -115,18 +114,21 @@ does> ( addr w -- )
 
 
 \ all of the following words have the stack effect ( u "name" )
-' disasm-noargs ' instruction-table-entry define-format asm-noargs 
-' disasm-1reg ' instruction-table-entry define-format asm-1reg
-' disasm-2reg ' instruction-table-entry define-format asm-2reg
-' disasm-3reg ' instruction-table-entry define-format asm-3reg
-' disasm-4reg ' instruction-table-entry define-format asm-4reg
-' disasm-1reg-imm16 ' instruction-table-entry define-format asm-1reg-imm16
-' disasm-2reg-imm16 ' instruction-table-entry define-format asm-2reg-imm16
-' disasm-1reg-imm8 ' instruction-table-entry define-format asm-1reg-imm8
-' disasm-2wreg ' instruction-table-entry define-format asm-2wreg 
-' disasm-3wreg ' instruction-table-entry define-format asm-3wreg 
+' disasm-noargs ' instruction-table define-format asm-noargs 
+' disasm-1reg ' instruction-table define-format asm-1reg
+' disasm-2reg ' instruction-table define-format asm-2reg
+' disasm-3reg ' instruction-table define-format asm-3reg
+' disasm-4reg ' instruction-table define-format asm-4reg
+' disasm-1reg-imm16 ' instruction-table define-format asm-1reg-imm16
+' disasm-2reg-imm16 ' instruction-table define-format asm-2reg-imm16
+' disasm-1reg-imm8 ' instruction-table define-format asm-1reg-imm8
+' disasm-2wreg ' instruction-table define-format asm-2wreg 
+' disasm-3wreg ' instruction-table define-format asm-3wreg 
 
 
- include ./opcodes.fs
+ \ include ./opcodes.fs
+ 0 asm-noargs illegal,
+ 1 asm-3reg add,
+ 2 asm-3reg sub,
 
- prevous set-current
+ previous set-current
