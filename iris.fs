@@ -497,29 +497,107 @@ defbinaryop umax; umax
 
 : stop; ( dest -- ) get-reg ?running ! ;
 
-: opcode: ( n decoder body "name" -- n+1 )
-  create 
-  rot ( decoder body n ) addr8 swap over ( decoder n body n )
-  dup dup >r , ( decoder n body n ) 
-  bodies ! ( decoder n )
-  decoders ! ( 
-  ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
-  ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
-  r> 1+ 
-  does> ( -- opcode )
-  @ ;
-: opcode0: ( n body "name" -- n+1 ) ['] decode-no-register swap opcode: ;
-: opcode1: ( n body "name" -- n+1 ) ['] decode-1reg swap opcode: ;
-: opcode2: ( n body "name" -- n+1 ) ['] decode-2reg swap opcode: ;
-: opcode3: ( n body "name" -- n+1 ) ['] decode-3reg swap opcode: ;
-: opcode4: ( n body "name" -- n+1 ) ['] decode-4reg swap opcode: ;
-: opcode1i16: ( n body "name" -- n+1 ) ['] decode-1reg-imm16 swap opcode: ;
-: opcode2i16: ( n body "name" -- n+1 ) ['] decode-2reg-imm16 swap opcode: ;
-: opcode2w: ( n body "name" -- n+1 ) ['] decode-wide-2reg swap opcode: ;
-: opcode3w: ( n body "name" -- n+1 ) ['] decode-wide-3reg swap opcode: ;
-: opcodei16 ( n body "name" -- n+1 ) ['] decode-imm16 swap opcode: ;
+: opcode ( n body decoder -- ) 
+  rot addr8 ( body decoder n ) 
+  swap over ( body n decoder n )
+  decoders ! 
+  bodies ! ;
+: opcode0 ( n body -- ) ['] decode-no-register opcode: ;
+: opcode1 ( n body -- ) ['] decode-1reg opcode: ;
+: opcode2 ( n body -- ) ['] decode-2reg opcode: ;
+: opcode3 ( n body -- ) ['] decode-3reg opcode: ;
+: opcode4 ( n body -- ) ['] decode-4reg opcode: ;
+: opcode1i16 ( n body -- ) ['] decode-1reg-imm16 opcode: ;
+: opcode2i16 ( n body -- ) ['] decode-2reg-imm16 opcode: ;
+: opcode2w ( n body -- ) ['] decode-wide-2reg opcode: ;
+: opcode3w ( n body -- ) ['] decode-wide-3reg opcode: ;
+: opcodei16 ( n body -- ) ['] decode-imm16 opcode: ;
+\ wiring 
+#illegal ' illegal-instruction ' illegal-instruction opcode
+#add      ' add;           opcode3
+#sub      ' sub;           opcode3
+#mul      ' mul;           opcode3
+#div      ' div;           opcode3
+#rem      ' rem;           opcode3
+#lshift   ' lshift;        opcode3
+#rshift   ' rshift;        opcode3
+#and      ' and;           opcode3
+#or       ' or;            opcode3
+#invert   ' invert;        opcode2
+#xor      ' xor;           opcode3
+#min      ' min;           opcode3
+#max      ' max;           opcode3
+#eq       ' eq;            opcode3
+#neq      ' neq;           opcode3
+#lt       ' lt;            opcode3
+#gt       ' gt;            opcode3
+#le       ' le;            opcode3
+#ge       ' ge;            opcode3
+#set      ' set;           opcode1i16
+#ld       ' ld;            opcode2
+#st       ' st;            opcode2
+#push     ' push;          opcode2
+#pop      ' pop;           opcode2
+#br       ' rbranch;       opcode1
+#brl      ' rbranch-link;  opcode2
+#bcr      ' ?rbranch;      opcode2
+#bcrl     ' ?rbranch-link; opcode3
+#ueq      ' ueq;           opcode3
+#uneq     ' uneq;          opcode3
+#ult      ' ult;           opcode3
+#ugt      ' ugt;           opcode3
+#ule      ' ule;           opcode3
+#uge      ' uge;           opcode3
+#uand     ' and;           opcode3
+#uor      ' or;            opcode3
+#uinvert  ' invert;        opcode2
+#uxor     ' xor;           opcode3
+#umin     ' umin;          opcode3
+#umax     ' umax;          opcode3
+#uadd     ' add;           opcode3
+#usub     ' sub;           opcode3
+#umul     ' mul;           opcode3
+#udiv     ' div;           opcode3
+#urem     ' rem;           opcode3
+#ulshift  ' lshift;        opcode3
+#urshift  ' rshift;        opcode3
+#incr     ' 1+;            opcode2
+#decr     ' 1-;            opcode2
+#uincr    ' 1+;            opcode2
+#udecr    ' 1-;            opcode2
+#call     ' call;          opcode1i16 
+#condb    ' ?branch;       opcode1i16 
+#addi     ' addi;          opcode2i16 
+#subi     ' subi;          opcode2i16 
+#rshifti  ' rshifti;       opcode2i16 
+#lshifti  ' lshifti;       opcode2i16 
+#ldtincr  ' ldtincr;       opcode2
+#lti      ' lti;           opcode2i16
+#move     ' move;          opcode2
+#sttincr  ' sttincr;       opcode2
+#addw     ' addw;          opcode3w
+#subw     ' subw;          opcode3w
+#pushw    ' pushw;         opcode2w
+#popw     ' popw;          opcode2w
+#return   ' return;        opcode1
+#creturn  ' ?return;       opcode2
+#invertw  ' invertw;       opcode2w
+#bi       ' branch;        opcodei16
+#eqz      ' eqz;           opcode2
+#neqz     ' neqz;          opcode2
+#ltz      ' ltz;           opcode2
+#gtz      ' gtz;           opcode2
+#lez      ' lez;           opcode2
+#gez      ' gez;           opcode2
+#andi     ' andi;          opcode2i16
+#uandi    ' andi;          opcode2i16
+#muli     ' muli;          opcode2i16
+#divi     ' divi;          opcode2i16
+#pushi    ' pushi;         opcode1i16
+#memincr  ' memincr;       opcode1
+#memdecr  ' memdecr;       opcode1
+#stop     ' stop;          opcode1 \ stop execution
 
-  
 : asm: ( n op "name" -- )
   create swap , , 
   does> ( args* -- args* control len )
@@ -560,92 +638,6 @@ set-current
   pc@ inst! pc@ + pc! ;
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 \ used for the purposes of data definitions
-{opcode 
-' illegal-instruction ' illegal-instruction opcode: #illegal  
-' add;           opcode3: #add
-' sub;           opcode3: #sub      
-' mul;           opcode3: #mul
-' div;           opcode3: #div
-' rem;           opcode3: #rem
-' lshift;        opcode3: #lshift   
-' rshift;        opcode3: #rshift   
-' and;           opcode3: #and      
-' or;            opcode3: #or       
-' invert;        opcode2: #invert   
-' xor;           opcode3: #xor      
-' min;           opcode3: #min      
-' max;           opcode3: #max      
-' eq;            opcode3: #eq       
-' neq;           opcode3: #neq      
-' lt;            opcode3: #lt       
-' gt;            opcode3: #gt       
-' le;            opcode3: #le       
-' ge;            opcode3: #ge       
-' set;           opcode1i16: #set      
-' ld;            opcode2: #ld
-' st;            opcode2: #st
-' push;          opcode2: #push     
-' pop;           opcode2: #pop      
-' rbranch;       opcode1: #br       
-' rbranch-link;  opcode2: #brl      
-' ?rbranch;      opcode2: #bcr      
-' ?rbranch-link; opcode3: #bcrl     
-' ueq;           opcode3: #ueq      
-' uneq;          opcode3: #uneq     
-' ult;           opcode3: #ult      
-' ugt;           opcode3: #ugt      
-' ule;           opcode3: #ule      
-' uge;           opcode3: #uge      
-' and;           opcode3: #uand     
-' or;            opcode3: #uor      
-' invert;        opcode2: #uinvert  
-' xor;           opcode3: #uxor     
-' umin;          opcode3: #umin     
-' umax;          opcode3: #umax     
-' add;           opcode3: #uadd     
-' sub;           opcode3: #usub     
-' mul;           opcode3: #umul     
-' div;           opcode3: #udiv     
-' rem;           opcode3: #urem     
-' lshift;        opcode3: #ulshift  
-' rshift;        opcode3: #urshift  
-' 1+;            opcode2: #incr     
-' 1-;            opcode2: #decr     
-' 1+;            opcode2: #uincr    
-' 1-;            opcode2: #udecr    
-' call;          opcode1i16: #call     
-' ?branch;       opcode1i16: #condb    
-' addi;          opcode2i16: #addi     
-' subi;          opcode2i16: #subi     
-' rshifti;       opcode2i16: #rshifti  
-' lshifti;       opcode2i16: #lshifti  
-' ldtincr;       opcode2: #ldtincr  
-' lti;           opcode2i16: #lti      
-' move;          opcode2: #move     
-' sttincr;       opcode2: #sttincr  
-' addw;          opcode3w: #addw     
-' subw;          opcode3w: #subw     
-' pushw;         opcode2w: #pushw    
-' popw;          opcode2w: #popw     
-' return;        opcode1: #return   
-' ?return;       opcode2: #creturn  
-' invertw;       opcode2w: #invertw  
-' branch;        opcodei16: #bi       
-' eqz;           opcode2: #eqz      
-' neqz;          opcode2: #neqz     
-' ltz;           opcode2: #ltz      
-' gtz;           opcode2: #gtz      
-' lez;           opcode2: #lez      
-' gez;           opcode2: #gez      
-' andi;          opcode2i16: #andi     
-' andi;          opcode2i16: #uandi    
-' muli;          opcode2i16: #muli     
-' divi;          opcode2i16: #divi     
-' pushi;         opcode1i16: #pushi    
-' memincr;       opcode1: #memincr  
-' memdecr;       opcode1: #memdecr  
-' stop;          opcode1: #stop     \ stop execution
-opcode}
 _r0 constant x0 
 _r1 constant x1 
 _r2 constant x2 
