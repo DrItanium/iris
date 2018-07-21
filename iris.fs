@@ -38,7 +38,6 @@ does> ( u -- addr )
 
 0x100 dispatch-table decoders 
 0x100 dispatch-table bodies
-0x100 dispatch-table encoders
 : addr32 ( a -- b ) 0xFFFFFFFF and ;
 : addr16 ( a -- b ) 0xFFFF and ;
 : addr8 ( a -- b ) 0x00FF and ;
@@ -520,21 +519,40 @@ defbinaryop umax; umax
   encode-imm16 drop ( v3 v2 ) r> ( v3 v2 v1 ) 3 ;
 
   
-: opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
-  create addr8 dup , ( n8 n8 )
+: opcode: ( n decoder body "name" -- n+1 )
+  create 
+  rot ( decoder body n ) addr8 swap over ( decoder n body n )
+  dup dup >r , ( decoder n body n ) 
+  bodies ! ( decoder n )
+  decoders ! ( 
   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
-  1+ 
+  r> 1+ 
   does> ( -- opcode )
   @ ;
-: encoder: ( n "name" "op" -- )
-  create dup , ' swap encoders ! 
-  does> ( args* -- encoded-args control count )
-	    @ dup >r ( args* c ) 
-	    encoders @ execute 
-		1+ \ advance the counter first 
-		r> addr8 swap ;
-
+: opcode0: ( n body "name" -- n+1 ) ['] decode-no-register swap opcode: ;
+: opcode1: ( n body "name" -- n+1 ) ['] decode-1reg swap opcode: ;
+: opcode2: ( n body "name" -- n+1 ) ['] decode-2reg swap opcode: ;
+: opcode3: ( n body "name" -- n+1 ) ['] decode-3reg swap opcode: ;
+: opcode4: ( n body "name" -- n+1 ) ['] decode-4reg swap opcode: ;
+: opcode1i16: ( n body "name" -- n+1 ) ['] decode-1reg-imm16 swap opcode: ;
+: opcode2i16: ( n body "name" -- n+1 ) ['] decode-2reg-imm16 swap opcode: ;
+: opcode2w: ( n body "name" -- n+1 ) ['] decode-wide-2reg swap opcode: ;
+: opcode3w: ( n body "name" -- n+1 ) ['] decode-wide-3reg swap opcode: ;
+: opcodei16 ( n body "name" -- n+1 ) ['] decode-imm16 swap opcode: ;
+: encoder: ( n op "name" -- )
+  create swap , , 
+  does> ( args* -- args* control len )
+  2@ ( args* op n ) >r ( args* op )
+  execute 1+ r> addr8 swap ;
+: encoder3: ( n "name" -- ) ['] encode-3reg encoder: ;
+: encoder2: ( n "name" -- ) ['] encode-2reg encoder: ;
+: encoder1: ( n "name" -- ) ['] encode-1reg encoder: ;
+: encoder0: ( n "name" -- ) ['] encode-0reg encoder: ;
+: encoder4: ( n "name" -- ) ['] encode-4reg encoder: ;
+: encoder1i16: ( n "name" -- ) ['] encode-1reg-imm16 encoder: ;
+: encoder2i16: ( n "name" -- ) ['] encode-2reg-imm16 encoder: ;
+: encoderi16: ( n "name" -- ) ['] encode-imm16 encoder: ;
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
 : i>x ( idx -- reg ) idx>reg ;

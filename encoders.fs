@@ -1,85 +1,84 @@
-(                  name                encode-op )
-#illegal  encoder: illegal,            illegal-instruction 
-#add      encoder: add,                encode-3reg         
-#sub      encoder: sub,                encode-3reg         
-#mul      encoder: mul,                encode-3reg         
-#div      encoder: div,                encode-3reg         
-#rem      encoder: rem,                encode-3reg         
-#lshift   encoder: lshift,             encode-3reg         
-#rshift   encoder: rshift,             encode-3reg         
-#and      encoder: and,                encode-3reg         
-#or       encoder: or,                 encode-3reg         
-#invert   encoder: invert,             encode-2reg         
-#xor      encoder: xor,                encode-3reg         
-#min      encoder: min,                encode-3reg         
-#max      encoder: max,                encode-3reg         
-#eq       encoder: eq,                 encode-3reg         
-#neq      encoder: neq,                encode-3reg         
-#lt       encoder: lt,                 encode-3reg         
-#gt       encoder: gt,                 encode-3reg         
-#le       encoder: le,                 encode-3reg         
-#ge       encoder: ge,                 encode-3reg         
-#incr     encoder: incr,               encode-2reg         
-#decr     encoder: decr,               encode-2reg         
-#set      encoder: set,                encode-1reg-imm16   
-#ld       encoder: ld,                 encode-2reg         
-#st       encoder: st,                 encode-2reg         
-#push     encoder: push,               encode-2reg         
-#pop      encoder: pop,                encode-2reg         
-#br       encoder: rbranch,            encode-1reg         
-#brl      encoder: rbranch-link,       encode-2reg         
-#bcr      encoder: ?rbranch,           encode-2reg         
-#bcrl     encoder: ?rbranch-link,      encode-3reg         
-#ueq      encoder: ueq,                encode-3reg         
-#uneq     encoder: uneq,               encode-3reg         
-#ult      encoder: ult,                encode-3reg         
-#ugt      encoder: ugt,                encode-3reg         
-#ule      encoder: ule,                encode-3reg         
-#uge      encoder: uge,                encode-3reg         
-#uand     encoder: uand,               encode-3reg         
-#uor      encoder: uor,                encode-3reg         
-#uinvert  encoder: uinvert,            encode-2reg         
-#uxor     encoder: uxor,               encode-3reg         
-#umin     encoder: umin,               encode-3reg         
-#umax     encoder: umax,               encode-3reg         
-#uadd     encoder: uadd,               encode-3reg         
-#usub     encoder: usub,               encode-3reg         
-#umul     encoder: umul,               encode-3reg         
-#udiv     encoder: udiv,               encode-3reg         
-#urem     encoder: urem,               encode-3reg         
-#ulshift  encoder: ulshift,            encode-3reg         
-#urshift  encoder: urshift,            encode-3reg         
-#uincr    encoder: uincr,              encode-2reg         
-#udecr    encoder: udecr,              encode-2reg         
-#call     encoder: call,               encode-1reg-imm16   
-#condb    encoder: ?branch,            encode-1reg-imm16   
-#addi     encoder: addi,               encode-2reg-imm16   
-#subi     encoder: subi,               encode-2reg-imm16   
-#rshifti  encoder: rshifti,            encode-2reg-imm16   
-#lshifti  encoder: lshifti,            encode-2reg-imm16   
-#ldtincr  encoder: ldtincr,            encode-2reg         
-#lti      encoder: lti,                encode-2reg-imm16   
-#move     encoder: move,               encode-2reg         
-#sttincr  encoder: sttincr,            encode-2reg         
-#addw     encoder: addw,               encode-3reg         
-#subw     encoder: subw,               encode-3reg         
-#pushw    encoder: pushw,              encode-2reg         
-#popw     encoder: popw,               encode-2reg         
-#return   encoder: return,             encode-1reg         
-#creturn  encoder: ?return,            encode-2reg         
-#invertw  encoder: invertw,            encode-2reg         
-#bi       encoder: branch,             encode-imm16        
-#eqz      encoder: eqz,                encode-2reg         
-#neqz     encoder: neqz,               encode-2reg         
-#ltz      encoder: ltz,                encode-2reg         
-#gtz      encoder: gtz,                encode-2reg         
-#lez      encoder: lez,                encode-2reg         
-#gez      encoder: gez,                encode-2reg         
-#andi     encoder: andi,               encode-2reg-imm16   
-#uandi    encoder: uandi,               encode-2reg-imm16   
-#muli     encoder: muli,               encode-2reg-imm16   
-#divi     encoder: divi,               encode-2reg-imm16   
-#pushi    encoder: pushi,              encode-1reg-imm16   
-#memincr  encoder: memincr,            encode-1reg         
-#memdecr  encoder: memdecr,            encode-1reg         
-#stop     encoder: stop,               encode-1reg         
+#illegal  encoder0: illegal,            
+#add      encoder3: add,                
+#sub      encoder3: sub,                
+#mul      encoder3: mul,                
+#div      encoder3: div,                
+#rem      encoder3: rem,                
+#lshift   encoder3: lshift,             
+#rshift   encoder3: rshift,             
+#and      encoder3: and,                
+#or       encoder3: or,                 
+#invert   encoder2: invert,             
+#xor      encoder3: xor,                
+#min      encoder3: min,                
+#max      encoder3: max,                
+#eq       encoder3: eq,                 
+#neq      encoder3: neq,                
+#lt       encoder3: lt,                 
+#gt       encoder3: gt,                 
+#le       encoder3: le,                 
+#ge       encoder3: ge,                
+#incr     encoder2: incr,               
+#decr     encoder2: decr,               
+#set      encoder1i16: set,                
+#ld       encoder2: ld,                 
+#st       encoder2: st,                
+#push     encoder2: push,               
+#pop      encoder2: pop,                
+#br       encoder1: rbranch,            
+#brl      encoder2: rbranch-link,       
+#bcr      encoder2: ?rbranch,           
+#bcrl     encoder3: ?rbranch-link,      
+#ueq      encoder3: ueq,                
+#uneq     encoder3: uneq,               
+#ult      encoder3: ult,                
+#ugt      encoder3: ugt,                
+#ule      encoder3: ule,                
+#uge      encoder3: uge,                
+#uand     encoder3: uand,               
+#uor      encoder3: uor,                
+#uinvert  encoder3: uinvert,            
+#uxor     encoder3: uxor,               
+#umin     encoder3: umin,               
+#umax     encoder3: umax,               
+#uadd     encoder3: uadd,               
+#usub     encoder3: usub,               
+#umul     encoder3: umul,               
+#udiv     encoder3: udiv,               
+#urem     encoder3: urem,               
+#ulshift  encoder3: ulshift,            
+#urshift  encoder3: urshift,            
+#uincr    encoder2: uincr,              
+#udecr    encoder2: udecr,             
+#call     encoder1i16: call,
+#condb    encoder1i16: ?branch,
+#addi     encoder2i16: addi,
+#subi     encoder2i16: subi,
+#rshifti  encoder2i16: rshifti,
+#lshifti  encoder2i16: lshifti,
+#ldtincr  encoder2: ldtincr,           
+#lti      encoder2i16: lti,            
+#move     encoder2: move,              
+#sttincr  encoder2: sttincr,           
+#addw     encoder3: addw,              
+#subw     encoder3: subw,              
+#pushw    encoder2: pushw,             
+#popw     encoder2: popw,              
+#return   encoder1: return,            
+#creturn  encoder2: ?return,           
+#invertw  encoder2: invertw,           
+#bi       encoderi16: branch,          
+#eqz      encoder2: eqz,
+#neqz     encoder2: neqz,
+#ltz      encoder2: ltz,
+#gtz      encoder2: gtz,
+#lez      encoder2: lez,
+#gez      encoder2: gez,
+#andi     encoder2i16: andi,
+#uandi    encoder2i16: uandi,
+#muli     encoder2i16: muli,
+#divi     encoder2i16: divi,
+#pushi    encoder1i16: pushi,
+#memincr  encoder1: memincr,           
+#memdecr  encoder1: memdecr,           
+#stop     encoder1: stop,              
