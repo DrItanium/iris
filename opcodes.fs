@@ -1,87 +1,87 @@
 {opcode 
-(       name      operation           encoder             decoder            )
-opcode: #illegal  illegal-instruction illegal-instruction illegal-instruction
-opcode: #add      add;                encode-3reg         decode-3reg
-opcode: #sub      sub;                encode-3reg         decode-3reg
-opcode: #mul      mul;                encode-3reg         decode-3reg
-opcode: #div      div;                encode-3reg         decode-3reg
-opcode: #rem      rem;                encode-3reg         decode-3reg
-opcode: #lshift   lshift;             encode-3reg         decode-3reg
-opcode: #rshift   rshift;             encode-3reg         decode-3reg
-opcode: #and      and;                encode-3reg         decode-3reg
-opcode: #or       or;                 encode-3reg         decode-3reg
-opcode: #invert   invert;             encode-2reg         decode-2reg
-opcode: #xor      xor;                encode-3reg         decode-3reg
-opcode: #min      min;                encode-3reg         decode-3reg
-opcode: #max      max;                encode-3reg         decode-3reg
-opcode: #eq       eq;                 encode-3reg         decode-3reg
-opcode: #neq      neq;                encode-3reg         decode-3reg
-opcode: #lt       lt;                 encode-3reg         decode-3reg
-opcode: #gt       gt;                 encode-3reg         decode-3reg
-opcode: #le       le;                 encode-3reg         decode-3reg
-opcode: #ge       ge;                 encode-3reg         decode-3reg
-opcode: #set      set;                encode-1reg-imm16   decode-1reg-imm16
-opcode: #ld       ld;                 encode-2reg         decode-2reg
-opcode: #st       st;                 encode-2reg         decode-2reg
-opcode: #push     push;               encode-2reg         decode-2reg
-opcode: #pop      pop;                encode-2reg         decode-2reg
-opcode: #br       rbranch;            encode-1reg         decode-1reg
-opcode: #brl      rbranch-link;       encode-2reg         decode-2reg
-opcode: #bcr      ?rbranch;           encode-2reg         decode-2reg
-opcode: #bcrl     ?rbranch-link;      encode-3reg         decode-3reg
-opcode: #ueq      ueq;                encode-3reg         decode-3reg
-opcode: #uneq     uneq;               encode-3reg         decode-3reg
-opcode: #ult      ult;                encode-3reg         decode-3reg
-opcode: #ugt      ugt;                encode-3reg         decode-3reg
-opcode: #ule      ule;                encode-3reg         decode-3reg
-opcode: #uge      uge;                encode-3reg         decode-3reg
-opcode: #uand     and;                encode-3reg         decode-3reg
-opcode: #uor      or;                 encode-3reg         decode-3reg
-opcode: #uinvert  invert;             encode-2reg         decode-2reg
-opcode: #uxor     xor;                encode-3reg         decode-3reg
-opcode: #umin     umin;               encode-3reg         decode-3reg
-opcode: #umax     umax;               encode-3reg         decode-3reg
-opcode: #uadd     add;                encode-3reg         decode-3reg
-opcode: #usub     sub;                encode-3reg         decode-3reg
-opcode: #umul     mul;                encode-3reg         decode-3reg
-opcode: #udiv     div;                encode-3reg         decode-3reg
-opcode: #urem     rem;                encode-3reg         decode-3reg
-opcode: #ulshift  lshift;             encode-3reg         decode-3reg
-opcode: #urshift  rshift;             encode-3reg         decode-3reg
-opcode: #incr     1+;                 encode-2reg         decode-2reg
-opcode: #decr     1-;                 encode-2reg         decode-2reg
-opcode: #uincr    1+;                 encode-2reg         decode-2reg
-opcode: #udecr    1-;                 encode-2reg         decode-2reg
-opcode: #call     call;               encode-1reg-imm16   decode-1reg-imm16
-opcode: #condb    ?branch;            encode-1reg-imm16   decode-1reg-imm16
-opcode: #addi     addi;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #subi     subi;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #rshifti  rshifti;            encode-2reg-imm16   decode-2reg-imm16
-opcode: #lshifti  lshifti;            encode-2reg-imm16   decode-2reg-imm16
-opcode: #ldtincr  ldtincr;            encode-2reg         decode-2reg
-opcode: #lti      lti;                encode-2reg-imm16   decode-2reg-imm16
-opcode: #move     move;               encode-2reg         decode-2reg
-opcode: #sttincr  sttincr;            encode-2reg         decode-2reg
-opcode: #addw     addw;               encode-3reg         decode-wide-3reg
-opcode: #subw     subw;               encode-3reg         decode-wide-3reg
-opcode: #pushw    pushw;              encode-2reg         decode-wide-2reg
-opcode: #popw     popw;               encode-2reg         decode-wide-2reg
-opcode: #return   return;             encode-1reg         decode-1reg
-opcode: #creturn  ?return;            encode-2reg         decode-2reg
-opcode: #invertw  invertw;            encode-2reg         decode-wide-2reg
-opcode: #bi       branch;             encode-imm16        decode-imm16
-opcode: #eqz      eqz;                encode-2reg         decode-2reg
-opcode: #neqz     neqz;               encode-2reg         decode-2reg
-opcode: #ltz      ltz;                encode-2reg         decode-2reg
-opcode: #gtz      gtz;                encode-2reg         decode-2reg
-opcode: #lez      lez;                encode-2reg         decode-2reg
-opcode: #gez      gez;                encode-2reg         decode-2reg
-opcode: #andi     andi;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #uandi    andi;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #muli     muli;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #divi     divi;               encode-2reg-imm16   decode-2reg-imm16
-opcode: #pushi    pushi;              encode-1reg-imm16   decode-1reg-imm16
-opcode: #memincr  memincr;            encode-1reg         decode-1reg
-opcode: #memdecr  memdecr;            encode-1reg         decode-1reg
-opcode: #stop     stop;               encode-1reg         decode-1reg \ stop execution
+(       name      operation           decoder            )
+opcode: #illegal  illegal-instruction illegal-instruction
+opcode: #add      add;                decode-3reg
+opcode: #sub      sub;                decode-3reg
+opcode: #mul      mul;                decode-3reg
+opcode: #div      div;                decode-3reg
+opcode: #rem      rem;                decode-3reg
+opcode: #lshift   lshift;             decode-3reg
+opcode: #rshift   rshift;             decode-3reg
+opcode: #and      and;                decode-3reg
+opcode: #or       or;                 decode-3reg
+opcode: #invert   invert;             decode-2reg
+opcode: #xor      xor;                decode-3reg
+opcode: #min      min;                decode-3reg
+opcode: #max      max;                decode-3reg
+opcode: #eq       eq;                 decode-3reg
+opcode: #neq      neq;                decode-3reg
+opcode: #lt       lt;                 decode-3reg
+opcode: #gt       gt;                 decode-3reg
+opcode: #le       le;                 decode-3reg
+opcode: #ge       ge;                 decode-3reg
+opcode: #set      set;                decode-1reg-imm16
+opcode: #ld       ld;                 decode-2reg
+opcode: #st       st;                 decode-2reg
+opcode: #push     push;               decode-2reg
+opcode: #pop      pop;                decode-2reg
+opcode: #br       rbranch;            decode-1reg
+opcode: #brl      rbranch-link;       decode-2reg
+opcode: #bcr      ?rbranch;           decode-2reg
+opcode: #bcrl     ?rbranch-link;      decode-3reg
+opcode: #ueq      ueq;                decode-3reg
+opcode: #uneq     uneq;               decode-3reg
+opcode: #ult      ult;                decode-3reg
+opcode: #ugt      ugt;                decode-3reg
+opcode: #ule      ule;                decode-3reg
+opcode: #uge      uge;                decode-3reg
+opcode: #uand     and;                decode-3reg
+opcode: #uor      or;                 decode-3reg
+opcode: #uinvert  invert;             decode-2reg
+opcode: #uxor     xor;                decode-3reg
+opcode: #umin     umin;               decode-3reg
+opcode: #umax     umax;               decode-3reg
+opcode: #uadd     add;                decode-3reg
+opcode: #usub     sub;                decode-3reg
+opcode: #umul     mul;                decode-3reg
+opcode: #udiv     div;                decode-3reg
+opcode: #urem     rem;                decode-3reg
+opcode: #ulshift  lshift;             decode-3reg
+opcode: #urshift  rshift;             decode-3reg
+opcode: #incr     1+;                 decode-2reg
+opcode: #decr     1-;                 decode-2reg
+opcode: #uincr    1+;                 decode-2reg
+opcode: #udecr    1-;                 decode-2reg
+opcode: #call     call;               decode-1reg-imm16
+opcode: #condb    ?branch;            decode-1reg-imm16
+opcode: #addi     addi;               decode-2reg-imm16
+opcode: #subi     subi;               decode-2reg-imm16
+opcode: #rshifti  rshifti;            decode-2reg-imm16
+opcode: #lshifti  lshifti;            decode-2reg-imm16
+opcode: #ldtincr  ldtincr;            decode-2reg
+opcode: #lti      lti;                decode-2reg-imm16
+opcode: #move     move;               decode-2reg
+opcode: #sttincr  sttincr;            decode-2reg
+opcode: #addw     addw;               decode-wide-3reg
+opcode: #subw     subw;               decode-wide-3reg
+opcode: #pushw    pushw;              decode-wide-2reg
+opcode: #popw     popw;               decode-wide-2reg
+opcode: #return   return;             decode-1reg
+opcode: #creturn  ?return;            decode-2reg
+opcode: #invertw  invertw;            decode-wide-2reg
+opcode: #bi       branch;             decode-imm16
+opcode: #eqz      eqz;                decode-2reg
+opcode: #neqz     neqz;               decode-2reg
+opcode: #ltz      ltz;                decode-2reg
+opcode: #gtz      gtz;                decode-2reg
+opcode: #lez      lez;                decode-2reg
+opcode: #gez      gez;                decode-2reg
+opcode: #andi     andi;               decode-2reg-imm16
+opcode: #uandi    andi;               decode-2reg-imm16
+opcode: #muli     muli;               decode-2reg-imm16
+opcode: #divi     divi;               decode-2reg-imm16
+opcode: #pushi    pushi;              decode-1reg-imm16
+opcode: #memincr  memincr;            decode-1reg
+opcode: #memdecr  memdecr;            decode-1reg
+opcode: #stop     stop;               decode-1reg \ stop execution
 opcode}

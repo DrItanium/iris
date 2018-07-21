@@ -523,13 +523,17 @@ defbinaryop umax; umax
 : opcode: ( n "name" "body" "encoder" "decoder" -- n+1 )
   create addr8 dup , ( n8 n8 )
   ' over ( n8 n8 "body" n8 ) bodies ! ( n8 )
-  ' over ( n8 n8 "encoder" n8 ) encoders ! ( n8 )
   ' over ( n8 "decoder" n8 ) decoders ! ( n8 )
   1+ 
-  does> ( args* -- encoded-args* control count )
-  ( args* addr )
-  @ ( args* c ) dup ( args* c c ) >r ( args* c count )
-  encoders @ execute 1+ ( advance the counter first ) r> addr8 swap ;
+  does> ( -- opcode )
+  @ ;
+: encoder: ( n "name" "op" -- )
+  create dup , ' swap encoders ! 
+  does> ( args* -- encoded-args control count )
+	    @ dup >r ( args* c ) 
+	    encoders @ execute 
+		1+ \ advance the counter first 
+		r> addr8 swap ;
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
@@ -558,6 +562,7 @@ set-current
   pc@ inst! pc@ + pc! ;
 : opcode>idx ( opcode -- idx ) 2 cells + @ ;
 include ./opcodes.fs
+include ./encoders.fs
 _r0 constant x0 
 _r1 constant x1 
 _r2 constant x2 
@@ -578,7 +583,7 @@ _r15 constant x15
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : examine-byte ( address -- ) dup load-byte swap . ." : " . cr ;
-: print-registers ( -- ) cr
+: inspect-registers ( -- ) cr
   base @ >r
   ." pc: 0x" pc@ hex . cr
   ." x0: 0x" x0 x@ hex . cr 
