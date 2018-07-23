@@ -1,22 +1,22 @@
 \ generic register definitions
 : {registers ( -- 0 ) 0 ;
 : registers} ( n -- ) drop ;
-: register: ( n -- n+1 ) constant 
+: register: ( n -- n+1 ) dup constant 1+ ;
 {registers
-register: r0
-register: r1
-register: r2
-register: r3
-register: r4
-register: r5
-register: r6
-register: r7
-register: r8
-register: r9
-register: r10
-register: r11
-register: r12
-register: r13
-register: r14
-register: r15
+register: x0
+register: x1
+register: x2
+register: x3
+register: x4
+register: x5
+register: x6
+register: x7
+register: x8
+register: x9
+register: x10
+register: x11
+register: x12
+register: x13
+register: x14
+register: x15
 registers}

@@ -597,11 +597,11 @@ defbinaryop umax; umax
 #memdecr  ' memdecr;       opcode1
 #stop     ' stop;          opcode1 \ stop execution
 
-: asm: ( n op "name" -- )
-  create swap , , 
-  does> ( args* -- args* control len )
-  2@ ( args* op n ) >r ( args* op )
-  execute 1+ r> addr8 swap ;
+\ : asm: ( n op "name" -- )
+\   create swap , , 
+\   does> ( args* -- args* control len )
+\   2@ ( args* op n ) >r ( args* op )
+\   execute 1+ r> addr8 swap ;
 \ : asm3: ( n "name" -- ) ['] encode-3reg asm: ;
 \ : asm2: ( n "name" -- ) ['] encode-2reg asm: ;
 \ : asm1: ( n "name" -- ) ['] encode-1reg asm: ;
