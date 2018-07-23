@@ -512,7 +512,7 @@ defbinaryop umax; umax
 : opcode3w ( n body -- ) ['] decode-wide-3reg opcode ;
 : opcodei16 ( n body -- ) ['] decode-imm16 opcode ;
 \ wiring 
-#illegal ' illegal-instruction ' illegal-instruction opcode
+#illegal  ' illegal-instruction ' illegal-instruction opcode
 #add      ' add;           opcode3
 #sub      ' sub;           opcode3
 #mul      ' mul;           opcode3
@@ -602,14 +602,14 @@ defbinaryop umax; umax
   does> ( args* -- args* control len )
   2@ ( args* op n ) >r ( args* op )
   execute 1+ r> addr8 swap ;
-: asm3: ( n "name" -- ) ['] encode-3reg asm: ;
-: asm2: ( n "name" -- ) ['] encode-2reg asm: ;
-: asm1: ( n "name" -- ) ['] encode-1reg asm: ;
-: asm0: ( n "name" -- ) ['] encode-0reg asm: ;
-: asm4: ( n "name" -- ) ['] encode-4reg asm: ;
-: asm1i16: ( n "name" -- ) ['] encode-1reg-imm16 asm: ;
-: asm2i16: ( n "name" -- ) ['] encode-2reg-imm16 asm: ;
-: asmi16: ( n "name" -- ) ['] encode-imm16 asm: ;
+\ : asm3: ( n "name" -- ) ['] encode-3reg asm: ;
+\ : asm2: ( n "name" -- ) ['] encode-2reg asm: ;
+\ : asm1: ( n "name" -- ) ['] encode-1reg asm: ;
+\ : asm0: ( n "name" -- ) ['] encode-0reg asm: ;
+\ : asm4: ( n "name" -- ) ['] encode-4reg asm: ;
+\ : asm1i16: ( n "name" -- ) ['] encode-1reg-imm16 asm: ;
+\ : asm2i16: ( n "name" -- ) ['] encode-2reg-imm16 asm: ;
+\ : asmi16: ( n "name" -- ) ['] encode-imm16 asm: ;
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
 : i>x ( idx -- reg ) idx>reg ;
@@ -641,6 +641,7 @@ set-current
 : examine-memory ( -- ) data-memory memory-size-in-cells cells dump ;
 : examine-word ( address -- ) dup load-word swap . ." : " . cr ;
 : examine-byte ( address -- ) dup load-byte swap . ." : " . cr ;
+data-memory constant _memory
 : inspect-registers ( -- ) cr
   base @ >r
   ." pc: 0x" pc@ hex . cr

@@ -38,13 +38,13 @@ dup set-current
 : disasm-inst ( addr w -- ) 
   \G disassemble instruction w at addr (addr is used for computing 
   \G branch targets)
-  dup disasm-op instruction-table @ execute ;
+  instruction-table @ execute ;
 
 : disasm ( addr u -- ) \ gforth
   \G disassemble u aus starting at addr
   bounds u+do
-  cr ." ( " i hex. ." ) " i i @ disasm-inst
-  1 cells +loop
+  cr ." ( " i hex. ." ) " i i c@ disasm-inst
+  1+ +loop 
   cr ;
 
 ' disasm IS discode
@@ -56,35 +56,51 @@ definitions
   dup disasm-op instruction-table @ execute ;
 
 \ disassemble various formats
-: disasm-noargs ( addr w -- ) 2drop ;
-: disasm-1reg ( addr w -- ) disasm-rdest . drop ; 
-: disasm-2reg ( addr w -- ) 
-  dup disasm-rsrc . 
-  disasm-rdest .  drop ;
-: disasm-3reg ( addr w -- ) 
-  dup disasm-rsrc2 . 
-  dup disasm-rsrc .
-  disasm-rdest . drop ;
-: disasm-4reg ( addr w  -- )
-  dup disasm-rsrc3 .
-  dup disasm-rsrc2 .
-  dup disasm-rsrc .
-  disasm-rdest .  drop ;
+: disasm-noargs ( addr -- 1 ) drop 1 ;
+: disasm-1reg ( addr -- n ) 1+ c@ disasm-rdest . 1 ;
+: disasm-2reg ( addr -- n ) 
+  1+ c@ dup  
+  disasm-rsrc .
+  disasm-rdest . 1 ;
+: disasm-3reg ( addr -- n ) 
+  1+ dup ( addr+1 addr+1 )
+  1+ ( addr+1 addr+2 )
+  c@ disasm-rsrc2 . ( addr+1 )
+  c@ dup ( l u )
+  disasm-rsrc .
+  disasm-rdest . 2 ;
+: disasm-4reg ( addr -- n ) 
+  1+ dup ( addr+1 addr+1 )
+  1+ ( addr+1 addr+2 )
+  c@ dup ( addr+1 l u ) 
+  disasm-rsrc3 . ( addr+1 l )
+  disasm-rsrc2 . ( addr+1 )
+  c@ dup ( l u )
+  disasm-rsrc .
+  disasm-rdest . 2 ;
+: disasm-1reg-imm16 ( addr -- n )
+  1+ dup ( a+1 a+1 )
+  1+ dup c@ ( a+1 a+2 v ) 
+  swap 1+ c@ ( a+1 v v2 )
+  8 lshift ( a+1 v v2<<8 )
+  or ( a+1 imm )
+  0xFFFF and hex . ( a+1 )
+  c@ disasm-rdest . 3 ;
+: disasm-imm16-only ( addr -- n )
+  1+ dup ( a+1 a+1 )
+  c@ swap ( v a+1 )
+  1+ ( v a+2 )
+  c@ 8 lshift or 0xFFFF and hex . 2 ;
 
-: disasm-1reg-imm16 ( addr w -- )
-  dup disasm-imm16 . 
-  disasm-rdest .  drop ;
-: disasm-imm16-only ( addr w -- )
-  disasm-imm16-noreg . drop ;
-
-: disasm-2reg-imm16 ( addr w -- )
-  dup disasm-imm16 .
-  dup disasm-rsrc .
-  disasm-rdest .  drop ;
-
-: disasm-1reg-imm8 ( addr w -- )
-  dup disasm-imm8-with-reg . 
-  disasm-rdest .  drop ;
+: disasm-2reg-imm16 ( addr -- n )
+  1+ dup ( a+1 a+1 )
+  1+ dup c@ ( a+1 a+2 v ) 
+  swap 1+ c@ ( a+1 v v2 )
+  8 lshift ( a+1 v v2<<8 )
+  or ( a+1 imm )
+  0xFFFF and hex . ( a+1 )
+  c@ dup disasm-rsrc .
+  disasm-rdest . 3 ;
 
 : disasm-2wreg ( addr w -- ) disasm-2reg ;
 : disasm-3wreg ( addr w -- ) disasm-3reg ;
@@ -121,7 +137,6 @@ does> ( addr w -- )
 ' disasm-4reg ' instruction-table define-format asm4:
 ' disasm-1reg-imm16 ' instruction-table define-format asm1i16:
 ' disasm-2reg-imm16 ' instruction-table define-format asm2i16:
-' disasm-1reg-imm8 ' instruction-table define-format asm1i8
 ' disasm-2wreg ' instruction-table define-format asm2w: 
 ' disasm-3wreg ' instruction-table define-format asm3w:
 ' disasm-imm16-only ' instruction-table define-format asmi16:
@@ -129,4 +144,4 @@ does> ( addr w -- )
 include ./opcodes.fs
 include ./asmops.fs
 
- previous set-current
+previous set-current
