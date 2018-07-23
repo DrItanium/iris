@@ -1,9 +1,11 @@
 \ iris assembler for gforth
+require code.fs
+: addr8 ( i -- i8 ) 0xFF and ; 
+: addr4 ( i -- i4 ) 0x0F and ;
+: num>reg ( i -- ri ) 0xF and ;
 get-current
 also assembler definitions
 include ./opcodes.fs
-: addr8 ( i -- i8 ) 0xFF and ; 
-: num>reg ( i -- ri ) 0xF and ;
 : do-asm0: ( -- ) 0 c, ;
 : do-asm1: ( dest -- ) num>reg addr8 c, ;
 : do-asm2: ( src dest -- ) num>reg swap num>reg 4 lshift or addr8 c, ;
@@ -22,5 +24,6 @@ include ./opcodes.fs
 : asm1i16: ( n -- ) create c, does> stash-opcode do-asm1i16: ;
 : asm2i16: ( n -- ) create c, does> stash-opcode do-asm2i16: ;
 include ./asmops.fs
+include ./registers.fs
 
 previous set-current
