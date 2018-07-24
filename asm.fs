@@ -22,7 +22,7 @@
 \ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \ iris assembler for gforth
 require code.fs
-require ./iris.fs
+require ./core.fs
 : addr8 ( i -- i8 ) 0xFF and ; 
 : addr4 ( i -- i4 ) 0x0F and ;
 : num>reg ( i -- ri ) 0xF and ;
