@@ -38,7 +38,7 @@ also disassembler definitions
     0 of ." x0 " endof 1 of ." x1 " endof 2 of ." x2 " endof 3 of ." x3 " endof
     4 of ." x4 " endof 5 of ." x5 " endof 6 of  ." x6 " endof 7 of ." x7 " endof
     8 of ." x8 " endof 9 of ." x9 " endof 10 of ." x10 " endof 11 of ." x11 " endof
-    12 of ." x12" endof 13 of ." x13 " endof 14 of ." x14 " endof 15 of ." x15 " endof
+    12 of ." x12 " endof 13 of ." x13 " endof 14 of ." x14 " endof 15 of ." x15 " endof
     abort" Illegal Register!"
   endcase 
   ;
