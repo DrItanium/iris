@@ -56,5 +56,5 @@ include ./opcodes.fs
 : asm2i16: ( n -- ) create c, does> stash-opcode do-asm2i16: ;
 include ./asmops.fs
 include ./registers.fs
-
+: irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
 previous set-current
