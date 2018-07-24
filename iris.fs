@@ -111,7 +111,7 @@ create data-memory memory-size-in-cells cells allot
 : dump-data-memory ( -- )
   data-memory memory-size-in-cells cells dump ;
 : upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
-: store-byte ( v a -- ) addr8 data-memory + c! ;
+: store-byte ( v a -- ) swap addr8 swap addr16 data-memory + c! ;
 : store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
 : load-byte ( addr -- value ) addr16 data-memory + c@ ;
 : load-word ( addr -- value ) 

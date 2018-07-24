@@ -22,21 +22,30 @@
 \ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \ iris assembler for gforth
 require code.fs
+require ./iris.fs
 : addr8 ( i -- i8 ) 0xFF and ; 
 : addr4 ( i -- i4 ) 0x0F and ;
 : num>reg ( i -- ri ) 0xF and ;
+: addr16 ( i -- ri ) 0xFFFF and ;
+variable memory_base
+variable memory_offset
+: byte, ( i -- ) memory_offset @ addr16 memory_base @ + c! 
+                 memory_offset @ 1+ addr16 memory_offset ! ;
+: .org ( value -- ) addr16 memory_offset ! ;
 get-current
 also assembler definitions
+_memory memory_base !
+0 memory_offset !
 include ./opcodes.fs
-: do-asm0: ( -- ) 0 c, ;
-: do-asm1: ( dest -- ) num>reg addr8 c, ;
-: do-asm2: ( src dest -- ) num>reg swap num>reg 4 lshift or addr8 c, ;
+: do-asm0: ( -- ) 0 byte, ;
+: do-asm1: ( dest -- ) num>reg addr8 byte, ;
+: do-asm2: ( src dest -- ) num>reg swap num>reg 4 lshift or addr8 byte, ;
 : do-asm3: ( src2 src dest -- ) do-asm2: do-asm1: ;
 : do-asm4: ( s3 s2 s d -- ) do-asm2: do-asm2: ;
-: do-asmi16: ( imm16 -- ) dup addr8 c, 8 rshift addr8 c, ;
+: do-asmi16: ( imm16 -- ) dup addr8 byte, 8 rshift addr8 byte, ;
 : do-asm1i16: ( imm16 dest -- ) do-asm1: do-asmi16: ;
 : do-asm2i16: ( imm16 src dest -- ) do-asm2: do-asmi16: ;
-: stash-opcode ( n -- ) c@ addr8 c, ;
+: stash-opcode ( n -- ) c@ addr8 byte, ;
 : asm0: ( n -- ) create c, does> stash-opcode do-asm0: ;
 : asm1: ( n -- ) create c, does> stash-opcode do-asm1: ;
 : asm2: ( n -- ) create c, does> stash-opcode do-asm2: ;

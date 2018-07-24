@@ -27,18 +27,29 @@ get-current
 vocabulary disassembler
 also disassembler definitions
 \ instruction fields
+: addr4 ( w -- w ) 0x0F and ;
+: addr16 ( w -- w16 ) 0xFFFF and ;
 : disasm-op ( w -- u )
   \ lowest eight bits
   0xFF and ;
-: disasm-register ( w shift -- u ) rshift 0x0F and ;
-: disasm-rdest ( w -- u )  8 disasm-register ;
-: disasm-rsrc ( w -- u )  12 disasm-register ;
-: disasm-rsrc2 ( w -- u ) 16 disasm-register ;
-: disasm-rsrc3 ( w -- u ) 20 disasm-register ;
-: disasm-imm16 ( w -- u ) 16 rshift 0xFFFF and ;
-: disasm-imm16-noreg ( w -- u ) 12 rshift 0xFFFF and ;
+: print-reg ( index -- ) 
+  addr4
+  case
+    0 of ." x0 " endof 1 of ." x1 " endof 2 of ." x2 " endof 3 of ." x3 " endof
+    4 of ." x4 " endof 5 of ." x5 " endof 6 of  ." x6 " endof 7 of ." x7 " endof
+    8 of ." x8 " endof 9 of ." x9 " endof 10 of ." x10 " endof 11 of ." x11 " endof
+    12 of ." x12" endof 13 of ." x13 " endof 14 of ." x14 " endof 15 of ." x15 " endof
+    abort" Illegal Register!"
+  endcase 
+  ;
+: disasm-register ( w shift -- ) rshift print-reg ;
+: disasm-rdest ( w -- )  0 disasm-register ;
+: disasm-rsrc ( w -- )  4 disasm-register ;
+: disasm-rsrc2 ( w -- ) 0 disasm-register ;
+: disasm-rsrc3 ( w -- ) 4 disasm-register ;
+: disasm-imm16 ( w -- u ) 16 rshift addr16 ;
+: disasm-imm16-noreg ( w -- u ) 12 rshift addr16 ;
 : disasm-imm8-with-reg ( w -- u ) 16 rshift 0xFF and ;
-
 \ decode tables
 
 : disasm-illegal ( addr w -- )
@@ -79,40 +90,40 @@ definitions
 
 \ disassemble various formats
 : disasm-noargs ( addr -- 1 ) drop 1 ;
-: disasm-1reg ( addr -- n ) 1+ c@ disasm-rdest . 1 ;
-: disasm-2reg ( addr -- n ) 
-  1+ c@ dup  
-  disasm-rsrc .
-  disasm-rdest . 1 ;
-: disasm-3reg ( addr -- n ) 
+: disasm-1reg ( addr -- n ) 1+ c@ disasm-rdest  1 ;
+: disasm-2reg ( addr -- n )
+  1+ c@ dup 
+  disasm-rsrc 
+  disasm-rdest 1 ;
+: disasm-3reg ( addr -- n )
   1+ dup ( addr+1 addr+1 )
   1+ ( addr+1 addr+2 )
-  c@ disasm-rsrc2 . ( addr+1 )
+  c@ disasm-rsrc2 ( addr+1 )
   c@ dup ( l u )
-  disasm-rsrc .
-  disasm-rdest . 2 ;
+  disasm-rsrc 
+  disasm-rdest  2 ;
 : disasm-4reg ( addr -- n ) 
   1+ dup ( addr+1 addr+1 )
   1+ ( addr+1 addr+2 )
   c@ dup ( addr+1 l u ) 
-  disasm-rsrc3 . ( addr+1 l )
-  disasm-rsrc2 . ( addr+1 )
+  disasm-rsrc3  ( addr+1 l )
+  disasm-rsrc2  ( addr+1 )
   c@ dup ( l u )
-  disasm-rsrc .
-  disasm-rdest . 2 ;
+  disasm-rsrc 
+  disasm-rdest  2 ;
 : disasm-1reg-imm16 ( addr -- n )
   1+ dup ( a+1 a+1 )
   1+ dup c@ ( a+1 a+2 v ) 
   swap 1+ c@ ( a+1 v v2 )
   8 lshift ( a+1 v v2<<8 )
   or ( a+1 imm )
-  0xFFFF and hex . ( a+1 )
-  c@ disasm-rdest . 3 ;
+  addr16 hex . ( a+1 )
+  c@ disasm-rdest 3 ;
 : disasm-imm16-only ( addr -- n )
   1+ dup ( a+1 a+1 )
   c@ swap ( v a+1 )
   1+ ( v a+2 )
-  c@ 8 lshift or 0xFFFF and hex . 2 ;
+  c@ 8 lshift or addr16 hex . 2 ;
 
 : disasm-2reg-imm16 ( addr -- n )
   1+ dup ( a+1 a+1 )
@@ -120,9 +131,9 @@ definitions
   swap 1+ c@ ( a+1 v v2 )
   8 lshift ( a+1 v v2<<8 )
   or ( a+1 imm )
-  0xFFFF and hex . ( a+1 )
-  c@ dup disasm-rsrc .
-  disasm-rdest . 3 ;
+  addr16 hex . ( a+1 )
+  c@ dup disasm-rsrc 
+  disasm-rdest 3 ;
 
 : disasm-2wreg ( addr w -- ) disasm-2reg ;
 : disasm-3wreg ( addr w -- ) disasm-3reg ;
