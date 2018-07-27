@@ -47,22 +47,10 @@ does> ( u -- addr )
 : addr12 ( a -- b ) 0x0FFF and ; 
 : register ( "name" -- ) variable 0 latest name>int execute ! ;
 
-register x0
-register x1 
-register x2
-register x3
-register x4
-register x5
-register x6
-register x7
-register x8
-register x9
-register x10
-register x11
-register x12
-register x13
-register x14
-register x15
+register  x0 register x1  register x2  register x3
+register  x4 register x5  register x6  register x7
+register  x8 register x9  register x10 register x11
+register x12 register x13 register x14 register x15
 register pc
 register imm
 register ?running
@@ -356,6 +344,10 @@ defbinaryop umin; umin
   dup 4 rshift addr4 idx>reg swap 
   addr4 idx>reg ;
 
+: decode-1reg-imm4 ( -- imm dest )
+  @pc@1+ dup ( b1 b1 )
+  get-dest swap ( dest b1 )
+  4 rshift addr4 swap ( imm4 dest ) ;
 
 : invert; ( src dest -- ) 
   swap get-reg 
@@ -496,7 +488,6 @@ defbinaryop umax; umax
   pop; ;
 
 : stop; ( dest -- ) get-reg ?running ! ;
-: zero; ( dest -- ) 0 swap set-reg ;
 
 : opcode ( n body decoder -- ) 
   rot addr8 ( body decoder n ) 
@@ -512,6 +503,8 @@ defbinaryop umax; umax
 : opcode2w ( n body -- ) ['] decode-wide-2reg opcode ;
 : opcode3w ( n body -- ) ['] decode-wide-3reg opcode ;
 : opcodei16 ( n body -- ) ['] decode-imm16 opcode ;
+: opcode1i4 ( n body -- ) ['] decode-1reg-imm4 opcode ;
+: opcode1i8 ( n body -- ) ['] decode-one-reg-imm8 opcode ;
 \ wiring 
 #illegal  ' illegal-instruction ' illegal-instruction opcode
 #add      ' add;           opcode3
@@ -597,21 +590,9 @@ defbinaryop umax; umax
 #memincr  ' memincr;       opcode1
 #memdecr  ' memdecr;       opcode1
 #stop     ' stop;          opcode1 \ stop execution
-#zero     ' zero;          opcode1 
+#set4     ' set;           opcode1i4
+#set8     ' set;           opcode1i8
 
-\ : asm: ( n op "name" -- )
-\   create swap , , 
-\   does> ( args* -- args* control len )
-\   2@ ( args* op n ) >r ( args* op )
-\   execute 1+ r> addr8 swap ;
-\ : asm3: ( n "name" -- ) ['] encode-3reg asm: ;
-\ : asm2: ( n "name" -- ) ['] encode-2reg asm: ;
-\ : asm1: ( n "name" -- ) ['] encode-1reg asm: ;
-\ : asm0: ( n "name" -- ) ['] encode-0reg asm: ;
-\ : asm4: ( n "name" -- ) ['] encode-4reg asm: ;
-\ : asm1i16: ( n "name" -- ) ['] encode-1reg-imm16 asm: ;
-\ : asm2i16: ( n "name" -- ) ['] encode-2reg-imm16 asm: ;
-\ : asmi16: ( n "name" -- ) ['] encode-imm16 asm: ;
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
 : i>x ( idx -- reg ) idx>reg ;

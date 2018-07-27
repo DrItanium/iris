@@ -104,4 +104,5 @@
 #memincr  asm1: memincr,           
 #memdecr  asm1: memdecr,           
 #stop     asm1: stop,              
-#zero     asm1: zero,
+#set4     asm1i4: set4,
+#set8     asm1i8: set8,

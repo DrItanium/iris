@@ -28,6 +28,7 @@ vocabulary disassembler
 also disassembler definitions
 \ instruction fields
 : addr4 ( w -- w ) 0x0F and ;
+: addr8 ( w -- w ) 0xFF and ;
 : addr16 ( w -- w16 ) 0xFFFF and ;
 : disasm-op ( w -- u )
   \ lowest eight bits
@@ -137,6 +138,16 @@ definitions
 
 : disasm-2wreg ( addr w -- ) disasm-2reg ;
 : disasm-3wreg ( addr w -- ) disasm-3reg ;
+: disasm-1reg-imm4 ( addr -- n ) 
+  1+ c@ dup 
+  4 rshift addr4 hex . 
+  disasm-rdest 1 ;
+: disasm-1reg-imm8 ( addr -- n )
+  1+ dup ( a+1 a+1 )
+  1+ c@ addr8 hex .
+  c@ dup disasm-rsrc 
+  disasm-rdest 2 ;
+  
 
 
 \ meta-definining word for instruction format disassembling definitions
@@ -173,6 +184,8 @@ does> ( addr w -- )
 ' disasm-2wreg ' instruction-table define-format asm2w: 
 ' disasm-3wreg ' instruction-table define-format asm3w:
 ' disasm-imm16-only ' instruction-table define-format asmi16:
+' disasm-1reg-imm4 ' instruction-table define-format asm1i4:
+' disasm-1reg-imm8 ' instruction-table define-format asm1i8:
 
 include ./opcodes.fs
 include ./asmops.fs

@@ -45,6 +45,8 @@ include ./opcodes.fs
 : do-asmi16: ( imm16 -- ) dup addr8 byte, 8 rshift addr8 byte, ;
 : do-asm1i16: ( imm16 dest -- ) do-asm1: do-asmi16: ;
 : do-asm2i16: ( imm16 src dest -- ) do-asm2: do-asmi16: ;
+: do-asm1i4: ( imm4 dest -- ) do-asm2: ;
+: do-asm1i8: ( imm8 dest -- ) do-asm1: addr8 byte, ;
 : stash-opcode ( n -- ) c@ addr8 byte, ;
 : asm0: ( n -- ) create c, does> stash-opcode do-asm0: ;
 : asm1: ( n -- ) create c, does> stash-opcode do-asm1: ;
@@ -54,19 +56,36 @@ include ./opcodes.fs
 : asmi16: ( n -- ) create c, does> stash-opcode do-asmi16: ;
 : asm1i16: ( n -- ) create c, does> stash-opcode do-asm1i16: ;
 : asm2i16: ( n -- ) create c, does> stash-opcode do-asm2i16: ;
+: asm1i4: ( n -- ) create c, does> stash-opcode do-asm1i4: ;
+: asm1i8: ( n -- ) create c, does> stash-opcode do-asm1i8: ;
 include ./asmops.fs
 include ./registers.fs
 x15 constant xtmp
-: set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
 : move, ( src dest -- ) 2dup = if 2drop else move, endif ;
-: set, ( imm dest -- ) 
+: zero, ( dest -- ) 0 swap set4, ;
+: set4, ( imm dest -- ) 
   >r dup 0= 
   if 
-    drop r> zero, 
+     drop r> zero, 
   else
-    r> set, 
+    addr4 r> set4, 
   endif ;
+: set8, ( imm dest -- )
+  >r dup dup addr4 = 
+  if \ is 4 bits wide
+     r> set4, 
+  else \ it is 8 bits wide
+     addr8 r> set8,
+  endif ;
+: set, ( imm dest -- ) 
+  >r dup dup addr8 = 
+  if ( 8 bits wide )
+     r> set8, \ this will check to see if we should do set4
+  else 
+     r> set, 
+  endif ;
+: set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 
 : rshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> rshifti, endif ;
 : lshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> lshifti, endif ;
@@ -168,4 +187,15 @@ x15 constant xtmp
 : stopi, ( imm -- ) set-tmp, stop, ;
 : ldi, ( imm dest -- ) >r set-tmp, r> ld, ;
 : sti, ( src imm -- ) set-tmp, st, ; 
+: square, ( src dest -- ) over swap mul, ;
+: indld, ( src dest -- ) 
+  >r xtmp ld,
+  xtmp r> ld, ;
+: indst, ( src dest -- )
+  \ indirect store
+  swap >r xtmp ld,
+  r> xtmp st, ;
+
+  
+
 previous set-current
