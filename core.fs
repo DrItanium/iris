@@ -545,8 +545,6 @@ defbinaryop umax; umax
 #umax     ' umax;          opcode3
 #incr     ' 1+;            opcode2
 #decr     ' 1-;            opcode2
-#uincr    ' 1+;            opcode2
-#udecr    ' 1-;            opcode2
 #call     ' call;          opcode1i16 
 #condb    ' ?branch;       opcode1i16 
 #addi     ' addi;          opcode2i16 
