@@ -56,8 +56,40 @@ include ./opcodes.fs
 : asm2i16: ( n -- ) create c, does> stash-opcode do-asm2i16: ;
 include ./asmops.fs
 include ./registers.fs
+x15 constant xtmp
+x14 constant xzero
+x13 constant xcv
+: set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
+: move, ( src dest -- ) 2dup = if 2drop else move, endif ;
+: rshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> rshifti, endif ;
+: lshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> lshifti, endif ;
+: zero, ( dest -- ) xzero swap move, ;
+: or, ( src2 src dest -- )
+  >r 2dup = 
+  if 
+    drop r> move, 
+  else
+    r> or, 
+  endif ;
 
+: and, ( src2 src dest -- )
+  >r 2dup = 
+  if 
+    drop r> move, 
+  else
+    r> or, 
+  endif ;
+: andi, ( imm src dest -- )
+  2>r dup 0= 
+  if 
+    drop 2r> nip zero, 
+  else 
+    2r> andi, 
+  endif ;
+ 
+\ can perform checks to simplify logic such as eq, with src and src2 being the same
+\ register always yielding true
 : addi, ( imm src dest -- )
   2>r dup
   case
@@ -76,7 +108,7 @@ include ./registers.fs
 : muli, ( imm src dest -- )
   2>r dup 
     case
-    0 of drop 2r> over swap xor, endof
+    0 of drop 2r> drop zero, endof
     1 of drop 2r> move, endof
     2 of drop 2r> over swap add, endof
     4 of drop 2 2r> lshifti, endof
@@ -97,6 +129,7 @@ include ./registers.fs
     32 of drop 5 2r> rshifti, endof
     2r> divi,
     endcase ;
-
-
+: stopi, ( imm -- ) set-tmp, stop, ;
+: ldi, ( imm dest -- ) >r set-tmp, r> ld, ;
+: sti, ( src imm -- ) set-tmp, st, ; 
 previous set-current
