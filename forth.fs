@@ -43,7 +43,6 @@ data-stack-end constant return-stack-start
 return-stack-start 0x200 - constant return-stack-end
 0x0000 constant input-buffer-start
 input-buffer-start 0x100 + constant input-buffer-end
-
 : 1pop, ( -- ) xsp xtop pop, ;
 : 2pop, ( -- )
     1pop,
@@ -231,4 +230,5 @@ label: cold_
 \ we should not put anything in this area as it could be useful for other things :D
 cold_ branch,
 
+: run ( -- ) memory_base &bootkind + @ addr16 0= if cold_ pc! execute-core else execute-core endif ;
 
