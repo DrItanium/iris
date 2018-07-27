@@ -31,6 +31,14 @@ x1 constant xrp
 x2 constant xtop
 x3 constant xlower
 x4 constant xthird
+x5 constant xfourth
+x2 constant wtop
+x4 constant wlower
+
+0xFE00 constant data-stack-start
+0xFD00 constant data-stack-end
+data-stack-end constant return-stack-start
+return-stack-start 0x200 - constant return-stack-end
 
 : dup, ( -- ) 
   xsp xtop ld,
@@ -68,4 +76,11 @@ defstackbinaryop -, sub,
 defstackbinaryop *, mul, 
 : -rot, ( -- ) rot, rot, ;
 : 2dup, ( -- ) over, over, ;
+: literal, ( imm -- ) xsp pushi, ;
+: drop, ( -- ) xsp xtop pop, ; 
+: 2drop, ( -- ) drop, drop, ;
+0x0000 .org 
+\ setup the stacks
+data-stack-start xsp set,
+return-stack-start xrp set,
 
