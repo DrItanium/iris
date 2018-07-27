@@ -181,6 +181,11 @@ label: spaces_loop_
     xtop xtop decr,
     spaces_loop_ xlower ?branch,
     next,
+label: ok_ ( -- ) 
+    0x6f emiti,
+    0x6b emiti, 
+    newline_ bl,
+    next,
 label: bootmessage_ ( -- ) 
     0x69 emiti, 0x72 emiti, 0x69 emiti, 0x73 emiti, 
     space_ bl,
@@ -191,6 +196,7 @@ label: bootmessage_ ( -- )
 label: interpreter_
     newline_ bl, newline_ bl,
     bootmessage_ bl,
+    ok_ bl,
     bye_ branch,
 label: initcold_
     0 xtop set,
