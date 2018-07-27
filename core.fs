@@ -199,9 +199,9 @@ defbinaryop umin; umin
   swap get-reg 
   store-word ;
 : pushi; ( imm dest -- ) 
-  swap over ( dest imm dest )
-  get-reg ( dest imm dreg )
-  push-word ( n addr ) swap
+  dup >r ( imm dest )
+  get-reg ( imm dreg )
+  push-word ( addr ) r>
   set-reg ;
 : push; ( src dest -- ) 
   swap ( dest src )
@@ -219,8 +219,10 @@ defbinaryop umin; umin
   
 : branch; ( addr -- ) set-pc ;
 : call; ( imm dest -- )
-  get-pc swap pushi;
+  get-pc swap pushi; ( imm )
   branch; ;
+
+
 : rbranch; ( dest -- ) get-reg branch; ;
 : rbranch-link; ( src dest -- ) 
   \ branch to the dest register and push _pc onto the stack at src
