@@ -84,8 +84,8 @@ include ./opcodes.fs
 : 1+-register ( reg -- ) dup get-reg 1+ swap set-reg ;
 : 2+-register ( reg -- ) dup get-reg 2 + swap set-reg ;
 : 1--register ( reg -- ) dup get-reg 1- swap set-reg ;
-: set-pc ( value -- ) pc set-reg ;
 : get-pc ( -- value ) pc get-reg ;
+: set-pc ( value -- ) pc set-reg ;
 : advance-pc ( -- ) get-pc 1+ set-pc ;
 
 \ memory block
@@ -99,8 +99,17 @@ create data-memory memory-size-in-cells cells allot
 : dump-data-memory ( -- )
   data-memory memory-size-in-cells cells dump ;
 : upper-half ( a -- b ) addr16 8 rshift 0x00FF and ;
-: store-byte ( v a -- ) swap addr8 swap addr16 data-memory + c! ;
-: store-word ( value addr -- ) 2dup store-byte 1+ swap 8 rshift swap store-byte ;
+: store-byte ( v a -- ) 
+  addr16 data-memory + swap addr8 swap c! ;
+: store-word ( value addr -- ) 
+  addr16
+  2dup ( v a v a )
+  store-byte ( v a )
+  1+ addr16 ( v a+1 )
+  swap ( a+1 v )
+  8 rshift ( a+1 v>>8 ) 
+  addr8 ( a+1 v8 )
+  swap store-byte ;
 : load-byte ( addr -- value ) addr16 data-memory + c@ ;
 : load-word ( addr -- value ) 
   dup load-byte 0xFF and ( addr l )
@@ -121,12 +130,14 @@ create data-memory memory-size-in-cells cells allot
 : pop-byte ( addr -- value addr+1 )
   dup load-byte swap 1+ ;
 : push-word ( value addr -- addr-2 ) 
-  2 - dup 
-  -rot 
-  store-word ;
+  2 - dup ( value addr-2 addr-2 )
+  -rot ( addr-2 value addr-2 )
+  store-word ( addr-2 ) ;
 : pop-word ( addr -- value addr+2 ) 
-  dup load-word 
-  swap 2 + ; 
+  dup ( addr addr ) 
+  load-word ( addr value ) 
+  swap 2 + ( value addr+2 ) 
+  ;
 
 : @pc@ ( -- value ) get-pc load-byte ;
 : @pc@1+ ( -- value )
@@ -188,19 +199,24 @@ defbinaryop umin; umin
   swap get-reg 
   store-word ;
 : pushi; ( imm dest -- ) 
-  swap over 
-  get-reg 
-  push-word ( n ) 
+  swap over ( dest imm dest )
+  get-reg ( dest imm dreg )
+  push-word ( n addr ) swap
   set-reg ;
 : push; ( src dest -- ) 
   swap ( dest src )
   get-reg swap pushi; ;
 
 : pop; ( src dest -- )
-  over get-reg pop-word ( src dest value addr+2 )
-  >r ( src dest value )
-  swap set-reg r>
-  swap set-reg ;
+  over ( src dest src )
+  get-reg ( src dest a )
+  pop-word ( src dest value addr+2 )
+  -rot ( src addr+2 dest value ) 
+  swap ( s a2 v d )
+  set-reg ( s a2 )
+  swap ( a2 s )
+  set-reg ;
+  
 : branch; ( addr -- ) set-pc ;
 : call; ( imm dest -- )
   get-pc swap pushi;
@@ -251,9 +267,10 @@ defbinaryop umin; umin
 
 : return; ( dest -- ) 
   \ pop the top element from the stack pointer and store it in _pc
-  dup pop-word ( dest value addr ) 
-  swap ( dest addr value )
-  set-pc ( dest addr )
+  dup ( dest dest )
+  pop-word ( dest value addr ) 
+  swap ( dest addr value ) 
+  set-pc ( dest addr ) 
   swap set-reg ;
 : ?return; ( src dest -- )
   swap get-reg 

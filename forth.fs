@@ -40,33 +40,10 @@ x4 constant wlower
 data-stack-end constant return-stack-start
 return-stack-start 0x200 - constant return-stack-end
 
-: dup, ( -- ) 
-  xsp xtop ld,
-  xtop xsp push, ;
-: over, ( -- )
-  2 xsp xtop addi,
-  xtop xtop ld,
-  xtop xsp pushi, ;
-: swap, ( -- )
-  xsp xtop pop,
-  xsp xlower pop,
-  xtop xsp push,
-  xlower xsp push, ;
-
-: rot, ( -- ) 
-  \ a b c -- b c a 
-  xsp xtop pop,  \ c
-  xsp xlower pop, \ b 
-  xsp xthird pop, \ a
-  xlower xsp push, 
-  xtop xsp push,
-  xthird xsp push, ;
 : 2pop, ( -- )
     xsp xtop pop,
     xsp xlower pop, ;
 : literal, ( imm -- ) xsp pushi, ;
-: drop, ( -- ) xsp xtop pop, ; 
-: 2drop, ( -- ) drop, drop, ;
 : next, ( -- ) xrp return, ;
 : bl, ( imm -- ) xrp call, ;
 0x0100 constant variables-start
@@ -78,43 +55,87 @@ label: +_
    xtop xsp push,
    next,
 label: swap_ 
-   swap, 
+   2pop, 
+   xtop xsp push,
+   xlower xsp push, 
    next,
 label: over_ 
-   over, 
+   2 xsp xtop addi,
+   xtop xtop ld,
+   xtop xsp push, 
    next, 
 label: drop_
-    drop,
+    xsp xtop pop,
+    next,
+label: 2drop_
+    2pop,
     next,
 label: dup_
-    dup,
+    xsp xtop ld,
+    xtop xsp push,
     next,
 label: rot_
-    rot,
+    xsp xtop pop,  \ c
+    xsp xlower pop, \ b 
+    xsp xthird pop, \ a
+    xlower xsp push, 
+    xtop xsp push,
+    xthird xsp push,
     next,
-label: bye_ 
+label: bye_
     0 stopi,
-label: load_
+label: @_ 
     xsp xtop pop, \ get the address
     xtop xtop ld, \ load the value
     xtop xsp push,
     next,
+label: !_ 
+    2pop, \ top -> address
+          \ lower -> value
+    xlower xtop st,
+    next,
+label: c@_
+    xsp xtop pop, \ addr
+    xtop xtop ld, 
+    0x00FF xtop xtop andi, 
+    xtop xsp push,
+    next,
+label: c!_ ( value addr -- )
+    2pop, \ top -> addr
+          \ lower -> value
+    xtop xthird ld, \ load the full 16-bit value
+    0x00FF xlower xlower andi, \ construct the lower 8 bits
+    0xFF00 xthird xthird andi, \ clear the lower half out
+    xlower xthird xlower or, \ combine the numbers together
+    xlower xtop st, \ store the new value
+    next,
+
 label: >r_ \ transfer to the return stack from data stack
-    \ todo verify that we are not empty
+    \ todo verify that the parameter stack is not empty
     xsp xlower pop, \ pull the top off of the stack
     xrp xtop pop, \ pull the top of the return stack off as well
     xlower xrp push,  \ stash the value we want _under_ the top so we don't do bad things to the stack
-    xtop xrp push, \ push the return address
-    next,
-label: 2dup_ 
-    over_ bl,
-    over_ bl,
+    xtop rbranch, \ go back to where we were
+
+label: r>_ 
+    xrp xtop pop, \ the return from this function
+    xrp xlower pop, \ the value we want
+    xlower xsp push,
+    xtop rbranch,
+label: 2dup_  ( a b -- a b a b )
+    xsp xtop pop, \ b
+    xsp xlower pop, \ a
+    xlower xsp push,
+    xtop xsp push,
+    xlower xsp push,
+    xtop xsp push,
     next,
 label: -rot_
     rot_ bl,
     rot_ bl,
     next,
 label: interpreter_
+    bye_ bl,
 variables-start .org
     interpreter_ word,  \ first variable
 0x0000 .org
@@ -122,10 +143,9 @@ variables-start .org
 data-stack-start xsp set,
 return-stack-start xrp set,
 variables-start literal,
-load_ bl,
+!_ bl,
 xsp xtop pop,
 xtop xrp push,
 next, \ jump out of the bootstrap area
-variables-start xtop ldi, \ get the interpreter start location
 
 

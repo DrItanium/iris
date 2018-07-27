@@ -53,9 +53,9 @@ also disassembler definitions
 : disasm-imm8-with-reg ( w -- u ) 16 rshift 0xFF and ;
 \ decode tables
 
-: disasm-illegal ( addr w -- )
+: disasm-illegal ( addr w -- 1 )
   \ disassemble illegal/unknown instruction w at addr 
-  hex. ." , ( illegal inst ) " drop ;
+  dup hex. ." , " dup c@ swap 1+ c@ 8 lshift or hex. 1 ;
 
 : disasm-table ( n "name" -- )
   \ initialize table with n entries with disasm-illegal
