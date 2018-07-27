@@ -496,6 +496,7 @@ defbinaryop umax; umax
   pop; ;
 
 : stop; ( dest -- ) get-reg ?running ! ;
+: zero; ( dest -- ) 0 swap set-reg ;
 
 : opcode ( n body decoder -- ) 
   rot addr8 ( body decoder n ) 
@@ -596,6 +597,7 @@ defbinaryop umax; umax
 #memincr  ' memincr;       opcode1
 #memdecr  ' memdecr;       opcode1
 #stop     ' stop;          opcode1 \ stop execution
+#zero     ' zero;          opcode1 
 
 \ : asm: ( n op "name" -- )
 \   create swap , , 

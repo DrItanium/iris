@@ -104,3 +104,4 @@
 #memincr  asm1: memincr,           
 #memdecr  asm1: memdecr,           
 #stop     asm1: stop,              
+#zero     asm1: zero,

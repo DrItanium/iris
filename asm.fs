@@ -60,7 +60,6 @@ x15 constant xtmp
 : set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
 : move, ( src dest -- ) 2dup = if 2drop else move, endif ;
-: zero, ( dest -- ) dup dup sub, ;
 : set, ( imm dest -- ) 
   >r dup 0= 
   if 
@@ -88,8 +87,22 @@ x15 constant xtmp
     r> or, 
   endif ;
 
-: ori, ( imm src dest -- ) 2>r set-tmp, 2r> or, ;
-: xori, ( imm src dest -- ) 2>r set-tmp, 2r> xor, ;
+: ori, ( imm src dest -- ) 
+  2>r dup 0= 
+  if
+    drop 2r> move, 
+  else
+    set-tmp, 2r> or, 
+  endif ;
+
+: xor, ( src2 src dest -- ) >r 2dup = if 2drop r> zero, else r> xor, endif ;
+: xori, ( imm src dest -- ) 
+  2>r dup 0= 
+  if 
+    drop 2r> move, 
+  else 
+    set-tmp, 2r> xor, 
+  endif ;
 
 : and, ( src2 src dest -- )
   >r 2dup = 
@@ -134,6 +147,8 @@ x15 constant xtmp
     8 of drop 3 2r> lshifti, endof
     16 of drop 4 2r> lshifti, endof
     32 of drop 5 2r> lshifti, endof
+    64 of drop 6 2r> lshifti, endof
+    128 of drop 6 2r> lshifti, endof
     2r> muli, ( imm )
     endcase ;
 : divi, ( imm src dest -- )
@@ -146,6 +161,8 @@ x15 constant xtmp
     8 of drop 3 2r> rshifti, endof
     16 of drop 4 2r> rshifti, endof
     32 of drop 5 2r> rshifti, endof
+    64 of drop 6 2r> rshifti, endof
+    128 of drop 6 2r> rshifti, endof
     2r> divi,
     endcase ;
 : stopi, ( imm -- ) set-tmp, stop, ;

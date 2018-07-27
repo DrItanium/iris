@@ -109,4 +109,5 @@ opcode: #pushi
 opcode: #memincr  
 opcode: #memdecr  
 opcode: #stop     \ stop execution
+opcode: #zero
 opcode}
