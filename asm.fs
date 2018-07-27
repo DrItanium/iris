@@ -57,14 +57,21 @@ include ./opcodes.fs
 include ./asmops.fs
 include ./registers.fs
 x15 constant xtmp
-x14 constant xzero
-x13 constant xcv
 : set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
 : move, ( src dest -- ) 2dup = if 2drop else move, endif ;
 : rshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> rshifti, endif ;
 : lshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> lshifti, endif ;
-: zero, ( dest -- ) xzero swap move, ;
+: zero, ( dest -- ) dup dup sub, ;
+: sub, ( src2 src dest -- ) 
+  >r 2dup = 
+  if \ if the two registers are the same then it will be a zeroing operation
+    2drop r> zero, 
+  else
+    r> sub, 
+  endif
+;
+
 : or, ( src2 src dest -- )
   >r 2dup = 
   if 
@@ -72,14 +79,23 @@ x13 constant xcv
   else
     r> or, 
   endif ;
+: ori, ( imm src dest -- )
+  2>r dup 0= 
+  if 
+    drop 2r> move, 
+  else
+    r> ori, 
+  endif
+;
 
 : and, ( src2 src dest -- )
   >r 2dup = 
   if 
     drop r> move, 
   else
-    r> or, 
+    r> and, 
   endif ;
+
 : andi, ( imm src dest -- )
   2>r dup 0= 
   if 
