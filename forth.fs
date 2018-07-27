@@ -139,16 +139,14 @@ label: -rot_
 label: interpreter_
     bye_ bl,
 variables-start .org
-    bye_ word,  \ first variable
+    interpreter_ word,  \ first variable
 0x0000 .org
 \ setup the stacks
 data-stack-start xsp set,
 return-stack-start xrp set,
 variables-start literal,
 @_ bl,
-xsp xtop pop,
-xsp xtop pop,
-xtop xrp push,
+>r_ bl, 
 next, \ jump out of the bootstrap area
 
 
