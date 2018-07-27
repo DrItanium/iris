@@ -24,6 +24,7 @@
 \  
 
 require ./iris.fs
+: 2+ ( a -- b ) 2 + ;
 assembler
 \ macros and higher level operations
 x0 constant xsp
@@ -40,22 +41,39 @@ x4 constant wlower
 data-stack-end constant return-stack-start
 return-stack-start 0x200 - constant return-stack-end
 
+: 1pop, ( -- ) xsp xtop pop, ;
 : 2pop, ( -- )
-    xsp xtop pop,
+    1pop,
     xsp xlower pop, ;
 : literal, ( imm -- ) xsp pushi, ;
-: next, ( -- ) 
-  xrp xtop pop, 
-  xtop rbranch, ;
 : bl, ( imm -- ) xrp call, ;
 0x0100 constant variables-start
 0x0200 constant dictionary-start
 dictionary-start .org
+label: next_
+    xrp xtmp pop,
+    xtmp rbranch,
+: next, ( -- ) next_ branch, ;
+label: -_
+   2pop,
+   xtop xlower xtop sub,
+   xtop xsp push,
+   next,
 label: +_
    2pop,
    xtop xlower xtop add,
    xtop xsp push,
    next,
+label: 1+_
+   1pop, 
+   xtop xtop incr, 
+   xtop xsp push,
+   next,
+label: 2+_
+    1pop,
+    2 xtop xtop addi,
+    xtop xsp push,
+    next,
 label: swap_ 
    2pop, 
    xtop xsp push,
@@ -136,17 +154,32 @@ label: -rot_
     rot_ bl,
     rot_ bl,
     next,
+label: 1=_
+label: ?exec_
+    2pop, \ top - flag
+          \ lower - addr to jump to
+    xrp xtop xlower ?rbranch-link,
+    next,
 label: interpreter_
-    bye_ bl,
+    bye_ branch,
+label: initcold_
+    0 xtop set,
+    variables-start 2+ xlower set,
+    xtop xlower st,
+    next, 
+label: cold_
+    \ reset/set the stacks
+    data-stack-start xsp set,
+    return-stack-start xrp set,
+    initcold_ literal,
+    variables-start 2+ literal, @_ bl, \ coldboot?
+    ?exec_ bl, \ see if we should do an initial cold boot or not
+    interpreter_ branch,
 variables-start .org
-    interpreter_ word,  \ first variable
+    interpreter_ word,  \ first variable, interpreter location, this is fixed in memory
+    0xFFFF word,             \ we are doing cold or warm boot?
 0x0000 .org
-\ setup the stacks
-data-stack-start xsp set,
-return-stack-start xrp set,
-variables-start literal,
-@_ bl,
->r_ bl, 
-next, \ jump out of the bootstrap area
+\ we should not put anything in this area as it could be useful for other things :D
+cold_ branch,
 
 

@@ -241,6 +241,9 @@ defbinaryop umin; umin
   endif ;
 
 : ?rbranch-link; ( src2 src dest -- )
+  \ dest is where to go
+  \ src is the conditional
+  \ src2 is the stack pointer
   >r
   get-reg 
   if 
@@ -257,27 +260,6 @@ defbinaryop umin; umin
   endif ;
 
 : move; ( src dest -- ) swap get-reg swap set-reg ; 
-: swap; ( src dest -- ) 
-  \ swap the contents of the top two registers
-  2dup ( src dest src dest )
-  get-reg >r \ load dest onto the return stack
-  get-reg \ get the src value
-  swap set-reg \ set dest
-  r> \ get dest value back
-  swap set-reg ;
-
-
-: load-then-increment; ( src dest -- ) 
-  \ perform a load operation then increment source to the next word address
-  over >r 
-  ld; 
-  r> 2+-register ;
-
-: store-then-increment; ( src dest -- ) 
-  \ perform a store operation then increment dest to the next word address
-  dup >r
-  st;
-  r> 2+-register ;
 
 : decode-lower-half ( v -- reg ) addr4 idx>reg ;
 : decode-upper-half ( v -- reg ) 4 rshift decode-lower-half ;
@@ -422,16 +404,6 @@ defimmop gei; ge;
       else
       2r> _muli;
       endif ;
-: def0src2op ( "name" "op" -- )
-  create ' , 
-  does> ( src dest -- )
-  >r 0 -rot r> @ execute ;
-def0src2op eqz; eqi; 
-def0src2op neqz; neqi; 
-def0src2op ltz; lti; 
-def0src2op gtz; gti; 
-def0src2op gez; gei; 
-def0src2op lez; lei; 
 
 : umax ( a b -- a | b ) 
   2dup u< 
@@ -440,27 +412,7 @@ def0src2op lez; lei;
   drop ; 
 defbinaryop umax; umax 
 
-: memincr; ( dest -- ) 
-  dup imm ld; ( dest ) \ load into the imm register
-  imm imm 1+; imm ( dest imm ) \ increment the contents
-  swap ( imm dest ) st;  \ store it back into memory
-  ;
-: memdecr; ( dest -- ) 
-  dup imm ld; ( dest ) \ load into the imm register
-  imm imm 1-; imm ( dest imm ) \ increment the contents
-  swap ( imm dest ) st;  \ store it back into memory
-  ;
 
-: ldtincr; ( src dest -- ) 
-  \ load into dest and then increment src
-  over >r ld; \ perform the load
-  r> dup 1+; \ go to the next location
-  ;
-: sttincr; ( src dest -- ) 
-  \ store into dest and then increment dest
-  dup >r st; \ perform the store
-  r> dup 1+; \ perform the increment 
-  ;
 : extract-2wide ( src2u src2l srcu srcl -- n n2 ) 
   make-num32 ( src2u src2l n )
   r>  ( src2u src2l )
@@ -492,6 +444,8 @@ defbinaryop umax; umax
   pop; ;
 
 : stop; ( dest -- ) get-reg ?running ! ;
+: typereg; ( dest -- ) get-reg addr16 . ;
+: emit; ( dest -- ) get-reg addr8 emit ;
 
 : opcode ( n body decoder -- ) 
   rot addr8 ( body decoder n ) 
@@ -555,33 +509,25 @@ defbinaryop umax; umax
 #subi     ' subi;          opcode2i16 
 #rshifti  ' rshifti;       opcode2i16 
 #lshifti  ' lshifti;       opcode2i16 
-#ldtincr  ' ldtincr;       opcode2
 #lti      ' lti;           opcode2i16
 #move     ' move;          opcode2
-#sttincr  ' sttincr;       opcode2
 #addw     ' addw;          opcode3w
 #subw     ' subw;          opcode3w
 #pushw    ' pushw;         opcode2w
 #popw     ' popw;          opcode2w
 #invertw  ' invertw;       opcode2w
 #bi       ' branch;        opcodei16
-#eqz      ' eqz;           opcode2
-#neqz     ' neqz;          opcode2
-#ltz      ' ltz;           opcode2
-#gtz      ' gtz;           opcode2
-#lez      ' lez;           opcode2
-#gez      ' gez;           opcode2
 #andi     ' andi;          opcode2i16
 #muli     ' muli;          opcode2i16
 #divi     ' divi;          opcode2i16
 #pushi    ' pushi;         opcode1i16
-#memincr  ' memincr;       opcode1
-#memdecr  ' memdecr;       opcode1
 #stop     ' stop;          opcode1 \ stop execution
 #set4     ' set;           opcode1i4
 #set8     ' set;           opcode1i8
 #pushi4   ' pushi;         opcode1i4
 #pushi8   ' pushi;         opcode1i8
+#typereg  ' typereg;       opcode1
+#emit     ' emit;          opcode1
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current

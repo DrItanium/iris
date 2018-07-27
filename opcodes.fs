@@ -70,31 +70,23 @@ opcode: #addi
 opcode: #subi     
 opcode: #rshifti  
 opcode: #lshifti  
-opcode: #ldtincr  
 opcode: #lti      
 opcode: #move     
-opcode: #sttincr  
 opcode: #addw     
 opcode: #subw     
 opcode: #pushw    
 opcode: #popw     
 opcode: #invertw  
 opcode: #bi       
-opcode: #eqz      
-opcode: #neqz     
-opcode: #ltz      
-opcode: #gtz      
-opcode: #lez      
-opcode: #gez      
 opcode: #andi     
 opcode: #muli     
 opcode: #divi     
 opcode: #pushi    
-opcode: #memincr  
-opcode: #memdecr  
 opcode: #stop     \ stop execution
 opcode: #set4
 opcode: #set8
 opcode: #pushi4
 opcode: #pushi8
+opcode: #typereg
+opcode: #emit
 opcode}
