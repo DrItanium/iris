@@ -97,4 +97,6 @@ opcode: #memdecr
 opcode: #stop     \ stop execution
 opcode: #set4
 opcode: #set8
+opcode: #pushi4
+opcode: #pushi8
 opcode}

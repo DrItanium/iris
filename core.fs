@@ -578,6 +578,8 @@ defbinaryop umax; umax
 #stop     ' stop;          opcode1 \ stop execution
 #set4     ' set;           opcode1i4
 #set8     ' set;           opcode1i8
+#pushi4   ' pushi;         opcode1i4
+#pushi8   ' pushi;         opcode1i8
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current

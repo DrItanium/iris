@@ -92,3 +92,6 @@
 #stop     asm1: stop,              
 #set4     asm1i4: set4,
 #set8     asm1i8: set8,
+#pushi4   asm1i4: pushi4,
+#pushi8   asm1i8: pushi8,
+

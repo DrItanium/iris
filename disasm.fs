@@ -145,8 +145,7 @@ definitions
 : disasm-1reg-imm8 ( addr -- n )
   1+ dup ( a+1 a+1 )
   1+ c@ addr8 hex .
-  c@ dup disasm-rsrc 
-  disasm-rdest 2 ;
+  c@ disasm-rdest 2 ;
   
 
 

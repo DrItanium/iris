@@ -61,8 +61,9 @@ include ./opcodes.fs
 include ./asmops.fs
 include ./registers.fs
 x15 constant xtmp
+: ?same-registers ( a b -- a b f ) 2dup = ; 
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
-: move, ( src dest -- ) 2dup = if 2drop else move, endif ;
+: move, ( src dest -- ) ?same-registers if 2drop else move, endif ;
 : zero, ( dest -- ) 0 swap set4, ;
 : set4, ( imm dest -- ) 
   >r dup 0= 
@@ -90,7 +91,7 @@ x15 constant xtmp
 : rshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> rshifti, endif ;
 : lshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> lshifti, endif ;
 : sub, ( src2 src dest -- ) 
-  >r 2dup = 
+  >r ?same-registers
   if \ if the two registers are the same then it will be a zeroing operation
     2drop r> zero, 
   else
@@ -99,7 +100,7 @@ x15 constant xtmp
 ;
 
 : or, ( src2 src dest -- )
-  >r 2dup = 
+  >r ?same-registers 
   if 
     drop r> move, 
   else
@@ -114,7 +115,13 @@ x15 constant xtmp
     set-tmp, 2r> or, 
   endif ;
 
-: xor, ( src2 src dest -- ) >r 2dup = if 2drop r> zero, else r> xor, endif ;
+: xor, ( src2 src dest -- ) 
+  >r ?same-registers 
+  if 
+     2drop r> zero, 
+  else 
+     r> xor, 
+  endif ;
 : xori, ( imm src dest -- ) 
   2>r dup 0= 
   if 
@@ -124,7 +131,7 @@ x15 constant xtmp
   endif ;
 
 : and, ( src2 src dest -- )
-  >r 2dup = 
+  >r ?same-registers
   if 
     drop r> move, 
   else
@@ -196,6 +203,16 @@ x15 constant xtmp
   swap >r xtmp ld,
   r> xtmp st, ;
 
-  
-
+: pushi4, ( imm sp -- ) swap addr4 swap pushi4, ; 
+: pushi8, ( imm sp -- ) 
+  swap addr8 dup dup addr4 = 
+  if swap pushi4, 
+  else swap pushi8, endif ;
+: pushi, ( imm sp -- ) 
+  swap addr16 dup dup addr8 = 
+  if 
+    swap pushi8, 
+  else
+    swap pushi, 
+  endif ;
 previous set-current
