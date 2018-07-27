@@ -44,7 +44,9 @@ return-stack-start 0x200 - constant return-stack-end
     xsp xtop pop,
     xsp xlower pop, ;
 : literal, ( imm -- ) xsp pushi, ;
-: next, ( -- ) xrp return, ;
+: next, ( -- ) 
+  xrp xtop pop, 
+  xtop rbranch, ;
 : bl, ( imm -- ) xrp call, ;
 0x0100 constant variables-start
 0x0200 constant dictionary-start
@@ -143,9 +145,8 @@ variables-start .org
 data-stack-start xsp set,
 return-stack-start xrp set,
 variables-start literal,
-!_ bl,
+@_ bl,
 xsp xtop pop,
-0 stopi,
 xsp xtop pop,
 xtop xrp push,
 next, \ jump out of the bootstrap area

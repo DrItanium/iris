@@ -73,8 +73,6 @@
 #subw     asm3: subw,              
 #pushw    asm2: pushw,             
 #popw     asm2: popw,              
-#return   asm1: return,            
-#creturn  asm2: ?return,           
 #invertw  asm2: invertw,           
 #bi       asmi16: branch,          
 #eqz      asm2: eqz,

@@ -267,21 +267,6 @@ defbinaryop umin; umin
   swap set-reg ;
 
 
-: return; ( dest -- ) 
-  \ pop the top element from the stack pointer and store it in _pc
-  dup ( dest dest )
-  pop-word ( dest value addr ) 
-  swap ( dest addr value ) 
-  set-pc ( dest addr ) 
-  swap set-reg ;
-: ?return; ( src dest -- )
-  swap get-reg 
-  if 
-     return;
-  else
-    drop
-  endif ;
-
 : load-then-increment; ( src dest -- ) 
   \ perform a load operation then increment source to the next word address
   over >r 
@@ -578,8 +563,6 @@ defbinaryop umax; umax
 #subw     ' subw;          opcode3w
 #pushw    ' pushw;         opcode2w
 #popw     ' popw;          opcode2w
-#return   ' return;        opcode1
-#creturn  ' ?return;       opcode2
 #invertw  ' invertw;       opcode2w
 #bi       ' branch;        opcodei16
 #eqz      ' eqz;           opcode2

@@ -78,8 +78,6 @@ opcode: #addw
 opcode: #subw     
 opcode: #pushw    
 opcode: #popw     
-opcode: #return   
-opcode: #creturn  
 opcode: #invertw  
 opcode: #bi       
 opcode: #eqz      
