@@ -59,51 +59,72 @@ variables-start .org
     0x0020 word,        \ delimiter character
     0x000a word,        \ numeric base
 dictionary-start .org
+0x0001 constant flag/compile 
+0x0002 constant flag/immediate
+flag/compile flag/immediate or constant flag/comp,imm 
+variable previousWord
+0 previousWord !
+: compute-hash ( str u -- nhu nhl ) 
+  \ hacked design for now
+  swap drop 
+  addr8 0 swap ;
+
+: defword_custom: ( previous flags str len "id" -- ) 
+  compute-hash 
+  x11 set16, \ lower name-hash
+  x12 set16, \ upper name-hash
+  x13 set16, \ flags 
+  x14 set16, \ previous
+  label: ;
+: defword: ( str len "id" -- ) 
+  2>r previousWord @ 0x0000 2r> defword_custom: 
+  latest name>int execute previousWord !  ;
+
 label: next_
     xrp xtmp pop,
     xtmp rbranch,
 : next, ( -- ) next_ branch, ;
-label: -_
+s" -" defword: -_
    2pop,
    xtop xlower xtop sub,
    xtop xsp push,
    next,
-label: +_
+s" +" defword: +_
    2pop,
    xtop xlower xtop add,
    xtop xsp push,
    next,
-label: 1+_
+s" 1+" defword: 1+_
    1pop, 
    xtop xtop incr, 
    xtop xsp push,
    next,
-label: 2+_
+s" 2+" defword: 2+_
     1pop,
     2 xtop xtop addi,
     xtop xsp push,
     next,
-label: swap_ 
+s" swap" defword: swap_ 
    2pop, 
    xtop xsp push,
    xlower xsp push, 
    next,
-label: over_ 
+s" over" defword: over_ 
    2 xsp xtop addi,
    xtop xtop ld,
    xtop xsp push, 
    next, 
-label: drop_
+s" drop" defword: drop_
     xsp xtop pop,
     next,
-label: 2drop_
+s" 2drop" defword: 2drop_
     2pop,
     next,
-label: dup_
+s" dup" defword: dup_
     xsp xtop ld,
     xtop xsp push,
     next,
-label: rot_
+s" rot" defword: rot_
     xsp xtop pop,  \ c
     xsp xlower pop, \ b 
     xsp xthird pop, \ a
@@ -111,25 +132,25 @@ label: rot_
     xtop xsp push,
     xthird xsp push,
     next,
-label: bye_
+s" bye" defword: bye_
     0 stopi,
-label: @_ 
+s" @" defword: @_ 
     xsp xtop pop, \ get the address
     xtop xtop ld, \ load the value
     xtop xsp push,
     next,
-label: !_ 
+s" !" defword: !_ 
     2pop, \ top -> address
           \ lower -> value
     xlower xtop st,
     next,
-label: c@_
+s" c@" defword: c@_
     xsp xtop pop, \ addr
     xtop xtop ld, 
     0x00FF xtop xtop andi, 
     xtop xsp push,
     next,
-label: c!_ ( value addr -- )
+s" c!" defword: c!_ ( value addr -- )
     2pop, \ top -> addr
           \ lower -> value
     xtop xthird ld, \ load the full 16-bit value
@@ -139,19 +160,19 @@ label: c!_ ( value addr -- )
     xlower xtop st, \ store the new value
     next,
 
-label: >r_ \ transfer to the return stack from data stack
+s" >r" defword: >r_ \ transfer to the return stack from data stack
     \ todo verify that the parameter stack is not empty
     xsp xlower pop, \ pull the top off of the stack
     xrp xtop pop, \ pull the top of the return stack off as well
     xlower xrp push,  \ stash the value we want _under_ the top so we don't do bad things to the stack
     xtop rbranch, \ go back to where we were
 
-label: r>_ 
+s" r>" defword: r>_ 
     xrp xtop pop, \ the return from this function
     xrp xlower pop, \ the value we want
     xlower xsp push,
     xtop rbranch,
-label: 2dup_  ( a b -- a b a b )
+s" 2dup" defword: 2dup_  ( a b -- a b a b )
     xsp xtop pop, \ b
     xsp xlower pop, \ a
     xlower xsp push,
@@ -159,24 +180,23 @@ label: 2dup_  ( a b -- a b a b )
     xlower xsp push,
     xtop xsp push,
     next,
-label: -rot_
+s" -rot" defword: -rot_
     rot_ bl,
     rot_ bl,
     next,
-label: 1=_
-label: ?exec_
+s" ?exec" defword: ?exec_
     2pop, \ top - flag
           \ lower - addr to jump to
     xrp xtop xlower ?rbranch-link,
     next,
-label: newline_ ( -- )
+s" cr" defword: newline_ ( -- )
     0xa emiti, 
     0xb emiti,
     next,
-label: space_ ( -- ) 
+s" space" defword: space_ ( -- ) 
     0x20 emiti, 
     next, 
-label: spaces_ ( n -- ) 
+s" spaces" defword: spaces_ ( n -- ) 
     1pop, \ xtop count
     0 xthird set,
 label: spaces_loop_
@@ -187,12 +207,50 @@ label: spaces_loop_
     xtop xtop decr,
     spaces_loop_ xlower ?branch,
     next,
-label: ok_ ( -- ) 
+s" &hashlower" defword: &hashlower_ 
+    \ extract the lower hash 
+    1pop, 
+    14 xtop xtop subi,
+    xtop xsp push,
+    next,
+s" &hashupper" defword: &hashupper_
+    \ extract the flags field 
+    ( addr -- &hashupper )
+    1pop, 
+    10 xtop xtop subi,
+    xtop xsp push,
+    next,
+s" extract-name-hash" defword extract_name_hash_
+    ( addr -- hu hl )
+    dup_ bl,
+    &hashupper_ bl, 
+    @_ bl,
+    swap_ bl,
+    &hashlower_ bl,
+    @_ bl, 
+    next,
+
+s" &flags" defword: flags_
+    \ extract the flags field 
+    ( addr -- &flags )
+    1pop, 
+    6 xtop xtop subi,
+    xtop xsp push,
+    next,
+s" &previous" defword: getprevious_
+    \ exract the previous field
+    ( addr -- &prev )
+    1pop, 
+    2 xtop xtop subi,
+    xtop xsp push,
+    next,
+
+s" dook" defword: ok_ ( -- ) 
     0x6f emiti,
     0x6b emiti, 
     newline_ bl,
     next,
-label: bootmessage_ ( -- ) 
+s" dobootmessage" defword: bootmessage_ ( -- ) 
     0x69 emiti, 0x72 emiti, 0x69 emiti, 0x73 emiti, 
     space_ bl,
     0x66 emiti, 0x6f emiti, 0x72 emiti, 0x74 emiti, 0x68 emiti,
@@ -208,7 +266,7 @@ label: reset_base_
     0x0a xlower set,
     xlower xtop st,
     next,
-label: interpreter_
+s" interpreter" defword: interpreter_
     bye_ branch,
 label: initcold_
     0 xtop set,
@@ -217,7 +275,7 @@ label: initcold_
     newline_ bl, newline_ bl,
     bootmessage_ bl,
     next, 
-label: cold_
+s" cold" defword: cold_
     \ reset/set the stacks
     data-stack-start xsp set,
     return-stack-start xrp set,

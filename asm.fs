@@ -82,6 +82,7 @@ x15 constant xtmp
   else \ it is 8 bits wide
      addr8 r> set8,
   endif ;
+: set16, ( imm dest -- ) ( always do 4 byte output ) swap addr16 swap set, ;
 : set, ( imm dest -- ) 
   >r dup dup addr8 = 
   if ( 8 bits wide )
@@ -219,4 +220,5 @@ x15 constant xtmp
     swap pushi, 
   endif ;
 : emiti, ( imm -- ) set-tmp, emit, ;
+
 previous set-current
