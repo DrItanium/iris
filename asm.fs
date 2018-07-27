@@ -60,9 +60,17 @@ x15 constant xtmp
 : set-tmp, ( imm -- xtmp ) xtmp set, xtmp ;
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
 : move, ( src dest -- ) 2dup = if 2drop else move, endif ;
+: zero, ( dest -- ) dup dup sub, ;
+: set, ( imm dest -- ) 
+  >r dup 0= 
+  if 
+    drop r> zero, 
+  else
+    r> set, 
+  endif ;
+
 : rshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> rshifti, endif ;
 : lshifti, ( imm src dest -- ) 2>r dup 0= if drop 2r> move, else 2r> lshifti, endif ;
-: zero, ( dest -- ) dup dup sub, ;
 : sub, ( src2 src dest -- ) 
   >r 2dup = 
   if \ if the two registers are the same then it will be a zeroing operation
@@ -79,14 +87,9 @@ x15 constant xtmp
   else
     r> or, 
   endif ;
-: ori, ( imm src dest -- )
-  2>r dup 0= 
-  if 
-    drop 2r> move, 
-  else
-    r> ori, 
-  endif
-;
+
+: ori, ( imm src dest -- ) 2>r set-tmp, 2r> or, ;
+: xori, ( imm src dest -- ) 2>r set-tmp, 2r> xor, ;
 
 : and, ( src2 src dest -- )
   >r 2dup = 
