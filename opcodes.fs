@@ -22,7 +22,7 @@
 \ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \ used for the purposes of data definitions
 : {opcode ( -- 0 ) 0 ;
-: opcode} ( n -- ) drop ;
+: opcode} ( n -- ) 0xFF > abort" TOO MANY OPERANDS DEFINED!" ;
 : opcode: ( n -- n+1 ) dup constant 1+ ;
 {opcode 
 opcode: #illegal  
