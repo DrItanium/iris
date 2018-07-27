@@ -57,4 +57,46 @@ include ./opcodes.fs
 include ./asmops.fs
 include ./registers.fs
 : irisdis ( offset count -- ) swap addr16 memory_base @ + swap disasm ;
+
+: addi, ( imm src dest -- )
+  2>r dup
+  case
+    0 of drop 2r> move, endof
+    1 of drop 2r> incr, endof
+    2r> addi, 
+  endcase ;
+
+: subi, ( imm src dest -- )
+  2>r dup
+  case
+    0 of drop 2r> move, endof
+    1 of drop 2r> decr, endof
+    2r> subi, 
+  endcase ;
+: muli, ( imm src dest -- )
+  2>r dup 
+    case
+    0 of drop 2r> over swap xor, endof
+    1 of drop 2r> move, endof
+    2 of drop 2r> over swap add, endof
+    4 of drop 2 2r> lshifti, endof
+    8 of drop 3 2r> lshifti, endof
+    16 of drop 4 2r> lshifti, endof
+    32 of drop 5 2r> lshifti, endof
+    2r> muli, ( imm )
+    endcase ;
+: divi, ( imm src dest -- )
+  2>r dup
+    case 
+    0 of drop 2r> move, ( divide by zero causes a move ) endof
+    1 of drop 2r> move, endof
+    2 of drop 1 2r> rshifti, endof
+    4 of drop 2 2r> rshifti, endof
+    8 of drop 3 2r> rshifti, endof
+    16 of drop 4 2r> rshifti, endof
+    32 of drop 5 2r> rshifti, endof
+    2r> divi,
+    endcase ;
+
+
 previous set-current
