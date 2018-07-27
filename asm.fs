@@ -218,4 +218,5 @@ x15 constant xtmp
   else
     swap pushi, 
   endif ;
+: emiti, ( imm -- ) set-tmp, emit, ;
 previous set-current

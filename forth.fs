@@ -33,6 +33,7 @@ x2 constant xtop
 x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
+
 x2 constant wtop
 x4 constant wlower
 
@@ -40,6 +41,8 @@ x4 constant wlower
 0xFD00 constant data-stack-end
 data-stack-end constant return-stack-start
 return-stack-start 0x200 - constant return-stack-end
+0x0000 constant input-buffer-start
+input-buffer-start 0x100 + constant input-buffer-end
 
 : 1pop, ( -- ) xsp xtop pop, ;
 : 2pop, ( -- )
@@ -160,7 +163,34 @@ label: ?exec_
           \ lower - addr to jump to
     xrp xtop xlower ?rbranch-link,
     next,
+label: newline_ ( -- )
+    0xa emiti, 
+    0xb emiti,
+    next,
+label: space_ ( -- ) 
+    0x20 emiti, 
+    next, 
+label: spaces_ ( n -- ) 
+    1pop, \ xtop count
+    0 xthird set,
+label: spaces_loop_
+    xtop xsp push,
+    space_ bl,
+    xsp xtop pop,
+    xthird xtop xlower gt,
+    xtop xtop decr,
+    spaces_loop_ xlower ?branch,
+    next,
+label: bootmessage_ ( -- ) 
+    0x69 emiti, 0x72 emiti, 0x69 emiti, 0x73 emiti, 
+    space_ bl,
+    0x66 emiti, 0x6f emiti, 0x72 emiti, 0x74 emiti, 0x68 emiti,
+    newline_ bl,
+    next, 
+
 label: interpreter_
+    newline_ bl, newline_ bl,
+    bootmessage_ bl,
     bye_ branch,
 label: initcold_
     0 xtop set,
