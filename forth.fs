@@ -64,23 +64,68 @@ return-stack-start 0x200 - constant return-stack-end
 : 2pop, ( -- )
     xsp xtop pop,
     xsp xlower pop, ;
-: defstackbinaryop ( "name" "op" -- )
-  create ' , 
-  does>
-  >r
-  2pop,
-  xtop xlower xtop r> @ execute 
-  xtop xsp push, ;
-defstackbinaryop +, add,
-defstackbinaryop -, sub, 
-defstackbinaryop *, mul, 
-: -rot, ( -- ) rot, rot, ;
-: 2dup, ( -- ) over, over, ;
 : literal, ( imm -- ) xsp pushi, ;
 : drop, ( -- ) xsp xtop pop, ; 
 : 2drop, ( -- ) drop, drop, ;
-0x0000 .org 
+: next, ( -- ) xrp return, ;
+: bl, ( imm -- ) xrp call, ;
+0x0100 constant variables-start
+0x0200 constant dictionary-start
+dictionary-start .org
+label: +_
+   2pop,
+   xtop xlower xtop add,
+   xtop xsp push,
+   next,
+label: swap_ 
+   swap, 
+   next,
+label: over_ 
+   over, 
+   next, 
+label: drop_
+    drop,
+    next,
+label: dup_
+    dup,
+    next,
+label: rot_
+    rot,
+    next,
+label: bye_ 
+    0 stopi,
+label: load_
+    xsp xtop pop, \ get the address
+    xtop xtop ld, \ load the value
+    xtop xsp push,
+    next,
+label: >r_ \ transfer to the return stack from data stack
+    \ todo verify that we are not empty
+    xsp xlower pop, \ pull the top off of the stack
+    xrp xtop pop, \ pull the top of the return stack off as well
+    xlower xrp push,  \ stash the value we want _under_ the top so we don't do bad things to the stack
+    xtop xrp push, \ push the return address
+    next,
+label: 2dup_ 
+    over_ bl,
+    over_ bl,
+    next,
+label: -rot_
+    rot_ bl,
+    rot_ bl,
+    next,
+label: interpreter_
+variables-start .org
+    interpreter_ word,  \ first variable
+0x0000 .org
 \ setup the stacks
 data-stack-start xsp set,
 return-stack-start xrp set,
+variables-start literal,
+load_ bl,
+xsp xtop pop,
+xtop xrp push,
+next, \ jump out of the bootstrap area
+variables-start xtop ldi, \ get the interpreter start location
+
 

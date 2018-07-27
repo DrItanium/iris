@@ -31,7 +31,10 @@ variable memory_base
 variable memory_offset
 : byte, ( i -- ) memory_offset @ addr16 memory_base @ + c! 
                  memory_offset @ 1+ addr16 memory_offset ! ;
+: word, ( imm -- ) addr16 dup byte, 8 rshift addr8 byte, ;
+: .mloc ( -- addr ) memory_offset @ ;
 : .org ( value -- ) addr16 memory_offset ! ;
+: label: ( "name" -- ) .mloc constant ;
 get-current
 also assembler definitions
 _memory memory_base !
