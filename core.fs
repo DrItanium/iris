@@ -541,19 +541,8 @@ defbinaryop umax; umax
 #ugt      ' ugt;           opcode3
 #ule      ' ule;           opcode3
 #uge      ' uge;           opcode3
-#uand     ' and;           opcode3
-#uor      ' or;            opcode3
-#uinvert  ' invert;        opcode2
-#uxor     ' xor;           opcode3
 #umin     ' umin;          opcode3
 #umax     ' umax;          opcode3
-#uadd     ' add;           opcode3
-#usub     ' sub;           opcode3
-#umul     ' mul;           opcode3
-#udiv     ' div;           opcode3
-#urem     ' rem;           opcode3
-#ulshift  ' lshift;        opcode3
-#urshift  ' rshift;        opcode3
 #incr     ' 1+;            opcode2
 #decr     ' 1-;            opcode2
 #uincr    ' 1+;            opcode2
@@ -583,7 +572,6 @@ defbinaryop umax; umax
 #lez      ' lez;           opcode2
 #gez      ' gez;           opcode2
 #andi     ' andi;          opcode2i16
-#uandi    ' andi;          opcode2i16
 #muli     ' muli;          opcode2i16
 #divi     ' divi;          opcode2i16
 #pushi    ' pushi;         opcode1i16
