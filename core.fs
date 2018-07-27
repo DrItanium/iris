@@ -386,7 +386,6 @@ defimmop _divi; div;
 
 defimmop rshifti; rshift;
 defimmop lshifti; lshift;
-defimmop lti; lt;
 defimmop eqi; eq;
 defimmop neqi; neq;
 defimmop gti; gt;
@@ -509,7 +508,6 @@ defbinaryop umax; umax
 #subi     ' subi;          opcode2i16 
 #rshifti  ' rshifti;       opcode2i16 
 #lshifti  ' lshifti;       opcode2i16 
-#lti      ' lti;           opcode2i16
 #move     ' move;          opcode2
 #addw     ' addw;          opcode3w
 #subw     ' subw;          opcode3w

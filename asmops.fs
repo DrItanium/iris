@@ -65,7 +65,6 @@
 #subi     asm2i16: subi,
 #rshifti  asm2i16: rshifti,
 #lshifti  asm2i16: lshifti,
-#lti      asm2i16: lti,            
 #move     asm2: move,              
 #addw     asm3: addw,              
 #subw     asm3: subw,              

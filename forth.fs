@@ -51,7 +51,14 @@ input-buffer-start 0x100 + constant input-buffer-end
 : literal, ( imm -- ) xsp pushi, ;
 : bl, ( imm -- ) xrp call, ;
 0x0100 constant variables-start
+: &bootkind ( -- value ) variables-start ;
+: &delimiter ( -- value ) variables-start 2+ ;
+: &base ( -- value ) variables-start 2+ 2+ ;
 0x0200 constant dictionary-start
+variables-start .org
+    0xFFFF word,        \ we are doing cold or warm boot?
+    0x0020 word,        \ delimiter character
+    0x000a word,        \ numeric base
 dictionary-start .org
 label: next_
     xrp xtmp pop,
@@ -192,28 +199,34 @@ label: bootmessage_ ( -- )
     0x66 emiti, 0x6f emiti, 0x72 emiti, 0x74 emiti, 0x68 emiti,
     newline_ bl,
     next, 
-
+label: reset_delimiter_ 
+    variables-start 2+ 2+ xtop set, 
+    0x20 xlower set,
+    xlower xtop st,
+    next,
+label: reset_base_
+    &base xtop set, 
+    0x0a xlower set,
+    xlower xtop st,
+    next,
 label: interpreter_
-    newline_ bl, newline_ bl,
-    bootmessage_ bl,
-    ok_ bl,
     bye_ branch,
 label: initcold_
     0 xtop set,
-    variables-start 2+ xlower set,
+    &bootkind xlower set,
     xtop xlower st,
+    newline_ bl, newline_ bl,
+    bootmessage_ bl,
     next, 
 label: cold_
     \ reset/set the stacks
     data-stack-start xsp set,
     return-stack-start xrp set,
     initcold_ literal,
-    variables-start 2+ literal, @_ bl, \ coldboot?
+    &bootkind literal, @_ bl, \ coldboot?
     ?exec_ bl, \ see if we should do an initial cold boot or not
+    reset_delimiter_ bl, 
     interpreter_ branch,
-variables-start .org
-    interpreter_ word,  \ first variable, interpreter location, this is fixed in memory
-    0xFFFF word,             \ we are doing cold or warm boot?
 0x0000 .org
 \ we should not put anything in this area as it could be useful for other things :D
 cold_ branch,

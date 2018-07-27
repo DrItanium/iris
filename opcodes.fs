@@ -70,7 +70,6 @@ opcode: #addi
 opcode: #subi     
 opcode: #rshifti  
 opcode: #lshifti  
-opcode: #lti      
 opcode: #move     
 opcode: #addw     
 opcode: #subw     
