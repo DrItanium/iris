@@ -412,9 +412,12 @@ defimmop gei; ge;
 defbinaryop umax; umax 
 
 
+
 : stop; ( dest -- ) get-reg ?running ! ;
-: typereg; ( dest -- ) get-reg addr16 . ;
 : emit; ( dest -- ) get-reg addr8 emit ;
+
+: ?key; ( dest -- ) key? swap addr16 set-reg ;
+: key;  ( dest -- ) key swap addr16 set-reg ;
 
 : opcode ( n body decoder -- ) 
   rot addr8 ( body decoder n ) 
@@ -488,6 +491,8 @@ defbinaryop umax; umax
 #pushi4   ' pushi;         opcode1i4
 #pushi8   ' pushi;         opcode1i8
 #emit     ' emit;          opcode1
+#?key	  ' ?key;		   opcode1
+#key 	  ' key; 		   opcode1
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current

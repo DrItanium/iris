@@ -77,4 +77,5 @@
 #pushi4   asm1i4: pushi4,
 #pushi8   asm1i8: pushi8,
 #emit     asm1: emit,
-
+#?key     asm1: ?key,
+#key	  asm1: key,

@@ -82,4 +82,6 @@ opcode: #set8
 opcode: #pushi4
 opcode: #pushi8
 opcode: #emit
+opcode: #?key
+opcode: #key
 opcode}
