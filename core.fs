@@ -509,11 +509,6 @@ defbinaryop umax; umax
 #rshifti  ' rshifti;       opcode2i16 
 #lshifti  ' lshifti;       opcode2i16 
 #move     ' move;          opcode2
-#addw     ' addw;          opcode3w
-#subw     ' subw;          opcode3w
-#pushw    ' pushw;         opcode2w
-#popw     ' popw;          opcode2w
-#invertw  ' invertw;       opcode2w
 #bi       ' branch;        opcodei16
 #andi     ' andi;          opcode2i16
 #muli     ' muli;          opcode2i16
@@ -524,7 +519,6 @@ defbinaryop umax; umax
 #set8     ' set;           opcode1i8
 #pushi4   ' pushi;         opcode1i4
 #pushi8   ' pushi;         opcode1i8
-#typereg  ' typereg;       opcode1
 #emit     ' emit;          opcode1
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;

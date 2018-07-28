@@ -66,11 +66,6 @@
 #rshifti  asm2i16: rshifti,
 #lshifti  asm2i16: lshifti,
 #move     asm2: move,              
-#addw     asm3: addw,              
-#subw     asm3: subw,              
-#pushw    asm2: pushw,             
-#popw     asm2: popw,              
-#invertw  asm2: invertw,           
 #bi       asmi16: branch,          
 #andi     asm2i16: andi,
 #muli     asm2i16: muli,
@@ -81,6 +76,5 @@
 #set8     asm1i8: set8,
 #pushi4   asm1i4: pushi4,
 #pushi8   asm1i8: pushi8,
-#typereg  asm1: typereg,
 #emit     asm1: emit,
 

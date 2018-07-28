@@ -34,9 +34,6 @@ x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
 
-x2 constant wtop
-x4 constant wlower
-
 0xFE00 constant data-stack-start
 0xFD00 constant data-stack-end
 data-stack-end constant return-stack-start

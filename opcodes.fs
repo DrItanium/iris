@@ -71,11 +71,6 @@ opcode: #subi
 opcode: #rshifti  
 opcode: #lshifti  
 opcode: #move     
-opcode: #addw     
-opcode: #subw     
-opcode: #pushw    
-opcode: #popw     
-opcode: #invertw  
 opcode: #bi       
 opcode: #andi     
 opcode: #muli     
@@ -86,6 +81,5 @@ opcode: #set4
 opcode: #set8
 opcode: #pushi4
 opcode: #pushi8
-opcode: #typereg
 opcode: #emit
 opcode}
