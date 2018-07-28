@@ -412,36 +412,6 @@ defimmop gei; ge;
 defbinaryop umax; umax 
 
 
-: extract-2wide ( src2u src2l srcu srcl -- n n2 ) 
-  make-num32 ( src2u src2l n )
-  r>  ( src2u src2l )
-  make-num32  ( n2 )
-  >r  swap ( n n2 ) ;
-: addw; ( src2u src2l srcu srcl destu destl -- ) 
-  2>r ( s2u s2l s1u s1l )
-  extract-2wide + 
-  break-apart-num32 ( u l )
-  2r> ( u l destu destl ) set-reg32 ;
-: subw; ( s2u s2l su sl du dl -- )
-  2>r ( s2u s2l su sl )
-  extract-2wide - 
-  break-apart-num32 ( u l )
-  2r> set-reg32 ;
-: pushw; ( su sl du dl -- ) 
-  swap drop ( su sl dl )
-  -rot ( dl su sl ) 
-  get-reg swap ( dl l su )
-  get-reg rot swap over ( l dl u dl )
-  pushi;
-  pushi; ;
-
-: popw; ( su sl du dl -- )
-  2>r swap drop dup 2r> ( sl sl du dl ) \ get rid of the double source registers 
-  swap >r ( sl sl dl ) 
-  pop; ( sl ) 
-  r> ( sl du ) 
-  pop; ;
-
 : stop; ( dest -- ) get-reg ?running ! ;
 : typereg; ( dest -- ) get-reg addr16 . ;
 : emit; ( dest -- ) get-reg addr8 emit ;
@@ -457,8 +427,6 @@ defbinaryop umax; umax
 : opcode3 ( n body -- ) ['] decode-3reg opcode ;
 : opcode1i16 ( n body -- ) ['] decode-1reg-imm16 opcode ;
 : opcode2i16 ( n body -- ) ['] decode-2reg-imm16 opcode ;
-: opcode2w ( n body -- ) ['] decode-wide-2reg opcode ;
-: opcode3w ( n body -- ) ['] decode-wide-3reg opcode ;
 : opcodei16 ( n body -- ) ['] decode-imm16 opcode ;
 : opcode1i4 ( n body -- ) ['] decode-1reg-imm4 opcode ;
 : opcode1i8 ( n body -- ) ['] decode-one-reg-imm8 opcode ;
