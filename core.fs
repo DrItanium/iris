@@ -116,14 +116,6 @@ create data-memory memory-size-in-cells cells allot
   swap 1+ load-byte ( l h )
   8 lshift  0xFF00 and ( l h<<8 )
   or addr16 ;
-: load-double-word ( addr -- value ) 
-  dup 2 + addr16 load-word \ get the upper half
-  16 lshift 0xFFFF0000 and \ finish setting up the upper half
-  swap 
-  addr16 load-word \ get the lower half
-  0x0000FFFF and  \ make sure
-  or \ combine it 
-  0xFFFFFFFF and ;
 : push-byte ( value addr -- addr-1 )
   \ move the address down one addr and then store the value there
   1 - swap over store-byte ;
@@ -299,23 +291,6 @@ defbinaryop umin; umin
   dup ( n n )
   get-upper-register ( n u )
   swap idx>reg ( u l ) ;
-: decode-wide-2reg ( -- srcu srcl destu destl )
-  @pc@1+ ( b1 ) 
-  dup addr4 ( b1 dest )
-  >r ( b1 )
-  4 rshift addr4 ( srcl )
-  compute-reg-pair ( srcu srcl )
-  r> ( srcu srcl dest )
-  compute-reg-pair ( srcu srcl destu destl ) ;
-: decode-wide-3reg ( -- src2u src2l srcu srcl destu destl ) 
-  @pc@1+ ( b1 ) >r 
-  @pc@1+ ( b2 ) addr4
-  compute-reg-pair ( src2u src2l ) r> ( src2u src2l b1 )
-  dup ( s2u s2l b1 b1 ) >r ( s2u s2l b1 )
-  4 rshift addr4 ( s2u s2l src )
-  compute-reg-pair ( s2u s2l su sl )
-  r> ( s2u s2l su sl b1 )
-  addr4 compute-reg-pair ; 
 
 : decode-imm16 ( -- imm ) make-imm16 ;
 : decode-one-reg-imm8 ( -- imm8 dest ) 
@@ -374,9 +349,9 @@ defbinaryop umin; umin
 : defimmop ( "name" "operation" ) 
   create ' , 
   does> ( imm src dest -- )
-        swap 2>r ( imm src )
-        swap use-imm swap ( immreg srcreg )
-        2r> ( immreg srcreg destreg addr ) @ execute ;
+	    >r ( imm dest src )
+	    2>r ( imm )
+	    use-imm 2r> r> @ execute ;
 
 defimmop andi; and;
 defimmop addi; add;

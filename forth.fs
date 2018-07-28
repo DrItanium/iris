@@ -33,7 +33,29 @@ x2 constant xtop
 x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
-
+: if, ( -- addr ) 
+  xsp xtop pop, ( get the top of the stack )
+  xtop xtop invert,  ( invert the condition )
+  0 xtop ?branch, ( branch if the code was zero )
+  .mloc 2 - ( we want the address where to store the jump target )
+  ;
+: else, ( addr -- addr2 )
+	0 branch, \ the skip over point for all of this 
+	.mloc swap over ( loc addr loc ) \ need addr for later
+	2 - ( loc addr loc-2 )
+	>r ( loc addr )
+	memory_base @ +
+	2dup swap addr8 swap c!
+	1+ swap 8 rshift addr8 swap c! 
+	r> ( loc-2 ) ;
+: then, ( addr -- )
+  \ take the address on the top of the stack and stash the current location
+  \ into it
+  .mloc ( addr loc )
+  swap ( loc addr ) memory_base @ + 
+  2dup swap addr8 swap c!
+  1+ swap 8 rshift addr8 swap c! 
+  ;
 0xFE00 constant data-stack-start
 0xFD00 constant data-stack-end
 data-stack-end constant return-stack-start
@@ -217,6 +239,29 @@ label: spaces_loop_
     xtop xtop decr,
     spaces_loop_ xlower ?branch,
     next,
+s" invert" defword: invert_ ( n -- n )
+   1pop,
+   xtop xtop invert,
+   xtop xsp push,
+   next,
+s" 0=" defword: 0=_ ( v -- f )
+   1pop, 
+   0 xlower set,
+   xlower xtop xtop eq,
+   xtop xsp push,
+   next,
+s" /" defword: div_ ( n d -- v ) 
+   dup_ bl,  ( n d d ) 
+   0=_ bl, ( n d f )
+   if, 
+    2pop,
+   	0 xsp pushi, 
+   else,
+   	2pop,
+	xtop xlower xtop div,
+	xtop xsp push,
+   then,
+   next,
 s" &hashlower" defword: &hashlower_ 
     \ extract the lower hash 
     1pop, 
@@ -286,6 +331,10 @@ label: reset_base_
     xlower xtop st,
     next,
 s" interpreter" defword: interpreter_
+	0xfded literal, 1 literal, div_ bl,
+	0xfded literal, 0 literal, div_ bl,
+	xsp x8 pop,
+	xsp x9 pop, 
     bye_ branch,
 label: initcold_
     0 xtop set,
