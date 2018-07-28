@@ -64,14 +64,27 @@ dictionary-start .org
 flag/compile flag/immediate or constant flag/comp,imm 
 variable previousWord
 0 previousWord !
-: compute-hash ( str u -- nhu nhl ) 
-  \ hacked design for now
-  swap drop 
-  addr8 0 swap ;
+: compute-hash ( str u -- nhu nhm nhl ) 
+  addr8 over c@ 8 lshift 0xff00 and or addr16 ( str nhl ) 
+  swap ( nhl str ) 
+  1+ dup dup 2+ >r ( nhl str+1 str+1 )
+  c@ ( nhl str+1 c2 ) addr8 
+  swap 1+ ( nhl c2 str+2 ) 
+  c@ addr8 ( nhl c2 c3 )
+  8 lshift 0xff00 and or addr16 ( nhl nhu )
+  swap ( nhm nhl ) 
+  r> ( nhm nhl addr+3 )
+  dup 1+ ( nhm nhl addr+3 addr+4 )
+  c@ addr8 ( nhm nhl addr+3 c5 )
+  8 lshift 0xff00 and swap ( nhm nhl c5<<8 addr+3 )
+  c@ addr8 or addr16 ( nhm nhl nhu ) 
+  -rot ( nhu nhm nhl )
+  ; 
 
 : defword_custom: ( previous flags str len "id" -- ) 
   compute-hash 
-  x11 set16, \ lower name-hash
+  x10 set16, \ lowest name-hash
+  x11 set16, \ middle name-hash
   x12 set16, \ upper name-hash
   x13 set16, \ flags 
   x14 set16, \ previous
@@ -210,6 +223,11 @@ label: spaces_loop_
 s" &hashlower" defword: &hashlower_ 
     \ extract the lower hash 
     1pop, 
+    18 xtop xtop subi,
+    xtop xsp push,
+    next,
+s" &hashmiddle" defword: &hashmiddle_
+    1pop,
     14 xtop xtop subi,
     xtop xsp push,
     next,
@@ -220,11 +238,15 @@ s" &hashupper" defword: &hashupper_
     10 xtop xtop subi,
     xtop xsp push,
     next,
-s" extract-name-hash" defword extract_name_hash_
-    ( addr -- hu hl )
-    dup_ bl,
+s" extract-name-hash" defword: extract_name_hash_
+    ( addr -- hu hm hl )
+    dup_ bl, 
     &hashupper_ bl, 
     @_ bl,
+    swap_ bl, 
+    dup_ bl,
+    &hashmiddle_ bl, 
+    @_ bl, 
     swap_ bl,
     &hashlower_ bl,
     @_ bl, 
