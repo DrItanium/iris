@@ -33,9 +33,26 @@ x2 constant xtop
 x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
+
+0xFE00 constant data-stack-start
+0xFD00 constant data-stack-end
+data-stack-end constant return-stack-start
+return-stack-start 0x200 - constant return-stack-end
+0x0000 constant input-buffer-start
+input-buffer-start 0x100 + constant input-buffer-end
+: 1pop, ( -- ) xsp xtop pop, ;
+: 2pop, ( -- )
+    1pop,
+    xsp xlower pop, ;
+: literal, ( imm -- ) xsp pushi, ;
+: bl, ( imm -- ) xrp call, ;
+0x0100 constant variables-start
+: &bootkind ( -- value ) variables-start ;
+: &delimiter ( -- value ) variables-start 2+ ;
+: &base ( -- value ) variables-start 2+ 2+ ;
 : if, ( -- addr ) 
   xsp xtop pop, ( get the top of the stack )
-  xtop xtop invert,  ( invert the condition )
+  xtop xtop invert,  ( invert the condition since we want to jump to the else )
   0 xtop ?branch, ( branch if the code was zero )
   .mloc 2 - ( we want the address where to store the jump target )
   ;
@@ -54,24 +71,25 @@ x5 constant xfourth
   .mloc ( addr loc )
   swap ( loc addr ) memory_base @ + 
   2dup swap addr8 swap c!
-  1+ swap 8 rshift addr8 swap c! 
-  ;
-0xFE00 constant data-stack-start
-0xFD00 constant data-stack-end
-data-stack-end constant return-stack-start
-return-stack-start 0x200 - constant return-stack-end
-0x0000 constant input-buffer-start
-input-buffer-start 0x100 + constant input-buffer-end
-: 1pop, ( -- ) xsp xtop pop, ;
-: 2pop, ( -- )
-    1pop,
-    xsp xlower pop, ;
-: literal, ( imm -- ) xsp pushi, ;
-: bl, ( imm -- ) xrp call, ;
-0x0100 constant variables-start
-: &bootkind ( -- value ) variables-start ;
-: &delimiter ( -- value ) variables-start 2+ ;
-: &base ( -- value ) variables-start 2+ 2+ ;
+  1+ swap 8 rshift addr8 swap c! ;
+: begin, ( -- addr ) .mloc ;
+: while, ( -- addr ) 
+  1pop,
+  xtop xtop invert,
+  0 xtop ?branch,
+  .mloc 2 - ;
+: repeat, ( at al -- )
+  swap ( al at )
+  branch, ( al )
+  memory_base @ + .mloc swap 
+  2dup c! ( v al )
+  1+ ( v al+1 ) swap 8 rshift swap c! ;
+: until, ( addr -- )
+  xsp xtop pop,
+  0 xlower set,
+  xlower xtop xtop eq,
+  xtop ?branch, ;
+: again, ( addr -- ) branch, ; 
 0x0200 constant dictionary-start
 variables-start .org
     0xFFFF word,        \ we are doing cold or warm boot?
@@ -83,6 +101,7 @@ dictionary-start .org
 flag/compile flag/immediate or constant flag/comp,imm 
 variable previousWord
 0 previousWord !
+
 : compute-hash ( str u -- nhu nhm nhl ) 
   addr8 over c@ 8 lshift 0xff00 and or addr16 ( str nhl ) 
   swap ( nhl str ) 
@@ -116,26 +135,6 @@ label: next_
     xrp xtmp pop,
     xtmp rbranch,
 : next, ( -- ) next_ branch, ;
-s" -" defword: -_
-   2pop,
-   xtop xlower xtop sub,
-   xtop xsp push,
-   next,
-s" +" defword: +_
-   2pop,
-   xtop xlower xtop add,
-   xtop xsp push,
-   next,
-s" 1+" defword: 1+_
-   1pop, 
-   xtop xtop incr, 
-   xtop xsp push,
-   next,
-s" 2+" defword: 2+_
-    1pop,
-    2 xtop xtop addi,
-    xtop xsp push,
-    next,
 s" swap" defword: swap_ 
    2pop, 
    xtop xsp push,
@@ -166,6 +165,94 @@ s" rot" defword: rot_
     xtop xsp push,
     xthird xsp push,
     next,
+s" -" defword: -_
+   2pop,
+   xtop xlower xtop sub,
+   xtop xsp push,
+   next,
+s" +" defword: +_
+   2pop,
+   xtop xlower xtop add,
+   xtop xsp push,
+   next,
+s" *" defword: *_
+	2pop, 
+	xtop xlower xtop mul,
+	xtop xsp push,
+	next,
+s" 1+" defword: 1+_
+   1pop, 
+   xtop xtop incr, 
+   xtop xsp push,
+   next,
+s" 2+" defword: 2+_
+    1pop,
+    2 xtop xtop addi,
+    xtop xsp push,
+    next,
+s" invert" defword: invert_ ( n -- n )
+   1pop,
+   xtop xtop invert,
+   xtop xsp push,
+   next,
+s" =" defword: =_ ( a b -- f )
+   2pop,
+   xlower xtop xtop eq,
+   xtop xsp push,
+   next,
+: =, ( -- ) =_ bl, ;
+s" 0=" defword: 0=_ ( v -- f )
+   0 literal, 
+   =,
+   next,
+: 0=, ( -- ) 0=_ bl, ;
+s" rshift" defword: rshift_ ( n d -- v )
+   2pop,
+   xtop xlower xtop rshift,
+   xtop xsp push,
+   next,
+: rshift,, ( -- ) rshift_ bl, ;
+s" lshift" defword: lshift_ ( n d -- v )
+	2pop, 
+	xtop xlower xtop lshift,
+	xtop xsp push,
+	next,
+: lshift,, ( -- ) lshift_ bl, ;
+s" /" defword: div_ ( n d -- v ) 
+   dup, ( n d d ) 
+   0=, ( n d f )
+   if, 
+	2pop,
+	0 xsp pushi, 
+   else,
+	2pop,
+	xtop xlower xtop div,
+	xtop xsp push,
+   then,
+   next,
+s" 2*" defword: 2*_ ( a -- b )
+  1pop, 
+  1 xtop xtop lshift,
+  xtop xsp push,
+  next,
+s" 2/" defword: 2/_ ( a -- b )
+  1pop,
+  1 xtop xtop rshift, 
+  xtop xsp push,
+  next,
+
+s" mod" defword: mod_ ( n d -- v )
+  dup_ bl, ( n d d )
+  0=_ bl, ( n d f )
+  if,
+  	2pop,
+	0 xsp pushi,
+  else,
+	2pop,
+	xtop xlower xtop rem,
+	xtop xsp push,
+  then,
+  next, 
 s" bye" defword: bye_
     0 stopi,
 s" @" defword: @_ 
@@ -242,65 +329,6 @@ label: spaces_loop_
     xtop xtop decr,
     spaces_loop_ xlower ?branch,
     next,
-s" invert" defword: invert_ ( n -- n )
-   1pop,
-   xtop xtop invert,
-   xtop xsp push,
-   next,
-s" =" defword: =_ ( a b -- f )
-   2pop,
-   xlower xtop xtop eq,
-   xtop xsp push,
-   next,
-: =, ( -- ) =_ bl, ;
-s" 0=" defword: 0=_ ( v -- f )
-   0 literal, 
-   =,
-   next,
-: 0=, ( -- ) 0=_ bl, ;
-s" rshift" defword: rshift_ ( n d -- v )
-   2pop,
-   xtop xlower xtop rshift,
-   xtop xsp push,
-   next,
-: rshift,, ( -- ) rshift_ bl, ;
-s" lshift" defword: lshift_ ( n d -- v )
-	2pop, 
-	xtop xlower xtop lshift,
-	xtop xsp push,
-	next,
-: lshift,, ( -- ) lshift_ bl, ;
-s" /" defword: div_ ( n d -- v ) 
-   dup, ( n d d ) 
-   0=, ( n d f )
-   if, 
-	2pop,
-	0 xsp pushi, 
-   else,
-	dup, ( n d d ) 
-	2 literal, =, 
-	if, 
-		drop, ( n ) 
-		1 literal, rshift,,
-	else,
-		2pop,
-		xtop xlower xtop div,
-		xtop xsp push,
-	then,
-   then,
-   next,
-s" mod" defword: mod_ ( n d -- v )
-  dup_ bl, ( n d d )
-  0=_ bl, ( n d f )
-  if,
-  	2pop,
-	0 xsp pushi,
-  else,
-	2pop,
-	xtop xlower xtop rem,
-	xtop xsp push,
-  then,
-  next, 
 s" ?even" defword: ?even_ ( v -- f )
 	1pop, 
 	0x1 xlower set,
@@ -383,26 +411,27 @@ label: reset_base_
     xlower xtop st,
     next,
 s" interpreter" defword: interpreter_
-	0xfded literal, 1 literal, div_ bl,
-	0xfded literal, 0 literal, div_ bl,
-	xsp x8 pop,
-	xsp x9 pop, 
-    bye_ branch,
-label: initcold_
-    0 xtop set,
-    &bootkind xlower set,
-    xtop xlower st,
-    newline_ bl, newline_ bl,
-    bootmessage_ bl,
-    next, 
+	begin,
+		0xfded literal, 1 literal, div_ bl,
+		0xfded literal, 0 literal, div_ bl,
+		xsp x8 pop,
+		xsp x9 pop, 
+    	bye_ branch,
+	again,
 s" cold" defword: cold_
     \ reset/set the stacks
     data-stack-start xsp set,
     return-stack-start xrp set,
-    initcold_ literal,
     &bootkind literal, @_ bl, \ coldboot?
-    ?exec_ bl, \ see if we should do an initial cold boot or not
+	if, 
+    	0 xtop set,
+    	&bootkind xlower set,
+    	xtop xlower st,
+    	newline_ bl, newline_ bl,
+    	bootmessage_ bl,
+	then,
     reset_delimiter_ bl, 
+	reset_base_ bl,
     interpreter_ branch,
 0x0000 .org
 \ we should not put anything in this area as it could be useful for other things :D
