@@ -149,6 +149,7 @@ s" over" defword: over_
 s" drop" defword: drop_
     xsp xtop pop,
     next,
+: drop, ( -- ) drop_ bl, ;
 s" 2drop" defword: 2drop_
     2pop,
     next,
@@ -156,6 +157,7 @@ s" dup" defword: dup_
     xsp xtop ld,
     xtop xsp push,
     next,
+: dup, ( -- ) dup_ bl, ;
 s" rot" defword: rot_
     xsp xtop pop,  \ c
     xsp xlower pop, \ b 
@@ -212,6 +214,7 @@ s" 2dup" defword: 2dup_  ( a b -- a b a b )
     xlower xsp push,
     xtop xsp push,
     next,
+: 2dup, ( -- ) 2dup_ bl, ;
 s" -rot" defword: -rot_
     rot_ bl,
     rot_ bl,
@@ -244,24 +247,73 @@ s" invert" defword: invert_ ( n -- n )
    xtop xtop invert,
    xtop xsp push,
    next,
-s" 0=" defword: 0=_ ( v -- f )
-   1pop, 
-   0 xlower set,
+s" =" defword: =_ ( a b -- f )
+   2pop,
    xlower xtop xtop eq,
    xtop xsp push,
    next,
-s" /" defword: div_ ( n d -- v ) 
-   dup_ bl,  ( n d d ) 
-   0=_ bl, ( n d f )
-   if, 
-    2pop,
-   	0 xsp pushi, 
-   else,
-   	2pop,
-	xtop xlower xtop div,
+: =, ( -- ) =_ bl, ;
+s" 0=" defword: 0=_ ( v -- f )
+   0 literal, 
+   =,
+   next,
+: 0=, ( -- ) 0=_ bl, ;
+s" rshift" defword: rshift_ ( n d -- v )
+   2pop,
+   xtop xlower xtop rshift,
+   xtop xsp push,
+   next,
+: rshift,, ( -- ) rshift_ bl, ;
+s" lshift" defword: lshift_ ( n d -- v )
+	2pop, 
+	xtop xlower xtop lshift,
 	xtop xsp push,
+	next,
+: lshift,, ( -- ) lshift_ bl, ;
+s" /" defword: div_ ( n d -- v ) 
+   dup, ( n d d ) 
+   0=, ( n d f )
+   if, 
+	2pop,
+	0 xsp pushi, 
+   else,
+	dup, ( n d d ) 
+	2 literal, =, 
+	if, 
+		drop, ( n ) 
+		1 literal, rshift,,
+	else,
+		2pop,
+		xtop xlower xtop div,
+		xtop xsp push,
+	then,
    then,
    next,
+s" mod" defword: mod_ ( n d -- v )
+  dup_ bl, ( n d d )
+  0=_ bl, ( n d f )
+  if,
+  	2pop,
+	0 xsp pushi,
+  else,
+	2pop,
+	xtop xlower xtop rem,
+	xtop xsp push,
+  then,
+  next, 
+s" ?even" defword: ?even_ ( v -- f )
+	1pop, 
+	0x1 xlower set,
+	0x0 xthird set,
+	xlower xtop xtop and,
+	xthird xtop xtop neq, 
+	xtop xsp push,
+	next,
+s" ?odd" defword: ?odd_ ( v -- f )
+	?even_ bl,
+	invert_ bl,
+	next,
+
 s" &hashlower" defword: &hashlower_ 
     \ extract the lower hash 
     1pop, 
