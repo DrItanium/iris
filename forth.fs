@@ -436,7 +436,7 @@ s" emit" defword: emit_
    1pop,
    xtop emit,
    next,
-s" <=" defword <=_ ( a b -- f )
+s" <=" defword: <=_ ( a b -- f )
   2pop,  \ xtop - b 
          \ xlower - a
   xtop xlower xtop le,
