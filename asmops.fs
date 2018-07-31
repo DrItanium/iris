@@ -79,3 +79,5 @@
 #emit     asm1: emit,
 #?key     asm1: ?key,
 #key	  asm1: key,
+#stb      asm2: stb,
+#ldb      asm2: ldb,

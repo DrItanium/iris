@@ -84,4 +84,6 @@ opcode: #pushi8
 opcode: #emit
 opcode: #?key
 opcode: #key
+opcode: #stb
+opcode: #ldb
 opcode}

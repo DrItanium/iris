@@ -33,6 +33,7 @@ x2 constant xtop
 x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
+x6 constant xinput
 
 0xFE00 constant data-stack-start
 0xFD00 constant data-stack-end
@@ -48,8 +49,9 @@ input-buffer-start 0x100 + constant input-buffer-end
 : bl, ( imm -- ) xrp call, ;
 0x0100 constant variables-start
 : &bootkind ( -- value ) variables-start ;
-: &delimiter ( -- value ) variables-start 2+ ;
-: &base ( -- value ) variables-start 2+ 2+ ;
+: &delimiter ( -- value ) &bootkind 2+ ;
+: &base ( -- value ) &delimiter 2+ ;
+: &dp ( -- value ) &base 2+ ; 
 : if, ( -- addr ) 
   xsp xtop pop, ( get the top of the stack )
   xtop xtop invert,  ( invert the condition since we want to jump to the else )
@@ -127,9 +129,13 @@ variable previousWord
   x13 set16, \ flags 
   x14 set16, \ previous
   label: ;
+: update-previous-word ( -- ) latest name>int execute previousWord ! ;
+: defword_custom_flags: ( flags str len "id" -- )
+  2>r previousWord @ swap 2r> defword_custom:
+  update-previous-word ;
 : defword: ( str len "id" -- ) 
   2>r previousWord @ 0x0000 2r> defword_custom: 
-  latest name>int execute previousWord !  ;
+  update-previous-word ;
 
 label: next_
     xrp xtmp pop,
@@ -259,6 +265,14 @@ s" @" defword: @_
     xsp xtop pop, \ get the address
     xtop xtop ld, \ load the value
     xtop xsp push,
+    next,
+s" dp" defword: dp_ ( -- v )
+   &dp xtop set,
+   xtop xsp push,
+   next,
+s" here" defword: here_ ( -- v ) dp_ bl, @_ bl, next,
+s" create" defword: create_ 
+    
     next,
 s" !" defword: !_ 
     2pop, \ top -> address
@@ -410,13 +424,58 @@ label: reset_base_
     0x0a xlower set,
     xlower xtop st,
     next,
+s" ?key" defword: ?key_ ( -- f )
+   xtop ?key,
+   xtop xsp push,
+   next,
+s" key" defword: key_ ( -- v ) 
+   xtop key,
+   xtop xsp push,
+   next,
+s" emit" defword: emit_
+   1pop,
+   xtop emit,
+   next,
+s" <=" defword <=_ ( a b -- f )
+  2pop,  \ xtop - b 
+         \ xlower - a
+  xtop xlower xtop le,
+  xtop xsp push,
+  next,
+s" read-key" defword: read-key_ ( -- )
+  key_ bl,
+  dup,
+  0x7f literal,
+  =_ bl, 
+  if,
+    
+  else, 
+    emit_ bl, \ print out the character to the display
+    dup, 
+    input-buffer-end literal,
+    <=_ bl,
+    if,
+      1pop,     \ stash the output to the input buffer
+      xtop xinput stb,
+      xinput 1+,
+    else,
+    then,
+  then,
+  next,
+    
+
+
 s" interpreter" defword: interpreter_
 	begin,
-		0xfded literal, 1 literal, div_ bl,
-		0xfded literal, 0 literal, div_ bl,
-		xsp x8 pop,
-		xsp x9 pop, 
-    	bye_ branch,
+        ?key_ bl,
+        if,
+            key_ bl,
+            dup,
+            emit_ bl,
+            1pop, 
+            xtop xinput stb,
+            xinput 1+,
+        then,
 	again,
 s" cold" defword: cold_
     \ reset/set the stacks
@@ -429,8 +488,12 @@ s" cold" defword: cold_
     	xtop xlower st,
     	newline_ bl, newline_ bl,
     	bootmessage_ bl,
+        &dp xlower set,
+        cold_ xtop set,
+        xtop xlower st, \ setup the initial dictionary pointer
 	then,
-    reset_delimiter_ bl, 
+    input-buffer-start xinput set,
+    reset_delimiter_ bl,
 	reset_base_ bl,
     interpreter_ branch,
 0x0000 .org

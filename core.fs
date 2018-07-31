@@ -391,8 +391,10 @@ defbinaryop umax; umax
 : stop; ( dest -- ) get-reg ?running ! ;
 : emit; ( dest -- ) get-reg addr8 emit ;
 
-: ?key; ( dest -- ) key? swap addr16 set-reg ;
-: key;  ( dest -- ) key swap addr16 set-reg ;
+: ?key; ( dest -- ) key? addr16 swap set-reg ;
+: key;  ( dest -- ) key addr16 swap set-reg ;
+: stb; ( value dest -- ) swap get-reg addr8 swap get-reg store-byte ;
+: ldb; ( addr dest -- ) swap get-reg load-byte swap set-reg ;
 
 : opcode ( n body decoder -- ) 
   rot addr8 ( body decoder n ) 
@@ -468,6 +470,8 @@ defbinaryop umax; umax
 #emit     ' emit;          opcode1
 #?key	  ' ?key;		   opcode1
 #key 	  ' key; 		   opcode1
+#stb      ' stb;           opcode2
+#ldb      ' ldb;           opcode2
 
 : set-memory ( value address -- ) swap addr8 swap store-byte ;
 set-current
