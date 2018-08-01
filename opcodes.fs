@@ -86,4 +86,7 @@ opcode: #?key
 opcode: #key
 opcode: #stb
 opcode: #ldb
+opcode: #clrscr
+opcode: #setcur
+opcode: #tdims
 opcode}

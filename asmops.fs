@@ -81,3 +81,7 @@
 #key	  asm1: key,
 #stb      asm2: stb,
 #ldb      asm2: ldb,
+#clrscr   asm0: clrscr,
+#setcur   asm2: setcur,
+#tdims    asm2: tdims,
+

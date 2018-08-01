@@ -34,6 +34,9 @@ x3 constant xlower
 x4 constant xthird
 x5 constant xfourth
 x6 constant xinput
+x7 constant xlength
+x8 constant xrow
+x9 constant xcolumn
 
 0xFE00 constant data-stack-start
 0xFD00 constant data-stack-end
@@ -52,6 +55,8 @@ input-buffer-start 0x100 + constant input-buffer-end
 : &delimiter ( -- value ) &bootkind 2+ ;
 : &base ( -- value ) &delimiter 2+ ;
 : &dp ( -- value ) &base 2+ ; 
+: &maxrow ( -- value ) &dp 2+ ;
+: &maxcolumn ( -- value ) &maxrow 2+ ;
 : if, ( -- addr ) 
   xsp xtop pop, ( get the top of the stack )
   xtop xtop invert,  ( invert the condition since we want to jump to the else )
@@ -141,11 +146,13 @@ label: next_
     xrp xtmp pop,
     xtmp rbranch,
 : next, ( -- ) next_ branch, ;
+
 s" swap" defword: swap_ 
    2pop, 
    xtop xsp push,
    xlower xsp push, 
    next,
+: swap; ( -- ) swap_ bl, ;
 s" over" defword: over_ 
    2 xsp xtop addi,
    xtop xtop ld,
@@ -171,6 +178,8 @@ s" rot" defword: rot_
     xtop xsp push,
     xthird xsp push,
     next,
+\ s" emit" defword: emit_ ( c -- )
+   
 s" -" defword: -_
    2pop,
    xtop xlower xtop sub,
@@ -432,33 +441,67 @@ s" key" defword: key_ ( -- v )
    xtop key,
    xtop xsp push,
    next,
-s" emit" defword: emit_
-   1pop,
-   xtop emit,
-   next,
 s" <=" defword: <=_ ( a b -- f )
   2pop,  \ xtop - b 
          \ xlower - a
   xtop xlower xtop le,
   xtop xsp push,
   next,
+s" input-overflow?" defword: input-overflow?_ ( -- f )
+  0 xlower set, 
+  0xFF00 xlength xtop andi, 
+  xlower xtop xtop neq,
+  xtop xsp push,
+  next,
+s" ?delete-char" defword: ?delete-char_ ( c -- f ) 
+  0x7f literal, 
+  =_ bl, 
+  next,
+s" add-to-input" defword: add-to-input_ ( c -- )
+  1pop, 
+  xtop xinput stb,
+  xinput 1+,
+  xlength 1+,
+  next, 
+
+s" or" defword: or_ ( a b -- c ) 
+  2pop,
+  xtop xlower xtop or,
+  xtop xsp push,
+  next,
+: or; ( -- ) or_ bl, ;
+s" ?newline-char" defword: ?newline-char_ ( c -- f )
+  dup,
+  0xa literal,
+  =_ bl,
+  swap;
+  0xd literal,
+  =_ bl,
+  or_ bl,
+  next, 
+s" clear-input" defword: clear-input_ ( -- )
+  0 xlength set,
+  input-buffer-start xinput set,
+  next,
 s" read-key" defword: read-key_ ( -- )
   key_ bl,
   dup,
-  0x7f literal,
-  =_ bl, 
+  ?delete-char_ bl, 
   if,
     
   else, 
-    emit_ bl, \ print out the character to the display
-    dup, 
-    input-buffer-end literal,
-    <=_ bl,
+    dup,
+    ?newline-char_ bl, 
     if,
-      1pop,     \ stash the output to the input buffer
-      xtop xinput stb,
-      xinput 1+,
+        ok_ bl,
     else,
+        1pop,
+        xtop emit,
+        \ emit_ bl, \ print out the character to the display
+        \ input-overflow?_ bl,
+        \ if,
+        \ else,
+        \ then,
     then,
   then,
   next,
@@ -471,10 +514,18 @@ s" interpreter" defword: interpreter_
         if,
             key_ bl,
             dup,
-            emit_ bl,
-            1pop, 
-            xtop xinput stb,
-            xinput 1+,
+            1pop,
+            xtop emit,
+            dup, 
+            ?newline-char_ bl,
+            if,
+                \ process input
+                newline_ bl,
+            else,
+                1pop, 
+                xtop xinput stb,
+                xinput 1+,
+            then,
         then,
 	again,
 s" cold" defword: cold_
@@ -486,11 +537,19 @@ s" cold" defword: cold_
     	0 xtop set,
     	&bootkind xlower set,
     	xtop xlower st,
-    	newline_ bl, newline_ bl,
-    	bootmessage_ bl,
         &dp xlower set,
         cold_ xtop set,
         xtop xlower st, \ setup the initial dictionary pointer
+        xrow xcolumn tdims, \ get the dimensions
+        &maxrow xtop set, 
+        xrow xtop st,
+        &maxcolumn xtop set,
+        xcolumn xtop st, 
+        0 xrow set,
+        0 xcolumn set,
+        clrscr,
+    	newline_ bl, newline_ bl,
+    	bootmessage_ bl,
 	then,
     input-buffer-start xinput set,
     reset_delimiter_ bl,
