@@ -494,39 +494,54 @@ s" clear-input" defword: clear-input_ ( -- )
   0 xlength set,
   input-buffer-start xinput set,
   next,
+s" read-key" defword: read-key_ ( -- c )
+  key_ bl,
+  dup;
+  emit_ bl,
+  next,
+s" process-line" defword: process-line_ ( -- )
+    newline_ bl,
+    \ process input here
+    input-buffer-start xinput set,
+    0 xlength set,
+    next,
+s" perform-backspace" defword: perform-backspace_ ( c -- )
+  backspace_ bl,
+  xlength xsp push, 0=,
+  if,
+  else,
+    xlength 1-,
+    xinput 1-,
+  then,
+  next,
+s" stash-char" defword: stash-char_ ( c -- ) 
+  1pop,
+  xtop xinput stb,
+  xinput 1+,
+  xlength 1+,
+  next,
 
+s" process-char" defword: process-char_ ( c -- )
+  dup;
+  ?newline-char_ bl,
+  if,
+    process-line_ bl,
+  else,
+      dup; ?backspace-char_ bl,
+      if, 
+          drop; perform-backspace_ bl,
+      else,
+          stash-char_ bl,
+      then,
+  then,
+  next,
 
 s" interpreter" defword: interpreter_
 	begin,
         ?key_ bl,
         if,
-            key_ bl,
-            dup;
-            emit_ bl,
-            dup; 
-            ?newline-char_ bl,
-            if,
-                newline_ bl,
-                \ process input
-                input-buffer-start xinput set,
-                0 xlength set,
-            else,
-                dup; ?backspace-char_ bl,
-                if, 
-                    backspace_ bl,
-                    xlength xsp push, 0=, 
-                    if, 
-                    else, 
-                        xlength 1-,
-                        xinput 1-,
-                    then,
-                else,
-                    1pop, 
-                    xtop xinput stb,
-                    xinput 1+,
-                    xlength 1+,
-                then,
-            then,
+            read-key_ bl,
+            process-char_ bl,
         then,
 	again,
 s" cold" defword: cold_
