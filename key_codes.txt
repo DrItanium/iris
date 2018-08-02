@@ -1,0 +1,180 @@
+The cpu is able to return input keycodes as well. The standard ascii set maps to the lower 7-bits
+with the 8th bit reserved for extended ascii/anything else special. Values [0x0100-0x01FF] are
+used for extended key codes. Here is the list:
+
+0x0100 - left key
+0x0101 - right key
+0x0102 - up key
+0x0103 - down key
+0x0104 - home key
+0x0105 - end key
+0x0106 - page up key
+0x0107 - page down key
+0x0108 - insert key
+0x0109 - delete key
+0x010A - f1 key
+0x010B - f2 key
+0x010C - f3 key
+0x010D - f4 key
+0x010E - f5 key
+0x010F - f6 key
+0x0110 - f7 key
+0x0111 - f8 key
+0x0112 - f9 key
+0x0113 - f10 key
+0x0114 - f11 key
+0x0115 - f12 key
+0x0116 - shift + left key
+0x0117 - shift + right key
+0x0118 - shift + up key
+0x0119 - shift + down key
+0x011A - shift + home key
+0x011B - shift + end key
+0x011C - shift + page up key
+0x011D - shift + page down key
+0x011E - shift + insert key
+0x011F - shift + delete key
+0x0120 - shift + f1 key
+0x0121 - shift + f2 key
+0x0122 - shift + f3 key
+0x0123 - shift + f4 key
+0x0124 - shift + f5 key
+0x0125 - shift + f6 key
+0x0126 - shift + f7 key
+0x0127 - shift + f8 key
+0x0128 - shift + f9 key
+0x0129 - shift + f10 key
+0x012A - shift + f11 key
+0x012B - shift + f12 key
+0x012C - ctrl + left key
+0x012D - ctrl + right key
+0x012E - ctrl + up key
+0x012F - ctrl + down key
+0x0130 - ctrl + home key
+0x0131 - ctrl + end key
+0x0132 - ctrl + page up key
+0x0133 - ctrl + page down key
+0x0134 - ctrl + insert key
+0x0135 - ctrl + delete key
+0x0136 - ctrl + f1 key
+0x0137 - ctrl + f2 key
+0x0138 - ctrl + f3 key
+0x0139 - ctrl + f4 key
+0x013A - ctrl + f5 key
+0x013B - ctrl + f6 key
+0x013C - ctrl + f7 key
+0x013D - ctrl + f8 key
+0x013E - ctrl + f9 key
+0x013F - ctrl + f10 key
+0x0140 - ctrl + f11 key
+0x0141 - ctrl + f12 key
+0x0142 - alt + left key
+0x0143 - alt + right key
+0x0144 - alt + up key
+0x0145 - alt + down key
+0x0146 - alt + home key
+0x0147 - alt + end key
+0x0148 - alt + page up key
+0x0149 - alt + page down key
+0x014A - alt + insert key
+0x014B - alt + delete key
+0x014C - alt + f1 key
+0x014D - alt + f2 key
+0x014E - alt + f3 key
+0x014F - alt + f4 key
+0x0150 - alt + f5 key
+0x0151 - alt + f6 key
+0x0152 - alt + f7 key
+0x0153 - alt + f8 key
+0x0154 - alt + f9 key
+0x0155 - alt + f10 key
+0x0156 - alt + f11 key
+0x0157 - alt + f12 key
+0x0158 - shift + ctrl + left key
+0x0159 - shift + ctrl + right key
+0x015A - shift + ctrl + up key
+0x015B - shift + ctrl + down key
+0x015C - shift + ctrl + home key
+0x015D - shift + ctrl + end key
+0x015E - shift + ctrl + page up key
+0x015F - shift + ctrl + page down key
+0x0160 - shift + ctrl + insert key
+0x0161 - shift + ctrl + delete key
+0x0162 - shift + ctrl + f1 key
+0x0163 - shift + ctrl + f2 key
+0x0164 - shift + ctrl + f3 key
+0x0165 - shift + ctrl + f4 key
+0x0166 - shift + ctrl + f5 key
+0x0167 - shift + ctrl + f6 key
+0x0168 - shift + ctrl + f7 key
+0x0169 - shift + ctrl + f8 key
+0x016A - shift + ctrl + f9 key
+0x016B - shift + ctrl + f10 key
+0x016C - shift + ctrl + f11 key
+0x016D - shift + ctrl + f12 key
+0x016E - shift + alt + left key
+0x016F - shift + alt + right key
+0x0170 - shift + alt + up key
+0x0171 - shift + alt + down key
+0x0172 - shift + alt + home key
+0x0173 - shift + alt + end key
+0x0174 - shift + alt + page up key
+0x0175 - shift + alt + page down key
+0x0176 - shift + alt + insert key
+0x0177 - shift + alt + delete key
+0x0178 - shift + alt + f1 key
+0x0179 - shift + alt + f2 key
+0x017A - shift + alt + f3 key
+0x017B - shift + alt + f4 key
+0x017C - shift + alt + f5 key
+0x017D - shift + alt + f6 key
+0x017E - shift + alt + f7 key
+0x017F - shift + alt + f8 key
+0x0180 - shift + alt + f9 key
+0x0181 - shift + alt + f10 key
+0x0182 - shift + alt + f11 key
+0x0183 - shift + alt + f12 key
+0x0184 - ctrl + alt + left key
+0x0185 - ctrl + alt + right key
+0x0186 - ctrl + alt + up key
+0x0187 - ctrl + alt + down key
+0x0188 - ctrl + alt + home key
+0x0189 - ctrl + alt + end key
+0x018A - ctrl + alt + page up key
+0x018B - ctrl + alt + page down key
+0x018C - ctrl + alt + insert key
+0x018D - ctrl + alt + delete key
+0x018E - ctrl + alt + f1 key
+0x018F - ctrl + alt + f2 key
+0x0190 - ctrl + alt + f3 key
+0x0191 - ctrl + alt + f4 key
+0x0192 - ctrl + alt + f5 key
+0x0193 - ctrl + alt + f6 key
+0x0194 - ctrl + alt + f7 key
+0x0195 - ctrl + alt + f8 key
+0x0196 - ctrl + alt + f9 key
+0x0197 - ctrl + alt + f10 key
+0x0198 - ctrl + alt + f11 key
+0x0199 - ctrl + alt + f12 key
+0x019A - shift + ctrl + alt + left key
+0x019B - shift + ctrl + alt + right key
+0x019C - shift + ctrl + alt + up key
+0x019D - shift + ctrl + alt + down key
+0x019E - shift + ctrl + alt + home key
+0x019F - shift + ctrl + alt + end key
+0x01A0 - shift + ctrl + alt + page up key
+0x01A1 - shift + ctrl + alt + page down key
+0x01A2 - shift + ctrl + alt + insert key
+0x01A3 - shift + ctrl + alt + delete key
+0x01A4 - shift + ctrl + alt + f1 key
+0x01A5 - shift + ctrl + alt + f2 key
+0x01A6 - shift + ctrl + alt + f3 key
+0x01A7 - shift + ctrl + alt + f4 key
+0x01A8 - shift + ctrl + alt + f5 key
+0x01A9 - shift + ctrl + alt + f6 key
+0x01AA - shift + ctrl + alt + f7 key
+0x01AB - shift + ctrl + alt + f8 key
+0x01AC - shift + ctrl + alt + f9 key
+0x01AD - shift + ctrl + alt + f10 key
+0x01AE - shift + ctrl + alt + f11 key
+0x01AF - shift + ctrl + alt + f12 key
