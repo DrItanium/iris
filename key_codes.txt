@@ -1,6 +1,21 @@
 The cpu is able to return input keycodes as well. The standard ascii set maps to the lower 7-bits
 with the 8th bit reserved for extended ascii/anything else special. Values [0x0100-0x01FF] are
-used for extended key codes. Here is the list:
+used for extended key codes. 
+
+The upper three bits of the lower octet are laid out like this:
+
+ACS? => where:
+A signifies if Alt is pressed
+C signifies if Ctrl is pressed
+S signifies if Shift is pressed
+? can be 0 or 1 combined with the lower 4 bits to specify the extended key pressed
+
+The codes are aligned on 32 entry boundaries to make this design work so there are
+unused keycodes. The extended design supports up to 32 keycodes with 10 going 
+unused.
+
+
+Here is the list:
 
 0x0100 - left key
 0x0101 - right key
@@ -98,3 +113,164 @@ used for extended key codes. Here is the list:
 0x015D - unused
 0x015E - unused
 0x015F - unused
+0x0160 - shift + ctrl + left key
+0x0161 - shift + ctrl + right key
+0x0162 - shift + ctrl + up key
+0x0163 - shift + ctrl + down key
+0x0164 - shift + ctrl + home key
+0x0165 - shift + ctrl + end key
+0x0166 - shift + ctrl + page up key
+0x0167 - shift + ctrl + page down key
+0x0168 - shift + ctrl + insert key
+0x0169 - shift + ctrl + delete key
+0x016A - shift + ctrl + f1 key
+0x016B - shift + ctrl + f2 key
+0x016C - shift + ctrl + f3 key
+0x016D - shift + ctrl + f4 key
+0x016E - shift + ctrl + f5 key
+0x016F - shift + ctrl + f6 key
+0x0170 - shift + ctrl + f7 key
+0x0171 - shift + ctrl + f8 key
+0x0172 - shift + ctrl + f9 key
+0x0173 - shift + ctrl + f10 key
+0x0174 - shift + ctrl + f11 key
+0x0175 - shift + ctrl + f12 key
+0x0176 - unused
+0x0177 - unused
+0x0178 - unused
+0x0179 - unused
+0x017A - unused
+0x017B - unused
+0x017C - unused
+0x017D - unused
+0x017E - unused
+0x017F - unused
+0x0180 - alt + left key
+0x0181 - alt + right key
+0x0182 - alt + up key
+0x0183 - alt + down key
+0x0184 - alt + home key
+0x0185 - alt + end key
+0x0186 - alt + page up key
+0x0187 - alt + page down key
+0x0188 - alt + insert key
+0x0189 - alt + delete key
+0x018A - alt + f1 key
+0x018B - alt + f2 key
+0x018C - alt + f3 key
+0x018D - alt + f4 key
+0x018E - alt + f5 key
+0x018F - alt + f6 key
+0x0190 - alt + f7 key
+0x0191 - alt + f8 key
+0x0192 - alt + f9 key
+0x0193 - alt + f10 key
+0x0194 - alt + f11 key
+0x0195 - alt + f12 key
+0x0196 - unused
+0x0197 - unused
+0x0198 - unused
+0x0199 - unused
+0x019A - unused
+0x019B - unused
+0x019C - unused
+0x019D - unused
+0x019E - unused
+0x019F - unused
+0x01A0 - shift + alt + left key
+0x01A1 - shift + alt + right key
+0x01A2 - shift + alt + up key
+0x01A3 - shift + alt + down key
+0x01A4 - shift + alt + home key
+0x01A5 - shift + alt + end key
+0x01A6 - shift + alt + page up key
+0x01A7 - shift + alt + page down key
+0x01A8 - shift + alt + insert key
+0x01A9 - shift + alt + delete key
+0x01AA - shift + alt + f1 key
+0x01AB - shift + alt + f2 key
+0x01AC - shift + alt + f3 key
+0x01AD - shift + alt + f4 key
+0x01AE - shift + alt + f5 key
+0x01AF - shift + alt + f6 key
+0x01B0 - shift + alt + f7 key
+0x01B1 - shift + alt + f8 key
+0x01B2 - shift + alt + f9 key
+0x01B3 - shift + alt + f10 key
+0x01B4 - shift + alt + f11 key
+0x01B5 - shift + alt + f12 key
+0x01B6 - unused
+0x01B7 - unused
+0x01B8 - unused
+0x01B9 - unused
+0x01BA - unused
+0x01BB - unused
+0x01BC - unused
+0x01BD - unused
+0x01BE - unused
+0x01BF - unused
+0x01C0 - ctrl + alt + left key
+0x01C1 - ctrl + alt + right key
+0x01C2 - ctrl + alt + up key
+0x01C3 - ctrl + alt + down key
+0x01C4 - ctrl + alt + home key
+0x01C5 - ctrl + alt + end key
+0x01C6 - ctrl + alt + page up key
+0x01C7 - ctrl + alt + page down key
+0x01C8 - ctrl + alt + insert key
+0x01C9 - ctrl + alt + delete key
+0x01CA - ctrl + alt + f1 key
+0x01CB - ctrl + alt + f2 key
+0x01CC - ctrl + alt + f3 key
+0x01CD - ctrl + alt + f4 key
+0x01CE - ctrl + alt + f5 key
+0x01CF - ctrl + alt + f6 key
+0x01D0 - ctrl + alt + f7 key
+0x01D1 - ctrl + alt + f8 key
+0x01D2 - ctrl + alt + f9 key
+0x01D3 - ctrl + alt + f10 key
+0x01D4 - ctrl + alt + f11 key
+0x01D5 - ctrl + alt + f12 key
+0x01D6 - unused
+0x01D7 - unused
+0x01D8 - unused
+0x01D9 - unused
+0x01DA - unused
+0x01DB - unused
+0x01DC - unused
+0x01DD - unused
+0x01DE - unused
+0x01DF - unused
+0x01E0 - shift + ctrl + alt + left key
+0x01E1 - shift + ctrl + alt + right key
+0x01E2 - shift + ctrl + alt + up key
+0x01E3 - shift + ctrl + alt + down key
+0x01E4 - shift + ctrl + alt + home key
+0x01E5 - shift + ctrl + alt + end key
+0x01E6 - shift + ctrl + alt + page up key
+0x01E7 - shift + ctrl + alt + page down key
+0x01E8 - shift + ctrl + alt + insert key
+0x01E9 - shift + ctrl + alt + delete key
+0x01EA - shift + ctrl + alt + f1 key
+0x01EB - shift + ctrl + alt + f2 key
+0x01EC - shift + ctrl + alt + f3 key
+0x01ED - shift + ctrl + alt + f4 key
+0x01EE - shift + ctrl + alt + f5 key
+0x01EF - shift + ctrl + alt + f6 key
+0x01F0 - shift + ctrl + alt + f7 key
+0x01F1 - shift + ctrl + alt + f8 key
+0x01F2 - shift + ctrl + alt + f9 key
+0x01F3 - shift + ctrl + alt + f10 key
+0x01F4 - shift + ctrl + alt + f11 key
+0x01F5 - shift + ctrl + alt + f12 key
+0x01F6 - unused
+0x01F7 - unused
+0x01F8 - unused
+0x01F9 - unused
+0x01FA - unused
+0x01FB - unused
+0x01FC - unused
+0x01FD - unused
+0x01FE - unused
+0x01FF - unused
+
