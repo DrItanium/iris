@@ -392,7 +392,7 @@ defbinaryop umax; umax
 : emit; ( dest -- ) get-reg addr8 emit ;
 
 : ?key; ( dest -- ) key? addr16 swap set-reg ;
-: key;  ( dest -- ) key addr16 swap .s set-reg ;
+: key;  ( dest -- ) key addr16 swap set-reg ;
 : stb; ( value dest -- ) swap get-reg addr8 swap get-reg store-byte ;
 : ldb; ( addr dest -- ) swap get-reg load-byte swap set-reg ;
 : tdims; ( rows cols -- ) 

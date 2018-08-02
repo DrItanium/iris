@@ -222,5 +222,6 @@ x15 constant xtmp
 : emiti, ( imm -- ) set-tmp, emit, ;
 
 : 1+, ( dest -- ) dup incr, ;
+: 1-, ( dest -- ) dup decr, ;
 
 previous set-current

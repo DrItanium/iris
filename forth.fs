@@ -146,7 +146,39 @@ label: next_
     xrp xtmp pop,
     xtmp rbranch,
 : next, ( -- ) next_ branch, ;
-
+s" emit" defword: emit_ ( c -- ) 
+    1pop,
+    xtop emit,
+    xcolumn 1+,
+    next,
+: emiti; ( v -- ) literal, emit_ bl, ; 
+s" row-full?" defword: row-full? ( -- f )
+   &maxcolumn xlower set,
+   xlower xtop ld, \ load the max column value
+   xtop xcolumn xtop ge, \ is the current column greater than or equal to the max column?
+   xtop xsp push,
+   next,
+s" =" defword: =_ ( a b -- f )
+   2pop,
+   xlower xtop xtop eq,
+   xtop xsp push,
+   next,
+s" 0=" defword: 0=_ ( v -- f )
+   0 literal,
+   =_ bl,
+   next,
+: 0=, ( -- ) 0=_ bl, ;
+s" backspace" defword: backspace_ ( -- )
+   xcolumn xsp push, 0=,
+   if, 
+    next,
+   else,
+    2 xcolumn xcolumn subi,
+    xcolumn xrow setcur,
+    0x20 emiti,
+    xcolumn xrow setcur,
+   then,
+   next,
 s" swap" defword: swap_ 
    2pop, 
    xtop xsp push,
@@ -161,7 +193,7 @@ s" over" defword: over_
 s" drop" defword: drop_
     xsp xtop pop,
     next,
-: drop, ( -- ) drop_ bl, ;
+: drop; ( -- ) drop_ bl, ;
 s" 2drop" defword: 2drop_
     2pop,
     next,
@@ -169,7 +201,7 @@ s" dup" defword: dup_
     xsp xtop ld,
     xtop xsp push,
     next,
-: dup, ( -- ) dup_ bl, ;
+: dup; ( -- ) dup_ bl, ;
 s" rot" defword: rot_
     xsp xtop pop,  \ c
     xsp xlower pop, \ b 
@@ -216,11 +248,6 @@ s" =" defword: =_ ( a b -- f )
    xtop xsp push,
    next,
 : =, ( -- ) =_ bl, ;
-s" 0=" defword: 0=_ ( v -- f )
-   0 literal, 
-   =,
-   next,
-: 0=, ( -- ) 0=_ bl, ;
 s" rshift" defword: rshift_ ( n d -- v )
    2pop,
    xtop xlower xtop rshift,
@@ -234,7 +261,7 @@ s" lshift" defword: lshift_ ( n d -- v )
 	next,
 : lshift,, ( -- ) lshift_ bl, ;
 s" /" defword: div_ ( n d -- v ) 
-   dup, ( n d d ) 
+   dup; ( n d d ) 
    0=, ( n d f )
    if, 
 	2pop,
@@ -324,7 +351,7 @@ s" 2dup" defword: 2dup_  ( a b -- a b a b )
     xlower xsp push,
     xtop xsp push,
     next,
-: 2dup, ( -- ) 2dup_ bl, ;
+: 2dup; ( -- ) 2dup_ bl, ;
 s" -rot" defword: -rot_
     rot_ bl,
     rot_ bl,
@@ -335,35 +362,14 @@ s" ?exec" defword: ?exec_
     xrp xtop xlower ?rbranch-link,
     next,
 s" cr" defword: newline_ ( -- )
-    0xa emiti, 
-    0xb emiti,
+    0xa emiti,
+    xrow 1+,
+    0 xcolumn set,
     next,
 s" space" defword: space_ ( -- ) 
     0x20 emiti, 
+    xcolumn 1+,
     next, 
-s" spaces" defword: spaces_ ( n -- ) 
-    1pop, \ xtop count
-    0 xthird set,
-label: spaces_loop_
-    xtop xsp push,
-    space_ bl,
-    xsp xtop pop,
-    xthird xtop xlower gt,
-    xtop xtop decr,
-    spaces_loop_ xlower ?branch,
-    next,
-s" ?even" defword: ?even_ ( v -- f )
-	1pop, 
-	0x1 xlower set,
-	0x0 xthird set,
-	xlower xtop xtop and,
-	xthird xtop xtop neq, 
-	xtop xsp push,
-	next,
-s" ?odd" defword: ?odd_ ( v -- f )
-	?even_ bl,
-	invert_ bl,
-	next,
 
 s" &hashlower" defword: &hashlower_ 
     \ extract the lower hash 
@@ -413,14 +419,15 @@ s" &previous" defword: getprevious_
     next,
 
 s" dook" defword: ok_ ( -- ) 
-    0x6f emiti,
-    0x6b emiti, 
+    0x6f emiti;
+    0x6b emiti;
     newline_ bl,
     next,
 s" dobootmessage" defword: bootmessage_ ( -- ) 
-    0x69 emiti, 0x72 emiti, 0x69 emiti, 0x73 emiti, 
+    
+    0x69 emiti; 0x72 emiti; 0x69 emiti; 0x73 emiti; 
     space_ bl,
-    0x66 emiti, 0x6f emiti, 0x72 emiti, 0x74 emiti, 0x68 emiti,
+    0x66 emiti; 0x6f emiti; 0x72 emiti; 0x74 emiti; 0x68 emiti;
     newline_ bl,
     next, 
 label: reset_delimiter_ 
@@ -471,7 +478,7 @@ s" or" defword: or_ ( a b -- c )
   next,
 : or; ( -- ) or_ bl, ;
 s" ?newline-char" defword: ?newline-char_ ( c -- f )
-  dup,
+  dup;
   0xa literal,
   =_ bl,
   swap;
@@ -479,33 +486,14 @@ s" ?newline-char" defword: ?newline-char_ ( c -- f )
   =_ bl,
   or_ bl,
   next, 
+s" ?backspace-char" defword: ?backspace-char_ ( c -- f )
+  0x7f literal,
+  =_ bl,
+  next,
 s" clear-input" defword: clear-input_ ( -- )
   0 xlength set,
   input-buffer-start xinput set,
   next,
-s" read-key" defword: read-key_ ( -- )
-  key_ bl,
-  dup,
-  ?delete-char_ bl, 
-  if,
-    
-  else, 
-    dup,
-    ?newline-char_ bl, 
-    if,
-        ok_ bl,
-    else,
-        1pop,
-        xtop emit,
-        \ emit_ bl, \ print out the character to the display
-        \ input-overflow?_ bl,
-        \ if,
-        \ else,
-        \ then,
-    then,
-  then,
-  next,
-    
 
 
 s" interpreter" defword: interpreter_
@@ -513,18 +501,31 @@ s" interpreter" defword: interpreter_
         ?key_ bl,
         if,
             key_ bl,
-            dup,
-            1pop,
-            xtop emit,
-            dup, 
+            dup;
+            emit_ bl,
+            dup; 
             ?newline-char_ bl,
             if,
-                \ process input
                 newline_ bl,
+                \ process input
+                input-buffer-start xinput set,
+                0 xlength set,
             else,
-                1pop, 
-                xtop xinput stb,
-                xinput 1+,
+                dup; ?backspace-char_ bl,
+                if, 
+                    backspace_ bl,
+                    xlength xsp push, 0=, 
+                    if, 
+                    else, 
+                        xlength 1-,
+                        xinput 1-,
+                    then,
+                else,
+                    1pop, 
+                    xtop xinput stb,
+                    xinput 1+,
+                    xlength 1+,
+                then,
             then,
         then,
 	again,
