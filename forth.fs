@@ -514,6 +514,10 @@ s" perform-backspace" defword: perform-backspace_ ( c -- )
     xinput 1-,
   then,
   next,
+s" escape-char?" defword: escape-char?_ ( c -- f ) 
+  0x1b literal,
+  =_ bl,
+  next,
 s" stash-char" defword: stash-char_ ( c -- ) 
   1pop,
   xtop xinput stb,
@@ -531,7 +535,12 @@ s" process-char" defword: process-char_ ( c -- )
       if, 
           drop; perform-backspace_ bl,
       else,
-          stash-char_ bl,
+          dup; escape-char?_ bl,
+          if,
+            drop;
+          else,
+            stash-char_ bl,
+          then,
       then,
   then,
   next,
