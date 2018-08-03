@@ -392,7 +392,12 @@ defbinaryop umax; umax
 : emit; ( dest -- ) get-reg addr8 emit ;
 
 : ?key; ( dest -- ) ekey? addr16 swap set-reg ;
-
+: shift-masked ( v -- m ) 
+  k-shift-mask or ;
+: alt-masked ( v -- m )
+  k-alt-mask or ;
+: ctrl-masked ( v -- m )
+  k-ctrl-mask or ;
 : key;  ( dest -- ) 
   ekey ekey>char 
   if 
@@ -424,166 +429,166 @@ defbinaryop umax; umax
             k-f11    of 0x114 endof
             k-f12    of 0x115 endof
             \ shift+
-            k-left   k-shift-mask or of 0x120 endof
-            k-right  k-shift-mask or of 0x121 endof
-            k-up     k-shift-mask or of 0x122 endof
-            k-down   k-shift-mask or of 0x123 endof
-            k-home   k-shift-mask or of 0x124 endof
-            k-end    k-shift-mask or of 0x125 endof
-            k-prior  k-shift-mask or of 0x126 ( page up ) endof
-            k-next   k-shift-mask or of 0x127 ( page down ) endof
-            k-insert k-shift-mask or of 0x128 endof
-            k-delete k-shift-mask or of 0x129 endof
-            k-f1     k-shift-mask or of 0x12A endof
-            k-f2     k-shift-mask or of 0x12B endof
-            k-f3     k-shift-mask or of 0x12C endof
-            k-f4     k-shift-mask or of 0x12D endof
-            k-f5     k-shift-mask or of 0x12E endof
-            k-f6     k-shift-mask or of 0x12F endof
-            k-f7     k-shift-mask or of 0x130 endof
-            k-f8     k-shift-mask or of 0x131 endof
-            k-f9     k-shift-mask or of 0x132 endof
-            k-f10    k-shift-mask or of 0x133 endof
-            k-f11    k-shift-mask or of 0x134 endof
-            k-f12    k-shift-mask or of 0x135 endof
+            k-left   shift-masked  of 0x120 endof
+            k-right  shift-masked  of 0x121 endof
+            k-up     shift-masked  of 0x122 endof
+            k-down   shift-masked  of 0x123 endof
+            k-home   shift-masked  of 0x124 endof
+            k-end    shift-masked  of 0x125 endof
+            k-prior  shift-masked  of 0x126 ( page up ) endof
+            k-next   shift-masked  of 0x127 ( page down ) endof
+            k-insert shift-masked  of 0x128 endof
+            k-delete shift-masked  of 0x129 endof
+            k-f1     shift-masked  of 0x12A endof
+            k-f2     shift-masked  of 0x12B endof
+            k-f3     shift-masked  of 0x12C endof
+            k-f4     shift-masked  of 0x12D endof
+            k-f5     shift-masked  of 0x12E endof
+            k-f6     shift-masked  of 0x12F endof
+            k-f7     shift-masked  of 0x130 endof
+            k-f8     shift-masked  of 0x131 endof
+            k-f9     shift-masked  of 0x132 endof
+            k-f10    shift-masked  of 0x133 endof
+            k-f11    shift-masked  of 0x134 endof
+            k-f12    shift-masked  of 0x135 endof
             \ ctrl+
-            k-left   k-ctrl-mask or of 0x140 endof
-            k-right  k-ctrl-mask or of 0x141 endof
-            k-up     k-ctrl-mask or of 0x142 endof
-            k-down   k-ctrl-mask or of 0x143 endof
-            k-home   k-ctrl-mask or of 0x144 endof
-            k-end    k-ctrl-mask or of 0x145 endof
-            k-prior  k-ctrl-mask or of 0x146 ( page up ) endof
-            k-next   k-ctrl-mask or of 0x147 ( page down ) endof
-            k-insert k-ctrl-mask or of 0x148 endof
-            k-delete k-ctrl-mask or of 0x149 endof
-            k-f1     k-ctrl-mask or of 0x14A endof
-            k-f2     k-ctrl-mask or of 0x14B endof
-            k-f3     k-ctrl-mask or of 0x14C endof
-            k-f4     k-ctrl-mask or of 0x14D endof
-            k-f5     k-ctrl-mask or of 0x14E endof
-            k-f6     k-ctrl-mask or of 0x14F endof
-            k-f7     k-ctrl-mask or of 0x150 endof
-            k-f8     k-ctrl-mask or of 0x151 endof
-            k-f9     k-ctrl-mask or of 0x152 endof
-            k-f10    k-ctrl-mask or of 0x153 endof
-            k-f11    k-ctrl-mask or of 0x154 endof
-            k-f12    k-ctrl-mask or of 0x155 endof
+            k-left   ctrl-masked of 0x140 endof
+            k-right  ctrl-masked of 0x141 endof
+            k-up     ctrl-masked of 0x142 endof
+            k-down   ctrl-masked of 0x143 endof
+            k-home   ctrl-masked of 0x144 endof
+            k-end    ctrl-masked of 0x145 endof
+            k-prior  ctrl-masked of 0x146 ( page up ) endof
+            k-next   ctrl-masked of 0x147 ( page down ) endof
+            k-insert ctrl-masked of 0x148 endof
+            k-delete ctrl-masked of 0x149 endof
+            k-f1     ctrl-masked of 0x14A endof
+            k-f2     ctrl-masked of 0x14B endof
+            k-f3     ctrl-masked of 0x14C endof
+            k-f4     ctrl-masked of 0x14D endof
+            k-f5     ctrl-masked of 0x14E endof
+            k-f6     ctrl-masked of 0x14F endof
+            k-f7     ctrl-masked of 0x150 endof
+            k-f8     ctrl-masked of 0x151 endof
+            k-f9     ctrl-masked of 0x152 endof
+            k-f10    ctrl-masked of 0x153 endof
+            k-f11    ctrl-masked of 0x154 endof
+            k-f12    ctrl-masked of 0x155 endof
             \ ctrl + shift + 
-            k-left   k-ctrl-mask or k-shift-mask or of 0x160 endof
-            k-right  k-ctrl-mask or k-shift-mask or of 0x161 endof
-            k-up     k-ctrl-mask or k-shift-mask or of 0x162 endof
-            k-down   k-ctrl-mask or k-shift-mask or of 0x163 endof
-            k-home   k-ctrl-mask or k-shift-mask or of 0x164 endof
-            k-end    k-ctrl-mask or k-shift-mask or of 0x165 endof
-            k-prior  k-ctrl-mask or k-shift-mask or of 0x166 ( page up ) endof
-            k-next   k-ctrl-mask or k-shift-mask or of 0x167 ( page down ) endof
-            k-insert k-ctrl-mask or k-shift-mask or of 0x168 endof
-            k-delete k-ctrl-mask or k-shift-mask or of 0x169 endof
-            k-f1     k-ctrl-mask or k-shift-mask or of 0x16A endof
-            k-f2     k-ctrl-mask or k-shift-mask or of 0x16B endof
-            k-f3     k-ctrl-mask or k-shift-mask or of 0x16C endof
-            k-f4     k-ctrl-mask or k-shift-mask or of 0x16D endof
-            k-f5     k-ctrl-mask or k-shift-mask or of 0x16E endof
-            k-f6     k-ctrl-mask or k-shift-mask or of 0x16F endof
-            k-f7     k-ctrl-mask or k-shift-mask or of 0x170 endof
-            k-f8     k-ctrl-mask or k-shift-mask or of 0x171 endof
-            k-f9     k-ctrl-mask or k-shift-mask or of 0x172 endof
-            k-f10    k-ctrl-mask or k-shift-mask or of 0x173 endof
-            k-f11    k-ctrl-mask or k-shift-mask or of 0x174 endof
-            k-f12    k-ctrl-mask or k-shift-mask or of 0x175 endof
+            k-left   ctrl-masked shift-masked of 0x160 endof
+            k-right  ctrl-masked shift-masked of 0x161 endof
+            k-up     ctrl-masked shift-masked of 0x162 endof
+            k-down   ctrl-masked shift-masked of 0x163 endof
+            k-home   ctrl-masked shift-masked of 0x164 endof
+            k-end    ctrl-masked shift-masked of 0x165 endof
+            k-prior  ctrl-masked shift-masked of 0x166 ( page up ) endof
+            k-next   ctrl-masked shift-masked of 0x167 ( page down ) endof
+            k-insert ctrl-masked shift-masked of 0x168 endof
+            k-delete ctrl-masked shift-masked of 0x169 endof
+            k-f1     ctrl-masked shift-masked of 0x16A endof
+            k-f2     ctrl-masked shift-masked of 0x16B endof
+            k-f3     ctrl-masked shift-masked of 0x16C endof
+            k-f4     ctrl-masked shift-masked of 0x16D endof
+            k-f5     ctrl-masked shift-masked of 0x16E endof
+            k-f6     ctrl-masked shift-masked of 0x16F endof
+            k-f7     ctrl-masked shift-masked of 0x170 endof
+            k-f8     ctrl-masked shift-masked of 0x171 endof
+            k-f9     ctrl-masked shift-masked of 0x172 endof
+            k-f10    ctrl-masked shift-masked of 0x173 endof
+            k-f11    ctrl-masked shift-masked of 0x174 endof
+            k-f12    ctrl-masked shift-masked of 0x175 endof
             \ alt + 
-            k-left   k-alt-mask or of 0x180 endof
-            k-right  k-alt-mask or of 0x181 endof
-            k-up     k-alt-mask or of 0x182 endof
-            k-down   k-alt-mask or of 0x183 endof
-            k-home   k-alt-mask or of 0x184 endof
-            k-end    k-alt-mask or of 0x185 endof
-            k-prior  k-alt-mask or of 0x186 ( page up ) endof
-            k-next   k-alt-mask or of 0x187 ( page down ) endof
-            k-insert k-alt-mask or of 0x188 endof
-            k-delete k-alt-mask or of 0x189 endof
-            k-f1     k-alt-mask or of 0x18A endof
-            k-f2     k-alt-mask or of 0x18B endof
-            k-f3     k-alt-mask or of 0x18C endof
-            k-f4     k-alt-mask or of 0x18D endof
-            k-f5     k-alt-mask or of 0x18E endof
-            k-f6     k-alt-mask or of 0x18F endof
-            k-f7     k-alt-mask or of 0x190 endof
-            k-f8     k-alt-mask or of 0x191 endof
-            k-f9     k-alt-mask or of 0x192 endof
-            k-f10    k-alt-mask or of 0x193 endof
-            k-f11    k-alt-mask or of 0x194 endof
-            k-f12    k-alt-mask or of 0x195 endof
+            k-left   alt-masked of 0x180 endof
+            k-right  alt-masked of 0x181 endof
+            k-up     alt-masked of 0x182 endof
+            k-down   alt-masked of 0x183 endof
+            k-home   alt-masked of 0x184 endof
+            k-end    alt-masked of 0x185 endof
+            k-prior  alt-masked of 0x186 ( page up ) endof
+            k-next   alt-masked of 0x187 ( page down ) endof
+            k-insert alt-masked of 0x188 endof
+            k-delete alt-masked of 0x189 endof
+            k-f1     alt-masked of 0x18A endof
+            k-f2     alt-masked of 0x18B endof
+            k-f3     alt-masked of 0x18C endof
+            k-f4     alt-masked of 0x18D endof
+            k-f5     alt-masked of 0x18E endof
+            k-f6     alt-masked of 0x18F endof
+            k-f7     alt-masked of 0x190 endof
+            k-f8     alt-masked of 0x191 endof
+            k-f9     alt-masked of 0x192 endof
+            k-f10    alt-masked of 0x193 endof
+            k-f11    alt-masked of 0x194 endof
+            k-f12    alt-masked of 0x195 endof
             \ alt + shift + 
-            k-left   k-alt-mask or k-shift-mask or of 0x1A0 endof
-            k-right  k-alt-mask or k-shift-mask or of 0x1A1 endof
-            k-up     k-alt-mask or k-shift-mask or of 0x1A2 endof
-            k-down   k-alt-mask or k-shift-mask or of 0x1A3 endof
-            k-home   k-alt-mask or k-shift-mask or of 0x1A4 endof
-            k-end    k-alt-mask or k-shift-mask or of 0x1A5 endof
-            k-prior  k-alt-mask or k-shift-mask or of 0x1A6 ( page up ) endof
-            k-next   k-alt-mask or k-shift-mask or of 0x1A7 ( page down ) endof
-            k-insert k-alt-mask or k-shift-mask or of 0x1A8 endof
-            k-delete k-alt-mask or k-shift-mask or of 0x1A9 endof
-            k-f1     k-alt-mask or k-shift-mask or of 0x1AA endof
-            k-f2     k-alt-mask or k-shift-mask or of 0x1AB endof
-            k-f3     k-alt-mask or k-shift-mask or of 0x1AC endof
-            k-f4     k-alt-mask or k-shift-mask or of 0x1AD endof
-            k-f5     k-alt-mask or k-shift-mask or of 0x1AE endof
-            k-f6     k-alt-mask or k-shift-mask or of 0x1AF endof
-            k-f7     k-alt-mask or k-shift-mask or of 0x1B0 endof
-            k-f8     k-alt-mask or k-shift-mask or of 0x1B1 endof
-            k-f9     k-alt-mask or k-shift-mask or of 0x1B2 endof
-            k-f10    k-alt-mask or k-shift-mask or of 0x1B3 endof
-            k-f11    k-alt-mask or k-shift-mask or of 0x1B4 endof
-            k-f12    k-alt-mask or k-shift-mask or of 0x1B5 endof
+            k-left   alt-masked shift-masked of 0x1A0 endof
+            k-right  alt-masked shift-masked of 0x1A1 endof
+            k-up     alt-masked shift-masked of 0x1A2 endof
+            k-down   alt-masked shift-masked of 0x1A3 endof
+            k-home   alt-masked shift-masked of 0x1A4 endof
+            k-end    alt-masked shift-masked of 0x1A5 endof
+            k-prior  alt-masked shift-masked of 0x1A6 ( page up ) endof
+            k-next   alt-masked shift-masked of 0x1A7 ( page down ) endof
+            k-insert alt-masked shift-masked of 0x1A8 endof
+            k-delete alt-masked shift-masked of 0x1A9 endof
+            k-f1     alt-masked shift-masked of 0x1AA endof
+            k-f2     alt-masked shift-masked of 0x1AB endof
+            k-f3     alt-masked shift-masked of 0x1AC endof
+            k-f4     alt-masked shift-masked of 0x1AD endof
+            k-f5     alt-masked shift-masked of 0x1AE endof
+            k-f6     alt-masked shift-masked of 0x1AF endof
+            k-f7     alt-masked shift-masked of 0x1B0 endof
+            k-f8     alt-masked shift-masked of 0x1B1 endof
+            k-f9     alt-masked shift-masked of 0x1B2 endof
+            k-f10    alt-masked shift-masked of 0x1B3 endof
+            k-f11    alt-masked shift-masked of 0x1B4 endof
+            k-f12    alt-masked shift-masked of 0x1B5 endof
             \ alt + ctrl + 
-            k-left   k-alt-mask or k-ctrl-mask or of 0x1C0 endof
-            k-right  k-alt-mask or k-ctrl-mask or of 0x1C1 endof
-            k-up     k-alt-mask or k-ctrl-mask or of 0x1C2 endof
-            k-down   k-alt-mask or k-ctrl-mask or of 0x1C3 endof
-            k-home   k-alt-mask or k-ctrl-mask or of 0x1C4 endof
-            k-end    k-alt-mask or k-ctrl-mask or of 0x1C5 endof
-            k-prior  k-alt-mask or k-ctrl-mask or of 0x1C6 ( page up ) endof
-            k-next   k-alt-mask or k-ctrl-mask or of 0x1C7 ( page down ) endof
-            k-insert k-alt-mask or k-ctrl-mask or of 0x1C8 endof
-            k-delete k-alt-mask or k-ctrl-mask or of 0x1C9 endof
-            k-f1     k-alt-mask or k-ctrl-mask or of 0x1CA endof
-            k-f2     k-alt-mask or k-ctrl-mask or of 0x1CB endof
-            k-f3     k-alt-mask or k-ctrl-mask or of 0x1CC endof
-            k-f4     k-alt-mask or k-ctrl-mask or of 0x1CD endof
-            k-f5     k-alt-mask or k-ctrl-mask or of 0x1CE endof
-            k-f6     k-alt-mask or k-ctrl-mask or of 0x1CF endof
-            k-f7     k-alt-mask or k-ctrl-mask or of 0x1D0 endof
-            k-f8     k-alt-mask or k-ctrl-mask or of 0x1D1 endof
-            k-f9     k-alt-mask or k-ctrl-mask or of 0x1D2 endof
-            k-f10    k-alt-mask or k-ctrl-mask or of 0x1D3 endof
-            k-f11    k-alt-mask or k-ctrl-mask or of 0x1D4 endof
-            k-f12    k-alt-mask or k-ctrl-mask or of 0x1D5 endof
+            k-left   alt-masked ctrl-masked of 0x1C0 endof
+            k-right  alt-masked ctrl-masked of 0x1C1 endof
+            k-up     alt-masked ctrl-masked of 0x1C2 endof
+            k-down   alt-masked ctrl-masked of 0x1C3 endof
+            k-home   alt-masked ctrl-masked of 0x1C4 endof
+            k-end    alt-masked ctrl-masked of 0x1C5 endof
+            k-prior  alt-masked ctrl-masked of 0x1C6 ( page up ) endof
+            k-next   alt-masked ctrl-masked of 0x1C7 ( page down ) endof
+            k-insert alt-masked ctrl-masked of 0x1C8 endof
+            k-delete alt-masked ctrl-masked of 0x1C9 endof
+            k-f1     alt-masked ctrl-masked of 0x1CA endof
+            k-f2     alt-masked ctrl-masked of 0x1CB endof
+            k-f3     alt-masked ctrl-masked of 0x1CC endof
+            k-f4     alt-masked ctrl-masked of 0x1CD endof
+            k-f5     alt-masked ctrl-masked of 0x1CE endof
+            k-f6     alt-masked ctrl-masked of 0x1CF endof
+            k-f7     alt-masked ctrl-masked of 0x1D0 endof
+            k-f8     alt-masked ctrl-masked of 0x1D1 endof
+            k-f9     alt-masked ctrl-masked of 0x1D2 endof
+            k-f10    alt-masked ctrl-masked of 0x1D3 endof
+            k-f11    alt-masked ctrl-masked of 0x1D4 endof
+            k-f12    alt-masked ctrl-masked of 0x1D5 endof
             \ alt + ctrl + shift + 
-            k-left   k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E0 endof
-            k-right  k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E1 endof
-            k-up     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E2 endof
-            k-down   k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E3 endof
-            k-home   k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E4 endof
-            k-end    k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E5 endof
-            k-prior  k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E6 ( page up ) endof
-            k-next   k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E7 ( page down ) endof
-            k-insert k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E8 endof
-            k-delete k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1E9 endof
-            k-f1     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1EA endof
-            k-f2     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1EB endof
-            k-f3     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1EC endof
-            k-f4     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1ED endof
-            k-f5     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1EE endof
-            k-f6     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1EF endof
-            k-f7     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F0 endof
-            k-f8     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F1 endof
-            k-f9     k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F2 endof
-            k-f10    k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F3 endof
-            k-f11    k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F4 endof
-            k-f12    k-alt-mask or k-ctrl-mask or k-shift-mask or of 0x1F5 endof
+            k-left   alt-masked ctrl-masked shift-masked of 0x1E0 endof
+            k-right  alt-masked ctrl-masked shift-masked of 0x1E1 endof
+            k-up     alt-masked ctrl-masked shift-masked of 0x1E2 endof
+            k-down   alt-masked ctrl-masked shift-masked of 0x1E3 endof
+            k-home   alt-masked ctrl-masked shift-masked of 0x1E4 endof
+            k-end    alt-masked ctrl-masked shift-masked of 0x1E5 endof
+            k-prior  alt-masked ctrl-masked shift-masked of 0x1E6 ( page up ) endof
+            k-next   alt-masked ctrl-masked shift-masked of 0x1E7 ( page down ) endof
+            k-insert alt-masked ctrl-masked shift-masked of 0x1E8 endof
+            k-delete alt-masked ctrl-masked shift-masked of 0x1E9 endof
+            k-f1     alt-masked ctrl-masked shift-masked of 0x1EA endof
+            k-f2     alt-masked ctrl-masked shift-masked of 0x1EB endof
+            k-f3     alt-masked ctrl-masked shift-masked of 0x1EC endof
+            k-f4     alt-masked ctrl-masked shift-masked of 0x1ED endof
+            k-f5     alt-masked ctrl-masked shift-masked of 0x1EE endof
+            k-f6     alt-masked ctrl-masked shift-masked of 0x1EF endof
+            k-f7     alt-masked ctrl-masked shift-masked of 0x1F0 endof
+            k-f8     alt-masked ctrl-masked shift-masked of 0x1F1 endof
+            k-f9     alt-masked ctrl-masked shift-masked of 0x1F2 endof
+            k-f10    alt-masked ctrl-masked shift-masked of 0x1F3 endof
+            k-f11    alt-masked ctrl-masked shift-masked of 0x1F4 endof
+            k-f12    alt-masked ctrl-masked shift-masked of 0x1F5 endof
             >r 0xFFFF r> 
         endcase
         swap set-reg
