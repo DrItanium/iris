@@ -108,6 +108,7 @@ dictionary-start .org
 flag/compile flag/immediate or constant flag/comp,imm 
 variable previousWord
 0 previousWord !
+3 constant column-start
 
 : compute-hash ( str u -- nhu nhm nhl ) 
   addr8 over c@ 8 lshift 0xff00 and or addr16 ( str nhl ) 
@@ -142,173 +143,24 @@ variable previousWord
   2>r previousWord @ 0x0000 2r> defword_custom: 
   update-previous-word ;
 
+label: 2push_
+    xlower xsp push,
+label: 1push_
+    xtop xsp push,
 label: next_
     xrp xtmp pop,
     xtmp rbranch,
 : next, ( -- ) next_ branch, ;
-s" emit" defword: emit_ ( c -- ) 
-    1pop,
-    xtop emit,
-    xcolumn 1+,
-    next,
-: emiti; ( v -- ) literal, emit_ bl, ; 
-s" row-full?" defword: row-full? ( -- f )
-   &maxcolumn xlower set,
-   xlower xtop ld, \ load the max column value
-   xtop xcolumn xtop ge, \ is the current column greater than or equal to the max column?
-   xtop xsp push,
-   next,
-s" =" defword: =_ ( a b -- f )
-   2pop,
-   xlower xtop xtop eq,
-   xtop xsp push,
-   next,
-s" 0=" defword: 0=_ ( v -- f )
-   0 literal,
-   =_ bl,
-   next,
-: 0=, ( -- ) 0=_ bl, ;
-s" backspace" defword: backspace_ ( -- )
-   xcolumn xsp push, 0=,
-   if, 
-    next,
-   else,
-    2 xcolumn xcolumn subi,
-    xcolumn xrow setcur,
-    0x20 emiti,
-    xcolumn xrow setcur,
-   then,
-   next,
-s" swap" defword: swap_ 
-   2pop, 
-   xtop xsp push,
-   xlower xsp push, 
-   next,
-: swap; ( -- ) swap_ bl, ;
-s" over" defword: over_ 
-   2 xsp xtop addi,
-   xtop xtop ld,
-   xtop xsp push, 
-   next, 
-s" drop" defword: drop_
-    xsp xtop pop,
-    next,
-: drop; ( -- ) drop_ bl, ;
-s" 2drop" defword: 2drop_
-    2pop,
-    next,
+: 1push, ( -- ) 1push_ branch, ;
+: 2push, ( -- ) 2push_ branch, ;
 s" dup" defword: dup_
     xsp xtop ld,
-    xtop xsp push,
-    next,
+    1push,
 : dup; ( -- ) dup_ bl, ;
-s" rot" defword: rot_
-    xsp xtop pop,  \ c
-    xsp xlower pop, \ b 
-    xsp xthird pop, \ a
-    xlower xsp push, 
-    xtop xsp push,
-    xthird xsp push,
-    next,
-\ s" emit" defword: emit_ ( c -- )
-   
-s" -" defword: -_
-   2pop,
-   xtop xlower xtop sub,
-   xtop xsp push,
-   next,
-s" +" defword: +_
-   2pop,
-   xtop xlower xtop add,
-   xtop xsp push,
-   next,
-s" *" defword: *_
-	2pop, 
-	xtop xlower xtop mul,
-	xtop xsp push,
-	next,
-s" 1+" defword: 1+_
-   1pop, 
-   xtop xtop incr, 
-   xtop xsp push,
-   next,
-s" 2+" defword: 2+_
-    1pop,
-    2 xtop xtop addi,
-    xtop xsp push,
-    next,
-s" invert" defword: invert_ ( n -- n )
-   1pop,
-   xtop xtop invert,
-   xtop xsp push,
-   next,
-s" =" defword: =_ ( a b -- f )
-   2pop,
-   xlower xtop xtop eq,
-   xtop xsp push,
-   next,
-: =, ( -- ) =_ bl, ;
-s" rshift" defword: rshift_ ( n d -- v )
-   2pop,
-   xtop xlower xtop rshift,
-   xtop xsp push,
-   next,
-: rshift,, ( -- ) rshift_ bl, ;
-s" lshift" defword: lshift_ ( n d -- v )
-	2pop, 
-	xtop xlower xtop lshift,
-	xtop xsp push,
-	next,
-: lshift,, ( -- ) lshift_ bl, ;
-s" /" defword: div_ ( n d -- v ) 
-   dup; ( n d d ) 
-   0=, ( n d f )
-   if, 
-	2pop,
-	0 xsp pushi, 
-   else,
-	2pop,
-	xtop xlower xtop div,
-	xtop xsp push,
-   then,
-   next,
-s" 2*" defword: 2*_ ( a -- b )
-  1pop, 
-  1 xtop xtop lshift,
-  xtop xsp push,
-  next,
-s" 2/" defword: 2/_ ( a -- b )
-  1pop,
-  1 xtop xtop rshift, 
-  xtop xsp push,
-  next,
-
-s" mod" defword: mod_ ( n d -- v )
-  dup_ bl, ( n d d )
-  0=_ bl, ( n d f )
-  if,
-  	2pop,
-	0 xsp pushi,
-  else,
-	2pop,
-	xtop xlower xtop rem,
-	xtop xsp push,
-  then,
-  next, 
-s" bye" defword: bye_
-    0 stopi,
 s" @" defword: @_ 
     xsp xtop pop, \ get the address
     xtop xtop ld, \ load the value
     xtop xsp push,
-    next,
-s" dp" defword: dp_ ( -- v )
-   &dp xtop set,
-   xtop xsp push,
-   next,
-s" here" defword: here_ ( -- v ) dp_ bl, @_ bl, next,
-s" create" defword: create_ 
-    
     next,
 s" !" defword: !_ 
     2pop, \ top -> address
@@ -330,229 +182,169 @@ s" c!" defword: c!_ ( value addr -- )
     xlower xthird xlower or, \ combine the numbers together
     xlower xtop st, \ store the new value
     next,
-
-s" >r" defword: >r_ \ transfer to the return stack from data stack
-    \ todo verify that the parameter stack is not empty
-    xsp xlower pop, \ pull the top off of the stack
-    xrp xtop pop, \ pull the top of the return stack off as well
-    xlower xrp push,  \ stash the value we want _under_ the top so we don't do bad things to the stack
-    xtop rbranch, \ go back to where we were
-
-s" r>" defword: r>_ 
-    xrp xtop pop, \ the return from this function
-    xrp xlower pop, \ the value we want
-    xlower xsp push,
-    xtop rbranch,
-s" 2dup" defword: 2dup_  ( a b -- a b a b )
-    xsp xtop pop, \ b
-    xsp xlower pop, \ a
-    xlower xsp push,
-    xtop xsp push,
-    xlower xsp push,
-    xtop xsp push,
-    next,
-: 2dup; ( -- ) 2dup_ bl, ;
-s" -rot" defword: -rot_
-    rot_ bl,
-    rot_ bl,
-    next,
-s" ?exec" defword: ?exec_
-    2pop, \ top - flag
-          \ lower - addr to jump to
-    xrp xtop xlower ?rbranch-link,
-    next,
-s" cr" defword: newline_ ( -- )
-    0xa emiti,
-    xrow 1+,
-    0 xcolumn set,
-    next,
-s" space" defword: space_ ( -- ) 
-    0x20 emiti, 
-    xcolumn 1+,
-    next, 
-
-s" &hashlower" defword: &hashlower_ 
-    \ extract the lower hash 
-    1pop, 
-    18 xtop xtop subi,
-    xtop xsp push,
-    next,
-s" &hashmiddle" defword: &hashmiddle_
-    1pop,
-    14 xtop xtop subi,
-    xtop xsp push,
-    next,
-s" &hashupper" defword: &hashupper_
-    \ extract the flags field 
-    ( addr -- &hashupper )
-    1pop, 
-    10 xtop xtop subi,
-    xtop xsp push,
-    next,
-s" extract-name-hash" defword: extract_name_hash_
-    ( addr -- hu hm hl )
-    dup_ bl, 
-    &hashupper_ bl, 
-    @_ bl,
-    swap_ bl, 
-    dup_ bl,
-    &hashmiddle_ bl, 
-    @_ bl, 
-    swap_ bl,
-    &hashlower_ bl,
-    @_ bl, 
-    next,
-
-s" &flags" defword: flags_
-    \ extract the flags field 
-    ( addr -- &flags )
-    1pop, 
-    6 xtop xtop subi,
-    xtop xsp push,
-    next,
-s" &previous" defword: getprevious_
-    \ exract the previous field
-    ( addr -- &prev )
-    1pop, 
-    2 xtop xtop subi,
-    xtop xsp push,
-    next,
-
-s" dook" defword: ok_ ( -- ) 
-    0x6f emiti;
-    0x6b emiti;
-    newline_ bl,
-    next,
-s" dobootmessage" defword: bootmessage_ ( -- ) 
-    
-    0x69 emiti; 0x72 emiti; 0x69 emiti; 0x73 emiti; 
-    space_ bl,
-    0x66 emiti; 0x6f emiti; 0x72 emiti; 0x74 emiti; 0x68 emiti;
-    newline_ bl,
-    next, 
-label: reset_delimiter_ 
-    variables-start 2+ 2+ xtop set, 
-    0x20 xlower set,
-    xlower xtop st,
-    next,
-label: reset_base_
-    &base xtop set, 
-    0x0a xlower set,
-    xlower xtop st,
-    next,
-s" ?key" defword: ?key_ ( -- f )
-   xtop ?key,
-   xtop xsp push,
-   next,
-s" key" defword: key_ ( -- v ) 
-   xtop key,
-   xtop xsp push,
-   next,
-s" <=" defword: <=_ ( a b -- f )
-  2pop,  \ xtop - b 
-         \ xlower - a
-  xtop xlower xtop le,
-  xtop xsp push,
-  next,
-s" input-overflow?" defword: input-overflow?_ ( -- f )
-  0 xlower set, 
-  0xFF00 xlength xtop andi, 
-  xlower xtop xtop neq,
-  xtop xsp push,
-  next,
-s" ?delete-char" defword: ?delete-char_ ( c -- f ) 
-  0x7f literal, 
-  =_ bl, 
-  next,
-s" add-to-input" defword: add-to-input_ ( c -- )
-  1pop, 
-  xtop xinput stb,
-  xinput 1+,
-  xlength 1+,
-  next, 
-
+s" =" defword: =_ ( a b -- f )
+   2pop,
+   xlower xtop xtop eq,
+   1push,
+: =, ( -- ) =_ bl, ;
 s" or" defword: or_ ( a b -- c ) 
   2pop,
   xtop xlower xtop or,
-  xtop xsp push,
-  next,
+  1push,
 : or; ( -- ) or_ bl, ;
-s" ?newline-char" defword: ?newline-char_ ( c -- f )
-  dup;
-  0xa literal,
-  =_ bl,
-  swap;
-  0xd literal,
-  =_ bl,
-  or_ bl,
-  next, 
-s" ?backspace-char" defword: ?backspace-char_ ( c -- f )
-  0x7f literal,
-  =_ bl,
-  next,
-s" clear-input" defword: clear-input_ ( -- )
-  0 xlength set,
-  input-buffer-start xinput set,
-  next,
-s" read-key" defword: read-key_ ( -- c )
-  key_ bl,
-  dup;
-  emit_ bl,
-  next,
-s" process-line" defword: process-line_ ( -- )
-    newline_ bl,
-    \ process input here
-    input-buffer-start xinput set,
-    0 xlength set,
+s" swap" defword: swap_ 
+   2pop, 
+   xtop xsp push,
+   xlower xsp push, 
+   next,
+: swap; ( -- ) swap_ bl, ;
+s" update-terminal" defword: update-terminal_ ( -- ) 
+   xcolumn xrow setcur,
+   next,
+s" column@" defword: column@_ ( -- v )
+   xcolumn xsp push,
+   next,
+s" row@" defword: row@_ ( -- v )
+   xrow xsp push,
+   next,
+s" column!" defword: column!_ ( -- v )
+   1pop,
+   xtop xcolumn move,
+   next,
+s" row!" defword: row!_ ( -- v )
+   1pop,
+   xtop xrow move,
+   next,
+s" column1+" defword: column1+_ ( -- )
+   xcolumn 1+,
+   next,
+s" row1+" defword: row1+_ ( -- ) 
+   xrow 1+,
+   next,
+s" termpos!" defword: termpos!_ ( r c -- ) 
+   column!_ bl,
+   row!_ bl,
+   update-terminal_ bl,
+   next,
+s" linestart!" defword: linestart!_ ( -- ) 
+   0 literal, column!_ bl,
+   update-terminal_ bl,
+   next,
+s" emit" defword: emit_ ( c -- ) 
+    1pop,
+    xtop emit,
+    column1+_ bl,
     next,
-s" perform-backspace" defword: perform-backspace_ ( c -- )
-  backspace_ bl,
-  xlength xsp push, 0=,
-  if,
-  else,
-    xlength 1-,
-    xinput 1-,
-  then,
+: emiti; ( v -- ) literal, emit_ bl, ; 
+s" key" defword: key_ ( -- v ) 
+   xtop key,
+   1push,
+s" ?backspace" defword: ?backspace_ ( c -- f ) 
+  0x7f literal, =,
   next,
-s" escape-char?" defword: escape-char?_ ( c -- f ) 
-  0x1b literal,
-  =_ bl,
+: ?backspace; ( -- ) ?backspace_ bl, ;
+s" ?line-feed" defword: ?line-feed_ ( c -- f )
+  0xa literal, 
+  =, 
   next,
-s" stash-char" defword: stash-char_ ( c -- ) 
-  1pop,
-  xtop xinput stb,
-  xinput 1+,
-  xlength 1+,
+s" ?carriage-return" defword: ?carriage-return_ ( c -- f )
+  0xd literal, 
+  =, 
   next,
 
-s" process-char" defword: process-char_ ( c -- )
-  dup;
-  ?newline-char_ bl,
+s" ?newline" defword: ?newline_ ( c -- f )
+  dup; ( c c )
+  ?line-feed_ bl,
+  swap;
+  ?carriage-return_ bl,
+  or;
+  next,
+: ?newline; ( -- ) ?newline_ bl, ;
+s" next-input-line" defword: next-input-line_ ( -- ) 
+   row1+_ bl,
+   linestart!_ bl,
+   next,
+s" space" defword: space_ ( -- )
+  0x20 emiti; 
+  next,
+s" cr" defword: cr_ ( -- )
+  0xa emiti;
+  next,
+: space; ( -- ) space_ bl, ;
+s" indent-input-line" defword: indent-input-line_ ( -- )
+  0 literal, column!_ bl,
+  space; space; space; space; 
+  next,
+s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
+  next-input-line_ bl,
+  indent-input-line_ bl,
+s" <=" defword: <=_ ( a b -- f )
+  2pop, \ xtop - b 
+        \ xlower -a 
+  xtop xlower xtop le,
+  1push,
+s" >=" defword: >=_ ( a b -- f )
+  2pop, \ xtop - b 
+        \ xlower -a 
+  xtop xlower xtop ge,
+  1push,
+s" -" defword: -_ ( a b -- c )
+  2pop,
+  xtop xlower xtop sub,
+  1push,
+: -; ( -- ) -_ bl, ;
+s" drop" defword: drop_ ( a -- )
+   1pop,
+   next,
+: drop; ( -- ) drop_ bl, ;
+s" backspace" defword: backspace_ ( -- )
+  column@_ bl, 
+  3 literal,
+  <=_ bl, 
   if,
-    process-line_ bl,
+    \ fix the output if it is all cocked up
+    indent-input-line_ bl,
   else,
-      dup; ?backspace-char_ bl,
-      if, 
-          drop; perform-backspace_ bl,
-      else,
-          dup; escape-char?_ bl,
-          if,
-            drop;
-          else,
-            stash-char_ bl,
-          then,
-      then,
+    column@_ bl,
+    4 literal, 
+    =_ bl,
+    \ otherwise we should just go back two spaces
+    \ Because we are looking at the space _following_ the 
+    \ last output character :D we have to clear out the previous character as 
+    \ part of the delete process
+    column@_ bl, 1 literal, -; column!_ bl, \ jump back two positions
+    update-terminal_ bl, \ update the terminal position
+    column@_ bl, \ stash a copy of where we currently are too :)
+    space; \ emit a space to clear the position we are concerned about
+    column@_ bl, 4 literal, =,
+    if,
+        drop;
+    else,
+        column!_ bl, \ move back now that the character is cleared
+        update-terminal_ bl,
+    then,
   then,
   next,
-
-s" interpreter" defword: interpreter_
-	begin,
-        ?key_ bl,
+s" interpreter" defword: interpreter_ ( -- )
+    indent-input-line_ bl,
+    begin,
+        key_ bl, \ read a character in
+        dup;
+        ?backspace; 
         if,
-            read-key_ bl,
-            process-char_ bl,
+            drop; 
+            backspace_ bl,
+        else,
+            dup; 
+            ?newline;
+            if,
+                drop;
+                invoke-input-newline_ bl,
+            else,
+                emit_ bl,
+            then,
         then,
-	again,
+    again,
 s" cold" defword: cold_
     \ reset/set the stacks
     data-stack-start xsp set,
@@ -570,15 +362,12 @@ s" cold" defword: cold_
         xrow xtop st,
         &maxcolumn xtop set,
         xcolumn xtop st, 
+        clrscr,
         0 xrow set,
         0 xcolumn set,
-        clrscr,
-    	newline_ bl, newline_ bl,
-    	bootmessage_ bl,
 	then,
     input-buffer-start xinput set,
-    reset_delimiter_ bl,
-	reset_base_ bl,
+    0 xlength set,
     interpreter_ branch,
 0x0000 .org
 \ we should not put anything in this area as it could be useful for other things :D
