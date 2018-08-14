@@ -421,10 +421,47 @@ s" 0=" defword: 0=_ ( a -- f )
    0 literal, 
    =, 
    next,
-
+s" >" defword: >_ ( a b -- f )
+   2pop, 
+   xtop xlower xtop gt,
+   1push,
+s" 0>" defword: 0>_ ( a -- f )
+   0 literal, 
+   >_ bl, 
+   next,
+: 0>; ( -- ) 0>_ bl, ;
+s" <>" defword: <>_ ( a b -- f )
+   2pop,
+   xtop xlower xtop neq,
+   1push,
+: <>; ( -- ) <>_ bl, ;
+s" print-input" defword: print-input_ ( -- ) 
+  xinput xlength xtop add,
+  xtop xsp push, ( stop )
+  xinput xsp push, ( stop pos )
+  begin,
+    over; over; <>;
+  while,
+    dup; 
+    c@_ bl, 
+    dup;
+    0 literal,
+    <>;
+    if,
+        emit_ bl,
+    else,
+        drop;
+    then,
+    1+;
+  repeat,
+  next,
+    
 s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
   next-input-line_ bl,
+  print-input_ bl,
+  next-input-line_ bl,
   indent-input-line_ bl,
+  reset-input-stream_ bl,
   next,
 
 s" interpreter" defword: interpreter_ ( -- )
