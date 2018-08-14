@@ -214,6 +214,7 @@ s" update-terminal" defword: update-terminal_ ( -- )
 s" column@" defword: column@_ ( -- v )
    xcolumn xsp push,
    next,
+: column@; ( -- ) column@_ bl, ;
 s" row@" defword: row@_ ( -- v )
    xrow xsp push,
    next,
@@ -221,6 +222,7 @@ s" column!" defword: column!_ ( -- v )
    1pop,
    xtop xcolumn move,
    next,
+: column!; ( -- ) column!_ bl, ;
 s" row!" defword: row!_ ( -- v )
    1pop,
    xtop xrow move,
@@ -232,12 +234,12 @@ s" row1+" defword: row1+_ ( -- )
    xrow 1+,
    next,
 s" termpos!" defword: termpos!_ ( r c -- ) 
-   column!_ bl,
+   column!;
    row!_ bl,
    update-terminal_ bl,
    next,
 s" linestart!" defword: linestart!_ ( -- ) 
-   0 literal, column!_ bl,
+   0 literal, column!;
    update-terminal_ bl,
    next,
 s" emit" defword: emit_ ( c -- ) 
@@ -283,12 +285,9 @@ s" cr" defword: cr_ ( -- )
   next,
 : space; ( -- ) space_ bl, ;
 s" indent-input-line" defword: indent-input-line_ ( -- )
-  0 literal, column!_ bl,
+  0 literal, column!;
   space; space; space; space; 
   next,
-s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
-  next-input-line_ bl,
-  indent-input-line_ bl,
 s" <=" defword: <=_ ( a b -- f )
   2pop, \ xtop - b 
         \ xlower -a 
@@ -353,35 +352,35 @@ s" and" defword: and_ ( a b -- v )
 : and; ( -- ) and_ bl, ;
 
 s" backspace" defword: backspace_ ( -- )
-  column@_ bl, 
+  column@; 
   3 literal,
   <=_ bl, 
   if,
     \ fix the output if it is all cocked up
     indent-input-line_ bl,
   else,
-    column@_ bl,
+    column@;
     4 literal, 
     =_ bl,
     \ otherwise we should just go back two spaces
     \ Because we are looking at the space _following_ the 
     \ last output character :D we have to clear out the previous character as 
     \ part of the delete process
-    column@_ bl, 1 literal, -; column!_ bl, \ jump back two positions
+    column@; 1 literal, -; column!; \ jump back two positions
     update-terminal_ bl, \ update the terminal position
-    column@_ bl, \ stash a copy of where we currently are too :)
+    column@; \ stash a copy of where we currently are too :)
     space; \ emit a space to clear the position we are concerned about
-    column@_ bl, 4 literal, =,
+    column@; 4 literal, =,
     if,
         drop;
     else,
-        column!_ bl, \ move back now that the character is cleared
+        column!; \ move back now that the character is cleared
         update-terminal_ bl,
     then,
   then,
   next,
 s" row-full?" defword: row-full?_ ( -- f )
-    column@_ bl,
+    column@;
     &maxcolumn xtop set, 
     xtop xtop ld,
     xtop xsp push,
@@ -422,6 +421,12 @@ s" 0=" defword: 0=_ ( a -- f )
    0 literal, 
    =, 
    next,
+
+s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
+  next-input-line_ bl,
+  indent-input-line_ bl,
+  next,
+
 s" interpreter" defword: interpreter_ ( -- )
     indent-input-line_ bl,
     begin,
