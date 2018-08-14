@@ -153,9 +153,19 @@ label: next_
 : next, ( -- ) next_ branch, ;
 : 1push, ( -- ) 1push_ branch, ;
 : 2push, ( -- ) 2push_ branch, ;
+    
+   
 s" dup" defword: dup_
     xsp xtop ld,
     1push,
+s" over" defword: over_ ( a b -- a b a )
+    2pop, \ xtop - b
+          \ xlower - a 
+    xlower xsp push,
+    xtop xsp push,
+    xlower xsp push,
+    next,
+: over; ( -- ) over_ bl, ;
 : dup; ( -- ) dup_ bl, ;
 s" @" defword: @_ 
     xsp xtop pop, \ get the address
@@ -260,6 +270,7 @@ s" ?newline" defword: ?newline_ ( c -- f )
   or;
   next,
 : ?newline; ( -- ) ?newline_ bl, ;
+
 s" next-input-line" defword: next-input-line_ ( -- ) 
    row1+_ bl,
    linestart!_ bl,
@@ -297,6 +308,50 @@ s" drop" defword: drop_ ( a -- )
    1pop,
    next,
 : drop; ( -- ) drop_ bl, ;
+s" +" defword: add_ ( a b -- v )
+    2pop, 
+    xtop xlower xtop add,
+    1push,
+: +; ( -- ) add_ bl, ;
+s" 1+" defword: incr_ ( a -- v )
+     1pop,
+     xtop 1+,
+     1push,
+: 1+; ( -- ) incr_ bl, ;
+s" input-stream@" defword: input-stream@_ ( -- a )
+    xinput xsp push,
+    next,
+s" input-stream!" defword: input-stream!_ ( a -- )
+    1pop, \ xtop -> value
+          \ prevent us from jumping out of the input area
+
+    0x00FF xtop xinput andi, \ we can only go so far
+    next,
+s" input-length@" defword: input-length@_ ( -- l )
+    xlength xtop push,
+    next,
+s" input-length!" defword: input-length!_ ( v -- )
+    1pop, \ xtop -> length
+    0x00FF xtop xlength andi,
+    next,
+
+s" reset-input-stream" defword: reset-input-stream_
+    input-buffer-start literal,
+    input-stream!_ bl,
+    0 literal,
+    input-length!_ bl,
+    next,
+s" 0=" defword: 0=_ ( a -- f )
+   0 literal,
+   =, 
+   next,
+: 0=, ( -- ) 0=_ bl, ;
+s" and" defword: and_ ( a b -- v )
+  2pop,
+  xtop xlower xtop and,
+  1push,
+: and; ( -- ) and_ bl, ;
+
 s" backspace" defword: backspace_ ( -- )
   column@_ bl, 
   3 literal,
@@ -325,6 +380,48 @@ s" backspace" defword: backspace_ ( -- )
     then,
   then,
   next,
+s" row-full?" defword: row-full?_ ( -- f )
+    column@_ bl,
+    &maxcolumn xtop set, 
+    xtop xtop ld,
+    xtop xsp push,
+    =,
+    next,
+s" invert" defword: invert_ ( a -- b )
+   1pop,
+   xtop xtop invert,
+   1push,
+s" unstash-character" defword: unstash-char_ ( -- )
+   xlength xsp push, \ go back a character with the length
+   0=_ bl, \ check first if it is equal to zero
+   invert_ bl, \ neq zero
+   if, 
+        \ it is not equal to zero so decrement it
+        1 xlength xlength subi, \ go back a position
+   then,
+   next,
+
+s" stash-character" defword: stash-char_ ( c -- )
+   xinput xlength xtop add,
+   xtop xsp push,
+   c!_ bl,
+   1 xlength xlength addi,
+   next,
+   
+s" stash-character-to-buffer" defword: stash-char-to-buf_ ( c -- )
+    row-full?_ bl,
+    if,
+        backspace_ bl,
+        1 xlength xlength subi,
+    then,
+    dup_ bl,
+    stash-char_ bl,
+    emit_ bl,
+    next,
+s" 0=" defword: 0=_ ( a -- f )
+   0 literal, 
+   =, 
+   next,
 s" interpreter" defword: interpreter_ ( -- )
     indent-input-line_ bl,
     begin,
@@ -334,6 +431,7 @@ s" interpreter" defword: interpreter_ ( -- )
         if,
             drop; 
             backspace_ bl,
+            unstash-char_ bl,
         else,
             dup; 
             ?newline;
@@ -341,7 +439,8 @@ s" interpreter" defword: interpreter_ ( -- )
                 drop;
                 invoke-input-newline_ bl,
             else,
-                emit_ bl,
+                stash-char-to-buf_ bl, 
+                \ stash a copy to the input buffer
             then,
         then,
     again,
