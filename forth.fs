@@ -154,7 +154,44 @@ label: next_
 : 1push, ( -- ) 1push_ branch, ;
 : 2push, ( -- ) 2push_ branch, ;
     
-   
+: defbinaryop: ( str len "label" -- ) 
+  defword: 
+  2pop,
+  xtop xlower xtop ' execute 
+  1push, ;
+s" +" defbinaryop: add_ add,
+s" -" defbinaryop: sub_ sub,
+s" *" defbinaryop: mul_ mul,
+s" /" defbinaryop: div_ div,
+s" mod" defbinaryop: mod_ rem,
+s" and" defbinaryop: and_ and,
+s" or" defbinaryop: or_ or, 
+s" =" defbinaryop: eq_ eq,
+s" <>" defbinaryop: neq_ neq,
+s" >" defbinaryop: gt_ gt,
+s" <" defbinaryop: lt_ lt,
+s" >=" defbinaryop: ge_ ge, 
+s" <=" defbinaryop: le_ le, 
+s" xor" defbinaryop: xor_ xor,
+: +; ( -- ) add_ bl, ;
+: -; ( -- ) sub_ bl, ;
+: *; ( -- ) mul_ bl, ;
+: /; ( -- ) div_ bl, ;
+: mod; ( -- ) mod_ bl, ;
+: and; ( -- ) and_ bl, ;
+: or; ( -- ) or_ bl, ;
+: xor; ( -- ) xor_ bl, ;
+: <>; ( -- ) neq_ bl, ;
+: =; ( -- ) eq_ bl, ;
+: >; ( -- ) gt_ bl, ;
+: <; ( -- ) lt_ bl, ;
+: >=; ( -- ) ge_ bl, ;
+: <=; ( -- ) le_ bl, ;
+s" 1+" defword: incr_ ( a -- v )
+    1pop,
+    xtop 1+,
+    1push,
+: 1+; ( -- ) incr_ bl, ;
 s" dup" defword: dup_
     xsp xtop ld,
     1push,
@@ -168,10 +205,9 @@ s" over" defword: over_ ( a b -- a b a )
 : over; ( -- ) over_ bl, ;
 : dup; ( -- ) dup_ bl, ;
 s" @" defword: @_ 
-    xsp xtop pop, \ get the address
+    1pop, \ xtop - address
     xtop xtop ld, \ load the value
-    xtop xsp push,
-    next,
+    1push,
 s" !" defword: !_ 
     2pop, \ top -> address
           \ lower -> value
@@ -181,8 +217,7 @@ s" c@" defword: c@_
     xsp xtop pop, \ addr
     xtop xtop ld, 
     0x00FF xtop xtop andi, 
-    xtop xsp push,
-    next,
+    1push,
 s" c!" defword: c!_ ( value addr -- )
     2pop, \ top -> addr
           \ lower -> value
@@ -192,16 +227,6 @@ s" c!" defword: c!_ ( value addr -- )
     xlower xthird xlower or, \ combine the numbers together
     xlower xtop st, \ store the new value
     next,
-s" =" defword: =_ ( a b -- f )
-   2pop,
-   xlower xtop xtop eq,
-   1push,
-: =, ( -- ) =_ bl, ;
-s" or" defword: or_ ( a b -- c ) 
-  2pop,
-  xtop xlower xtop or,
-  1push,
-: or; ( -- ) or_ bl, ;
 s" swap" defword: swap_ 
    2pop, 
    xtop xsp push,
@@ -252,16 +277,16 @@ s" key" defword: key_ ( -- v )
    xtop key,
    1push,
 s" ?backspace" defword: ?backspace_ ( c -- f ) 
-  0x7f literal, =,
+  0x7f literal, =;
   next,
 : ?backspace; ( -- ) ?backspace_ bl, ;
 s" ?line-feed" defword: ?line-feed_ ( c -- f )
   0xa literal, 
-  =, 
+  =; 
   next,
 s" ?carriage-return" defword: ?carriage-return_ ( c -- f )
   0xd literal, 
-  =, 
+  =; 
   next,
 
 s" ?newline" defword: ?newline_ ( c -- f )
@@ -288,35 +313,10 @@ s" indent-input-line" defword: indent-input-line_ ( -- )
   0 literal, column!;
   space; space; space; space; 
   next,
-s" <=" defword: <=_ ( a b -- f )
-  2pop, \ xtop - b 
-        \ xlower -a 
-  xtop xlower xtop le,
-  1push,
-s" >=" defword: >=_ ( a b -- f )
-  2pop, \ xtop - b 
-        \ xlower -a 
-  xtop xlower xtop ge,
-  1push,
-s" -" defword: -_ ( a b -- c )
-  2pop,
-  xtop xlower xtop sub,
-  1push,
-: -; ( -- ) -_ bl, ;
 s" drop" defword: drop_ ( a -- )
    1pop,
    next,
 : drop; ( -- ) drop_ bl, ;
-s" +" defword: add_ ( a b -- v )
-    2pop, 
-    xtop xlower xtop add,
-    1push,
-: +; ( -- ) add_ bl, ;
-s" 1+" defword: incr_ ( a -- v )
-     1pop,
-     xtop 1+,
-     1push,
-: 1+; ( -- ) incr_ bl, ;
 s" input-stream@" defword: input-stream@_ ( -- a )
     xinput xsp push,
     next,
@@ -342,26 +342,21 @@ s" reset-input-stream" defword: reset-input-stream_
     next,
 s" 0=" defword: 0=_ ( a -- f )
    0 literal,
-   =, 
+   =; 
    next,
-: 0=, ( -- ) 0=_ bl, ;
-s" and" defword: and_ ( a b -- v )
-  2pop,
-  xtop xlower xtop and,
-  1push,
-: and; ( -- ) and_ bl, ;
+: 0=; ( -- ) 0=_ bl, ;
 
 s" backspace" defword: backspace_ ( -- )
   column@; 
   3 literal,
-  <=_ bl, 
+  <=; 
   if,
     \ fix the output if it is all cocked up
     indent-input-line_ bl,
   else,
     column@;
     4 literal, 
-    =_ bl,
+    =;
     \ otherwise we should just go back two spaces
     \ Because we are looking at the space _following_ the 
     \ last output character :D we have to clear out the previous character as 
@@ -370,7 +365,7 @@ s" backspace" defword: backspace_ ( -- )
     update-terminal_ bl, \ update the terminal position
     column@; \ stash a copy of where we currently are too :)
     space; \ emit a space to clear the position we are concerned about
-    column@; 4 literal, =,
+    column@; 4 literal, =;
     if,
         drop;
     else,
@@ -384,7 +379,7 @@ s" row-full?" defword: row-full?_ ( -- f )
     &maxcolumn xtop set, 
     xtop xtop ld,
     xtop xsp push,
-    =,
+    =;
     next,
 s" invert" defword: invert_ ( a -- b )
    1pop,
@@ -392,7 +387,7 @@ s" invert" defword: invert_ ( a -- b )
    1push,
 s" unstash-character" defword: unstash-char_ ( -- )
    xlength xsp push, \ go back a character with the length
-   0=_ bl, \ check first if it is equal to zero
+   0=; \ check first if it is equal to zero
    invert_ bl, \ neq zero
    if, 
         \ it is not equal to zero so decrement it
@@ -417,33 +412,19 @@ s" stash-character-to-buffer" defword: stash-char-to-buf_ ( c -- )
     stash-char_ bl,
     emit_ bl,
     next,
-s" 0=" defword: 0=_ ( a -- f )
-   0 literal, 
-   =, 
-   next,
-s" >" defword: >_ ( a b -- f )
-   2pop, 
-   xtop xlower xtop gt,
-   1push,
 s" 0>" defword: 0>_ ( a -- f )
    0 literal, 
-   >_ bl, 
+   >;
    next,
 : 0>; ( -- ) 0>_ bl, ;
-s" <>" defword: <>_ ( a b -- f )
-   2pop,
-   xtop xlower xtop neq,
-   1push,
-: <>; ( -- ) <>_ bl, ;
-s" print-input" defword: print-input_ ( -- ) 
-  xinput xlength xtop add,
-  xtop xsp push, ( stop )
-  xinput xsp push, ( stop pos )
+s" print-string" defword: print-string_ ( start length -- ) 
+  over; +;
+  swap;
   begin,
     over; over; <>;
   while,
-    dup; 
-    c@_ bl, 
+    dup;
+    c@_ bl,
     dup;
     0 literal,
     <>;
@@ -454,14 +435,21 @@ s" print-input" defword: print-input_ ( -- )
     then,
     1+;
   repeat,
+  drop; drop;
   next,
-    
+
+s" print-input" defword: print-input_ ( -- ) 
+  xinput xsp push,
+  xlength xsp push,
+  print-string_ bl,
+  next,
 s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
   next-input-line_ bl,
   print-input_ bl,
   next-input-line_ bl,
   indent-input-line_ bl,
   reset-input-stream_ bl,
+  \ TODO process words and invoke things
   next,
 
 s" interpreter" defword: interpreter_ ( -- )
