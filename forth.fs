@@ -467,13 +467,8 @@ s" print-input" defword: print-input_ ( -- )
   print-string_ bl,
   next,
 s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
-  next-input-line_ bl,
-  print-input_ bl,
-  next-input-line_ bl,
-  indent-input-line_ bl,
-  reset-input-stream_ bl,
   \ TODO process words and invoke things
-  0xFFFF literal,
+  0 literal, \ always fail for the time being
   next,
 s" char>num" defword: char>num_ ( c -- n t | f )
     \ 0123456789
@@ -571,16 +566,21 @@ s" interpreter" defword: interpreter_ ( -- )
             ?newline;
             if,
                 drop;
+                next-input-line_ bl,
+                indent-input-line_ bl,
                 invoke-input-newline_ bl,
                 invert_ bl,
                 if,
-                else,
+                    input-buffer-start literal, 4 literal,
                     number_ bl, 
                     invert_ bl,
                     if, 
                         \ perform error handling
+                        0x3f emiti, 0xa emiti,
                         error_ bl, \ go to the error handler
                     then,
+                else,
+                    reset-input-stream_ bl,
                 then,
             else,
                 stash-char-to-buf_ bl, 
