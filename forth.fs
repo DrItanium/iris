@@ -466,10 +466,6 @@ s" print-input" defword: print-input_ ( -- )
   xlength xsp push,
   print-string_ bl,
   next,
-s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
-  \ TODO process words and invoke things
-  0 literal, \ always fail for the time being
-  next,
 s" char>num" defword: char>num_ ( c -- n t | f )
     \ 0123456789
     \ aA bB cC dD eE fF
@@ -551,6 +547,28 @@ s" error" defword: error_ ( -- )
     &cold literal, @; ( addr -- )
     1pop,
     xtop rbranch,
+s" find-word" defword: find-word_ ( addr value -- addr t | f )
+  \ TODO actually find the correct entry
+  drop; drop;
+  0 literal,
+  next,
+s" process-input" defword: process-input_ ( -- )
+  \ TODO process words and invoke things
+  next-input-line_ bl,
+  indent-input-line_ bl,
+  invert_ bl,
+  if,
+    input-buffer-start literal, 4 literal,
+    number_ bl, 
+    invert_ bl,
+    if, 
+        \ perform error handling
+        0x3f emiti, 0xa emiti,
+        error_ bl, \ go to the error handler
+    then,
+  then,
+  reset-input-stream_ bl,
+  next,
 s" interpreter" defword: interpreter_ ( -- )
     indent-input-line_ bl,
     begin,
@@ -566,21 +584,7 @@ s" interpreter" defword: interpreter_ ( -- )
             ?newline;
             if,
                 drop;
-                next-input-line_ bl,
-                indent-input-line_ bl,
-                invoke-input-newline_ bl,
-                invert_ bl,
-                if,
-                    input-buffer-start literal, 4 literal,
-                    number_ bl, 
-                    invert_ bl,
-                    if, 
-                        \ perform error handling
-                        0x3f emiti, 0xa emiti,
-                        error_ bl, \ go to the error handler
-                    then,
-                then,
-                reset-input-stream_ bl,
+                process-input_ bl,
             else,
                 stash-char-to-buf_ bl, 
                 \ stash a copy to the input buffer
@@ -612,8 +616,7 @@ s" cold" defword: cold_
         cold_ xtop set,
         xtop xlower st,
 	then,
-    input-buffer-start xinput set,
-    0 xlength set,
+    reset-input-stream_ bl,
     interpreter_ branch,
 0x0000 .org
 \ we should not put anything in this area as it could be useful for other things :D
