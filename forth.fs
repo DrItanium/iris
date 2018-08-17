@@ -57,6 +57,7 @@ input-buffer-start 0x100 + constant input-buffer-end
 : &dp ( -- value ) &base 2+ ; 
 : &maxrow ( -- value ) &dp 2+ ;
 : &maxcolumn ( -- value ) &maxrow 2+ ;
+: &cold ( -- value ) &maxcolumn 2+ ;
 : if, ( -- addr ) 
   xsp xtop pop, ( get the top of the stack )
   xtop xtop invert,  ( invert the condition since we want to jump to the else )
@@ -109,7 +110,6 @@ flag/compile flag/immediate or constant flag/comp,imm
 variable previousWord
 0 previousWord !
 3 constant column-start
-
 : compute-hash ( str u -- nhu nhm nhl ) 
   addr8 over c@ 8 lshift 0xff00 and or addr16 ( str nhl ) 
   swap ( nhl str ) 
@@ -173,6 +173,10 @@ s" <" defbinaryop: lt_ lt,
 s" >=" defbinaryop: ge_ ge, 
 s" <=" defbinaryop: le_ le, 
 s" xor" defbinaryop: xor_ xor,
+s" lshift" defbinaryop: lshift_ lshift,
+s" rshift" defbinaryop: rshift_ rshift,
+: lshift; ( -- ) lshift_ bl, ;
+: rshift; ( -- ) rshift_ bl, ;
 : +; ( -- ) add_ bl, ;
 : -; ( -- ) sub_ bl, ;
 : *; ( -- ) mul_ bl, ;
@@ -187,11 +191,29 @@ s" xor" defbinaryop: xor_ xor,
 : <; ( -- ) lt_ bl, ;
 : >=; ( -- ) ge_ bl, ;
 : <=; ( -- ) le_ bl, ;
+s" >r" defword: >r_ ( value -- ) 
+   1pop, 
+   xrp xlower pop, \ pull the return address out
+   xtop xrp push,  \ put the stack element to the return stack below the return
+   xlower xrp push, \ put the return back onto the stack
+   next,            \ goto next
+s" r>" defword: r>_ ( -- value )
+   xrp xlower pop, \ don't pull the top element as that is the return address
+   xrp xtop pop,   \ pull the one below the top out
+   xlower xrp push, \ put the return address back
+   1push,
+: >r; ( -- ) >r_ bl, ;
+: r>; ( -- ) r>_ bl, ;
 s" 1+" defword: incr_ ( a -- v )
     1pop,
     xtop 1+,
     1push,
 : 1+; ( -- ) incr_ bl, ;
+s" 1-" defword: decr_ ( a -- v )
+    1pop,
+    xtop 1-,
+    1push,
+: 1-; ( -- ) decr_ bl, ;
 s" dup" defword: dup_
     xsp xtop ld,
     1push,
@@ -208,6 +230,7 @@ s" @" defword: @_
     1pop, \ xtop - address
     xtop xtop ld, \ load the value
     1push,
+: @; ( -- ) @_ bl, ;
 s" !" defword: !_ 
     2pop, \ top -> address
           \ lower -> value
@@ -450,8 +473,89 @@ s" invoke-input-newline" defword: invoke-input-newline_ ( -- )
   indent-input-line_ bl,
   reset-input-stream_ bl,
   \ TODO process words and invoke things
+  0xFFFF literal,
   next,
-
+s" char>num" defword: char>num_ ( c -- n t | f )
+    \ 0123456789
+    \ aA bB cC dD eE fF
+   dup; 
+   0x30 literal,
+   <;
+   if, 
+    drop;
+    0 literal, \ failure, return 16 which is impossible 0-15 allowed
+   else,
+    0x30 literal, -;
+    dup; 0xa literal, <; \ check and see if we're below 10
+    if, 
+      \ we are, so just return that value and true
+      0xFFFF literal,
+    else,
+      \ it is greater than or equal to 10. 
+      dup; 0xa literal, =; \ check and see if it is 10
+      if,
+        \ it is 10 so failure
+        drop; 
+        0 literal,
+      else,
+        \ it is greater than 10 so subtract 1
+        1-;
+        dup; 0x10 literal, <; \ is it less than 0x10?
+        if, 
+            \ it is so success :)
+            0xFFFF literal,
+        else,
+            \ it is not so we need to see if it is lower case letters
+            0x30 literal, -; dup;
+            0x6 literal, <;
+            if, 
+                0xa literal, +;
+                0xFFFF literal, 
+            else,
+                drop;
+                0 literal,
+            then,
+        then,
+      then,
+    then,
+  then,
+  next,
+: char>num; ( -- ) char>num_ bl, ;
+s" number" defword: number_ ( start len -- n t | f )
+    \ we read numbers left to right so it should work out correctly
+  over; +; \ combine the address
+  swap;
+  0 literal,
+  >r;
+  begin,
+    over; over; <>;
+  while,
+    dup;
+    c@_ bl, \ load the character
+    char>num; \ convert the character and get the lookup codes back
+    if, 
+        \ success
+        r>;
+        4 literal, lshift;
+        or;
+        >r;
+    else,
+        \ failure
+        r>; \ drop the numeric value
+        drop;
+        drop; drop; \ drop the addresses too!
+        next, \ get out of there!
+    then,
+    1+;
+  repeat,
+    drop; drop;
+    r>;
+    0xFFFF literal,
+    next,
+s" error" defword: error_ ( -- )
+    &cold literal, @; ( addr -- )
+    1pop,
+    xtop rbranch,
 s" interpreter" defword: interpreter_ ( -- )
     indent-input-line_ bl,
     begin,
@@ -468,6 +572,16 @@ s" interpreter" defword: interpreter_ ( -- )
             if,
                 drop;
                 invoke-input-newline_ bl,
+                invert_ bl,
+                if,
+                else,
+                    number_ bl, 
+                    invert_ bl,
+                    if, 
+                        \ perform error handling
+                        error_ bl, \ go to the error handler
+                    then,
+                then,
             else,
                 stash-char-to-buf_ bl, 
                 \ stash a copy to the input buffer
@@ -494,6 +608,10 @@ s" cold" defword: cold_
         clrscr,
         0 xrow set,
         0 xcolumn set,
+        \ stash the cold address to restart when an error happens
+        &cold xlower set,
+        cold_ xtop set,
+        xtop xlower st,
 	then,
     input-buffer-start xinput set,
     0 xlength set,
