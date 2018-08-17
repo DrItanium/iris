@@ -579,9 +579,8 @@ s" interpreter" defword: interpreter_ ( -- )
                         0x3f emiti, 0xa emiti,
                         error_ bl, \ go to the error handler
                     then,
-                else,
-                    reset-input-stream_ bl,
                 then,
+                reset-input-stream_ bl,
             else,
                 stash-char-to-buf_ bl, 
                 \ stash a copy to the input buffer
