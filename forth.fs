@@ -349,6 +349,10 @@ s" input-stream!" defword: input-stream!_ ( a -- )
 
     0x00FF xtop xinput andi, \ we can only go so far
     next,
+s" input-stream1+" defword: input-stream1+_ ( -- )
+   xinput 1+,
+   next,
+: input-stream1+; ( -- ) input-stream1+_ bl, ; 
 s" input-length@" defword: input-length@_ ( -- l )
     xlength xtop push,
     next,
@@ -356,7 +360,10 @@ s" input-length!" defword: input-length!_ ( v -- )
     1pop, \ xtop -> length
     0x00FF xtop xlength andi,
     next,
-
+s" input-length1-" defword: input-length1-_ ( -- )
+    xlength 1-, 
+    next,
+: input-length1-; ( -- ) input-length1-_ bl, ;
 s" reset-input-stream" defword: reset-input-stream_
     input-buffer-start literal,
     input-stream!_ bl,
@@ -514,14 +521,12 @@ s" char>num" defword: char>num_ ( c -- n t | f )
 : char>num; ( -- ) char>num_ bl, ;
 s" number" defword: number_ ( start len -- n t | f )
     \ we read numbers left to right so it should work out correctly
-  over; +; \ combine the address
-  swap;
   0 literal,
   >r;
   begin,
-    over; over; <>;
+    dup; 0 literal, <>;
   while,
-    dup;
+    over;
     c@_ bl, \ load the character
     char>num; \ convert the character and get the lookup codes back
     if, 
@@ -535,9 +540,10 @@ s" number" defword: number_ ( start len -- n t | f )
         r>; \ drop the numeric value
         drop;
         drop; drop; \ drop the addresses too!
+        0x0000 literal,
         next, \ get out of there!
     then,
-    1+;
+    1-;
   repeat,
     drop; drop;
     r>;
@@ -547,26 +553,130 @@ s" error" defword: error_ ( -- )
     &cold literal, @; ( addr -- )
     1pop,
     xtop rbranch,
-s" find-word" defword: find-word_ ( addr value -- addr t | f )
+s" invoke-address" defword: invoke-address_ ( addr -- )
+  1pop,
+  xtop rbranch, \ do not come back here, this is a shim!
+s" input-empty?" defword: input-empty?_ ( -- f )
+  input-length@_ bl, 0=;
+  input-stream@_ bl, 
+  input-length@_ bl, over; +;
+  =; \ check and see if they are equal
+  or; 
+  next,
+s" whitespace?" defword: whitespace?_ ( input -- f )
+  0x20 literal,
+  =;
+  next,
+s" skip-input-whitespace" defword: skip-input-whitespace_ ( -- )
+  begin,
+    input-stream@_ bl, whitespace?_ bl,
+    input-length@_ bl, 0 literal, <>;
+    and;
+  while, 
+    input-stream1+;
+    input-length1-;
+  repeat,
+  next,
+s" word-length" defword: word-length_ ( -- len )
+  xinput xrp push, \ stash xinput to the return stack of where we were
+  begin,
+    input-stream@_ bl, whitespace?_ bl, invert_ bl, \ if it is whitespace then stop
+    input-length@_ bl, 0 literal, <>; 
+    and;
+  while, 
+    input-stream1+_ bl,
+    input-length1-_ bl,
+  repeat,
+  xinput xsp push,
+  xrp xinput pop, \ restore the old input location
+  xinput xsp push, \ put xinput onto the stack
+  -;
+  dup;
+  1pop,
+  xtop xlength xlength add, \ move the length back as well now that we're done
+  next,
+
+
+s" scan-next-word" defword: scan-next-word_ ( -- addr length t | f )
+  \ walk through the contents of the input stream
+  input-empty?_ bl, 
+  if, 
+    0 literal,
+  else,
+    skip-input-whitespace_ bl,
+    input-empty?_ bl, 
+    invert_ bl,
+    if,
+        0 literal,
+    else,
+        word-length_ bl, \ find the length of the next word
+        xinput xsp push, 
+        swap;
+        0xFFFF literal,
+    then,
+  then,
+  next,
+s" lookup-word" defword: lookup-word_ ( addr value -- addr t | f )
   \ TODO actually find the correct entry
   drop; drop;
   0 literal,
   next,
+s" update-input-and-length" defword: update-input-and-length_ ( addr length -- )
+  dup; >r; 
+  +; 
+  1pop,
+  xtop xinput move,
+  r>;
+  1pop,
+  xtop xlength xlength sub,
+  next,
+s" process-word" defword: process-word_ ( -- f )
+  scan-next-word_ bl, \ if false then we ran out of input
+  if, 
+    ( addr length )
+    over; over; ( a l a l ) \ make a copy of the result so we can use it to process input
+    >r; ( a l a )
+    >r; ( a l ) 
+    lookup-word_ bl,  
+    if, 
+        \ lookup was successful
+        invoke-address_ bl, \ perform the invocation
+    else,
+        \ lookup yielded nothing!
+        \ try and parse it as a number
+        0x21 emiti,
+        next-input-line_ bl,
+        r>; ( l )
+        r>; ( l a )
+        swap; ( a l )
+        over; over; >r; >r; ( backup another copy of it )
+        number_ bl, 
+        invert_ bl,
+        if, 
+           \ we were unsuccessful at parsing
+           0x3f emiti,
+           next-input-line_ bl,
+           error_ bl, \ go to the error handler and don't come back
+        then,
+    then,
+    r>; ( l )
+    r>; ( l a )
+    swap; ( a l )
+    update-input-and-length_ bl, \ update length locations
+    0xFFFF literal,
+  else,
+    0 literal,
+  then,
+  next,
+
 s" process-input" defword: process-input_ ( -- )
   \ TODO process words and invoke things
   next-input-line_ bl,
   indent-input-line_ bl,
-  invert_ bl,
-  if,
-    input-buffer-start literal, 4 literal,
-    number_ bl, 
-    invert_ bl,
-    if, 
-        \ perform error handling
-        0x3f emiti, 0xa emiti,
-        error_ bl, \ go to the error handler
-    then,
-  then,
+  begin, 
+    process-word_ bl, 0 literal, <>;
+  while,
+  repeat,
   reset-input-stream_ bl,
   next,
 s" interpreter" defword: interpreter_ ( -- )
