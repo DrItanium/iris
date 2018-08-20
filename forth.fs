@@ -354,7 +354,7 @@ s" input-stream1+" defword: input-stream1+_ ( -- )
    next,
 : input-stream1+; ( -- ) input-stream1+_ bl, ; 
 s" input-length@" defword: input-length@_ ( -- l )
-    xlength xtop push,
+    xlength xsp push,
     next,
 s" input-length!" defword: input-length!_ ( v -- )
     1pop, \ xtop -> length
@@ -425,6 +425,22 @@ s" unstash-character" defword: unstash-char_ ( -- )
    then,
    next,
 
+s" emitdig" defword: emitdig_ ( number -- )
+	0x30 literal, +;
+	dup; 0x39 literal, >; \ check if the value is greater than 0x39. If so then add 7 to the value
+	if,
+		0x7 literal, +;
+	then,
+	emit_ bl,
+	next,
+s" pnum" defword: pnum_ ( number -- ) 
+  dup; 0xF000 literal, and; 12 decimal literal, rshift; emitdig_ bl, 
+  dup; 0x0F00 literal, and; 0x8 literal, rshift; emitdig_ bl,
+  dup; 0x00F0 literal, and; 0x4 literal, rshift; emitdig_ bl,
+  0x000F literal, and; emitdig_ bl,
+  next,
+: pnum; ( -- ) pnum_ bl, ;
+: inspect-number; ( -- ) dup; pnum; space; ;
 s" stash-character" defword: stash-char_ ( c -- )
    xinput xlength xtop add,
    xtop xsp push,
@@ -438,7 +454,7 @@ s" stash-character-to-buffer" defword: stash-char-to-buf_ ( c -- )
         backspace_ bl,
         1 xlength xlength subi,
     then,
-    dup_ bl,
+	dup;
     stash-char_ bl,
     emit_ bl,
     next,
@@ -496,8 +512,8 @@ s" char>num" defword: char>num_ ( c -- n t | f )
         drop; 
         0 literal,
       else,
-        \ it is greater than 10 so subtract 1
-        1-;
+        \ it is greater than 10 so subtract 7
+		0x7 literal, -;
         dup; 0x10 literal, <; \ is it less than 0x10?
         if, 
             \ it is so success :)
@@ -548,6 +564,9 @@ s" number" defword: number_ ( start len -- n t | f )
     drop; drop;
     r>;
     0xFFFF literal,
+	xsp xsp push, inspect-number; drop; 
+	swap; inspect-number; swap;
+	inspect-number;
     next,
 s" error" defword: error_ ( -- )
     &cold literal, @; ( addr -- )
@@ -557,11 +576,11 @@ s" invoke-address" defword: invoke-address_ ( addr -- )
   1pop,
   xtop rbranch, \ do not come back here, this is a shim!
 s" input-empty?" defword: input-empty?_ ( -- f )
-  input-length@_ bl, 0=;
   input-stream@_ bl, 
-  input-length@_ bl, over; +;
+  input-length@_ bl, 
+  over; 
+  +;
   =; \ check and see if they are equal
-  or; 
   next,
 s" whitespace?" defword: whitespace?_ ( input -- f )
   0x20 literal,
@@ -605,7 +624,6 @@ s" scan-next-word" defword: scan-next-word_ ( -- addr length t | f )
   else,
     skip-input-whitespace_ bl,
     input-empty?_ bl, 
-    invert_ bl,
     if,
         0 literal,
     else,
@@ -644,7 +662,6 @@ s" process-word" defword: process-word_ ( -- f )
     else,
         \ lookup yielded nothing!
         \ try and parse it as a number
-        0x21 emiti,
         next-input-line_ bl,
         r>; ( l )
         r>; ( l a )
@@ -654,7 +671,7 @@ s" process-word" defword: process-word_ ( -- f )
         invert_ bl,
         if, 
            \ we were unsuccessful at parsing
-           0x3f emiti,
+		   0x3f emiti,
            next-input-line_ bl,
            error_ bl, \ go to the error handler and don't come back
         then,
