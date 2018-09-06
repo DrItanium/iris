@@ -84,5 +84,30 @@ void* sbrk(ptrdiff_t incr) {
    return NULL;
 }
 
+int isatty(int a) {
+   errno = ENOTTY;
+   return 0;
+}
+
+int close(int f) {
+   errno = EBADF;
+   return 0;
+}
+
+ssize_t  write(int fd, const void* buf, size_t nbyte) {
+   return -1;
+}
+
+off_t lseek(int f, off_t offset, int whence) {
+   return -1;
+}
+
+ssize_t read(int fd, void* buf, size_t nbyte) {
+   return -1;
+}
+
+int fstat(int fd, struct stat* sbuf) {
+   return -1;
+}
 
 /* vim: set expandtab tabstop=3 shiftwidth=3: */
