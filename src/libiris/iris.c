@@ -1,7 +1,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include "iris.h"
 
 void iris_dispatch(iris_core* proc, instruction* value) {

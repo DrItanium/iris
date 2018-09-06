@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdint.h>
 #include "iris.h"
 
 const char* iris_arithmetic_mnemonic(instruction* insn) {

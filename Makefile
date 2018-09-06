@@ -33,7 +33,8 @@ ALL_BINARIES = ${SIM_BINARY} ${RL_BINARY} ${DECODE_BINARY} ${ASM_BINARY}\
 ALL_OBJECTS = ${LIBIRIS_OBJECTS} ${RL_MAIN} ${TEST_OBJECTS} ${DECODE_MAIN} \
 			  ${SIM_MAIN} ${DBG_MAIN} ${ASM_FILES} ${ASM_OBJECTS} ${LIBIRIS_OUT}
 
-all: options ${LIBIRIS_OUT} iris rl decode asm dbg
+#all: options ${LIBIRIS_OUT} iris rl decode asm dbg
+all: options ${LIBIRIS_OUT} decode 
 
 options:
 	@echo iris build options:
@@ -62,7 +63,7 @@ ${LIBIRIS_OUT}: ${LIBIRIS_OBJECTS}
 
 iris: ${SIM_MAIN} ${LIBIRIS_OUT}
 	@echo -n Building ${SIM_BINARY} binary out of $^...
-	${CC} ${LDFLAGS} -o ${SIM_BINARY} $^
+	@${CC} ${LDFLAGS} -o ${SIM_BINARY} $^
 	@echo done.
 
 rl: ${RL_MAIN} ${LIBIRIS_OUT}
@@ -72,7 +73,7 @@ rl: ${RL_MAIN} ${LIBIRIS_OUT}
 
 decode: ${DECODE_MAIN} ${LIBIRIS_OUT}
 	@echo -n Building ${DECODE_BINARY} binary out of $^...
-	@${CC} ${LDFLAGS} -o ${DECODE_BINARY} $^
+	@${CC} ${LDFLAGS} -o ${DECODE_BINARY} $^ -lgcc -lc
 	@echo done.
 
 dbg: ${DBG_MAIN} ${LIBIRIS_OUT} 
