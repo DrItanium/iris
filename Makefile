@@ -34,7 +34,7 @@ ALL_OBJECTS = ${LIBIRIS_OBJECTS} ${RL_MAIN} ${TEST_OBJECTS} ${DECODE_MAIN} \
 			  ${SIM_MAIN} ${DBG_MAIN} ${ASM_FILES} ${ASM_OBJECTS} ${LIBIRIS_OUT}
 
 #all: options ${LIBIRIS_OUT} iris rl decode asm dbg
-all: options ${LIBIRIS_OUT} iris rl decode 
+all: options ${LIBIRIS_OUT} iris rl decode dbg 
 
 options:
 	@echo iris build options:
@@ -78,7 +78,7 @@ decode: ${DECODE_MAIN} ${LIBIRIS_OUT}
 
 dbg: ${DBG_MAIN} ${LIBIRIS_OUT} 
 	@echo -n Building ${DBG_BINARY} binary out of $^...
-	@${CC} ${LDFLAGS} -o ${DBG_BINARY} $^
+	@${CC} ${LDFLAGS} -o ${DBG_BINARY} $^ -lgcc -lc
 	@echo done.
 
 asm: ${ASM_BASE}/lex.yy.c ${ASM_BASE}/asm.tab.c ${ASM_BASE}/asm.tab.h src/libiris/util.c 
