@@ -24,14 +24,13 @@ ASM_FILES = ${ASM_BASE}/lex.yy.c ${ASM_BASE}/asm.tab.c ${ASM_BASE}/asm.tab.h
 ASM_OBJECTS = ${ASM_BASE}/lex.yy.o ${ASM_BASE}/asm.tab.o
 
 LIBIRIS_OBJECTS = $(patsubst %.c,%.o, $(wildcard src/libiris/*.c))
-LIBIRIS_OUT = src/libiris/libiris.a
 
 TEST_OBJECTS = $(patsubst %.c,%.o,$(wildcard src/cmd/tests/*.c))
 
 ALL_BINARIES = ${SIM_BINARY} ${RL_BINARY} ${DECODE_BINARY} ${ASM_BINARY}\
 			   ${DBG_BINARY} 
 ALL_OBJECTS = ${LIBIRIS_OBJECTS} ${RL_MAIN} ${TEST_OBJECTS} ${DECODE_MAIN} \
-			  ${SIM_MAIN} ${DBG_MAIN} ${ASM_FILES} ${ASM_OBJECTS} ${LIBIRIS_OUT}
+			  ${SIM_MAIN} ${DBG_MAIN} ${ASM_FILES} ${ASM_OBJECTS}
 
 #all: options ${LIBIRIS_OUT} iris rl decode asm dbg
 all: options ${LIBIRIS_OUT} iris rl decode dbg 
@@ -56,37 +55,32 @@ ${ASM_BASE}/lex.yy.c: ${ASM_BASE}/asm.l ${ASM_BASE}/asm.tab.h
 	@${LEX} -o ${ASM_BASE}/lex.yy.c -l ${ASM_BASE}/asm.l
 	@${CC} ${CFLAGS} -D_POSIX_SOURCE -c ${ASM_BASE}/lex.yy.c -o ${ASM_BASE}/lex.yy.o
 
-${LIBIRIS_OUT}: ${LIBIRIS_OBJECTS}
-	@echo -n Building ${LIBIRIS_OUT} out of $^...
-	@${AR} rcs ${LIBIRIS_OUT}  $^
-	@echo done
-
-iris: ${SIM_MAIN} ${LIBIRIS_OUT}
+iris: ${SIM_MAIN} ${LIBIRIS_OBJECTS}
 	@echo -n Building ${SIM_BINARY} binary out of $^...
 	@${CC} ${LDFLAGS} -o ${SIM_BINARY} $^ -lgcc -lc
 	@echo done.
 
-rl: ${RL_MAIN} ${LIBIRIS_OUT}
+rl: ${RL_MAIN} ${LIBIRIS_OBJECTS}
 	@echo -n Building ${RL_BINARY} binary out of $^...
 	@${CC} ${LDFLAGS} -o ${RL_BINARY} $^ -lgcc -lc
 	@echo done.
 
-decode: ${DECODE_MAIN} ${LIBIRIS_OUT}
+decode: ${DECODE_MAIN} ${LIBIRIS_OBJECTS}
 	@echo -n Building ${DECODE_BINARY} binary out of $^...
 	@${CC} ${LDFLAGS} -o ${DECODE_BINARY} $^ -lgcc -lc
 	@echo done.
 
-dbg: ${DBG_MAIN} ${LIBIRIS_OUT} 
+dbg: ${DBG_MAIN} ${LIBIRIS_OBJECTS} 
 	@echo -n Building ${DBG_BINARY} binary out of $^...
 	@${CC} ${LDFLAGS} -o ${DBG_BINARY} $^ -lgcc -lc
 	@echo done.
 
 asm: ${ASM_BASE}/lex.yy.c ${ASM_BASE}/asm.tab.c ${ASM_BASE}/asm.tab.h src/libiris/util.c 
 	@echo -n Building ${ASM_BINARY} binary out of $^...
-	@${CC} ${LDFLAGS} -o ${ASM_BINARY} ${ASM_BASE}/lex.yy.o ${ASM_BASE}/asm.tab.o ${LIBIRIS_OUT}
+	@${CC} ${LDFLAGS} -o ${ASM_BINARY} ${ASM_BASE}/lex.yy.o ${ASM_BASE}/asm.tab.o ${LIBIRIS_OBJECTS}
 	@echo done.
 
-test_%: src/cmd/tests/%.o ${LIBIRIS_OUT}
+test_%: src/cmd/tests/%.o ${LIBIRIS_OBJECTS}
 	@echo -n Building ${SIM_BINARY} binary out of $^...
 	${CC} ${LDFLAGS} -o ${SIM_BINARY} $^
 	@echo done.
