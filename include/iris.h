@@ -1,7 +1,8 @@
 /* UGH!!!!! */
 #ifndef _IRIS_H
 #define _IRIS_H
-#include <stdint.h>
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
 typedef unsigned char byte;
 typedef uint16_t word;
 typedef uint32_t dword;
