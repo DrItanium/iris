@@ -140,7 +140,10 @@
                    (type SYMBOL)
                    (default ?NONE))
              (multislot args
-                        (type SYMBOL)))
+                        (type SYMBOL))
+             (multislot members
+                        (type SYMBOL)
+                        (default ?NONE)))
 (deftemplate operation-group
              (slot kind
                    (type SYMBOL)
@@ -159,13 +162,6 @@
              (slot group
                    (type SYMBOL)
                    (default FALSE)))
-(deftemplate multi-instruction-description
-             (multislot operations
-                        (type SYMBOL)
-                        (default ?NONE))
-             (slot class
-                   (type SYMBOL)
-                   (default ?NONE)))
 
 (deftemplate alias-decl
              (slot real-name
@@ -176,59 +172,111 @@
                    (default ?NONE)))
 
 (deffacts descriptions 
-          (instruction-class (kind 3reg)
-                             (args destination 
-                                   source
-                                   source2))
-          (instruction-class (kind 2reg+imm8)
-                             (args destination
-                                   source
-                                   imm8))
-          (instruction-class (kind 2reg)
-                             (args destination
-                                   source))
           (instruction-class (kind noarg)
-                             (args))
-          (instruction-class (kind 1reg+imm16)
-                             (args destination
-                                   imm16))
-          (instruction-class (kind 1reg)
-                             (args destination))
+                             (args)
+                             (members BranchUnconditionalToTheLinkRegister
+                                      BranchUnconditionalToTheLinkRegisterAndLink
+                                      ReturnFromError
+                                      ))
+          (instruction-class (kind 3gpr)
+                             (args destination-gpr
+                                   source-gpr
+                                   source2-gpr)
+                             (members Add 
+                                      Subtract 
+                                      Multiply Divide
+                                      Remainder 
+                                      ShiftLeft 
+                                      ShiftRight 
+                                      BinaryAnd
+                                      BinaryOr 
+                                      BinaryExclusiveOr 
+                                      BinaryNand 
+                                      BinaryNor
+                                      Min 
+                                      Max
+                                      LoadFromCode
+                                      StoreToCode
+                                      ))
+          (instruction-class (kind 2gpr+imm8)
+                             (args destination-gpr
+                                   source-gpr
+                                   imm8)
+                             (members AddImmediate 
+                                      SubtractImmediate 
+                                      MultiplyImmediate 
+                                      DivideImmediate
+                                      RemainderImmediate 
+                                      ShiftLeftImmediate 
+                                      ShiftRightImmediate 
+                                      LoadFromDataWithOffset
+                                      StoreToDataWithOffset 
+                                      LoadFromIOWithOffset 
+                                      StoreToIOWithOffset
+                                      ))
+          (instruction-class (kind 2gpr)
+                             (args destination-gpr
+                                   source-gpr)
+                             (members UnaryNot 
+                                      MoveRegisterContents 
+                                      SwapRegisterContents
+                                      LoadFromIO 
+                                      StoreToIO 
+                                      LoadFromData 
+                                      StoreToData 
+                                      PushDataOntoStack
+                                      PopDataFromStack
+                                      ))
+          (instruction-class (kind 1gpr+imm16)
+                             (args destination-gpr
+                                   imm16)
+                             (members StoreToDataWithImmediateAddress 
+                                      LoadFromDataWithImmediateAddress
+                                      LoadImmediate 
+                                      PushImmediateOntoStack 
+                                      ))
+          (instruction-class (kind 1gpr)
+                             (args destination-gpr)
+                             (members MoveFromIP 
+                                      MoveToIP 
+                                      MoveFromLinkRegister 
+                                      MoveToLinkRegister 
+                                      SaveAllRegisters 
+                                      RestoreAllRegisters
+                                      BranchUnconditionalRegister 
+                                      BranchUnconditionalRegisterAndLink
+                                      ))
           (instruction-class (kind imm16only)
-                             (args imm16))
-          (multi-instruction-description (class 3reg)
-                                         (operations Add Subtract Multiply Divide
-                                                     Remainder ShiftLeft ShiftRight BinaryAnd
-                                                     BinaryOr BinaryExclusiveOr BinaryNand BinaryNor
-                                                     Min Max
+                             (args imm16)
+                             (members BranchUnconditionalImmediate
+                                      BranchUnconditionalImmediateAndLink
+                                      ))
+          (instruction-class (kind conditional-gpr)
+                             (args destination-predicate 
+                                   source-gpr)
+                             (members BranchConditionalRegister
+                                      BranchConditionalRegisterAndLink))
+          (instruction-class (kind conditional-imm)
+                             (args destination-predicate
+                                   imm16)
+                             (members BranchConditionalImmediateAndLink
+                                      BranchConditionalImmediate))
+          (instruction-class (kind conditional-noargs)
+                             (args destination-predicate)
+                             (members BranchConditionalToTheLinkRegisterAndLink
+                                      BranchConditionalToTheLinkRegister))
+          (instruction-class (kind compare-gpr)
+                             (args destination-predicate
+                                   destination-inverse-predicate
+                                   source-gpr
+                                   source2-gpr)
+                             (members Equals 
+                                      NotEqual 
+                                      LessThan 
+                                      LessThanOrEqualTo
+                                      GreaterThan 
+                                      GreaterThanOrEqualTo))
 
-
-                                                     ))
-          (multi-instruction-description (class 2reg+imm8)
-                                         (operations AddImmediate SubtractImmediate MultiplyImmediate DivideImmediate
-                                                     RemainderImmediate ShiftLeftImmediate ShiftRightImmediate 
-                                                     BinaryAndImmediate BinaryOrImmediate BinaryExclusiveOrImmediate 
-                                                     BinaryNandImmediate BinaryNorImmediate LoadFromDataWithOffset
-                                                     StoreToDataWithOffset LoadFromIOWithOffset StoreToIOWithOffset
-                                                     ))
-          (multi-instruction-description (class 2reg)
-                                         (operations not move swap ldio
-                                                     stio ld st push
-                                                     pop
-                                                     ))
-          (multi-instruction-description (class 1reg+imm16)
-                                         (operations sti ldi set pushi
-                                                     ))
-          (multi-instruction-description (class 1reg)
-                                         (operations mfip mtip mflr mtlr
-                                                     sregs rregs b bl
-                                                     ))
-          (multi-instruction-description (class imm16only)
-                                         (operations bil bi
-                                                     ))
-          (multi-instruction-description (class noarg)
-                                         (operations blrl blr rfe
-                                                     ))
 
           (operation-group (kind arithmetic)
                            (operations Add Subtract Multiply Divide 
@@ -236,15 +284,20 @@
                                        BinaryOr UnaryNot BinaryExclusiveOr BinaryNand
                                        BinaryNor AddImmediate SubtractImmediate MultiplyImmediate
                                        DivideImmediate RemainderImmediate ShiftLeftImmediate ShiftRightImmediate
-                                       BinaryAndImmediate BinaryOrImmediate UnaryNotImmediate BinaryExclusiveOrImmediate
-                                       BinaryNandImmediate BinaryNorImmediate Min Max))
+                                       Min Max))
           (operation-group (kind jump)
-                           (operations BranchUnconditionalImmediate BranchUnconditionalImmediateAndLink 
-                                       BranchUnconditionalRegister BranchUnconditionalRegisterAndLink
-                                       BranchConditionalImmediate BranchConditionalImmediateAndLink
-                                       BranchConditionalRegister BranchConditionalRegisterAndLink
-                                       BranchUnconditionalToTheLinkRegister BranchUnconditionalToTheLinkRegisterAndLink
-                                       BranchConditionalToTheLinkRegister BranchConditionalToTheLinkRegisterAndLink
+                           (operations BranchUnconditionalImmediate 
+                                       BranchUnconditionalImmediateAndLink 
+                                       BranchUnconditionalRegister 
+                                       BranchUnconditionalRegisterAndLink
+                                       BranchConditionalImmediate 
+                                       BranchConditionalImmediateAndLink
+                                       BranchConditionalRegister 
+                                       BranchConditionalRegisterAndLink
+                                       BranchUnconditionalToTheLinkRegister 
+                                       BranchUnconditionalToTheLinkRegisterAndLink
+                                       BranchConditionalToTheLinkRegister 
+                                       BranchConditionalToTheLinkRegisterAndLink
                                        ReturnFromError))
           (operation-group (kind move)
                            (operations MoveRegisterContents LoadImmediate SwapRegisterContents LoadFromData
