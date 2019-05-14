@@ -30,62 +30,49 @@
 (defclass component
   (is-a USER)
   (role abstract)
-  (pattern-match non-reactive))
-(defclass register
-  (is-a component)
-  (role concrete)
-  (pattern-match reactive)
-  (slot title
-        (type SYMBOL)
-        (storage local)
-        (visibility public)
-        (default-dynamic FALSE))
-  (message-handler init after)
-  (message-handler to-string primary))
-(defclass opcode
-  (is-a component)
-  (role concrete)
-  (pattern-match reactive)
-  (slot text
-        (type SYMBOL)
-        (storage local)
-        (visibility public)
-        (default ?NONE))
-  (message-handler to-string primary))
-
-(defmessage-handler register to-string primary
-                    ()
-                    (format nil
-                            "[%s]"
-                            (instance-name-to-symbol (instance-name ?self))))
-
-(defmessage-handler register init after
-                    ()
-                    (if (not (dynamic-get title)) then
-                      (dynamic-put title
-                                   (instance-name-to-symbol (instance-name ?self)))))
-
-(defclass aliased-constant 
-  (is-a USER)
-  (role abstract)
   (pattern-match non-reactive)
   (slot title
         (type SYMBOL)
         (storage local)
         (visibility public)
         (default-dynamic FALSE))
-  (message-handler init after)
-  (message-handler to-string primary))
-
-(defmessage-handler aliased-constant to-string primary
-                    ()
-                    (dynamic-get title))
-
-(defmessage-handler aliased-constant init after
+  (message-handler to-string primary)
+  (message-handler init after))
+  
+(defmessage-handler component init after
                     ()
                     (if (not (dynamic-get title)) then
                       (dynamic-put title
                                    (instance-name-to-symbol (instance-name ?self)))))
+
+(defmessage-handler component to-string primary
+                    ()
+                    (dynamic-get title))
+
+(defclass register
+  (is-a component)
+  (role concrete)
+  (pattern-match reactive)
+  (message-handler to-string primary))
+
+(defmessage-handler register to-string primary
+                    ()
+                    (format nil
+                            "[%s]"
+                            (dynamic-get title)))
+
+(defclass opcode
+  (is-a component)
+  (role concrete)
+  (pattern-match reactive))
+
+
+
+(defclass aliased-constant 
+  "Top level constant concept to differentiate against normal components"
+  (is-a component))
+
+
 
 (defclass label
   (is-a aliased-constant)
@@ -94,6 +81,8 @@
 
 (defclass numerical-constant
   (is-a aliased-constant)
+  (role concrete)
+  (pattern-match reactive)
   (slot value
         (type INTEGER
               INSTANCE)
@@ -112,8 +101,12 @@
 (defclass instruction 
   (is-a USER)
   (slot op 
-        (type SYMBOL)
+        (type INSTANCE)
+        (allowed-classes opcode)
         (storage local)
         (visibility public)
         (default ?NONE))
-  (multislot components))
+  (multislot arguments
+             (type INSTANCE)
+             (allowed-classes register 
+                              aliased-constant)))
