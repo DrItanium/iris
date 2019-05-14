@@ -234,6 +234,8 @@
                                       LoadFromDataWithImmediateAddress
                                       LoadImmediate 
                                       PushImmediateOntoStack 
+                                      SaveConditionRegisters
+                                      RestoreConditionRegisters
                                       ))
           (instruction-class (kind 1gpr)
                              (args destination-gpr)
@@ -276,6 +278,37 @@
                                       LessThanOrEqualTo
                                       GreaterThan 
                                       GreaterThanOrEqualTo))
+          (instruction-class (kind compare-imm8)
+                             (args destination-predicate
+                                   destination-inverse-predicate
+                                   source-gpr
+                                   imm8)
+                             (members EqualsImmediate
+                                      NotEqualsImmediate
+                                      LessThanImmediate
+                                      LessThanOrEqualToImmediate
+                                      GreaterThanOrEqualToImmediate
+                                      GreaterThanImmediate))
+          (instruction-group (kind 2predicates)
+                             (args destination-predicate 
+                                   destination-inverse-predicate)
+                             (members ConditionRegisterSwap
+                                      ConditionRegisterMove))
+          (instruction-group (kind 3predicates)
+                             (args destination-predicate
+                                   destination-inverse-predicate
+                                   source-predicate)
+                             (members ConditionRegisterNot))
+          (instruction-group (kind 4predicates)
+                             (args destination-predicate
+                                   destination-inverse-predicate
+                                   source-predicate
+                                   source1-predicate)
+                             (members ConditionRegisterXor
+                                      ConditionRegisterAnd
+                                      ConditionRegisterOr
+                                      ConditionRegisterNand
+                                      ConditionRegisterNor))
 
 
           (operation-group (kind arithmetic)
@@ -310,7 +343,7 @@
           (operation-group (kind compare)
                            (operations Equals EqualsImmediate NotEqual NotEqualImmediate
                                        LessThan LessThanImmediate GreaterThan GreaterThanImmediate
-                                       LessThanOrEqualTo LessOrEqualToImmediate GreaterThanOrEqualTo
+                                       LessThanOrEqualTo LessThanOrEqualToImmediate GreaterThanOrEqualTo
                                        GreaterThanOrEqualToImmediate))
           (operation-group (kind condition-register-op)
                            (operations SaveConditionRegisters RestoreConditionRegisters
