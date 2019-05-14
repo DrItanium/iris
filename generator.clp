@@ -38,7 +38,7 @@
         (default-dynamic FALSE))
   (message-handler to-string primary)
   (message-handler init after))
-  
+
 (defmessage-handler component init after
                     ()
                     (if (not (dynamic-get title)) then
@@ -47,7 +47,8 @@
 
 (defmessage-handler component to-string primary
                     ()
-                    (dynamic-get title))
+                    (send (dynamic-get title)
+                          to-string))
 
 (defclass register
   (is-a component)
@@ -59,7 +60,30 @@
                     ()
                     (format nil
                             "[%s]"
-                            (dynamic-get title)))
+                            (send (dynamic-get title)
+                                  to-string)))
+(defclass tagged-component
+  "Tags a given with extra information, this is used during pattern matching"
+  (is-a component)
+  (role concrete)
+  (pattern-match reactive)
+  (slot target
+        (type INSTANCE)
+        (allowed-classes component)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (multislot tags
+             (type SYMBOL)
+             (storage local)
+             (visibility public)
+             (default ?NONE))
+  (message-handler to-string primary))
+(defmessage-handler tagged-component to-string primary
+                    ()
+                    ; do an indirect dispatch
+                    (send (dynamic-get target)
+                          to-string))
 
 (defclass opcode
   (is-a component)
@@ -94,8 +118,8 @@
 
 (defmessage-handler numerical-constant to-string primary
                     ()
-                    (str-cat (send (dynamic-get value)
-                                   to-string)))
+                    (send (dynamic-get value)
+                          to-string))
 
 
 (defclass instruction 
@@ -108,5 +132,137 @@
         (default ?NONE))
   (multislot arguments
              (type INSTANCE)
-             (allowed-classes register 
-                              aliased-constant)))
+             (allowed-classes tagged-component)))
+
+(deftemplate instruction-class
+             "Maps a given kind to a given set of tagged components, used during code emission"
+             (slot kind
+                   (type SYMBOL)
+                   (default ?NONE))
+             (multislot args
+                        (type SYMBOL)))
+(deftemplate operation-group
+             (slot kind
+                   (type SYMBOL)
+                   (default ?NONE))
+             (multislot operations
+                        (type SYMBOL)
+                        (default ?NONE)))
+
+(deftemplate instruction-description
+             (slot kind
+                   (type SYMBOL)
+                   (default ?NONE))
+             (slot class
+                   (type SYMBOL)
+                   (default ?NONE))
+             (slot group
+                   (type SYMBOL)
+                   (default FALSE)))
+(deftemplate multi-instruction-description
+             (multislot operations
+                        (type SYMBOL)
+                        (default ?NONE))
+             (slot class
+                   (type SYMBOL)
+                   (default ?NONE)))
+
+(deftemplate alias-decl
+             (slot real-name
+                   (type SYMBOL)
+                   (default ?NONE))
+             (slot alias
+                   (type SYMBOL)
+                   (default ?NONE)))
+
+(deffacts descriptions 
+          (instruction-class (kind 3reg)
+                             (args destination 
+                                   source
+                                   source2))
+          (instruction-class (kind 2reg+imm8)
+                             (args destination
+                                   source
+                                   imm8))
+          (instruction-class (kind 2reg)
+                             (args destination
+                                   source))
+          (instruction-class (kind noarg)
+                             (args))
+          (instruction-class (kind 1reg+imm16)
+                             (args destination
+                                   imm16))
+          (instruction-class (kind 1reg)
+                             (args destination))
+          (instruction-class (kind imm16only)
+                             (args imm16))
+          (multi-instruction-description (class 3reg)
+                                         (operations Add Subtract Multiply Divide
+                                                     Remainder ShiftLeft ShiftRight BinaryAnd
+                                                     BinaryOr BinaryExclusiveOr BinaryNand BinaryNor
+                                                     Min Max
+
+
+                                                     ))
+          (multi-instruction-description (class 2reg+imm8)
+                                         (operations AddImmediate SubtractImmediate MultiplyImmediate DivideImmediate
+                                                     RemainderImmediate ShiftLeftImmediate ShiftRightImmediate 
+                                                     BinaryAndImmediate BinaryOrImmediate BinaryExclusiveOrImmediate 
+                                                     BinaryNandImmediate BinaryNorImmediate LoadFromDataWithOffset
+                                                     StoreToDataWithOffset LoadFromIOWithOffset StoreToIOWithOffset
+                                                     ))
+          (multi-instruction-description (class 2reg)
+                                         (operations not move swap ldio
+                                                     stio ld st push
+                                                     pop
+                                                     ))
+          (multi-instruction-description (class 1reg+imm16)
+                                         (operations sti ldi set pushi
+                                                     ))
+          (multi-instruction-description (class 1reg)
+                                         (operations mfip mtip mflr mtlr
+                                                     sregs rregs b bl
+                                                     ))
+          (multi-instruction-description (class imm16only)
+                                         (operations bil bi
+                                                     ))
+          (multi-instruction-description (class noarg)
+                                         (operations blrl blr rfe
+                                                     ))
+
+          (operation-group (kind arithmetic)
+                           (operations Add Subtract Multiply Divide 
+                                       Remainder ShiftLeft ShiftRight BinaryAnd
+                                       BinaryOr UnaryNot BinaryExclusiveOr BinaryNand
+                                       BinaryNor AddImmediate SubtractImmediate MultiplyImmediate
+                                       DivideImmediate RemainderImmediate ShiftLeftImmediate ShiftRightImmediate
+                                       BinaryAndImmediate BinaryOrImmediate UnaryNotImmediate BinaryExclusiveOrImmediate
+                                       BinaryNandImmediate BinaryNorImmediate Min Max))
+          (operation-group (kind jump)
+                           (operations BranchUnconditionalImmediate BranchUnconditionalImmediateAndLink 
+                                       BranchUnconditionalRegister BranchUnconditionalRegisterAndLink
+                                       BranchConditionalImmediate BranchConditionalImmediateAndLink
+                                       BranchConditionalRegister BranchConditionalRegisterAndLink
+                                       BranchUnconditionalToTheLinkRegister BranchUnconditionalToTheLinkRegisterAndLink
+                                       BranchConditionalToTheLinkRegister BranchConditionalToTheLinkRegisterAndLink
+                                       ReturnFromError))
+          (operation-group (kind move)
+                           (operations MoveRegisterContents LoadImmediate SwapRegisterContents LoadFromData
+                                       LoadFromDataWithImmediateAddress LoadFromDataWithOffset StoreToData
+                                       StoreToDataWithImmediateAddress StoreToDataWithOffset PushDataOntoStack
+                                       PushImmediateOntoStack PopDataFromStack LoadFromCode StoreToCode
+                                       LoadFromIO StoreToIO LoadFromIOWithOffset StoreToIOWithOffset
+                                       MoveFromIP MoveToIP MoveFromLinkRegister MoveToLinkRegister
+                                       SaveAllRegisters RestoreAllRegisters))
+          (operation-group (kind compare)
+                           (operations Equals EqualsImmediate NotEqual NotEqualImmediate
+                                       LessThan LessThanImmediate GreaterThan GreaterThanImmediate
+                                       LessThanOrEqualTo LessOrEqualToImmediate GreaterThanOrEqualTo
+                                       GreaterThanOrEqualToImmediate))
+          (operation-group (kind condition-register-op)
+                           (operations SaveConditionRegisters RestoreConditionRegisters
+                                       ConditionRegisterExclusiveOr ConditionRegisterNot
+                                       ConditionRegisterAnd ConditionRegisterOr
+                                       ConditionRegisterNand ConditionRegisterNor
+                                       ConditionRegisterSwap ConditionRegisterMove))
+          )
