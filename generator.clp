@@ -27,10 +27,8 @@
 (defmessage-handler LEXEME to-string primary
                     ()
                     ?self)
-(defclass component
+(defclass has-title
   (is-a USER)
-  (role abstract)
-  (pattern-match non-reactive)
   (slot title
         (type SYMBOL)
         (storage local)
@@ -39,16 +37,22 @@
   (message-handler to-string primary)
   (message-handler init after))
 
-(defmessage-handler component init after
+
+(defmessage-handler has-title init after
                     ()
                     (if (not (dynamic-get title)) then
                       (dynamic-put title
                                    (instance-name-to-symbol (instance-name ?self)))))
 
-(defmessage-handler component to-string primary
+(defmessage-handler has-title to-string primary
                     ()
                     (send (dynamic-get title)
                           to-string))
+
+(defclass component
+  (is-a has-title)
+  (role abstract)
+  (pattern-match non-reactive))
 
 (defclass register
   (is-a component)
@@ -141,6 +145,7 @@
         (allowed-classes opcode)
         (storage local)
         (visibility public)
+        (access initialize-only)
         (default ?NONE))
   (multislot arguments
              (type INSTANCE)
@@ -211,6 +216,39 @@
              (storage local)
              (visibility public)
              (default ?NONE)))
+
+(defclass memory-space-entry
+  (is-a USER)
+  (slot parent
+        (type INSTANCE)
+        (allowed-classes memory-space)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (slot address
+        (type INTEGER)
+        (range 0 ?VARIABLE)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (slot size
+        (type INTEGER)
+        (range 0 ?VARIABLE)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (slot contents
+        (type INSTANCE)
+        (allowed-classes component)
+        (storage local)
+        (visibility public)
+        (default ?NONE)))
+
+(defclass memory-space
+  (is-a has-title)
+  (multislot contents
+             (type INSTANCE)
+             (allowed-classes memory-space-entry)))
 
 
 (defrule add-alias-decl-to-instruction-description
@@ -286,5 +324,3 @@
                         (group ?group)
                         (aliases ?aliases)
                         (class-match ?match)))
-                        (
-
