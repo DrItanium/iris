@@ -161,7 +161,7 @@
                    (default ?NONE))
              (slot group
                    (type SYMBOL)
-                   (default FALSE)))
+                   (default ?NONE)))
 
 (deftemplate alias-decl
              (slot real-name
@@ -170,6 +170,46 @@
              (slot alias
                    (type SYMBOL)
                    (default ?NONE)))
+
+(defrule make-alias-from-group
+         ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
+         =>
+         (retract ?f)
+         (if (<> (length$ ?rest) 0) then
+           (assert (defaliases $?rest)))
+         (progn$ (?a $?contents)
+                 (assert (alias-decl (real-name ?name)
+                                     (alias ?a)))))
+
+(defrule make-instruction-description
+         (operation-group (kind ?group)
+                          (operations $? ?operation $?))
+         (instruction-class (kind ?class)
+                            (members $? ?operation $?))
+         =>
+         (assert (instruction-description (kind ?operation)
+                                          (class ?class)
+                                          (group ?group))))
+(defrule error:one-operation-mapped-to-multiple-groups
+         (instruction-description (kind ?operation)
+                                  (group ?group))
+         (instruction-description (kind ?operation)
+                                  (group ?group2&~?group))
+         =>
+         (printout stderr 
+                   "ERORR: Found that operation " ?operation " maps to groups " ?group " and " ?group2 crlf)
+         (halt))
+
+(defrule error:one-operation-mapped-to-multiple-classes
+         (instruction-description (kind ?operation)
+                                  (class ?group))
+         (instruction-description (kind ?operation)
+                                  (class ?group2&~?group))
+         =>
+         (printout stderr 
+                   "ERORR: Found that operation " ?operation " maps to classes " ?group " and " ?group2 crlf)
+         (halt))
+
 
 (deffacts descriptions 
           (instruction-class (kind noarg)
@@ -289,17 +329,17 @@
                                       LessThanOrEqualToImmediate
                                       GreaterThanOrEqualToImmediate
                                       GreaterThanImmediate))
-          (instruction-group (kind 2predicates)
+          (instruction-class (kind 2predicates)
                              (args destination-predicate 
                                    destination-inverse-predicate)
                              (members ConditionRegisterSwap
                                       ConditionRegisterMove))
-          (instruction-group (kind 3predicates)
+          (instruction-class (kind 3predicates)
                              (args destination-predicate
                                    destination-inverse-predicate
                                    source-predicate)
                              (members ConditionRegisterNot))
-          (instruction-group (kind 4predicates)
+          (instruction-class (kind 4predicates)
                              (args destination-predicate
                                    destination-inverse-predicate
                                    source-predicate
@@ -318,6 +358,27 @@
                                        BinaryNor AddImmediate SubtractImmediate MultiplyImmediate
                                        DivideImmediate RemainderImmediate ShiftLeftImmediate ShiftRightImmediate
                                        Min Max))
+          (defaliases Add -> { add }
+                      AddImmediate -> { addi }
+                      Subtract -> { sub }
+                      SubtractImmediate -> { subi }
+                      Multiply -> { mul }
+                      MultiplyImmediate -> { muli }
+                      Divide -> { div }
+                      DivideImmediate -> { divi }
+                      Remainder -> { rem } 
+                      RemainderImmediate -> { remi }
+                      ShiftLeft -> { shl }
+                      ShiftLeftImmediate -> { shli }
+                      ShiftRight -> { shr }
+                      ShiftRightImmediate -> { shri }
+                      BinaryAnd -> { and! binary-and }
+                      BinaryOr -> { or! binary-or }
+                      UnaryNot -> { not! unary-not }
+                      BinaryExclusiveOr -> { xor binary-xor }
+                      Min -> { min! minimum }
+                      Max -> { max! maximum }
+                      )
           (operation-group (kind jump)
                            (operations BranchUnconditionalImmediate 
                                        BranchUnconditionalImmediateAndLink 
@@ -332,6 +393,20 @@
                                        BranchConditionalToTheLinkRegister 
                                        BranchConditionalToTheLinkRegisterAndLink
                                        ReturnFromError))
+          (defaliases BranchUnconditionalImmediate -> { bi bui }
+                      BranchUnconditionalImmediateAndLink -> { bil buil }
+                      BranchUnconditionalRegister -> { b br bu bur }
+                      BranchUnconditionalRegisterAndLink -> { bl brl bul burl }
+                      BranchConditionalImmediate -> { bci }
+                      BranchConditionalImmediateAndLink -> { bcil }
+                      BranchConditionalRegister -> { bcr }
+                      BranchConditionalRegisterAndLink -> { bcrl }
+                      BranchUnconditionalToTheLinkRegister -> { blr bulr }
+                      BranchUnconditionalToTheLinkRegisterAndLink -> { blrl bulrl }
+                      BranchConditionalToTheLinkRegister -> { bclr }
+                      BranchConditionalToTheLinkRegisterAndLink -> { bclrl }
+                      ReturnFromError -> { rfe error-ret }
+                      )
           (operation-group (kind move)
                            (operations MoveRegisterContents LoadImmediate SwapRegisterContents LoadFromData
                                        LoadFromDataWithImmediateAddress LoadFromDataWithOffset StoreToData
@@ -340,15 +415,63 @@
                                        LoadFromIO StoreToIO LoadFromIOWithOffset StoreToIOWithOffset
                                        MoveFromIP MoveToIP MoveFromLinkRegister MoveToLinkRegister
                                        SaveAllRegisters RestoreAllRegisters))
+          (defaliases MoveRegisterContents -> { move mov transfer }
+                      SwapRegisterContents -> { swp swap transpose }
+                      LoadImmediate -> { load.const ldconst set assign }
+                      LoadFromData -> { ld load ld.data load.data <-data }
+                      LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data }
+                      LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data }
+                      StoreToData -> { st store st.data store.data ->data }
+                      StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data }
+                      StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data }
+                      PushDataOntoStack -> { push push.stack }
+                      PushImmediateOntoStack -> { pushi pushi.stack }
+                      PopDataFromStack -> { pop pop.stack }
+                      LoadFromCode -> { ldc loadc ld.code load.code }
+                      StoreToCode -> { stc storec st.code store.code }
+                      LoadFromIO -> { ldio loadio ld.io load.io }
+                      StoreToIO -> { stio storeio st.io store.io }
+                      LoadFromIOWithOffset -> { ldiowo loadiowo ldwo.io loadwo.io }
+                      StoreToIOWithOffset -> { stiowo storeiowo stwo.io storewo.io }
+                      MoveFromIP -> { mfip gpr<-ip }
+                      MoveToIP -> { mtip gpr->ip  }
+                      MoveFromLinkRegister -> { mflr gpr<-lr }
+                      MoveToLinkRegister -> { mtlr gpr->lr }
+                      SaveAllRegisters -> { sregs save.regs }
+                      RestoreAllRegisters -> { rregs restore.regs }
+                      )
           (operation-group (kind compare)
                            (operations Equals EqualsImmediate NotEqual NotEqualImmediate
                                        LessThan LessThanImmediate GreaterThan GreaterThanImmediate
                                        LessThanOrEqualTo LessThanOrEqualToImmediate GreaterThanOrEqualTo
                                        GreaterThanOrEqualToImmediate))
+          (defaliases Equals -> { eq }
+                      EqualsImmediate -> { eqi }
+                      NotEqual -> { ne neq }
+                      NotEqualImmediate -> { nei neqi }
+                      LessThan -> { lt }
+                      LessThanImmediate -> { lti }
+                      GreaterThan -> { gt }
+                      GreaterThanImmediate -> { gti }
+                      LessThanOrEqualTo -> { le }
+                      LessThanOrEqualToImmediate -> { lei }
+                      GreaterThanOrEqualTo -> { ge }
+                      GreaterThanOrEqualToImmediate -> { gei })
           (operation-group (kind condition-register-op)
                            (operations SaveConditionRegisters RestoreConditionRegisters
                                        ConditionRegisterExclusiveOr ConditionRegisterNot
                                        ConditionRegisterAnd ConditionRegisterOr
                                        ConditionRegisterNand ConditionRegisterNor
                                        ConditionRegisterSwap ConditionRegisterMove))
+          (defaliases SaveConditionRegisters -> { save.crs sav.crs crs.save crs.sav crssav crssave savecrs savcrs gpr<-crs crs->gpr }
+                      RestoreConditionRegisters -> { restore.crs restorecrs gpr->crs crs.restore crsrestore crs<-gpr }
+                      ConditionRegisterExclusiveOr -> { cr.xor xor.cr crxor xorcr }
+                      ConditionRegisterNot -> { cr.not not.cr crnot notcr }
+                      ConditionRegisterAnd -> { cr.and and.cr crand andcr }
+                      ConditionRegisterOr -> { cr.or or.cr cror orcr }
+                      ConditionRegisterNand -> { cr.nand nand.cr crnand nandcr }
+                      ConditionRegisterNor -> { cr.nor nor.cr crnor norcr }
+                      ConditionRegisterSwap -> { cr.swap swap.cr crswap swapcr }
+                      ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov })
           )
+
