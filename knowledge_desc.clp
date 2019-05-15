@@ -174,8 +174,8 @@
                       SubtractImmediate -> { subi sub.imm subtracti subtract.imm }
                       Multiply -> { mul multiply }
                       MultiplyImmediate -> { muli mul.imm multiply.imm multiplyi }
-                      Divide -> { div divide }
-                      DivideImmediate -> { divi div.imm divide.imm dividei }
+                      Divide -> { divide }
+                      DivideImmediate -> { divide.imm }
                       Remainder -> { rem remainder } 
                       RemainderImmediate -> { remi rem.imm remainderi remainder.imm }
                       ShiftLeft -> { shl shift-left left-shift lshift shift.left left.shift }
@@ -228,10 +228,10 @@
           (defaliases MoveRegisterContents -> { move mov transfer reg.move move.reg copy cpy copy.reg cpy.reg reg->reg }
                       SwapRegisterContents -> { swp swap transpose reg.swap swap.reg }
                       LoadImmediate -> { load.const ldconst set assign imm->reg }
-                      LoadFromData -> { ld load ld.data load.data data->gpr data.load }
+                      LoadFromData -> { ld ld.data load.data data->gpr data.load }
                       LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data data.loadi }
                       LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data data.loadwo }
-                      StoreToData -> { st store st.data store.data gpr->data data.store }
+                      StoreToData -> { st st.data store.data gpr->data data.store }
                       StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data data.storei data.store.imm }
                       StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data data.storewo }
                       PushDataOntoStack -> { push push.stack stack.push }
@@ -255,18 +255,18 @@
                                        LessThan LessThanImmediate GreaterThan GreaterThanImmediate
                                        LessThanOrEqualTo LessThanOrEqualToImmediate GreaterThanOrEqualTo
                                        GreaterThanOrEqualToImmediate))
-          (defaliases Equals -> { eq }
-                      EqualsImmediate -> { eqi }
-                      NotEqual -> { ne neq }
-                      NotEqualImmediate -> { nei neqi }
-                      LessThan -> { lt less.than }
-                      LessThanImmediate -> { lti }
-                      GreaterThan -> { gt }
-                      GreaterThanImmediate -> { gti }
-                      LessThanOrEqualTo -> { le }
-                      LessThanOrEqualToImmediate -> { lei }
-                      GreaterThanOrEqualTo -> { ge }
-                      GreaterThanOrEqualToImmediate -> { gei })
+          (defaliases Equals -> { equals }
+                      EqualsImmediate -> { equals.imm }
+                      NotEqual -> { not.equals }
+                      NotEqualImmediate -> { not.equals.imm }
+                      LessThan -> { less.than }
+                      LessThanImmediate -> { less.than.imm }
+                      GreaterThan -> { greater.than }
+                      GreaterThanImmediate -> { greater.than.imm }
+                      LessThanOrEqualTo -> { less.than.or.equal }
+                      LessThanOrEqualToImmediate -> { less.than.or.equal.imm }
+                      GreaterThanOrEqualTo -> { greater.than.or.equal }
+                      GreaterThanOrEqualToImmediate -> { greater.than.or.equal.imm })
           (operation-group (kind condition-register-op)
                            (operations SaveConditionRegisters RestoreConditionRegisters
                                        ConditionRegisterExclusiveOr ConditionRegisterNot

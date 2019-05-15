@@ -21,12 +21,6 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(defmessage-handler INTEGER to-string primary
-                    ()
-                    (str-cat ?self))
-(defmessage-handler LEXEME to-string primary
-                    ()
-                    ?self)
 (deftemplate stage
              (slot current
                    (type SYMBOL)
@@ -47,7 +41,24 @@
          (retract ?f))
 (deffacts stages
           (stage (current parse-knowledge-graph)
-                 (rest build-instruction-description)))
+                 (rest build-instruction-description
+                       build-instruction-functions)))
+;------------------------------------------------------------------------------
+(defmessage-handler INTEGER to-string primary
+                    ()
+                    (str-cat ?self))
+(defmessage-handler LEXEME to-string primary
+                    ()
+                    ?self)
+(defclass has-parent
+  (is-a USER)
+  (slot parent
+        (type INSTANCE
+              SYMBOL)
+        (allowed-symbols FALSE)
+        (storage local)
+        (visibility public)
+        (default-dynamic FALSE)))
 (defclass has-title
   (is-a USER)
   (slot title
@@ -160,8 +171,8 @@
 
 
 (defclass instruction 
-  (is-a USER)
-  (slot op 
+  (is-a has-parent)
+  (slot opcode
         (type INSTANCE)
         (allowed-classes opcode)
         (storage local)
@@ -236,17 +247,9 @@
              (type SYMBOL)
              (storage local)
              (visibility public)
-             (default ?NONE)))
+             (default ?NONE))
+  (message-handler construct-method primary))
 
-(defclass has-parent
-  (is-a USER)
-  (slot parent
-        (type INSTANCE
-              SYMBOL)
-        (allowed-symbols FALSE)
-        (storage local)
-        (visibility public)
-        (default-dynamic FALSE)))
 (defclass memory-space-entry
   (is-a has-parent)
   (slot parent
@@ -309,6 +312,105 @@
         (storage local)
         (visibility public)
         (default-dynamic (make-instance of memory-space))))
+
+(defclass buildable-method-argument
+  (is-a has-title
+        has-parent)
+  (slot title
+        (source composite)
+        (default ?NONE))
+  (slot is-multislot
+        (type SYMBOL)
+        (allowed-symbols FALSE
+                         TRUE)
+        (storage local)
+        (visibility public))
+  (multislot types
+             (storage local)
+             (visibility public)
+             (type SYMBOL
+                   INSTANCE))
+  (message-handler to-string primary))
+(defmessage-handler buildable-method-argument to-string primary
+                    ()
+                    (bind ?var
+                          (str-cat "?" 
+                                   (dynamic-get title)))
+                    (if (dynamic-get is-multislot) then
+                      (str-cat "$" 
+                               ?var)
+                      else
+                      (if (> (length$ (dynamic-get types)) 0) then
+                        (bind ?result
+                              (create$))
+                        (progn$ (?type (dynamic-get types))
+                                (bind ?result
+                                      ?result
+                                      (send ?type
+                                            to-string)
+                                      " "))
+
+                        (format nil 
+                                "(%s %s)"
+                                ?var
+                                (str-cat (expand$ ?result)))
+                        else
+                        ?var)))
+
+(defclass buildable-method
+  (is-a has-title)
+  (multislot args
+             (type INSTANCE)
+             (allowed-classes buildable-method-argument)
+             (storage local)
+             (visibility public))
+  (multislot body
+             (storage local)
+             (visibility public))
+  (message-handler body-to-string primary)
+  (message-handler args-to-string primary)
+  (message-handler to-string primary))
+(defmessage-handler buildable-method to-string primary
+                    ()
+                    (format nil
+                            "(defmethod %s
+                               %s
+                               %s)"
+                            (dynamic-get title)
+                            (send ?self 
+                                  args-to-string)
+                            (send ?self
+                                  body-to-string)))
+(defmessage-handler buildable-method args-to-string primary
+                    ()
+                    (bind ?content
+                          (create$))
+                    (progn$ (?arg (dynamic-get args))
+                            (bind ?content
+                                  ?content
+                                  (send ?arg
+                                        to-string)
+                                  " "))
+                    (format nil
+                            "(%s)"
+                            (if (> (length$ ?content) 1) then
+                              (str-cat (expand$ ?content))
+                              else
+                              "")))
+(defmessage-handler buildable-method body-to-string primary
+                    ()
+                    (bind ?content
+                          (create$))
+                    (progn$ (?arg (dynamic-get body))
+                            (bind ?content
+                                  ?content
+                                  (send ?arg
+                                        to-string)
+                                  " "))
+                    (if (> (length$ ?content) 1) then
+                      (str-cat (expand$ ?content))
+                      else
+                      ""))
 
 (defrule add-alias-decl-to-instruction-description
          (stage (current parse-knowledge-graph))
@@ -389,4 +491,61 @@
                         (group ?group)
                         (aliases ?aliases)
                         (class-match ?match)))
+
+(deffunction construct-args-from-symbols
+             ($?symbols)
+             (if (= (length$ ?symbols) 0) then
+               ""
+               else
+               (bind ?output
+                     (create$))
+               (progn$ (?sym $?symbols) 
+                       (bind ?output
+                             ?output
+                             (format nil
+                                     "?%s"
+                                     ?sym)
+                             " "))
+               (str-cat (expand$ ?output))))
+
+(defrule build-instruction-deffunction
+         (stage (current build-instruction-functions))
+         (object (is-a opcode)
+                 (title ?title)
+                 (class-match $?match)
+                 (name ?name))
+         =>
+         (assert (built deffunction ?title using ?name))
+         (build (format nil
+                        "(deffunction %s
+                                      (%s)
+                                      (make-instance of instruction
+                                                     (opcode [%s])
+                                                     (arguments %s)))%n"
+                        ?title
+                        (bind ?args
+                              (construct-args-from-symbols ?match))
+                        (instance-name-to-symbol ?name)
+                        ?args)))
+
+(defrule build-deffunction-using-aliases
+         (stage (current build-instruction-functions))
+         (built deffunction ?title using ?name)
+         (object (is-a opcode)
+                 (name ?name)
+                 (title ?title)
+                 (class-match $?match)
+                 (aliases $? ?alias $?))
+         (not (built deffunction ?alias using ?name))
+         =>
+         (assert (built deffunction ?alias using ?name))
+         (build (format nil
+                        "(deffunction %s
+                                      (%s)
+                                      (%s %s))"
+                        ?alias
+                        (bind ?args
+                              (construct-args-from-symbols ?match))
+                        ?title
+                        ?args)))
 
