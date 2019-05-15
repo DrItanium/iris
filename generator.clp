@@ -27,6 +27,27 @@
 (defmessage-handler LEXEME to-string primary
                     ()
                     ?self)
+(deftemplate stage
+             (slot current
+                   (type SYMBOL)
+                   (default ?NONE))
+             (multislot rest
+                        (type SYMBOL)))
+(defrule next-stage
+         (declare (salience -10000))
+         ?f <- (stage (rest ?next $?rest))
+         =>
+         (modify ?f
+                 (current ?next)
+                 (rest $?rest)))
+(defrule done-with-stage-fact
+         (declare (salience -10000))
+         ?f <- (stage (rest))
+         =>
+         (retract ?f))
+(deffacts stages
+          (stage (current parse-knowledge-graph)
+                 (rest build-instruction-description)))
 (defclass has-title
   (is-a USER)
   (slot title
@@ -217,13 +238,20 @@
              (visibility public)
              (default ?NONE)))
 
-(defclass memory-space-entry
+(defclass has-parent
   (is-a USER)
   (slot parent
-        (type INSTANCE)
-        (allowed-classes memory-space)
+        (type INSTANCE
+              SYMBOL)
+        (allowed-symbols FALSE)
         (storage local)
         (visibility public)
+        (default-dynamic FALSE)))
+(defclass memory-space-entry
+  (is-a has-parent)
+  (slot parent
+        (source composite)
+        (allowed-classes memory-space)
         (default ?NONE))
   (slot address
         (type INTEGER)
@@ -246,12 +274,44 @@
 
 (defclass memory-space
   (is-a has-title)
+  (slot address
+        (type INTEGER)
+        (range 0 65535)
+        (storage local)
+        (visibility public))
   (multislot contents
              (type INSTANCE)
              (allowed-classes memory-space-entry)))
 
+(defclass iris-program
+  (is-a USER)
+  (slot data-space
+        (type INSTANCE)
+        (allowed-classes memory-space)
+        (storage local)
+        (visibility public)
+        (default-dynamic (make-instance of memory-space)))
+  (slot code-space
+        (type INSTANCE)
+        (allowed-classes memory-space)
+        (storage local)
+        (visibility public)
+        (default-dynamic (make-instance of memory-space)))
+  (slot stack-space
+        (type INSTANCE)
+        (allowed-classes memory-space)
+        (storage local)
+        (visibility public)
+        (default-dynamic (make-instance of memory-space)))
+  (slot io-space
+        (type INSTANCE)
+        (allowed-classes memory-space)
+        (storage local)
+        (visibility public)
+        (default-dynamic (make-instance of memory-space))))
 
 (defrule add-alias-decl-to-instruction-description
+         (stage (current parse-knowledge-graph))
          ?f <- (alias-decl (real-name ?kind)
                            (alias ?alias))
          ?g <- (instruction-description (kind ?kind)
@@ -262,6 +322,7 @@
                  (aliases $?a 
                           ?alias)))
 (defrule make-alias-from-group
+         (stage (current parse-knowledge-graph))
          ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
          =>
          (retract ?f)
@@ -272,6 +333,7 @@
                                      (alias ?a)))))
 
 (defrule make-instruction-description
+         (stage (current parse-knowledge-graph))
          (operation-group (kind ?group)
                           (operations $? ?operation $?))
          (instruction-class (kind ?class)
@@ -283,6 +345,7 @@
                                           (group ?group)
                                           (class-match ?match))))
 (defrule error:one-operation-mapped-to-multiple-groups
+         (stage (current parse-knowledge-graph))
          (instruction-description (kind ?operation)
                                   (group ?group))
          (instruction-description (kind ?operation)
@@ -293,6 +356,7 @@
          (halt))
 
 (defrule error:one-operation-mapped-to-multiple-classes
+         (stage (current parse-knowledge-graph))
          (instruction-description (kind ?operation)
                                   (class ?group))
          (instruction-description (kind ?operation)
@@ -303,6 +367,7 @@
          (halt))
 (defrule error:no-mapped-alias
          (declare (salience -1))
+         (stage (current parse-knowledge-graph))
          (alias-decl (real-name ?operation)
                      (alias ?alias))
          =>
@@ -312,6 +377,7 @@
 
 (defrule make-opcode-from-instruction-description
          (declare (salience -2))
+         (stage (current build-instruction-description))
          ?f <- (instruction-description (kind ?operation)
                                         (class ?class)
                                         (group ?group)
@@ -324,3 +390,4 @@
                         (group ?group)
                         (aliases ?aliases)
                         (class-match ?match)))
+
