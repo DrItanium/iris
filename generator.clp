@@ -101,10 +101,6 @@
                     (send (dynamic-get target)
                           to-string))
 
-(defclass opcode
-  (is-a component)
-  (role concrete)
-  (pattern-match reactive))
 
 
 
@@ -191,6 +187,30 @@
              (slot alias
                    (type SYMBOL)
                    (default ?NONE)))
+(defclass opcode
+  (is-a component)
+  (role concrete)
+  (pattern-match reactive)
+  (slot class
+        (type SYMBOL)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (slot group
+        (type SYMBOL)
+        (storage local)
+        (visibility public)
+        (default ?NONE))
+  (multislot class-match
+             (type SYMBOL)
+             (storage local)
+             (visibility public)
+             (default ?NONE))
+  (multislot aliases
+             (type SYMBOL)
+             (storage local)
+             (visibility public)
+             (default ?NONE)))
 
 
 (defrule add-alias-decl-to-instruction-description
@@ -251,4 +271,20 @@
          (printout stderr
                    "ERROR: Found that operation " ?operation " was never described as an instruction yet alias " ?alias " exists for it!" crlf)
          (halt))
+
+(defrule make-opcode-from-instruction-description
+         (declare (salience -2))
+         ?f <- (instruction-description (kind ?operation)
+                                        (class ?class)
+                                        (group ?group)
+                                        (class-match $?match)
+                                        (aliases $?aliases))
+         =>
+         (retract ?f)
+         (make-instance ?operation of opcode
+                        (class ?class)
+                        (group ?group)
+                        (aliases ?aliases)
+                        (class-match ?match)))
+                        (
 

@@ -168,24 +168,24 @@
                                        BinaryNor AddImmediate SubtractImmediate MultiplyImmediate
                                        DivideImmediate RemainderImmediate ShiftLeftImmediate ShiftRightImmediate
                                        Min Max))
-          (defaliases Add -> { add }
-                      AddImmediate -> { addi }
-                      Subtract -> { sub }
-                      SubtractImmediate -> { subi }
-                      Multiply -> { mul }
-                      MultiplyImmediate -> { muli }
-                      Divide -> { div }
-                      DivideImmediate -> { divi }
-                      Remainder -> { rem } 
-                      RemainderImmediate -> { remi }
-                      ShiftLeft -> { shl }
-                      ShiftLeftImmediate -> { shli }
-                      ShiftRight -> { shr }
-                      ShiftRightImmediate -> { shri }
-                      BinaryAnd -> { and! binary-and }
-                      BinaryOr -> { or! binary-or }
-                      UnaryNot -> { not! unary-not }
-                      BinaryExclusiveOr -> { xor binary-xor }
+          (defaliases Add -> { add combine }
+                      AddImmediate -> { addi combinei add.imm combine.imm }
+                      Subtract -> { sub subtract }
+                      SubtractImmediate -> { subi sub.imm subtracti subtract.imm }
+                      Multiply -> { mul multiply }
+                      MultiplyImmediate -> { muli mul.imm multiply.imm multiplyi }
+                      Divide -> { div divide }
+                      DivideImmediate -> { divi div.imm divide.imm dividei }
+                      Remainder -> { rem remainder } 
+                      RemainderImmediate -> { remi rem.imm remainderi remainder.imm }
+                      ShiftLeft -> { shl shift-left left-shift lshift shift.left left.shift }
+                      ShiftLeftImmediate -> { shli shift-lefti shift-left-imm left-shift-imm left-shifti lshifti lshift-imm shift.lefti shift.left.imm left.shift.imm left.shifti lshift.imm }
+                      ShiftRight -> { shr shift-right right-shift rshift shift.right right.shift }
+                      ShiftRightImmediate -> { shri shift-righti shift-right-imm right-shift-imm right-shifti rshifti rshift-imm shift.righti shift.right.imm right.shift.imm right.shifti rshift.imm }
+                      BinaryAnd -> { and! binary-and binary.and }
+                      BinaryOr -> { or! binary-or binary.or }
+                      UnaryNot -> { not! unary-not unary.not }
+                      BinaryExclusiveOr -> { xor binary-xor binary.xor }
                       Min -> { min! minimum }
                       Max -> { max! maximum }
                       )
@@ -203,19 +203,19 @@
                                        BranchConditionalToTheLinkRegister 
                                        BranchConditionalToTheLinkRegisterAndLink
                                        ReturnFromError))
-          (defaliases BranchUnconditionalImmediate -> { bi bui }
-                      BranchUnconditionalImmediateAndLink -> { bil buil }
-                      BranchUnconditionalRegister -> { b br bu bur }
-                      BranchUnconditionalRegisterAndLink -> { bl brl bul burl }
-                      BranchConditionalImmediate -> { bci }
-                      BranchConditionalImmediateAndLink -> { bcil }
-                      BranchConditionalRegister -> { bcr }
-                      BranchConditionalRegisterAndLink -> { bcrl }
-                      BranchUnconditionalToTheLinkRegister -> { blr bulr }
-                      BranchUnconditionalToTheLinkRegisterAndLink -> { blrl bulrl }
-                      BranchConditionalToTheLinkRegister -> { bclr }
-                      BranchConditionalToTheLinkRegisterAndLink -> { bclrl }
-                      ReturnFromError -> { rfe error-ret }
+          (defaliases BranchUnconditionalImmediate -> { bi bui branch.imm }
+                      BranchUnconditionalImmediateAndLink -> { bil buil branch.imm.link }
+                      BranchUnconditionalRegister -> { b br bu bur branch.register branch.reg }
+                      BranchUnconditionalRegisterAndLink -> { bl brl bul burl branch.reg.link }
+                      BranchConditionalImmediate -> { bci branch.conditional.imm branch.cond.imm }
+                      BranchConditionalImmediateAndLink -> { bcil branch.conditional.imm.link branch.cond.imm.link }
+                      BranchConditionalRegister -> { bcr branch.cond.reg }
+                      BranchConditionalRegisterAndLink -> { bcrl branch.cond.reg.link }
+                      BranchUnconditionalToTheLinkRegister -> { blr bulr branch.lr }
+                      BranchUnconditionalToTheLinkRegisterAndLink -> { blrl bulrl branch.lr.link }
+                      BranchConditionalToTheLinkRegister -> { bclr branch.cond.lr }
+                      BranchConditionalToTheLinkRegisterAndLink -> { bclrl branch.cond.lr.link }
+                      ReturnFromError -> { rfe error-ret error.ret ret.error }
                       )
           (operation-group (kind move)
                            (operations MoveRegisterContents LoadImmediate SwapRegisterContents LoadFromData
@@ -225,30 +225,30 @@
                                        LoadFromIO StoreToIO LoadFromIOWithOffset StoreToIOWithOffset
                                        MoveFromIP MoveToIP MoveFromLinkRegister MoveToLinkRegister
                                        SaveAllRegisters RestoreAllRegisters))
-          (defaliases MoveRegisterContents -> { move mov transfer }
-                      SwapRegisterContents -> { swp swap transpose }
-                      LoadImmediate -> { load.const ldconst set assign }
-                      LoadFromData -> { ld load ld.data load.data <-data }
-                      LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data }
-                      LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data }
-                      StoreToData -> { st store st.data store.data ->data }
-                      StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data }
-                      StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data }
-                      PushDataOntoStack -> { push push.stack }
-                      PushImmediateOntoStack -> { pushi pushi.stack }
-                      PopDataFromStack -> { pop pop.stack }
-                      LoadFromCode -> { ldc loadc ld.code load.code }
-                      StoreToCode -> { stc storec st.code store.code }
-                      LoadFromIO -> { ldio loadio ld.io load.io }
-                      StoreToIO -> { stio storeio st.io store.io }
+          (defaliases MoveRegisterContents -> { move mov transfer reg.move move.reg copy cpy copy.reg cpy.reg reg->reg }
+                      SwapRegisterContents -> { swp swap transpose reg.swap swap.reg }
+                      LoadImmediate -> { load.const ldconst set assign imm->reg }
+                      LoadFromData -> { ld load ld.data load.data data->gpr data.load }
+                      LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data data.loadi }
+                      LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data data.loadwo }
+                      StoreToData -> { st store st.data store.data gpr->data data.store }
+                      StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data data.storei data.store.imm }
+                      StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data data.storewo }
+                      PushDataOntoStack -> { push push.stack stack.push }
+                      PushImmediateOntoStack -> { pushi pushi.stack stack.pushi stack.push.imm }
+                      PopDataFromStack -> { pop pop.stack stack.pop }
+                      LoadFromCode -> { ldc loadc ld.code load.code code.load code->gpr }
+                      StoreToCode -> { stc storec st.code store.code code.store gpr->code }
+                      LoadFromIO -> { ldio loadio ld.io load.io io.load io->gpr }
+                      StoreToIO -> { stio storeio st.io store.io io.store gpr->io }
                       LoadFromIOWithOffset -> { ldiowo loadiowo ldwo.io loadwo.io }
                       StoreToIOWithOffset -> { stiowo storeiowo stwo.io storewo.io }
-                      MoveFromIP -> { mfip gpr<-ip }
+                      MoveFromIP -> { mfip ip->gpr }
                       MoveToIP -> { mtip gpr->ip  }
-                      MoveFromLinkRegister -> { mflr gpr<-lr }
-                      MoveToLinkRegister -> { mtlr gpr->lr }
-                      SaveAllRegisters -> { sregs save.regs }
-                      RestoreAllRegisters -> { rregs restore.regs }
+                      MoveFromLinkRegister -> { mflr lr->gpr move-from-lr mov-from-lr move.from.lr mov.from.lr }
+                      MoveToLinkRegister -> { mtlr gpr->lr move-to-lr mov-to-lr move.to.lr mov.to.lr }
+                      SaveAllRegisters -> { sregs save.regs regs.save }
+                      RestoreAllRegisters -> { rregs restore.regs regs.restore }
                       )
           (operation-group (kind compare)
                            (operations Equals EqualsImmediate NotEqual NotEqualImmediate
@@ -259,7 +259,7 @@
                       EqualsImmediate -> { eqi }
                       NotEqual -> { ne neq }
                       NotEqualImmediate -> { nei neqi }
-                      LessThan -> { lt }
+                      LessThan -> { lt less.than }
                       LessThanImmediate -> { lti }
                       GreaterThan -> { gt }
                       GreaterThanImmediate -> { gti }
@@ -273,8 +273,8 @@
                                        ConditionRegisterAnd ConditionRegisterOr
                                        ConditionRegisterNand ConditionRegisterNor
                                        ConditionRegisterSwap ConditionRegisterMove))
-          (defaliases SaveConditionRegisters -> { save.crs sav.crs crs.save crs.sav crssav crssave savecrs savcrs gpr<-crs crs->gpr }
-                      RestoreConditionRegisters -> { restore.crs restorecrs gpr->crs crs.restore crsrestore crs<-gpr }
+          (defaliases SaveConditionRegisters -> { save.crs sav.crs crs.save crs.sav crssav crssave savecrs savcrs crs->gpr }
+                      RestoreConditionRegisters -> { restore.crs restorecrs gpr->crs crs.restore crsrestore gpr->crs }
                       ConditionRegisterExclusiveOr -> { cr.xor xor.cr crxor xorcr }
                       ConditionRegisterNot -> { cr.not not.cr crnot notcr }
                       ConditionRegisterAnd -> { cr.and and.cr crand andcr }
@@ -282,7 +282,7 @@
                       ConditionRegisterNand -> { cr.nand nand.cr crnand nandcr }
                       ConditionRegisterNor -> { cr.nor nor.cr crnor norcr }
                       ConditionRegisterSwap -> { cr.swap swap.cr crswap swapcr }
-                      ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov })
+                      ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov cr.copy copy.cr cr.transfer transfer.cr })
           )
 
 
