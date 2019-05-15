@@ -62,6 +62,10 @@
                             "[%s]"
                             (send (dynamic-get title)
                                   to-string)))
+(defclass predicate-register
+  (is-a register))
+(defclass gpr
+  (is-a register))
 (defclass tagged-component
   "Tags a given with extra information, this is used during pattern matching"
   (is-a component)
