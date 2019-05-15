@@ -76,13 +76,25 @@
         (allowed-classes component)
         (storage local)
         (visibility public)
+        (access initialize-only)
         (default ?NONE))
   (multislot tags
              (type SYMBOL)
              (storage local)
              (visibility public)
              (default ?NONE))
+  (message-handler init after)
   (message-handler to-string primary))
+(defmessage-handler tagged-component init after
+                    ()
+                    ; see if the target is a tagged-component
+                    (if (eq (class (dynamic-get target))
+                            tagged-component) then
+                      (dynamic-put tags
+                                   (dynamic-get tags)
+                                   (send (dynamic-get target)
+                                         get-tags))))
+
 (defmessage-handler tagged-component to-string primary
                     ()
                     ; do an indirect dispatch
