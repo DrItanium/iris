@@ -376,7 +376,6 @@
          (halt))
 
 (defrule make-opcode-from-instruction-description
-         (declare (salience -2))
          (stage (current build-instruction-description))
          ?f <- (instruction-description (kind ?operation)
                                         (class ?class)
