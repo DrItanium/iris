@@ -161,7 +161,12 @@
                    (default ?NONE))
              (slot group
                    (type SYMBOL)
-                   (default ?NONE)))
+                   (default ?NONE))
+             (multislot class-match 
+                        (type SYMBOL)
+                        (default ?NONE))
+             (multislot aliases
+                        (type SYMBOL)))
 
 (deftemplate alias-decl
              (slot real-name
@@ -171,6 +176,17 @@
                    (type SYMBOL)
                    (default ?NONE)))
 
+
+(defrule add-alias-decl-to-instruction-description
+         ?f <- (alias-decl (real-name ?kind)
+                           (alias ?alias))
+         ?g <- (instruction-description (kind ?kind)
+                                        (aliases $?a))
+         =>
+         (retract ?f)
+         (modify ?g 
+                 (aliases $?a 
+                          ?alias)))
 (defrule make-alias-from-group
          ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
          =>
@@ -185,11 +201,13 @@
          (operation-group (kind ?group)
                           (operations $? ?operation $?))
          (instruction-class (kind ?class)
-                            (members $? ?operation $?))
+                            (members $? ?operation $?)
+                            (args $?match))
          =>
          (assert (instruction-description (kind ?operation)
                                           (class ?class)
-                                          (group ?group))))
+                                          (group ?group)
+                                          (class-match ?match))))
 (defrule error:one-operation-mapped-to-multiple-groups
          (instruction-description (kind ?operation)
                                   (group ?group))
@@ -209,7 +227,14 @@
          (printout stderr 
                    "ERORR: Found that operation " ?operation " maps to classes " ?group " and " ?group2 crlf)
          (halt))
-
+(defrule error:no-mapped-alias
+         (declare (salience -1))
+         (alias-decl (real-name ?operation)
+                     (alias ?alias))
+         =>
+         (printout stderr
+                   "ERROR: Found that operation " ?operation " was never described as an instruction yet alias " ?alias " exists for it!" crlf)
+         (halt))
 
 (deffacts descriptions 
           (instruction-class (kind noarg)
@@ -324,7 +349,7 @@
                                    source-gpr
                                    imm8)
                              (members EqualsImmediate
-                                      NotEqualsImmediate
+                                      NotEqualImmediate
                                       LessThanImmediate
                                       LessThanOrEqualToImmediate
                                       GreaterThanOrEqualToImmediate
@@ -344,7 +369,7 @@
                                    destination-inverse-predicate
                                    source-predicate
                                    source1-predicate)
-                             (members ConditionRegisterXor
+                             (members ConditionRegisterExclusiveOr
                                       ConditionRegisterAnd
                                       ConditionRegisterOr
                                       ConditionRegisterNand
@@ -474,4 +499,5 @@
                       ConditionRegisterSwap -> { cr.swap swap.cr crswap swapcr }
                       ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov })
           )
+
 
