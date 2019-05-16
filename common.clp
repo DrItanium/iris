@@ -308,3 +308,11 @@
              (visibility public)
              (storage local))
   (message-handler to-string primary))
+
+(deftemplate alias-decl
+             (slot real-name
+                   (type SYMBOL)
+                   (default ?NONE))
+             (slot alias
+                   (type SYMBOL)
+                   (default ?NONE)))
