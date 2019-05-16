@@ -33,3 +33,14 @@
          =>
          (modify-instance ?tc
                           (target ?gpr)))
+
+(defrule process-register-translation
+         (stage (current parse-knowledge-graph))
+         ?f <- (decl $?before ?a -> ?b)
+         =>
+         (retract ?f)
+         (if (> (length$ ?before) 0) then
+           (assert (decl $?before ?a)))
+         (make-instance ?a of tagged-component
+                        (target ?b)
+                        (tags)))
