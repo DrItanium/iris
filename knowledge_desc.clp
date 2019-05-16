@@ -22,7 +22,12 @@
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-(deffacts descriptions 
+(defrule MAIN::make-deftranslation
+         ?f <- (decl $?contents)
+         =>
+         (retract ?f)
+         (assert (deftranslation (contents $?contents))))
+(deffacts MAIN::descriptions 
           (instruction-class (kind noarg)
                              (args)
                              (members BranchUnconditionalToTheLinkRegister
@@ -169,27 +174,27 @@
                                        BinaryNor AddImmediate SubtractImmediate MultiplyImmediate
                                        DivideImmediate RemainderImmediate ShiftLeftImmediate ShiftRightImmediate
                                        Min Max))
-          (defaliases Add -> { add combine }
-                      AddImmediate -> { addi combinei add.imm combine.imm }
-                      Subtract -> { sub subtract }
-                      SubtractImmediate -> { subi sub.imm subtracti subtract.imm }
-                      Multiply -> { mul multiply }
-                      MultiplyImmediate -> { muli mul.imm multiply.imm multiplyi }
-                      Divide -> { divide }
-                      DivideImmediate -> { divide.imm }
-                      Remainder -> { rem remainder } 
-                      RemainderImmediate -> { remi rem.imm remainderi remainder.imm }
-                      ShiftLeft -> { shl shift-left left-shift lshift shift.left left.shift }
-                      ShiftLeftImmediate -> { shli shift-lefti shift-left-imm left-shift-imm left-shifti lshifti lshift-imm shift.lefti shift.left.imm left.shift.imm left.shifti lshift.imm }
-                      ShiftRight -> { shr shift-right right-shift rshift shift.right right.shift }
-                      ShiftRightImmediate -> { shri shift-righti shift-right-imm right-shift-imm right-shifti rshifti rshift-imm shift.righti shift.right.imm right.shift.imm right.shifti rshift.imm }
-                      BinaryAnd -> { and! binary-and binary.and }
-                      BinaryOr -> { or! binary-or binary.or }
-                      UnaryNot -> { not! unary-not unary.not }
-                      BinaryExclusiveOr -> { xor binary-xor binary.xor }
-                      Min -> { min! minimum }
-                      Max -> { max! maximum }
-                      )
+          (defaliases (contents Add -> { add combine }
+                                AddImmediate -> { addi combinei add.imm combine.imm }
+                                Subtract -> { sub subtract }
+                                SubtractImmediate -> { subi sub.imm subtracti subtract.imm }
+                                Multiply -> { mul multiply }
+                                MultiplyImmediate -> { muli mul.imm multiply.imm multiplyi }
+                                Divide -> { divide }
+                                DivideImmediate -> { divide.imm }
+                                Remainder -> { rem remainder } 
+                                RemainderImmediate -> { remi rem.imm remainderi remainder.imm }
+                                ShiftLeft -> { shl shift-left left-shift lshift shift.left left.shift }
+                                ShiftLeftImmediate -> { shli shift-lefti shift-left-imm left-shift-imm left-shifti lshifti lshift-imm shift.lefti shift.left.imm left.shift.imm left.shifti lshift.imm }
+                                ShiftRight -> { shr shift-right right-shift rshift shift.right right.shift }
+                                ShiftRightImmediate -> { shri shift-righti shift-right-imm right-shift-imm right-shifti rshifti rshift-imm shift.righti shift.right.imm right.shift.imm right.shifti rshift.imm }
+                                BinaryAnd -> { and! binary-and binary.and }
+                                BinaryOr -> { or! binary-or binary.or }
+                                UnaryNot -> { not! unary-not unary.not }
+                                BinaryExclusiveOr -> { xor binary-xor binary.xor }
+                                Min -> { min! minimum }
+                                Max -> { max! maximum }
+                                ))
           (operation-group (kind jump)
                            (operations BranchUnconditionalImmediate 
                                        BranchUnconditionalImmediateAndLink 
@@ -204,20 +209,20 @@
                                        BranchConditionalToTheLinkRegister 
                                        BranchConditionalToTheLinkRegisterAndLink
                                        ReturnFromError))
-          (defaliases BranchUnconditionalImmediate -> { bi bui branch.imm }
-                      BranchUnconditionalImmediateAndLink -> { bil buil branch.imm.link }
-                      BranchUnconditionalRegister -> { b br bu bur branch.register branch.reg }
-                      BranchUnconditionalRegisterAndLink -> { bl brl bul burl branch.reg.link }
-                      BranchConditionalImmediate -> { bci branch.conditional.imm branch.cond.imm }
-                      BranchConditionalImmediateAndLink -> { bcil branch.conditional.imm.link branch.cond.imm.link }
-                      BranchConditionalRegister -> { bcr branch.cond.reg }
-                      BranchConditionalRegisterAndLink -> { bcrl branch.cond.reg.link }
-                      BranchUnconditionalToTheLinkRegister -> { blr bulr branch.lr }
-                      BranchUnconditionalToTheLinkRegisterAndLink -> { blrl bulrl branch.lr.link }
-                      BranchConditionalToTheLinkRegister -> { bclr branch.cond.lr }
-                      BranchConditionalToTheLinkRegisterAndLink -> { bclrl branch.cond.lr.link }
-                      ReturnFromError -> { rfe error-ret error.ret ret.error }
-                      )
+          (defaliases (contents BranchUnconditionalImmediate -> { bi bui branch.imm }
+                                BranchUnconditionalImmediateAndLink -> { bil buil branch.imm.link }
+                                BranchUnconditionalRegister -> { b br bu bur branch.register branch.reg }
+                                BranchUnconditionalRegisterAndLink -> { bl brl bul burl branch.reg.link }
+                                BranchConditionalImmediate -> { bci branch.conditional.imm branch.cond.imm }
+                                BranchConditionalImmediateAndLink -> { bcil branch.conditional.imm.link branch.cond.imm.link }
+                                BranchConditionalRegister -> { bcr branch.cond.reg }
+                                BranchConditionalRegisterAndLink -> { bcrl branch.cond.reg.link }
+                                BranchUnconditionalToTheLinkRegister -> { blr bulr branch.lr }
+                                BranchUnconditionalToTheLinkRegisterAndLink -> { blrl bulrl branch.lr.link }
+                                BranchConditionalToTheLinkRegister -> { bclr branch.cond.lr }
+                                BranchConditionalToTheLinkRegisterAndLink -> { bclrl branch.cond.lr.link }
+                                ReturnFromError -> { rfe error-ret error.ret ret.error }
+                                ))
           (operation-group (kind move)
                            (operations MoveRegisterContents LoadImmediate SwapRegisterContents LoadFromData
                                        LoadFromDataWithImmediateAddress LoadFromDataWithOffset StoreToData
@@ -226,67 +231,67 @@
                                        LoadFromIO StoreToIO LoadFromIOWithOffset StoreToIOWithOffset
                                        MoveFromIP MoveToIP MoveFromLinkRegister MoveToLinkRegister
                                        SaveAllRegisters RestoreAllRegisters))
-          (defaliases MoveRegisterContents -> { move mov transfer reg.move move.reg copy cpy copy.reg cpy.reg reg->reg }
-                      SwapRegisterContents -> { swp swap transpose reg.swap swap.reg }
-                      LoadImmediate -> { load.const ldconst set assign imm->reg }
-                      LoadFromData -> { ld ld.data load.data data->gpr data.load }
-                      LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data data.loadi }
-                      LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data data.loadwo }
-                      StoreToData -> { st st.data store.data gpr->data data.store }
-                      StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data data.storei data.store.imm }
-                      StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data data.storewo }
-                      PushDataOntoStack -> { push push.stack stack.push }
-                      PushImmediateOntoStack -> { pushi pushi.stack stack.pushi stack.push.imm }
-                      PopDataFromStack -> { pop pop.stack stack.pop }
-                      LoadFromCode -> { ldc loadc ld.code load.code code.load code->gpr }
-                      StoreToCode -> { stc storec st.code store.code code.store gpr->code }
-                      LoadFromIO -> { ldio loadio ld.io load.io io.load io->gpr }
-                      StoreToIO -> { stio storeio st.io store.io io.store gpr->io }
-                      LoadFromIOWithOffset -> { ldiowo loadiowo ldwo.io loadwo.io }
-                      StoreToIOWithOffset -> { stiowo storeiowo stwo.io storewo.io }
-                      MoveFromIP -> { mfip ip->gpr }
-                      MoveToIP -> { mtip gpr->ip  }
-                      MoveFromLinkRegister -> { mflr lr->gpr move-from-lr mov-from-lr move.from.lr mov.from.lr }
-                      MoveToLinkRegister -> { mtlr gpr->lr move-to-lr mov-to-lr move.to.lr mov.to.lr }
-                      SaveAllRegisters -> { sregs save.regs regs.save }
-                      RestoreAllRegisters -> { rregs restore.regs regs.restore }
-                      )
+          (defaliases (contents MoveRegisterContents -> { move mov transfer reg.move move.reg copy cpy copy.reg cpy.reg reg->reg }
+                                SwapRegisterContents -> { swp swap transpose reg.swap swap.reg }
+                                LoadImmediate -> { load.const ldconst set assign imm->reg }
+                                LoadFromData -> { ld ld.data load.data data->gpr data.load }
+                                LoadFromDataWithImmediateAddress -> { ldi loadi ldi.data loadi.data data.loadi }
+                                LoadFromDataWithOffset -> { ldwo loadwo ldwo.data loadwo.data data.loadwo }
+                                StoreToData -> { st st.data store.data gpr->data data.store }
+                                StoreToDataWithImmediateAddress -> { sti storei sti.data storei.data data.storei data.store.imm }
+                                StoreToDataWithOffset -> { stwo storewo stwo.data storewo.data data.storewo }
+                                PushDataOntoStack -> { push push.stack stack.push }
+                                PushImmediateOntoStack -> { pushi pushi.stack stack.pushi stack.push.imm }
+                                PopDataFromStack -> { pop pop.stack stack.pop }
+                                LoadFromCode -> { ldc loadc ld.code load.code code.load code->gpr }
+                                StoreToCode -> { stc storec st.code store.code code.store gpr->code }
+                                LoadFromIO -> { ldio loadio ld.io load.io io.load io->gpr }
+                                StoreToIO -> { stio storeio st.io store.io io.store gpr->io }
+                                LoadFromIOWithOffset -> { ldiowo loadiowo ldwo.io loadwo.io }
+                                StoreToIOWithOffset -> { stiowo storeiowo stwo.io storewo.io }
+                                MoveFromIP -> { mfip ip->gpr }
+                                MoveToIP -> { mtip gpr->ip  }
+                                MoveFromLinkRegister -> { mflr lr->gpr move-from-lr mov-from-lr move.from.lr mov.from.lr }
+                                MoveToLinkRegister -> { mtlr gpr->lr move-to-lr mov-to-lr move.to.lr mov.to.lr }
+                                SaveAllRegisters -> { sregs save.regs regs.save }
+                                RestoreAllRegisters -> { rregs restore.regs regs.restore }
+                                ))
           (operation-group (kind compare)
                            (operations Equals EqualsImmediate NotEqual NotEqualImmediate
                                        LessThan LessThanImmediate GreaterThan GreaterThanImmediate
                                        LessThanOrEqualTo LessThanOrEqualToImmediate GreaterThanOrEqualTo
                                        GreaterThanOrEqualToImmediate))
-          (defaliases Equals -> { equals }
-                      EqualsImmediate -> { equals.imm }
-                      NotEqual -> { not.equals }
-                      NotEqualImmediate -> { not.equals.imm }
-                      LessThan -> { less.than }
-                      LessThanImmediate -> { less.than.imm }
-                      GreaterThan -> { greater.than }
-                      GreaterThanImmediate -> { greater.than.imm }
-                      LessThanOrEqualTo -> { less.than.or.equal }
-                      LessThanOrEqualToImmediate -> { less.than.or.equal.imm }
-                      GreaterThanOrEqualTo -> { greater.than.or.equal }
-                      GreaterThanOrEqualToImmediate -> { greater.than.or.equal.imm })
+          (defaliases (contents Equals -> { equals }
+                                EqualsImmediate -> { equals.imm }
+                                NotEqual -> { not.equals }
+                                NotEqualImmediate -> { not.equals.imm }
+                                LessThan -> { less.than }
+                                LessThanImmediate -> { less.than.imm }
+                                GreaterThan -> { greater.than }
+                                GreaterThanImmediate -> { greater.than.imm }
+                                LessThanOrEqualTo -> { less.than.or.equal }
+                                LessThanOrEqualToImmediate -> { less.than.or.equal.imm }
+                                GreaterThanOrEqualTo -> { greater.than.or.equal }
+                                GreaterThanOrEqualToImmediate -> { greater.than.or.equal.imm }))
           (operation-group (kind condition-register-op)
                            (operations SaveConditionRegisters RestoreConditionRegisters
                                        ConditionRegisterExclusiveOr ConditionRegisterNot
                                        ConditionRegisterAnd ConditionRegisterOr
                                        ConditionRegisterNand ConditionRegisterNor
                                        ConditionRegisterSwap ConditionRegisterMove))
-          (defaliases SaveConditionRegisters -> { save.crs sav.crs crs.save crs.sav crssav crssave savecrs savcrs crs->gpr }
-                      RestoreConditionRegisters -> { restore.crs restorecrs gpr->crs crs.restore crsrestore gpr->crs }
-                      ConditionRegisterExclusiveOr -> { cr.xor xor.cr crxor xorcr }
-                      ConditionRegisterNot -> { cr.not not.cr crnot notcr }
-                      ConditionRegisterAnd -> { cr.and and.cr crand andcr }
-                      ConditionRegisterOr -> { cr.or or.cr cror orcr }
-                      ConditionRegisterNand -> { cr.nand nand.cr crnand nandcr }
-                      ConditionRegisterNor -> { cr.nor nor.cr crnor norcr }
-                      ConditionRegisterSwap -> { cr.swap swap.cr crswap swapcr }
-                      ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov cr.copy copy.cr cr.transfer transfer.cr })
+          (defaliases (contents SaveConditionRegisters -> { save.crs sav.crs crs.save crs.sav crssav crssave savecrs savcrs crs->gpr }
+                                RestoreConditionRegisters -> { restore.crs restorecrs gpr->crs crs.restore crsrestore gpr->crs }
+                                ConditionRegisterExclusiveOr -> { cr.xor xor.cr crxor xorcr }
+                                ConditionRegisterNot -> { cr.not not.cr crnot notcr }
+                                ConditionRegisterAnd -> { cr.and and.cr crand andcr }
+                                ConditionRegisterOr -> { cr.or or.cr cror orcr }
+                                ConditionRegisterNand -> { cr.nand nand.cr crnand nandcr }
+                                ConditionRegisterNor -> { cr.nor nor.cr crnor norcr }
+                                ConditionRegisterSwap -> { cr.swap swap.cr crswap swapcr }
+                                ConditionRegisterMove -> { cr.move move.cr crmove movecr mov.cr cr.mov movcr crmov cr.copy copy.cr cr.transfer transfer.cr }))
           )
 
-(definstances registers
+(definstances MAIN::registers
               (r0 of gpr) (r1 of gpr) (r2 of gpr)
               (r3 of gpr) (r4 of gpr) (r5 of gpr)
               (r6 of gpr) (r7 of gpr) (r8 of gpr)
@@ -383,8 +388,7 @@
 
 
 
-
-(deffacts register-translations
+(deffacts MAIN::register-translations
           (decl const.zero -> const0 -> zero -> r0)
           (decl t0 -> tmp0 -> temp0 -> temporary0 -> r1)
           (decl t1 -> tmp1 -> temp1 -> temporary1 -> r2)

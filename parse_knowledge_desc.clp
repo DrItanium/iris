@@ -71,16 +71,6 @@
                    "ERROR: Found that operation " ?operation " was never described as an instruction yet alias " ?alias " exists for it!" crlf)
          (halt))
 
-(defrule parse-knowledge-graph::make-alias-from-group
-         ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
-         =>
-         (retract ?f)
-         (if (<> (length$ ?rest) 0) then
-           (assert (defaliases $?rest)))
-         (progn$ (?a $?contents)
-                 (assert (alias-decl (real-name ?name)
-                                     (alias ?a)))))
-
 (defrule parse-knowledge-graph::make-instruction-description
          (operation-group (kind ?group)
                           (operations $? ?operation $?))
@@ -93,12 +83,26 @@
                                           (group ?group)
                                           (class-match ?match))))
 
-(defrule parse-knowledge-graph::process-register-translation
-         ?f <- (decl $?before ?a -> ?b)
+(defrule parse-knowledge-graph::unpack-defaliases 
+         ?f <- (defaliases (contents ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest))
          =>
-         (retract ?f)
-         (if (> (length$ ?before) 0) then
-           (assert (decl $?before ?a)))
+         (if (empty$ ?rest) then
+           (retract ?f)
+           else
+           (modify ?f 
+                   (contents $?rest)))
+         (progn$ (?a $?contents)
+                 (assert (alias-decl (real-name ?name)
+                                     (alias ?a)))))
+
+(defrule parse-knowledge-graph::process-register-translation
+         ?f <- (deftranslation (contents $?before ?a -> ?b))
+         =>
+         (if (empty$ $?before) then
+           (retract ?f)
+           else
+           (modify ?f 
+                   (contents $?before ?a)))
          (make-instance ?a of tagged-component
                         (target ?b)
                         (tags)))

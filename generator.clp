@@ -29,6 +29,8 @@
 ;------------------------------------------------------------------------------
 (focus MAIN)
 (defrule MAIN::generate-operations.clp
+         "Invoke this operation last as we want to do any startup actions first"
+         (declare (salience -10000))
          =>
          (focus parse-knowledge-graph
                 build-instruction-description

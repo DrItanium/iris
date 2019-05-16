@@ -23,20 +23,20 @@
 
 (defmodule MAIN
            (export ?ALL))
-(deftemplate stage
+(deftemplate MAIN::stage
              (slot current
                    (type SYMBOL)
                    (default ?NONE))
              (multislot rest
                         (type SYMBOL)))
-(defrule next-stage
+(defrule MAIN::next-stage
          (declare (salience -10000))
          ?f <- (stage (rest ?next $?rest))
          =>
          (modify ?f
                  (current ?next)
                  (rest $?rest)))
-(defrule done-with-stage-fact
+(defrule MAIN::done-with-stage-fact
          (declare (salience -10000))
          ?f <- (stage (rest))
          =>
@@ -312,5 +312,9 @@
              (storage local))
   (message-handler to-string primary))
 
-
-
+(deftemplate MAIN::defaliases
+             (multislot contents
+                        (default ?NONE)))
+(deftemplate MAIN::deftranslation
+             (multislot contents
+                        (default ?NONE)))

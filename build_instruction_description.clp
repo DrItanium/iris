@@ -21,7 +21,8 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 (defmodule build-instruction-description
-           (import MAIN ?ALL))
+           (import MAIN 
+                   ?ALL))
 (defrule build-instruction-description::make-opcode-from-instruction-description
          ?f <- (instruction-description (kind ?operation)
                                         (class ?class)
