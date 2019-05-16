@@ -40,6 +40,7 @@
          =>
          (retract ?f))
 (deffacts stages
+          ; builder stages
           (stage (current parse-knowledge-graph)
                  (rest build-instruction-description
                        build-instruction-functions)))
@@ -411,6 +412,13 @@
                       (str-cat (expand$ ?content))
                       else
                       ""))
+(defclass instruction-sequence
+  "Container for a set of instructions"
+  (is-a has-parent)
+  (multislot children
+             (visibility public)
+             (storage local))
+  (message-handler to-string primary))
 
 (defrule add-alias-decl-to-instruction-description
          (stage (current parse-knowledge-graph))
@@ -492,7 +500,7 @@
                         (aliases ?aliases)
                         (class-match ?match)))
 
-(deffunction construct-args-from-symbols
+(deffunction construct-args-string-from-symbols
              ($?symbols)
              (if (= (length$ ?symbols) 0) then
                ""
@@ -516,6 +524,19 @@
                  (name ?name))
          =>
          (assert (built deffunction ?title using ?name))
+         (bind ?constructed-args
+               (create$))
+         (progn$ (?sym ?match)
+                 (bind ?current-input
+                       (str-cat "?" ?sym " "))
+                 (bind ?constructed-args
+                       ?constructed-args
+                       (format nil
+                               "(make-instance of tagged-component
+                                               (target %s)
+                                               (tags %s))%n"
+                               ?current-input
+                               ?sym)))
          (build (format nil
                         "(deffunction %s
                                       (%s)
@@ -523,10 +544,12 @@
                                                      (opcode [%s])
                                                      (arguments %s)))%n"
                         ?title
-                        (bind ?args
-                              (construct-args-from-symbols ?match))
+                        (construct-args-string-from-symbols ?match)
                         (instance-name-to-symbol ?name)
-                        ?args)))
+                        (if (> (length$ ?constructed-args) 0) then
+                          (str-cat (expand$ ?constructed-args))
+                          else
+                          ""))))
 
 (defrule build-deffunction-using-aliases
          (stage (current build-instruction-functions))
@@ -545,7 +568,34 @@
                                       (%s %s))"
                         ?alias
                         (bind ?args
-                              (construct-args-from-symbols ?match))
+                              (construct-args-string-from-symbols ?match))
                         ?title
                         ?args)))
+(defrule perform-phase2
+         ?f <- (phase2)
+         =>
+         (retract ?f)
+         (assert (stage (current translate-fields)
+                        (rest))))
+(deffunction process-instances
+             ()
+             (assert (phase2))
+             (run))
 
+(deffunction process-file
+             (?path)
+             (batch* ?path)
+             (process-instances))
+(defrule replace-symbols-with-components
+         (stage (current translate-fields))
+         ?tc <- (object (is-a tagged-component)
+                        (target ?value))
+         (object (is-a component)
+                 (title ?title)
+                 (name ?gpr))
+         (test (eq ?value 
+                   ?title))
+
+         =>
+         (modify-instance ?tc
+                          (target ?gpr)))
