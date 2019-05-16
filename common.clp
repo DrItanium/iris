@@ -21,6 +21,8 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+(defmodule MAIN
+           (export ?ALL))
 (deftemplate stage
              (slot current
                    (type SYMBOL)
@@ -39,13 +41,14 @@
          ?f <- (stage (rest))
          =>
          (retract ?f))
+
 (defmessage-handler INTEGER to-string primary
                     ()
                     (str-cat ?self))
 (defmessage-handler LEXEME to-string primary
                     ()
                     ?self)
-(defclass has-parent
+(defclass MAIN::has-parent
   (is-a USER)
   (slot parent
         (type INSTANCE
@@ -54,7 +57,7 @@
         (storage local)
         (visibility public)
         (default-dynamic FALSE)))
-(defclass has-title
+(defclass MAIN::has-title
   (is-a USER)
   (slot title
         (type SYMBOL)
@@ -65,39 +68,39 @@
   (message-handler init after))
 
 
-(defmessage-handler has-title init after
+(defmessage-handler MAIN::has-title init after
                     ()
                     (if (not (dynamic-get title)) then
                       (dynamic-put title
                                    (instance-name-to-symbol (instance-name ?self)))))
 
-(defmessage-handler has-title to-string primary
+(defmessage-handler MAIN::has-title to-string primary
                     ()
                     (send (dynamic-get title)
                           to-string))
 
-(defclass component
+(defclass MAIN::component
   (is-a has-title)
   (role abstract)
   (pattern-match non-reactive))
 
-(defclass register
+(defclass MAIN::register
   (is-a component)
   (role concrete)
   (pattern-match reactive)
   (message-handler to-string primary))
 
-(defmessage-handler register to-string primary
+(defmessage-handler MAIN::register to-string primary
                     ()
                     (format nil
                             "[%s]"
                             (send (dynamic-get title)
                                   to-string)))
-(defclass predicate-register
+(defclass MAIN::predicate-register
   (is-a register))
-(defclass gpr
+(defclass MAIN::gpr
   (is-a register))
-(defclass tagged-component
+(defclass MAIN::tagged-component
   "Tags a given with extra information, this is used during pattern matching"
   (is-a component)
   (role concrete)
@@ -116,7 +119,7 @@
              (default ?NONE))
   (message-handler init after)
   (message-handler to-string primary))
-(defmessage-handler tagged-component init after
+(defmessage-handler MAIN::tagged-component init after
                     ()
                     ; see if the target is a tagged-component
                     (if (eq (class (dynamic-get target))
@@ -126,7 +129,7 @@
                                    (send (dynamic-get target)
                                          get-tags))))
 
-(defmessage-handler tagged-component to-string primary
+(defmessage-handler MAIN::tagged-component to-string primary
                     ()
                     ; do an indirect dispatch
                     (send (dynamic-get target)
@@ -135,18 +138,18 @@
 
 
 
-(defclass aliased-constant 
+(defclass MAIN::aliased-constant 
   "Top level constant concept to differentiate against normal components"
   (is-a component))
 
 
 
-(defclass label
+(defclass MAIN::label
   (is-a aliased-constant)
   (role concrete)
   (pattern-match reactive))
 
-(defclass numerical-constant
+(defclass MAIN::numerical-constant
   (is-a aliased-constant)
   (role concrete)
   (pattern-match reactive)
@@ -159,13 +162,13 @@
         (default ?NONE))
   (message-handler to-string primary))
 
-(defmessage-handler numerical-constant to-string primary
+(defmessage-handler MAIN::numerical-constant to-string primary
                     ()
                     (send (dynamic-get value)
                           to-string))
 
 
-(defclass instruction 
+(defclass MAIN::instruction 
   (is-a has-parent)
   (slot opcode
         (type INSTANCE)
@@ -178,7 +181,7 @@
              (type INSTANCE)
              (allowed-classes tagged-component)))
 
-(deftemplate instruction-class
+(deftemplate MAIN::instruction-class
              "Maps a given kind to a given set of tagged components, used during code emission"
              (slot kind
                    (type SYMBOL)
@@ -188,7 +191,7 @@
              (multislot members
                         (type SYMBOL)
                         (default ?NONE)))
-(deftemplate operation-group
+(deftemplate MAIN::operation-group
              (slot kind
                    (type SYMBOL)
                    (default ?NONE))
@@ -196,7 +199,7 @@
                         (type SYMBOL)
                         (default ?NONE)))
 
-(deftemplate instruction-description
+(deftemplate MAIN::instruction-description
              (slot kind
                    (type SYMBOL)
                    (default ?NONE))
@@ -212,7 +215,7 @@
              (multislot aliases
                         (type SYMBOL)))
 
-(defclass opcode
+(defclass MAIN::opcode
   (is-a component)
   (role concrete)
   (pattern-match reactive)
@@ -238,7 +241,7 @@
              (default ?NONE))
   (message-handler construct-method primary))
 
-(defclass memory-space-entry
+(defclass MAIN::memory-space-entry
   (is-a has-parent)
   (slot parent
         (source composite)
@@ -263,7 +266,7 @@
         (visibility public)
         (default ?NONE)))
 
-(defclass memory-space
+(defclass MAIN::memory-space
   (is-a has-title)
   (slot address
         (type INTEGER)
@@ -274,7 +277,7 @@
              (type INSTANCE)
              (allowed-classes memory-space-entry)))
 
-(defclass iris-program
+(defclass MAIN::iris-program
   (is-a USER)
   (slot data-space
         (type INSTANCE)
@@ -301,7 +304,7 @@
         (visibility public)
         (default-dynamic (make-instance of memory-space))))
 
-(defclass instruction-sequence
+(defclass MAIN::instruction-sequence
   "Container for a set of instructions"
   (is-a has-parent)
   (multislot children
@@ -309,49 +312,5 @@
              (storage local))
   (message-handler to-string primary))
 
-(deftemplate alias-decl
-             (slot real-name
-                   (type SYMBOL)
-                   (default ?NONE))
-             (slot alias
-                   (type SYMBOL)
-                   (default ?NONE)))
 
-(defrule make-alias-from-group
-         (stage (current parse-knowledge-graph))
-         ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
-         =>
-         (retract ?f)
-         (if (<> (length$ ?rest) 0) then
-           (assert (defaliases $?rest)))
-         (progn$ (?a $?contents)
-                 (assert (alias-decl (real-name ?name)
-                                     (alias ?a)))))
 
-(defrule make-instruction-description
-         (stage (current parse-knowledge-graph))
-         (operation-group (kind ?group)
-                          (operations $? ?operation $?))
-         (instruction-class (kind ?class)
-                            (members $? ?operation $?)
-                            (args $?match))
-         =>
-         (assert (instruction-description (kind ?operation)
-                                          (class ?class)
-                                          (group ?group)
-                                          (class-match ?match))))
-
-(defrule make-opcode-from-instruction-description
-         (stage (current build-instruction-description))
-         ?f <- (instruction-description (kind ?operation)
-                                        (class ?class)
-                                        (group ?group)
-                                        (class-match $?match)
-                                        (aliases $?aliases))
-         =>
-         (retract ?f)
-         (make-instance ?operation of opcode
-                        (class ?class)
-                        (group ?group)
-                        (aliases ?aliases)
-                        (class-match ?match)))

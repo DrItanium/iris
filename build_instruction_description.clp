@@ -20,17 +20,18 @@
 ; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-(defrule replace-symbols-with-components
-         (stage (current translate-fields))
-         ?tc <- (object (is-a tagged-component)
-                        (target ?value))
-         (object (is-a component)
-                 (title ?title)
-                 (name ?gpr))
-         (test (eq ?value 
-                   ?title))
-
+(defmodule build-instruction-description
+           (import MAIN ?ALL))
+(defrule build-instruction-description::make-opcode-from-instruction-description
+         ?f <- (instruction-description (kind ?operation)
+                                        (class ?class)
+                                        (group ?group)
+                                        (class-match $?match)
+                                        (aliases $?aliases))
          =>
-         (modify-instance ?tc
-                          (target ?gpr)))
-
+         (retract ?f)
+         (make-instance ?operation of opcode
+                        (class ?class)
+                        (group ?group)
+                        (aliases ?aliases)
+                        (class-match ?match)))
