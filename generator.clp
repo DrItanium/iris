@@ -28,9 +28,6 @@
                        build-instruction-functions)))
 ;------------------------------------------------------------------------------
 
-
-
-
 (defrule add-alias-decl-to-instruction-description
          (stage (current parse-knowledge-graph))
          ?f <- (alias-decl (real-name ?kind)
@@ -42,29 +39,6 @@
          (modify ?g 
                  (aliases $?a 
                           ?alias)))
-(defrule make-alias-from-group
-         (stage (current parse-knowledge-graph))
-         ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
-         =>
-         (retract ?f)
-         (if (<> (length$ ?rest) 0) then
-           (assert (defaliases $?rest)))
-         (progn$ (?a $?contents)
-                 (assert (alias-decl (real-name ?name)
-                                     (alias ?a)))))
-
-(defrule make-instruction-description
-         (stage (current parse-knowledge-graph))
-         (operation-group (kind ?group)
-                          (operations $? ?operation $?))
-         (instruction-class (kind ?class)
-                            (members $? ?operation $?)
-                            (args $?match))
-         =>
-         (assert (instruction-description (kind ?operation)
-                                          (class ?class)
-                                          (group ?group)
-                                          (class-match ?match))))
 (defrule error:one-operation-mapped-to-multiple-groups
          (stage (current parse-knowledge-graph))
          (instruction-description (kind ?operation)
@@ -96,20 +70,6 @@
                    "ERROR: Found that operation " ?operation " was never described as an instruction yet alias " ?alias " exists for it!" crlf)
          (halt))
 
-(defrule make-opcode-from-instruction-description
-         (stage (current build-instruction-description))
-         ?f <- (instruction-description (kind ?operation)
-                                        (class ?class)
-                                        (group ?group)
-                                        (class-match $?match)
-                                        (aliases $?aliases))
-         =>
-         (retract ?f)
-         (make-instance ?operation of opcode
-                        (class ?class)
-                        (group ?group)
-                        (aliases ?aliases)
-                        (class-match ?match)))
 
 (deffunction construct-args-string-from-symbols
              ($?symbols)
@@ -183,16 +143,3 @@
                         ?title
                         ?args)))
 
-(defrule replace-symbols-with-components
-         (stage (current translate-fields))
-         ?tc <- (object (is-a tagged-component)
-                        (target ?value))
-         (object (is-a component)
-                 (title ?title)
-                 (name ?gpr))
-         (test (eq ?value 
-                   ?title))
-
-         =>
-         (modify-instance ?tc
-                          (target ?gpr)))

@@ -316,3 +316,42 @@
              (slot alias
                    (type SYMBOL)
                    (default ?NONE)))
+
+(defrule make-alias-from-group
+         (stage (current parse-knowledge-graph))
+         ?f <- (defaliases ?name -> { $?contents&:(not (member$ } ?contents)) } $?rest)
+         =>
+         (retract ?f)
+         (if (<> (length$ ?rest) 0) then
+           (assert (defaliases $?rest)))
+         (progn$ (?a $?contents)
+                 (assert (alias-decl (real-name ?name)
+                                     (alias ?a)))))
+
+(defrule make-instruction-description
+         (stage (current parse-knowledge-graph))
+         (operation-group (kind ?group)
+                          (operations $? ?operation $?))
+         (instruction-class (kind ?class)
+                            (members $? ?operation $?)
+                            (args $?match))
+         =>
+         (assert (instruction-description (kind ?operation)
+                                          (class ?class)
+                                          (group ?group)
+                                          (class-match ?match))))
+
+(defrule make-opcode-from-instruction-description
+         (stage (current build-instruction-description))
+         ?f <- (instruction-description (kind ?operation)
+                                        (class ?class)
+                                        (group ?group)
+                                        (class-match $?match)
+                                        (aliases $?aliases))
+         =>
+         (retract ?f)
+         (make-instance ?operation of opcode
+                        (class ?class)
+                        (group ?group)
+                        (aliases ?aliases)
+                        (class-match ?match)))
