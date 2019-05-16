@@ -32,7 +32,7 @@
                         (tags)))
 
 (deffacts register-translations
-          (decl zero -> r0)
+          (decl const.zero -> const0 -> zero -> r0)
           (decl t0 -> tmp0 -> temp0 -> temporary0 -> r1)
           (decl t1 -> tmp1 -> temp1 -> temporary1 -> r2)
           (decl t2 -> tmp2 -> temp2 -> temporary2 -> r3)
@@ -43,7 +43,7 @@
           (decl t7 -> tmp7 -> temp7 -> temporary7 -> r8)
           (decl stack-pointer -> sp -> r9)
           (decl gcond -> pred-bits -> all-preds -> r10)
-          (decl ctr -> count -> r11)
+          (decl counter -> ctr -> count -> r11)
           (decl loc0 -> local0 -> r12)
           (decl loc1 -> local1 -> r13)
           (decl loc2 -> local2 -> r14)
@@ -55,6 +55,9 @@
           (decl link-backup -> lrbak -> r20)
           (decl return-value -> ret.val -> r21)
           (decl ip-backup -> r22)
+          (decl const.one -> const1 -> one -> r23)
+          (decl const.two -> const2 -> two -> r24)
+          (decl const.four -> const4 -> four -> r25)
           (decl sys0 -> system0 -> r248) 
           (decl sys1 -> system1 -> r249) 
           (decl sys2 -> system2 -> r250) 
