@@ -148,7 +148,7 @@
                                                (tags %s))%n"
                                ?current-input
                                ?sym)))
-         (build (format nil
+         (build (format stdout
                         "(deffunction %s
                                       (%s)
                                       (make-instance of instruction
@@ -173,30 +173,16 @@
          (not (built deffunction ?alias using ?name))
          =>
          (assert (built deffunction ?alias using ?name))
-         (build (format nil
+         (build (format stdout
                         "(deffunction %s
                                       (%s)
-                                      (%s %s))"
+                                      (%s %s))%n"
                         ?alias
                         (bind ?args
                               (construct-args-string-from-symbols ?match))
                         ?title
                         ?args)))
-(defrule perform-phase2
-         ?f <- (phase2)
-         =>
-         (retract ?f)
-         (assert (stage (current translate-fields)
-                        (rest))))
-(deffunction process-instances
-             ()
-             (assert (phase2))
-             (run))
 
-(deffunction process-file
-             (?path)
-             (batch* ?path)
-             (process-instances))
 (defrule replace-symbols-with-components
          (stage (current translate-fields))
          ?tc <- (object (is-a tagged-component)
