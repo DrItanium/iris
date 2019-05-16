@@ -21,14 +21,19 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(deffacts MAIN::code-generator-stages
-          ; builder stages
-          (stage (current build-instruction-description)
-                 (rest build-instruction-functions)))
+(batch* common.clp)
+(batch* build_instruction_functions.clp)
+(batch* parse_knowledge_desc.clp)
+(batch* build_instruction_description.clp)
+(batch* knowledge_desc.clp)
 ;------------------------------------------------------------------------------
-(defrule generate-operations.clp
+(focus MAIN)
+(defrule MAIN::generate-operations.clp
          =>
-         (focus 
+         (focus parse-knowledge-graph
+                build-instruction-description
+                build-instruction-functions))
+
 
 
 
