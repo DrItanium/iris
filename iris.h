@@ -28,6 +28,7 @@
 #include <variant>
 #include <optional>
 #include <list>
+#include <iostream>
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -42,11 +43,12 @@ using SignedByte = int8_t;
 
 class Register final {
     public:
-        explicit constexpr Register(Word value) noexcept : _value(value) { }
-        explicit constexpr Register(SignedWord value) noexcept : _signedValue(value) { }
+        explicit constexpr Register(Word value = 0) noexcept : _value(value) { }
         constexpr Register(const Register& other) noexcept = default;
         constexpr Register(Register&& other) noexcept = default;
         ~Register() = default;
+        Register& operator=(const Register& other) noexcept = default;
+        Register& operator=(Register&& other) noexcept = default;
         constexpr Register& operator++() noexcept {
             ++_value;
             return *this;
@@ -61,14 +63,18 @@ class Register final {
         constexpr bool operator!=(const Register& other) const noexcept { return other._value != _value; }
         constexpr bool operator!=(SignedWord other) const noexcept      { return other != _signedValue; }
         constexpr bool operator!=(Word other) const noexcept            { return other != _value; }
+        constexpr bool operator<(const Register& other) const noexcept  { return _value < other._value; }
         constexpr bool operator<(SignedWord other) const noexcept       { return _signedValue < other; }
         constexpr bool operator<(Word other) const noexcept             { return _value < other; }
+        constexpr bool operator<=(const Register& other) const noexcept { return _value <= other._value; }
         constexpr bool operator<=(SignedWord other) const noexcept      { return _signedValue <= other; }
         constexpr bool operator<=(Word other) const noexcept            { return _value <= other; }
         constexpr bool operator>(SignedWord other) const noexcept       { return _signedValue > other; }
         constexpr bool operator>(Word other) const noexcept             { return _value > other; }
+        constexpr bool operator>(const Register& other) const noexcept  { return _value > other._value; }
         constexpr bool operator>=(SignedWord other) const noexcept      { return _signedValue >= other; }
         constexpr bool operator>=(Word other) const noexcept            { return _value >= other; }
+        constexpr bool operator>=(const Register& other) const noexcept { return _value >= other._value; }
         template<typename T>
         T get() const noexcept {
             using K = std::decay_t<T>;
@@ -80,12 +86,27 @@ class Register final {
                 static_assert(false_v<T>, "Illegal type requested!");
             }
         }
+        template<typename T>
+        void put(T value) noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
+                _value = value;
+            } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
+                _signedValue = value;
+            } else {
+                static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
+            }
+        }
+        explicit constexpr operator Word() const noexcept { return _value; }
+        explicit constexpr operator SignedWord() const noexcept { return _signedValue; }
     private:
         union {
             Word _value;
             SignedWord _signedValue;
         };
 };
+using DestinationRegister = Register&;
+using SourceRegister = const Register&;
 
 } // end namespace iris
 
