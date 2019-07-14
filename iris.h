@@ -30,6 +30,9 @@
 #include <list>
 
 namespace iris {
+// false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
+template<typename...>
+inline constexpr bool false_v = false;
 using Word = uint16_t;
 using SignedWord = int16_t;
 using DoubleWord = uint32_t;
@@ -52,20 +55,31 @@ class Register final {
             --_value;
             return *this;
         }
-        constexpr bool operator==(const Register& other) const noexcept {
-            return other._value == _value;
+        constexpr bool operator==(const Register& other) const noexcept { return other._value == _value; }
+        constexpr bool operator==(SignedWord other) const noexcept      { return _signedValue == other; }
+        constexpr bool operator==(Word other) const noexcept            { return _value == other; }
+        constexpr bool operator!=(const Register& other) const noexcept { return other._value != _value; }
+        constexpr bool operator!=(SignedWord other) const noexcept      { return other != _signedValue; }
+        constexpr bool operator!=(Word other) const noexcept            { return other != _value; }
+        constexpr bool operator<(SignedWord other) const noexcept       { return _signedValue < other; }
+        constexpr bool operator<(Word other) const noexcept             { return _value < other; }
+        constexpr bool operator<=(SignedWord other) const noexcept      { return _signedValue <= other; }
+        constexpr bool operator<=(Word other) const noexcept            { return _value <= other; }
+        constexpr bool operator>(SignedWord other) const noexcept       { return _signedValue > other; }
+        constexpr bool operator>(Word other) const noexcept             { return _value > other; }
+        constexpr bool operator>=(SignedWord other) const noexcept      { return _signedValue >= other; }
+        constexpr bool operator>=(Word other) const noexcept            { return _value >= other; }
+        template<typename T>
+        T get() const noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, Word>) {
+                return _value;
+            } else if constexpr (std::is_same_v<K, SignedWord>) {
+                return _signedValue;
+            } else {
+                static_assert(false_v<T>, "Illegal type requested!");
+            }
         }
-        constexpr bool operator!=(const Register& other) const noexcept {
-            return other._value != _value;
-        }
-        constexpr bool operator<(SignedWord other) const noexcept { return _signedValue < other; }
-        constexpr bool operator<(Word other) const noexcept { return _value < other; }
-        constexpr bool operator<=(SignedWord other) const noexcept { return _signedValue <= other; }
-        constexpr bool operator<=(Word other) const noexcept { return _value <= other; }
-        constexpr bool operator>(SignedWord other) const noexcept { return _signedValue > other; }
-        constexpr bool operator>(Word other) const noexcept { return _value > other; }
-        constexpr bool operator>=(SignedWord other) const noexcept { return _signedValue >= other; }
-        constexpr bool operator>=(Word other) const noexcept { return _value >= other; }
     private:
         union {
             Word _value;
