@@ -30,6 +30,48 @@
 #include <list>
 
 namespace iris {
+using Word = uint16_t;
+using SignedWord = int16_t;
+using DoubleWord = uint32_t;
+using DoubleSignedWord = int32_t;
+using Byte = uint8_t;
+using SignedByte = int8_t;
+
+class Register final {
+    public:
+        explicit constexpr Register(Word value) noexcept : _value(value) { }
+        explicit constexpr Register(SignedWord value) noexcept : _signedValue(value) { }
+        constexpr Register(const Register& other) noexcept = default;
+        constexpr Register(Register&& other) noexcept = default;
+        ~Register() = default;
+        constexpr Register& operator++() noexcept {
+            ++_value;
+            return *this;
+        }
+        constexpr Register& operator--() noexcept {
+            --_value;
+            return *this;
+        }
+        constexpr bool operator==(const Register& other) const noexcept {
+            return other._value == _value;
+        }
+        constexpr bool operator!=(const Register& other) const noexcept {
+            return other._value != _value;
+        }
+        constexpr bool operator<(SignedWord other) const noexcept { return _signedValue < other; }
+        constexpr bool operator<(Word other) const noexcept { return _value < other; }
+        constexpr bool operator<=(SignedWord other) const noexcept { return _signedValue <= other; }
+        constexpr bool operator<=(Word other) const noexcept { return _value <= other; }
+        constexpr bool operator>(SignedWord other) const noexcept { return _signedValue > other; }
+        constexpr bool operator>(Word other) const noexcept { return _value > other; }
+        constexpr bool operator>=(SignedWord other) const noexcept { return _signedValue >= other; }
+        constexpr bool operator>=(Word other) const noexcept { return _value >= other; }
+    private:
+        union {
+            Word _value;
+            SignedWord _signedValue;
+        };
+};
 
 } // end namespace iris
 
