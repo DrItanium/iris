@@ -107,6 +107,39 @@ class Register final {
 };
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
+struct InstructionLogic {
+    virtual ~InstructionLogic() = default;
+    virtual void invoke() noexcept = 0;
+    inline void operator()() noexcept { invoke(); }
+};
+using SourceStorage = std::variant<Word, SourceRegister>;
+struct ThreeRegisterFormat : InstructionLogic {
+    public:
+        ThreeRegisterFormat(DestinationRegister& d, SourceRegister& s0, SourceStorage s1) : _dest(d), _src0(s0), _src1(s1) { }
+        virtual ~ThreeRegisterFormat() = default;
+    protected:
+        DestinationRegister& _dest;
+        SourceRegister& _src0;
+        SourceStorage _src1;
+};
+struct TwoRegisterFormat : InstructionLogic {
+    public:
+        TwoRegisterFormat(DestinationRegister& d, SourceStorage s0) : _dest(d), _src0(s0) { }
+        virtual ~TwoRegisterFormat() = default;
+    protected:
+        DestinationRegister _dest;
+        SourceStorage _src0;
+};
+struct OneRegisterFormat : InstructionLogic {
+    public:
+        using Storage = std::variant<std::monostate, DestinationRegister, SourceRegister>;
+    public: 
+        OneRegisterFormat(Storage storage) : _storage(storage) { }
+        virtual ~OneRegisterFormat() = default;
+    protected:
+        Storage _storage;
+};
+
 
 } // end namespace iris
 
