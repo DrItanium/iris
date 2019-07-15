@@ -113,29 +113,29 @@ struct InstructionLogic {
     inline void operator()() noexcept { invoke(); }
 };
 using SourceStorage = std::variant<Word, SourceRegister>;
-struct ThreeRegisterFormat : InstructionLogic {
+struct ThreeArgumentFormat : InstructionLogic {
     public:
-        ThreeRegisterFormat(DestinationRegister& d, SourceRegister& s0, SourceStorage s1) : _dest(d), _src0(s0), _src1(s1) { }
-        virtual ~ThreeRegisterFormat() = default;
+        ThreeArgumentFormat(DestinationRegister& d, SourceRegister& s0, SourceStorage s1) : _dest(d), _src0(s0), _src1(s1) { }
+        virtual ~ThreeArgumentFormat() = default;
     protected:
-        DestinationRegister& _dest;
-        SourceRegister& _src0;
+        DestinationRegister _dest;
+        SourceRegister _src0;
         SourceStorage _src1;
 };
-struct TwoRegisterFormat : InstructionLogic {
+struct TwoArgumentFormat : InstructionLogic {
     public:
-        TwoRegisterFormat(DestinationRegister& d, SourceStorage s0) : _dest(d), _src0(s0) { }
-        virtual ~TwoRegisterFormat() = default;
+        TwoArgumentFormat(DestinationRegister& d, SourceStorage s0) : _dest(d), _src0(s0) { }
+        virtual ~TwoArgumentFormat() = default;
     protected:
         DestinationRegister _dest;
         SourceStorage _src0;
 };
-struct OneRegisterFormat : InstructionLogic {
+struct OneArgumentFormat : InstructionLogic {
     public:
-        using Storage = std::variant<std::monostate, DestinationRegister, SourceRegister>;
+        using Storage = std::variant<Word, DestinationRegister, SourceRegister>;
     public: 
-        OneRegisterFormat(Storage storage) : _storage(storage) { }
-        virtual ~OneRegisterFormat() = default;
+        OneArgumentFormat(Storage storage) : _storage(storage) { }
+        virtual ~OneArgumentFormat() = default;
     protected:
         Storage _storage;
 };
