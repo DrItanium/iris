@@ -157,11 +157,6 @@ struct Instruction {
         DoubleWord _bits;
 };
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
-struct Instruction {
-    public:
-    private:
-        Byte 
-}
 
 
 } // end namespace iris
