@@ -30,6 +30,7 @@
 #include <optional>
 #include <array>
 #include <iostream>
+#include <type_traits>
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -159,11 +160,35 @@ struct Instruction {
 };
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
+constexpr auto RegisterCount = (0xFF + 1);
 
+template<typename T, size_t capacity>
+using NumericalStorageBank = std::array<T, capacity>;
+
+using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
+/**
+ * Generic template for defining a memory bank of 2^16 elements.
+ * @tparam T the type of each memory bank cell
+ */
 template<typename T>
-using MemoryBank = std::array<T, MemoryBankElementCount>;
+using MemoryBank = NumericalStorageBank<std::enable_if_t<std::is_integral_v<T>, T>, MemoryBankElementCount>;
+/**
+ * Separate memory space that holds the instructions the iris core executes;
+ * DoubleWords are stored in this location.
+ */
 using CodeMemoryBank = MemoryBank<DoubleWord>;
+
+/**
+ * Location to store data values in an iris core; 2^16 words worth of storage
+ * is provided by default.
+ */
 using DataMemoryBank = MemoryBank<Word>;
+/**
+ * Iris comes equipped with a full 2^16 words worth of stack space that is
+ * accessed by separate instructions. It is only possible to do pushes and pops
+ * to stack memory. However, the number of stack pointers is only limited by
+ * the number of registers.
+ */
 using StackMemoryBank = MemoryBank<Word>;
 /**
  * the MMIO space that is exposed to the program, one registers functions at
