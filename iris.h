@@ -1,6 +1,7 @@
-/*
+/**
+ * @copyright 
  * iris
- * Copyright (c) 2013-2018, Joshua Scoggins and Contributors
+ * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,12 +23,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef IRIS_H__
-#define IRIS_H__
+#ifndef IRIS_IRIS_H__
+#define IRIS_IRIS_H__
 #include <cstdint>
 #include <variant>
 #include <optional>
-#include <list>
+#include <array>
 #include <iostream>
 
 namespace iris {
@@ -157,7 +158,23 @@ struct Instruction {
         DoubleWord _bits;
 };
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
+constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 
+template<typename T>
+using MemoryBank = std::array<T, MemoryBankElementCount>;
+using CodeMemoryBank = MemoryBank<DoubleWord>;
+using DataMemoryBank = MemoryBank<Word>;
+using StackMemoryBank = MemoryBank<Word>;
+/**
+ * the MMIO space that is exposed to the program, one registers functions at
+ * addresses into the space. Writing to an address which is not registers
+ * results in nothing happening. Reading from an address will return all ones.
+ */
+class IOMemoryBank {
+    public:
+        IOMemoryBank() = default;
+        ~IOMemoryBank() = default;
+};
 
 } // end namespace iris
 
