@@ -110,6 +110,29 @@ class Register final {
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
 
+template<Byte index, Byte mask>
+struct ConstantDeclaration : std::integral_constant<size_t, index> {
+    public:
+        ConstantDeclaration() = delete;
+        ~ConstantDeclaration() = delete;
+        ConstantDeclaration(const ConstantDeclaration&) = delete;
+        ConstantDeclaration(ConstantDeclaration&&) = delete;
+        ConstantDeclaration& operator=(const ConstantDeclaration&) = delete;
+        ConstantDeclaration& operator=(ConstantDeclaration&&) = delete;
+        static_assert((index & mask) == index, "Too many values defined!");
+};
+template<Byte index>
+using GroupDeclaration = ConstantDeclaration<index, 0x3>;
+template<Byte index>
+using OperationDeclaration = ConstantDeclaration<index, 0x5>;
+using MiscGroup = GroupDeclaration<0>;
+using ArithmeticGroup = GroupDeclaration<1>;
+using BranchGroup = GroupDeclaration<2>;
+using MemoryGroup = GroupDeclaration<3>;
+using CompareGroup = GroupDeclaration<4>;
+
+/// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
+
 struct Instruction {
     public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
