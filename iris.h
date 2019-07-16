@@ -330,10 +330,32 @@ constexpr auto DecodedOpcode = MakeDecodedOpcode<decodeGroup(raw), decodeOperati
 
 
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
+/**
+ * The fields of an iris instruction are:
+ * [0,7] Opcode
+ * [8,15] Destination
+ * [16,23] Source0
+ * [24,31] Source1
+ * [16,31] Immediate16
+ * [24,31] Immediate8
+ *
+ * The formats are:
+ * Opcode, Destination, Source0, Source1 (3reg)
+ * Opcode, Destination, Source0, Immediate8 (2reg+i8)
+ * Opcode, Destination, Immediate16 (1reg + i16)
+ * Opcode, Destination, Source0 (2reg)
+ * Opcode, Destination (1reg)
+ * Opcode, Immediate8 (i8)
+ * Opcode, Immediate16 (i16)
+ * Opcode (0arg)
+ *
+ * All of the fields are always in the same place as well. Thus, requesting a destination
+ * as an imm16 will actually pull from the Immediate16 field.
+ */
 struct Instruction {
     private:
         template<typename T = RegisterIndex>
-        static constexpr T convertIndex(Byte result) noexcept {
+        static constexpr T convertByteIndex(Byte result) noexcept {
             if constexpr (std::is_same_v<T, RegisterIndex>) {
                 return static_cast<RegisterIndex>(result);
             } else if constexpr (std::is_same_v<T, Byte>) {
@@ -365,17 +387,38 @@ struct Instruction {
         constexpr Byte getOperationIndex() const noexcept { return iris::decodeOperationIndex(getOpcodeIndex()); }
         constexpr Group decodeGroup() const noexcept { return iris::decodeGroup(getOpcodeIndex()); }
         constexpr Operation decodeOperation() const noexcept { return iris::decodeOperation(getOpcodeIndex()); }
+    private:
+        template<typename T>
+        constexpr T innerGetIndex(Byte onDefault) const noexcept {
+            // some extra logic must go into here for the formats to make sense
+            // we always extract imm16 from the same location in the instruction
+            if constexpr (std::is_same_v<T, Word>) {
+                return getImm16();
+            } else if constexpr (std::is_same_v<T, SignedWord>) {
+                union {
+                    Word u;
+                    SignedWord s;
+                } i16;
+                i16.u = getImm16();
+                return i16.s;
+            } else if constexpr (std::is_same_v<T, Byte> || std::is_same_v<T, SignedByte>) {
+                return convertByteIndex<T>(getImm8());
+            } else {
+                return convertByteIndex<T>(onDefault);
+            }
+        }
+    public:
         template<typename T = RegisterIndex>
         constexpr T getDestinationIndex() const noexcept { 
-            return convertIndex<T>(getLowerQuarter()); 
+            return innerGetIndex<T>(getLowerQuarter()); 
         }
         template<typename T = RegisterIndex>
         constexpr T getSource0Index() const noexcept {
-            return convertIndex<T>(getHigherQuarter()); 
+            return innerGetIndex<T>(getHigherQuarter());
         }
         template<typename T = RegisterIndex>
         constexpr T getSource1Index() const noexcept { 
-            return convertIndex<T>(getHighestQuarter()); 
+            return convertByteIndex<T>(getHighestQuarter()); 
         }
         constexpr Byte getImm8() const noexcept { return getSource1Index<Byte>(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
@@ -421,6 +464,7 @@ class OneArgumentFormat {
     private:
         T _first;
 };
+class ZeroArgumentFormat { };
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex>;
 using TwoRegisterU8Format = ThreeArgumentsFormat<Byte>;
 using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte>;
