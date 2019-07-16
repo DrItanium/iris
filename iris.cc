@@ -130,6 +130,20 @@ struct ShiftRightInstruction : ArithmeticInstruction<isSigned> {
         return s0 >> s1;
     }
 };
+template<bool isSigned>
+struct MaxInstruction : ArithmeticInstruction<isSigned> {
+    using T = typename ArithmeticInstruction<isSigned>::Type;
+    T invokeBody(T s0, T s1) override {
+        return std::max(s0, s1);
+    }
+};
+template<bool isSigned>
+struct MinInstruction : ArithmeticInstruction<isSigned> {
+    using T = typename ArithmeticInstruction<isSigned>::Type;
+    T invokeBody(T s0, T s1) override {
+        return std::min(s0, s1);
+    }
+};
 
 using UnsignedOnlyArithmeticInstruction = ArithmeticInstruction<false>;
 struct BitwiseAndInstruction : UnsignedOnlyArithmeticInstruction {
@@ -167,23 +181,47 @@ struct BitwiseNotInstruction : TwoArgumentFormat {
         _dest.put(~_src0.get<Word>());
     };
 };
+struct IncrementInstruction : TwoArgumentFormat {
+    void invoke() override {
+        _dest.put(_src0.get<Word>() + 1);
+    }
+};
+struct DecrementInstruction : TwoArgumentFormat {
+    void invoke() override {
+        _dest.put(_src0.get<Word>() - 1);
+    }
+};
+struct HalveInstruction : TwoArgumentFormat {
+    void invoke() override {
+        _dest.put(_src0.get<Word>() / 2);
+    }
+};
+struct DoubleInstruction : TwoArgumentFormat {
+    void invoke() override {
+        _dest.put(_src0.get<Word>() * 2);
+    }
+};
 template<template<bool> typename T>
 using Unsigned = T<false>;
 template<template<bool> typename T>
 using Signed = T<true>;
 
 using InstructionDispatch = std::variant<
-NopInstruction,
-Unsigned<AddInstruction>, Signed<AddInstruction>,
-Unsigned<SubtractInstruction>, Signed<SubtractInstruction>,
-Unsigned<MultiplyInstruction>, Signed<MultiplyInstruction>,
-Unsigned<DivideInstruction>, Signed<DivideInstruction>,
-Unsigned<RemainderInstruction>, Signed<RemainderInstruction>,
-Unsigned<ShiftLeftInstruction>, Signed<ShiftLeftInstruction>,
-Unsigned<ShiftRightInstruction>, Signed<ShiftRightInstruction>,
+    NopInstruction,
+    Unsigned<AddInstruction>, Signed<AddInstruction>,
+    Unsigned<SubtractInstruction>, Signed<SubtractInstruction>,
+    Unsigned<MultiplyInstruction>, Signed<MultiplyInstruction>,
+    Unsigned<DivideInstruction>, Signed<DivideInstruction>,
+    Unsigned<RemainderInstruction>, Signed<RemainderInstruction>,
+    Unsigned<ShiftLeftInstruction>, Signed<ShiftLeftInstruction>,
+    Unsigned<ShiftRightInstruction>, Signed<ShiftRightInstruction>,
     BitwiseAndInstruction, BitwiseOrInstruction,
     BitwiseXorInstruction, BitwiseNorInstruction,
-    BitwiseNandInstruction, BitwiseNotInstruction
+    BitwiseNandInstruction, BitwiseNotInstruction,
+    Unsigned<MaxInstruction>, Signed<MaxInstruction>,
+    Unsigned<MinInstruction>, Signed<MinInstruction>,
+    IncrementInstruction, DecrementInstruction,
+    DoubleInstruction, HalveInstruction
     >;
 
 static_assert(std::variant_size_v<InstructionDispatch> <= 256, "Too many operations defined for the given group!");
