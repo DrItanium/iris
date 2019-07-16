@@ -115,41 +115,64 @@ enum class Group : Byte {
     Memory,
     Branch,
     Compare,
-    Other,
     Arithmetic2,
     Count,
 };
 static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
 enum class ArithmeticKind : Byte {
     Nop,
-    AddSigned, AddUnsigned,
-    SubtractSigned, SubtractUnsigned,
-    MultiplySigned, MultiplyUnsigned,
-    DivideSigned, DivideUnsigned,
-    RemainderSigned, RemainderUnsigned,
-    ShiftLeftSigned, ShiftLeftUnsigned,
-    ShiftRightSigned, ShiftRightUnsigned,
-    BitwiseAnd, BitwiseOr,
-    BitwiseNot, BitwiseXor,
-    BitwiseNor, BitwiseNand,
-    MaxSigned, MaxUnsigned,
-    MinSigned, MinUnsigned,
-    Increment, Decrement,
-    Double, Halve,
+    AddSigned, 
+    AddUnsigned,
+    SubtractSigned, 
+    SubtractUnsigned,
+    MultiplySigned, 
+    MultiplyUnsigned,
+    DivideSigned, 
+    DivideUnsigned,
+    RemainderSigned, 
+    RemainderUnsigned,
+    ShiftLeftSigned, 
+    ShiftLeftUnsigned,
+    ShiftRightSigned, 
+    ShiftRightUnsigned,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseNot,
+    BitwiseXor,
+    BitwiseNor,
+    BitwiseNand,
+    MaxSigned,
+    MaxUnsigned,
+    MinSigned,
+    MinUnsigned,
+    Increment,
+    Decrement,
+    Double,
+    Halve,
     Count,
 };
 static_assert(static_cast<Byte>(ArithmeticKind::Count) <= 32, "Too many arithmetic operations!");
 enum class Arithmetic2Kind : Byte {
-    AddSignedImmediate, AddUnsignedImmediate,
-    SubtractSignedImmediate, SubtractUnsignedImmediate,
-    MultiplySignedImmediate, MultiplyUnsignedImmediate,
-    DivideSignedImmediate, DivideUnsignedImmediate,
-    RemainderSignedImmediate, RemainderUnsignedImmediate,
-    ShiftLeftSignedImmediate, ShiftLeftUnsignedImmediate,
-    ShiftRightSignedImmediate, ShiftRightUnsignedImmediate,
-    BitwiseAndImmediate, BitwiseOrImmediate,
-    BitwiseNotImmediate, BitwiseXorImmediate,
-    BitwiseNorImmediate, BitwiseNandImmediate,
+    AddSignedImmediate, 
+    AddUnsignedImmediate,
+    SubtractSignedImmediate, 
+    SubtractUnsignedImmediate,
+    MultiplySignedImmediate, 
+    MultiplyUnsignedImmediate,
+    DivideSignedImmediate, 
+    DivideUnsignedImmediate,
+    RemainderSignedImmediate, 
+    RemainderUnsignedImmediate,
+    ShiftLeftSignedImmediate, 
+    ShiftLeftUnsignedImmediate,
+    ShiftRightSignedImmediate, 
+    ShiftRightUnsignedImmediate,
+    BitwiseAndImmediate, 
+    BitwiseOrImmediate,
+    BitwiseNotImmediate, 
+    BitwiseXorImmediate,
+    BitwiseNorImmediate, 
+    BitwiseNandImmediate,
     Count,
 };
 static_assert(static_cast<Byte>(Arithmetic2Kind::Count) <= 32, "Too many arithmetic 2 operations!");
@@ -162,8 +185,47 @@ enum class MemoryKind : Byte {
     LoadIO, StoreIO, StoreIOImmediate,
     Count,
 };
-static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many arithmetic 2 operations!");
+static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many memory operations!");
+enum class BranchKind : Byte {
+    JumpImmediate, 
+    JumpConditionalImmediate,
+    JumpRelativeImmediate, 
+    JumpConditionalRelativeImmediate,
+    JumpRegister, 
+    JumpConditionalRegister,
+    JumpRegisterAndLink, 
+    JumpImmediateAndLink,
+    JumpConditionalRegisterAndLink,
+    BranchSelect,
+    Count,
+};
+static_assert(static_cast<Byte>(BranchKind::Count) <= 32, "Too many branch operations!");
+enum class CompareKind : Byte {
+    Equals, 
+    NotEquals, 
+    LessThanSigned, 
+    LessThanUnsigned,
+    GreaterThanSigned, 
+    GreaterThanUnsigned,
+    LessThanOrEqualToSigned, 
+    LessThanOrEqualToUnsigned,
+    GreaterThanOrEqualToSigned, 
+    GreaterThanOrEqualToUnsigned,
+    Spaceship,
+    Count,
+};
+static_assert(static_cast<Byte>(CompareKind::Count) <= 32, "Too many branch operations!");
 
+template<Group grp>
+using GroupToKindMapping = 
+std::conditional_t<grp == Group::Arithmetic, ArithmeticKind,
+    std::conditional_t<grp == Group::Arithmetic2, Arithmetic2Kind,
+        std::conditional_t<grp == Group::Memory, MemoryKind, 
+        std::conditional_t<grp == Group::Branch, BranchKind,
+        std::conditional_t<grp == Group::Compare, CompareKind,
+            decltype(nullptr)>>>>>;
+template<Group grp>
+constexpr auto GroupNotMappedToKind = std::is_same_v<GroupToKindMapping<grp>, decltype(nullptr)>;
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 
 struct Instruction {
