@@ -130,7 +130,7 @@ constexpr bool isLegal(E kind) noexcept {
     return static_cast<UT>(kind) < static_cast<UT>(E::Count);
 }
 enum class ArithmeticKind : Byte {
-    Nop,
+    Error,
     AddSigned, 
     AddUnsigned,
     SubtractSigned, 
@@ -188,12 +188,45 @@ enum class Arithmetic2Kind : Byte {
 };
 static_assert(static_cast<Byte>(Arithmetic2Kind::Count) <= 32, "Too many arithmetic 2 operations!");
 enum class MemoryKind : Byte {
-    Move, Swap,
-    Push, Pop, PushImmediate,
-    LoadData, StoreData, 
-    LoadDataImmediate, StoreDataImmediate,
-    LoadCode, StoreCode,
-    LoadIO, StoreIO, StoreIOImmediate,
+    /**
+     * Copy the contents of a register to another register aka move
+     */
+    CopyRegister,
+    /**
+     * Swap the contents of two registers
+     */
+    SwapRegisters,
+    /**
+     * Assign an immediate value to a register aka load immediate
+     */
+    AssignRegister,
+    // stack operations
+    StackPush,
+    StackPop,
+    StackPushImmediateValue,
+    // So when dealing with data operations we have some interesting stuff to think about
+    // - There is always an offset that can either be a register or immediate
+    // - Because it can be register or immediate offset, there will need to be 
+    //   multiple forms of each instruction
+    // - Code modifications do not take offsets into account, however an increment
+    //   can happen automatically as part of the load store operation as well
+    // - Offsets can either be signed or unsigned
+    DataLoadWithSignedOffset, 
+    DataStoreWithSignedOffset, 
+    DataLoadWithUnsignedOffset,
+    DataStoreWithUnsignedOffset,
+    DataStoreImmediateValue, // store an imm16 into the target address
+    CodeLoad,
+    CodeStore,
+    CodeLoadAndIncrement,
+    CodeStoreAndIncrement,
+    CodeLoadAndDecrement,
+    CodeStoreAndDecrement,
+    IOLoadWithSignedOffset,
+    IOStoreWithSignedOffset,
+    IOLoadWithUnsignedOffset,
+    IOStoreWithUnsignedOffset,
+    IOStoreImmediateValue, // store an imm16 into the target address in IO space
     Count,
 };
 static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many memory operations!");
@@ -333,6 +366,8 @@ constexpr auto DecodedOpcode = MakeDecodedOpcode<decodeGroup(raw), decodeOperati
 /**
  * The fields of an iris instruction are:
  * [0,7] Opcode
+ * [0,2] Group
+ * [3,7] Operation
  * [8,15] Destination
  * [16,23] Source0
  * [24,31] Source1
