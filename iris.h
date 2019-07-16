@@ -109,38 +109,6 @@ class Register final {
 };
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
-struct InstructionLogic {
-    virtual ~InstructionLogic() = default;
-    virtual void invoke() noexcept = 0;
-    inline void operator()() noexcept { invoke(); }
-};
-using SourceStorage = std::variant<Word, SourceRegister>;
-struct ThreeArgumentFormat : InstructionLogic {
-    public:
-        ThreeArgumentFormat(DestinationRegister& d, SourceRegister& s0, SourceStorage s1) : _dest(d), _src0(s0), _src1(s1) { }
-        virtual ~ThreeArgumentFormat() = default;
-    protected:
-        DestinationRegister _dest;
-        SourceRegister _src0;
-        SourceStorage _src1;
-};
-struct TwoArgumentFormat : InstructionLogic {
-    public:
-        TwoArgumentFormat(DestinationRegister& d, SourceStorage s0) : _dest(d), _src0(s0) { }
-        virtual ~TwoArgumentFormat() = default;
-    protected:
-        DestinationRegister _dest;
-        SourceStorage _src0;
-};
-struct OneArgumentFormat : InstructionLogic {
-    public:
-        using Storage = std::variant<Word, DestinationRegister, SourceRegister>;
-    public: 
-        OneArgumentFormat(Storage storage) : _storage(storage) { }
-        virtual ~OneArgumentFormat() = default;
-    protected:
-        Storage _storage;
-};
 
 struct Instruction {
     public:
