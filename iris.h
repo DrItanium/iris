@@ -431,6 +431,7 @@ static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size misma
 template<typename T>
 class ThreeArgumentsFormat {
     public:
+        static constexpr auto ArgumentCount = 3;
         ThreeArgumentsFormat(RegisterIndex a, RegisterIndex b, T c) : _first(a), _second(b), _third(c) { }
         ThreeArgumentsFormat(const Instruction& inst) : ThreeArgumentsFormat(inst.getDestinationIndex(), inst.getSource0Index(), inst.getSource1Index<T>()) { }
         ~ThreeArgumentsFormat() = default;
@@ -445,6 +446,7 @@ class ThreeArgumentsFormat {
 template<typename T>
 class TwoArgumentsFormat {
     public:
+        static constexpr auto ArgumentCount = 2;
         TwoArgumentsFormat(RegisterIndex a, T b) : _first(a), _second(b) { }
         TwoArgumentsFormat(const Instruction& inst) : TwoArgumentsFormat(inst.getDestinationIndex(), inst.getSource0Index<T>()) { }
         ~TwoArgumentsFormat() = default;
@@ -457,6 +459,7 @@ class TwoArgumentsFormat {
 template<typename T>
 class OneArgumentFormat {
     public:
+        static constexpr auto ArgumentCount = 1;
         explicit OneArgumentFormat(T a) : _first(a) { }
         explicit OneArgumentFormat(const Instruction& inst) : OneArgumentFormat(inst.getDestinationIndex<T>()) { }
         ~OneArgumentFormat() = default;
@@ -464,7 +467,11 @@ class OneArgumentFormat {
     private:
         T _first;
 };
-class ZeroArgumentFormat { };
+class ZeroArgumentFormat { 
+    public:
+        static constexpr auto ArgumentCount = 0;
+    explicit ZeroArgumentFormat(const Instruction&) { }
+};
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex>;
 using TwoRegisterU8Format = ThreeArgumentsFormat<Byte>;
 using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte>;
@@ -476,6 +483,12 @@ using U16Format = OneArgumentFormat<Word>;
 using S16Format = OneArgumentFormat<SignedWord>;
 using U8Format = OneArgumentFormat<Byte>;
 using S8Format = OneArgumentFormat<SignedByte>;
+
+template<typename T>
+constexpr auto getArgumentCount = T::ArgumentCount;
+
+static_assert(getArgumentCount<S8Format> == 1, "ArgumentCount sanity check failed!");
+
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
 
