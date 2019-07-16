@@ -153,6 +153,16 @@ enum class Arithmetic2Kind : Byte {
     Count,
 };
 static_assert(static_cast<Byte>(Arithmetic2Kind::Count) <= 32, "Too many arithmetic 2 operations!");
+enum class MemoryKind : Byte {
+    Move, Swap,
+    Push, Pop, PushImmediate,
+    LoadData, StoreData, 
+    LoadDataImmediate, StoreDataImmediate,
+    LoadCode, StoreCode,
+    LoadIO, StoreIO, StoreIOImmediate,
+    Count,
+};
+static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many arithmetic 2 operations!");
 
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 
