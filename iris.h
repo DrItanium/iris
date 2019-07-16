@@ -119,6 +119,13 @@ enum class Group : Byte {
     Count,
 };
 static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
+
+template<typename E>
+constexpr bool isLegal(E kind) noexcept {
+    static_assert(std::is_enum_v<std::decay_t<E>>, "Kind provided must be an enum");
+    using UT = std::underlying_type_t<std::decay_t<E>>;
+    return static_cast<UT>(kind) < static_cast<UT>(E::Count);
+}
 enum class ArithmeticKind : Byte {
     Nop,
     AddSigned, 
@@ -216,7 +223,7 @@ enum class CompareKind : Byte {
     Count,
 };
 static_assert(static_cast<Byte>(CompareKind::Count) <= 32, "Too many branch operations!");
-template<auto value, typename T>
+template<auto value>
 struct BindConstantToType : std::integral_constant<decltype(value), value> {
     public:
         BindConstantToType() = delete;
@@ -225,14 +232,38 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
         BindConstantToType(BindConstantToType&&) = delete;
         BindConstantToType& operator=(const BindConstantToType&) = delete;
         BindConstantToType& operator=(BindConstantToType&&) = delete;
-        using BoundType = T;
+};
+template<Group group>
+struct BindGroupToOperationKind : BindConstantToType<group> { };
+template<typename T>
+struct BindOperationToGroupKind { 
+        BindOperationToGroupKind() = delete;
+        ~BindOperationToGroupKind() = delete;
+        BindOperationToGroupKind(const BindOperationToGroupKind&) = delete;
+        BindOperationToGroupKind(BindOperationToGroupKind&&) = delete;
+        BindOperationToGroupKind& operator=(const BindOperationToGroupKind&) = delete;
+        BindOperationToGroupKind& operator=(BindOperationToGroupKind&&) = delete;
 };
 
-template<Group group, typename T>
-struct BindGroupToOperationKind : BindConstantToType<group, T> {
-    static_assert(std::is_enum_v<T>, "T must be an enum at this point");
-};
+#define GroupToOperationKindBinding(g,t) \
+    template<> \
+    struct BindGroupToOperationKind<Group:: g> : BindConstantToType<Group:: g> { \
+        using BoundType = t ; \
+    }; \
+    template<> \
+    struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { }
+#define X(g) GroupToOperationKindBinding(g, g ## Kind)
+X(Arithmetic);
+X(Arithmetic2);
+X(Compare);
+X(Branch);
+X(Memory);
+#undef X
+#undef GroupToOperationKindBinding 
+    
 
+template<Group group>
+using GroupToOperationKind = typename BindGroupToOperationKind<group>::BoundType;
 
 
 
