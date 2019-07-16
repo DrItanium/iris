@@ -430,7 +430,7 @@ struct Instruction {
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
 class ArgumentFormat {
     public:
-        constexpr ArgumentFormat(const Instruction& inst) : _group(inst.decodeGroup()), _op(inst.decodeOperation()) { }
+        explicit constexpr ArgumentFormat(const Instruction& inst) : _group(inst.decodeGroup()), _op(inst.decodeOperation()) { }
         constexpr auto getGroup() const noexcept { return _group; }
         constexpr auto getOperation() const noexcept { return _op; }
     private:
@@ -443,7 +443,7 @@ class ThreeArgumentsFormat : public ArgumentFormat {
     public:
         using Parent = ArgumentFormat;
         static constexpr auto ArgumentCount = 3;
-        ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
+        explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr auto getThird() const noexcept { return _third; }
@@ -457,7 +457,7 @@ class TwoArgumentsFormat : public ArgumentFormat {
     public:
         using Parent = ArgumentFormat;
         static constexpr auto ArgumentCount = 2;
-        TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
+        explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
     private:
@@ -469,16 +469,16 @@ class OneArgumentFormat : public ArgumentFormat {
     public:
         using Parent = ArgumentFormat;
         static constexpr auto ArgumentCount = 1;
-        explicit OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
+        explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
     private:
         T _first;
 };
-class ZeroArgumentFormat : public ArgumentFormat { 
+class ZeroArgumentFormat final : public ArgumentFormat { 
     public:
         using Parent = ArgumentFormat;
+        using Parent::Parent;
         static constexpr auto ArgumentCount = 0;
-        explicit ZeroArgumentFormat(const Instruction& inst) : Parent(inst) { }
 };
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex>;
 using TwoRegisterU8Format = ThreeArgumentsFormat<Byte>;
@@ -486,12 +486,13 @@ using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte>;
 using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex>;
 using OneRegisterU16Format = TwoArgumentsFormat<Word>;
 using OneRegisterS16Format = TwoArgumentsFormat<SignedWord>;
+using OneRegisterU8Format = TwoArgumentsFormat<Byte>;
+using OneRegisterS8Format = TwoArgumentsFormat<SignedByte>;
 using OneRegisterFormat = OneArgumentFormat<RegisterIndex>;
 using U16Format = OneArgumentFormat<Word>;
 using S16Format = OneArgumentFormat<SignedWord>;
 using U8Format = OneArgumentFormat<Byte>;
 using S8Format = OneArgumentFormat<SignedByte>;
-
 
 template<typename T>
 constexpr auto getArgumentCount = T::ArgumentCount;
