@@ -254,10 +254,10 @@ struct BindOperationToGroupKind {
     struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { }
 #define X(g) GroupToOperationKindBinding(g, g ## Kind)
 X(Arithmetic);
-X(Arithmetic2);
-X(Compare);
-X(Branch);
 X(Memory);
+X(Branch);
+X(Compare);
+X(Arithmetic2);
 #undef X
 #undef GroupToOperationKindBinding 
     
@@ -285,11 +285,33 @@ static_assert(OperationKindToGroup<GroupToOperationKind<Group::Arithmetic>> == G
 
 struct Instruction {
     public:
+        using DecodedOperation = std::variant<
+            GroupToOperationKind<Group::Arithmetic>,
+            GroupToOperationKind<Group::Memory>,
+            GroupToOperationKind<Group::Branch>,
+            GroupToOperationKind<Group::Compare>,
+            GroupToOperationKind<Group::Arithmetic2>>;
+        using OptionalDecodedOperation = std::optional<DecodedOperation>;
+    public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
         constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
-        constexpr Byte getGroupKind() const noexcept { return getOpcodeIndex() & 0x7; }
-        constexpr Byte getOperationKind() const noexcept { return (getOpcodeIndex() & 0xF8) >> 3; }
+        constexpr Byte getGroupIndex() const noexcept { return getOpcodeIndex() & 0x7; }
+        constexpr Byte getOperationIndex() const noexcept { return (getOpcodeIndex() & 0xF8) >> 3; }
+        constexpr Group decodeGroup() const noexcept { return static_cast<Group>(getGroupIndex()); }
+        constexpr OptionalDecodedOperation decodeOperation() const noexcept {
+            switch (decodeGroup()) {
+#define X(k) case Group:: k : return static_cast<GroupToOperationKind<Group:: k>>(getOperationIndex())
+                X(Arithmetic);
+                X(Memory);
+                X(Branch);
+                X(Compare);
+                X(Arithmetic2);
+#undef X
+                default:
+                    return std::nullopt;
+            }
+        }
         constexpr Byte getDestinationIndex() const noexcept { return (_bits >> 8) & 0xFF; }
         constexpr Byte getSource0Index() const noexcept { return (_bits >> 16) & 0xFF; }
         constexpr Byte getSource1Index() const noexcept { return (_bits >> 24) & 0xFF; }
