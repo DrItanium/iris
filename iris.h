@@ -117,11 +117,10 @@ struct Instruction {
     public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
-        constexpr Byte getGroupIndex() const noexcept { return _bits & 0x3; }
-        constexpr Byte getOperationIndex() const noexcept { return (_bits >> 3) & 0x5; }
-        constexpr Byte getDestinationIndex() const noexcept { return _bits & 0xFF; }
-        constexpr Byte getSource0Index() const noexcept { return (_bits >> 8) & 0xFF; }
-        constexpr Byte getSource1Index() const noexcept { return (_bits >> 16) & 0xFF; }
+        constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
+        constexpr Byte getDestinationIndex() const noexcept { return (_bits >> 8) & 0xFF; }
+        constexpr Byte getSource0Index() const noexcept { return (_bits >> 16) & 0xFF; }
+        constexpr Byte getSource1Index() const noexcept { return (_bits >> 24) & 0xFF; }
         constexpr Word getImm8() const noexcept { return getSource1Index(); }
         constexpr Word getImm16() const noexcept { return Word(_bits >> 16); }
         constexpr DoubleWord getImm24() const noexcept { return _bits >> 8; }

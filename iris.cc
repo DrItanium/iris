@@ -62,7 +62,7 @@ struct NopInstruction : InstructionLogic {
     void invoke() override { }
 };
 template<bool yieldSigned = false>
-using ViewRegisterContentsAs = std::conditional<yieldSigned, SignedWord, Word>;
+using ViewRegisterContentsAs = std::conditional_t<yieldSigned, SignedWord, Word>;
 template<bool shouldTreatAsSignedOperation>
 struct ArithmeticInstruction : ThreeArgumentFormat {
     using Type = ViewRegisterContentsAs<shouldTreatAsSignedOperation>;
@@ -71,16 +71,13 @@ struct ArithmeticInstruction : ThreeArgumentFormat {
     void invoke() override {
         _dest.put<Type>(invokeBody(_src0.get<Type>(), _src1.get<Type>()));
     }
-    virtual Type invokeBody(Type s0, Type s1) {
-        throw "unimplemented!";
-    }
+    virtual Type invokeBody(Type s0, Type s1) = 0;
 };
 template<bool shouldTreatAsSignedOperation>
-struct AddInstruction : ArithmeticInstruction<shouldTreatAsSignedOperation> {
-    using Parent = ArithmeticInstruction<shouldTreatAsSignedOperation>;
-    using Type = typename Parent::Type;
-    Type invokeBody(Type s0, Type s1) override {
-        return s0 + s1;
+struct AddInstruction : ThreeArgumentFormat {
+    void invoke() override {
+        using T = ViewRegisterContentsAs<shouldTreatAsSignedOperation>;
+        _dest.put<T>(_src0.get<T>() + _src1.get<T>());
     }
 };
 template<bool shouldTreatAsSignedOperation>
@@ -108,10 +105,88 @@ struct DivideInstruction : ThreeArgumentFormat {
         }
     }
 };
-using UnsignedAddInstruction = AddInstruction<false>;
-using SignedAddInstruction = AddInstruction<true>;
-using MiscDispatch = std::variant< NopInstruction >;
-using ArithmeticDispatch = std::variant< UnsignedAddInstruction >;
-using InstructionDispatch = std::variant<MiscDispatch>;
+template<bool isSigned>
+struct RemainderInstruction : ArithmeticInstruction<isSigned> {
+    using T = typename ArithmeticInstruction<isSigned>::Type;
+    T invokeBody(T s0, T s1) override {
+        if (s1 == 0) {
+            throw "divide by zero";
+        } else {
+            return s0 % s1;
+        }
+    }
+};
+template<bool isSigned>
+struct ShiftLeftInstruction : ArithmeticInstruction<isSigned> {
+    using T = typename ArithmeticInstruction<isSigned>::Type;
+    T invokeBody(T s0, T s1) override {
+        return s0 << s1;
+    }
+};
+template<bool isSigned>
+struct ShiftRightInstruction : ArithmeticInstruction<isSigned> {
+    using T = typename ArithmeticInstruction<isSigned>::Type;
+    T invokeBody(T s0, T s1) override {
+        return s0 >> s1;
+    }
+};
+
+using UnsignedOnlyArithmeticInstruction = ArithmeticInstruction<false>;
+struct BitwiseAndInstruction : UnsignedOnlyArithmeticInstruction {
+    using T = typename UnsignedOnlyArithmeticInstruction::Type;
+    T invokeBody(T s0, T s1) override {
+        return s0 & s1;
+    }
+};
+struct BitwiseOrInstruction : UnsignedOnlyArithmeticInstruction {
+    using T = typename UnsignedOnlyArithmeticInstruction::Type;
+    T invokeBody(T s0, T s1) override {
+        return s0 | s1;
+    }
+};
+struct BitwiseXorInstruction : UnsignedOnlyArithmeticInstruction {
+    using T = typename UnsignedOnlyArithmeticInstruction::Type;
+    T invokeBody(T s0, T s1) override {
+        return s0 ^ s1;
+    }
+};
+struct BitwiseNorInstruction : UnsignedOnlyArithmeticInstruction {
+    using T = typename UnsignedOnlyArithmeticInstruction::Type;
+    T invokeBody(T s0, T s1) override {
+        return ~(s0 | s1);
+    }
+};
+struct BitwiseNandInstruction : UnsignedOnlyArithmeticInstruction {
+    using T = typename UnsignedOnlyArithmeticInstruction::Type;
+    T invokeBody(T s0, T s1) override {
+        return ~(s0 & s1);
+    }
+};
+struct BitwiseNotInstruction : TwoArgumentFormat {
+    void invoke() override {
+        _dest.put(~_src0.get<Word>());
+    };
+};
+template<template<bool> typename T>
+using Unsigned = T<false>;
+template<template<bool> typename T>
+using Signed = T<true>;
+
+using InstructionDispatch = std::variant<
+NopInstruction,
+Unsigned<AddInstruction>, Signed<AddInstruction>,
+Unsigned<SubtractInstruction>, Signed<SubtractInstruction>,
+Unsigned<MultiplyInstruction>, Signed<MultiplyInstruction>,
+Unsigned<DivideInstruction>, Signed<DivideInstruction>,
+Unsigned<RemainderInstruction>, Signed<RemainderInstruction>,
+Unsigned<ShiftLeftInstruction>, Signed<ShiftLeftInstruction>,
+Unsigned<ShiftRightInstruction>, Signed<ShiftRightInstruction>,
+    BitwiseAndInstruction, BitwiseOrInstruction,
+    BitwiseXorInstruction, BitwiseNorInstruction,
+    BitwiseNandInstruction, BitwiseNotInstruction
+    >;
+
+static_assert(std::variant_size_v<InstructionDispatch> <= 256, "Too many operations defined for the given group!");
+
     
 } // end namespace iris
