@@ -31,6 +31,7 @@
 #include <array>
 #include <iostream>
 #include <type_traits>
+#include <tuple>
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -279,39 +280,64 @@ static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Revers
 static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
 static_assert(OperationKindToGroup<GroupToOperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
 
+using OperationKinds = std::variant<
+    GroupToOperationKind<Group::Arithmetic>,
+    GroupToOperationKind<Group::Memory>,
+    GroupToOperationKind<Group::Branch>,
+    GroupToOperationKind<Group::Compare>,
+    GroupToOperationKind<Group::Arithmetic2>>;
+using Operation = std::optional<OperationKinds>;
 
 
-/// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
+template<Group g, GroupToOperationKind<g> op>
+constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
 
-struct Instruction {
-    public:
-        using DecodedOperation = std::variant<
-            GroupToOperationKind<Group::Arithmetic>,
-            GroupToOperationKind<Group::Memory>,
-            GroupToOperationKind<Group::Branch>,
-            GroupToOperationKind<Group::Compare>,
-            GroupToOperationKind<Group::Arithmetic2>>;
-        using OptionalDecodedOperation = std::optional<DecodedOperation>;
-    public:
-        explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
-        ~Instruction() = default;
-        constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
-        constexpr Byte getGroupIndex() const noexcept { return getOpcodeIndex() & 0x7; }
-        constexpr Byte getOperationIndex() const noexcept { return (getOpcodeIndex() & 0xF8) >> 3; }
-        constexpr Group decodeGroup() const noexcept { return static_cast<Group>(getGroupIndex()); }
-        constexpr OptionalDecodedOperation decodeOperation() const noexcept {
-            switch (decodeGroup()) {
-#define X(k) case Group:: k : return static_cast<GroupToOperationKind<Group:: k>>(getOperationIndex())
+template<Group g>
+using GroupToOpcodePair = std::tuple<decltype(g), GroupToOperationKind<g>>;
+
+constexpr Byte decodeGroupIndex(Byte raw) noexcept {
+    return raw & 0x7;
+}
+constexpr Group decodeGroup(Byte raw) noexcept {
+    return static_cast<Group>(decodeGroupIndex(raw)); 
+}
+
+constexpr Byte decodeOperationIndex(Byte raw ) noexcept {
+    return (raw & 0xF8) >> 3;
+}
+constexpr Operation decodeOperation(Byte raw) noexcept {
+    switch (decodeGroup(raw)) {
+#define X(k) case Group:: k : return static_cast<GroupToOperationKind<Group:: k>>(decodeOperationIndex(raw))
                 X(Arithmetic);
                 X(Memory);
                 X(Branch);
                 X(Compare);
                 X(Arithmetic2);
 #undef X
-                default:
-                    return std::nullopt;
-            }
-        }
+        default:
+            return std::nullopt;
+    }
+}
+
+
+template<Group g, GroupToOperationKind<g> op>
+constexpr GroupToOpcodePair<g> MakeDecodedOpcode = std::make_tuple(g, op);
+
+template<Byte raw>
+constexpr auto DecodedOpcode = MakeDecodedOpcode<decodeGroup(raw), decodeOperation(raw)>;
+
+/// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
+struct Instruction {
+    public:
+        using OptionalDecodedOperation = std::optional<Operation>;
+    public:
+        explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
+        ~Instruction() = default;
+        constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
+        constexpr Byte getGroupIndex() const noexcept { return iris::decodeGroupIndex(getOpcodeIndex()); }
+        constexpr Byte getOperationIndex() const noexcept { return iris::decodeOperationIndex(getOpcodeIndex()); }
+        constexpr Group decodeGroup() const noexcept { return iris::decodeGroup(getOpcodeIndex()); }
+        constexpr Operation decodeOperation() const noexcept { return iris::decodeOperation(getOpcodeIndex()); }
         constexpr Byte getDestinationIndex() const noexcept { return (_bits >> 8) & 0xFF; }
         constexpr Byte getSource0Index() const noexcept { return (_bits >> 16) & 0xFF; }
         constexpr Byte getSource1Index() const noexcept { return (_bits >> 24) & 0xFF; }
