@@ -110,6 +110,49 @@ class Register final {
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
 
+enum class Group : Byte {
+    Arithmetic,
+    Memory,
+    Branch,
+    Compare,
+    Other,
+    Arithmetic2,
+    Count,
+};
+static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
+enum class ArithmeticKind : Byte {
+    Nop,
+    AddSigned, AddUnsigned,
+    SubtractSigned, SubtractUnsigned,
+    MultiplySigned, MultiplyUnsigned,
+    DivideSigned, DivideUnsigned,
+    RemainderSigned, RemainderUnsigned,
+    ShiftLeftSigned, ShiftLeftUnsigned,
+    ShiftRightSigned, ShiftRightUnsigned,
+    BitwiseAnd, BitwiseOr,
+    BitwiseNot, BitwiseXor,
+    BitwiseNor, BitwiseNand,
+    MaxSigned, MaxUnsigned,
+    MinSigned, MinUnsigned,
+    Increment, Decrement,
+    Double, Halve,
+    Count,
+};
+static_assert(static_cast<Byte>(ArithmeticKind::Count) <= 32, "Too many arithmetic operations!");
+enum class Arithmetic2Kind : Byte {
+    AddSignedImmediate, AddUnsignedImmediate,
+    SubtractSignedImmediate, SubtractUnsignedImmediate,
+    MultiplySignedImmediate, MultiplyUnsignedImmediate,
+    DivideSignedImmediate, DivideUnsignedImmediate,
+    RemainderSignedImmediate, RemainderUnsignedImmediate,
+    ShiftLeftSignedImmediate, ShiftLeftUnsignedImmediate,
+    ShiftRightSignedImmediate, ShiftRightUnsignedImmediate,
+    BitwiseAndImmediate, BitwiseOrImmediate,
+    BitwiseNotImmediate, BitwiseXorImmediate,
+    BitwiseNorImmediate, BitwiseNandImmediate,
+    Count,
+};
+static_assert(static_cast<Byte>(Arithmetic2Kind::Count) <= 32, "Too many arithmetic 2 operations!");
 
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 
@@ -118,6 +161,8 @@ struct Instruction {
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
         constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
+        constexpr Byte getGroupKind() const noexcept { return getOpcodeIndex() & 0x7; }
+        constexpr Byte getOperationKind() const noexcept { return (getOpcodeIndex() & 0xF8) >> 3; }
         constexpr Byte getDestinationIndex() const noexcept { return (_bits >> 8) & 0xFF; }
         constexpr Byte getSource0Index() const noexcept { return (_bits >> 16) & 0xFF; }
         constexpr Byte getSource1Index() const noexcept { return (_bits >> 24) & 0xFF; }
@@ -131,6 +176,8 @@ struct Instruction {
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
+
+
 
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
