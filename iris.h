@@ -152,6 +152,7 @@ enum class ArithmeticKind : Byte {
     Count,
 };
 static_assert(static_cast<Byte>(ArithmeticKind::Count) <= 32, "Too many arithmetic operations!");
+
 enum class Arithmetic2Kind : Byte {
     AddSignedImmediate, 
     AddUnsignedImmediate,
@@ -215,17 +216,26 @@ enum class CompareKind : Byte {
     Count,
 };
 static_assert(static_cast<Byte>(CompareKind::Count) <= 32, "Too many branch operations!");
+template<auto value, typename T>
+struct BindConstantToType : std::integral_constant<decltype(value), value> {
+    public:
+        BindConstantToType() = delete;
+        ~BindConstantToType() = delete;
+        BindConstantToType(const BindConstantToType&) = delete;
+        BindConstantToType(BindConstantToType&&) = delete;
+        BindConstantToType& operator=(const BindConstantToType&) = delete;
+        BindConstantToType& operator=(BindConstantToType&&) = delete;
+        using BoundType = T;
+};
 
-template<Group grp>
-using GroupToKindMapping = 
-std::conditional_t<grp == Group::Arithmetic, ArithmeticKind,
-    std::conditional_t<grp == Group::Arithmetic2, Arithmetic2Kind,
-        std::conditional_t<grp == Group::Memory, MemoryKind, 
-        std::conditional_t<grp == Group::Branch, BranchKind,
-        std::conditional_t<grp == Group::Compare, CompareKind,
-            decltype(nullptr)>>>>>;
-template<Group grp>
-constexpr auto GroupNotMappedToKind = std::is_same_v<GroupToKindMapping<grp>, decltype(nullptr)>;
+template<Group group, typename T>
+struct BindGroupToOperationKind : BindConstantToType<group, T> {
+    static_assert(std::is_enum_v<T>, "T must be an enum at this point");
+};
+
+
+
+
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 
 struct Instruction {
