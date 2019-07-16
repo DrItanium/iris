@@ -264,6 +264,20 @@ X(Memory);
 
 template<Group group>
 using GroupToOperationKind = typename BindGroupToOperationKind<group>::BoundType;
+template<typename T>
+constexpr auto OperationKindToGroup = BindOperationToGroupKind<T>::value;
+template<auto value>
+constexpr auto OperationValueToGroup = OperationKindToGroup<decltype(value)>;
+
+template<typename T>
+constexpr auto operationValueToGroup(T) noexcept {
+    return OperationKindToGroup<T>;
+}
+
+static_assert(std::is_same_v<GroupToOperationKind<Group::Arithmetic>, ArithmeticKind>, "Group to operation kind sanity check failed");
+static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Reverse type binding check failed!");
+static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
+static_assert(OperationKindToGroup<GroupToOperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
 
 
 
