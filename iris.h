@@ -32,6 +32,7 @@
 #include <iostream>
 #include <type_traits>
 #include <tuple>
+#include <cstddef>
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -43,6 +44,7 @@ using DoubleWord = uint32_t;
 using DoubleSignedWord = int32_t;
 using Byte = uint8_t;
 using SignedByte = int8_t;
+using RegisterIndex = std::byte;
 
 class Register final {
     public:
@@ -326,29 +328,110 @@ constexpr GroupToOpcodePair<g> MakeDecodedOpcode = std::make_tuple(g, op);
 template<Byte raw>
 constexpr auto DecodedOpcode = MakeDecodedOpcode<decodeGroup(raw), decodeOperation(raw)>;
 
+
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 struct Instruction {
+    private:
+        template<typename T = RegisterIndex>
+        static constexpr T convertIndex(Byte result) noexcept {
+            if constexpr (std::is_same_v<T, RegisterIndex>) {
+                return static_cast<RegisterIndex>(result);
+            } else if constexpr (std::is_same_v<T, Byte>) {
+                return result;
+            } else if constexpr (std::is_same_v<T, SignedByte>) {
+                union {
+                    Byte value;
+                    SignedByte sgned;
+                } assignable;
+                assignable.value = result;
+                return assignable.sgned;
+            } else {
+                static_assert(false_v<T>, "Illegal type requested!");
+            }
+        }
     public:
         using OptionalDecodedOperation = std::optional<Operation>;
     public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
-        constexpr Byte getOpcodeIndex() const noexcept { return _bits & 0xFF; }
+        constexpr Byte getLowestQuarter() const noexcept { return _bits & 0xFF; }
+        constexpr Byte getLowerQuarter() const noexcept { return (_bits & 0xFF00) >> 8; }
+        constexpr Byte getHigherQuarter() const noexcept { return (_bits & 0xFF0000) >> 16; }
+        constexpr Byte getHighestQuarter() const noexcept { return (_bits & 0xFF000000) >> 24; }
+        constexpr Word getUpperHalf() const noexcept { return (_bits >> 16); }
+        constexpr Word getLowerHalf() const noexcept { return _bits; }
+        constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
         constexpr Byte getGroupIndex() const noexcept { return iris::decodeGroupIndex(getOpcodeIndex()); }
         constexpr Byte getOperationIndex() const noexcept { return iris::decodeOperationIndex(getOpcodeIndex()); }
         constexpr Group decodeGroup() const noexcept { return iris::decodeGroup(getOpcodeIndex()); }
         constexpr Operation decodeOperation() const noexcept { return iris::decodeOperation(getOpcodeIndex()); }
-        constexpr Byte getDestinationIndex() const noexcept { return (_bits >> 8) & 0xFF; }
-        constexpr Byte getSource0Index() const noexcept { return (_bits >> 16) & 0xFF; }
-        constexpr Byte getSource1Index() const noexcept { return (_bits >> 24) & 0xFF; }
-        constexpr Word getImm8() const noexcept { return getSource1Index(); }
-        constexpr Word getImm16() const noexcept { return Word(_bits >> 16); }
-        constexpr DoubleWord getImm24() const noexcept { return _bits >> 8; }
+        template<typename T = RegisterIndex>
+        constexpr T getDestinationIndex() const noexcept { 
+            return convertIndex<T>(getLowerQuarter()); 
+        }
+        template<typename T = RegisterIndex>
+        constexpr T getSource0Index() const noexcept {
+            return convertIndex<T>(getHigherQuarter()); 
+        }
+        template<typename T = RegisterIndex>
+        constexpr T getSource1Index() const noexcept { 
+            return convertIndex<T>(getHighestQuarter()); 
+        }
+        constexpr Byte getImm8() const noexcept { return getSource1Index<Byte>(); }
+        constexpr Word getImm16() const noexcept { return getUpperHalf(); }
         constexpr auto rawBits() const noexcept { return _bits; }
     private:
         DoubleWord _bits;
 };
+
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
+template<typename T>
+class ThreeArgumentsFormat {
+    public:
+        ThreeArgumentsFormat(RegisterIndex a, RegisterIndex b, T c) : _first(a), _second(b), _third(c) { }
+        ThreeArgumentsFormat(const Instruction& inst) : ThreeArgumentsFormat(inst.getDestinationIndex(), inst.getSource0Index(), inst.getSource1Index<T>()) { }
+        ~ThreeArgumentsFormat() = default;
+        constexpr auto getFirst() const noexcept { return _first; }
+        constexpr auto getSecond() const noexcept { return _second; }
+        constexpr auto getThird() const noexcept { return _third; }
+    private:
+        RegisterIndex _first;
+        RegisterIndex _second;
+        T _third;
+};
+template<typename T>
+class TwoArgumentsFormat {
+    public:
+        TwoArgumentsFormat(RegisterIndex a, T b) : _first(a), _second(b) { }
+        TwoArgumentsFormat(const Instruction& inst) : TwoArgumentsFormat(inst.getDestinationIndex(), inst.getSource0Index<T>()) { }
+        ~TwoArgumentsFormat() = default;
+        constexpr auto getFirst() const noexcept { return _first; }
+        constexpr auto getSecond() const noexcept { return _second; }
+    private:
+        RegisterIndex _first;
+        T _second;
+};
+template<typename T>
+class OneArgumentFormat {
+    public:
+        explicit OneArgumentFormat(T a) : _first(a) { }
+        explicit OneArgumentFormat(const Instruction& inst) : OneArgumentFormat(inst.getDestinationIndex<T>()) { }
+        ~OneArgumentFormat() = default;
+        constexpr auto getFirst() const noexcept { return _first; }
+    private:
+        T _first;
+};
+using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex>;
+using TwoRegisterU8Format = ThreeArgumentsFormat<Byte>;
+using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte>;
+using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex>;
+using OneRegisterU16Format = TwoArgumentsFormat<Word>;
+using OneRegisterS16Format = TwoArgumentsFormat<SignedWord>;
+using OneRegisterFormat = OneArgumentFormat<RegisterIndex>;
+using U16Format = OneArgumentFormat<Word>;
+using S16Format = OneArgumentFormat<SignedWord>;
+using U8Format = OneArgumentFormat<Byte>;
+using S8Format = OneArgumentFormat<SignedByte>;
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
 
