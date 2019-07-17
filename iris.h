@@ -538,35 +538,49 @@ class ZeroArgumentFormat final : public ArgumentFormat<group, op> {
         using Parent::Parent;
         static constexpr auto ArgumentCount = 0;
 };
-using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex>;
-using TwoRegisterU8Format = ThreeArgumentsFormat<Byte>;
-using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte>;
-using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex>;
-using OneRegisterU16Format = TwoArgumentsFormat<Word>;
-using OneRegisterS16Format = TwoArgumentsFormat<SignedWord>;
-using OneRegisterU8Format = TwoArgumentsFormat<Byte>;
-using OneRegisterS8Format = TwoArgumentsFormat<SignedByte>;
-using OneRegisterFormat = OneArgumentFormat<RegisterIndex>;
-using U16Format = OneArgumentFormat<Word>;
-using S16Format = OneArgumentFormat<SignedWord>;
-using U8Format = OneArgumentFormat<Byte>;
-using S8Format = OneArgumentFormat<SignedByte>;
+template<Group group, OperationKind<group> op>
+using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, group, op>;
+template<Group group, OperationKind<group> op>
+using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, group, op>;
+template<Group group, OperationKind<group> op>
+using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, group, op>;
+template<Group group, OperationKind<group> op>
+using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, group, op>;
+template<Group group, OperationKind<group> op>
+using OneRegisterU16Format = TwoArgumentsFormat<Word, group, op>;
+template<Group group, OperationKind<group> op>
+using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, group, op>;
+template<Group group, OperationKind<group> op>
+using OneRegisterU8Format = TwoArgumentsFormat<Byte, group, op>;
+template<Group group, OperationKind<group> op>
+using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, group, op>;
+template<Group group, OperationKind<group> op>
+using OneRegisterFormat = OneArgumentFormat<RegisterIndex, group, op>;
+template<Group group, OperationKind<group> op>
+using U16Format = OneArgumentFormat<Word, group, op>;
+template<Group group, OperationKind<group> op>
+using S16Format = OneArgumentFormat<SignedWord, group, op>;
+template<Group group, OperationKind<group> op>
+using U8Format = OneArgumentFormat<Byte, group, op>;
+template<Group group, OperationKind<group> op>
+using S8Format = OneArgumentFormat<SignedByte, group, op>;
+
+// define the actual instruction kinds
+#define X(g, o, f) \
+    struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
+        using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
+        using Parent::Parent; \
+    };
+#include "InstructionFormats.def"
+#undef X
+
 
 using DecodedInstruction = std::variant<
-            ThreeRegisterFormat,
-            TwoRegisterU8Format,
-            TwoRegisterS8Format,
-            TwoRegisterFormat,
-            OneRegisterU16Format,
-            OneRegisterS16Format,
-            OneRegisterU8Format,
-            OneRegisterS8Format,
-            OneRegisterFormat,
-            U16Format,
-            S16Format,
-            U8Format,
-            S8Format,
-            ZeroArgumentFormat>;
+            std::monostate,
+#define X(g, o, f) , g ## o ## Format 
+#include "InstructionFormats.def"
+#undef X
+            >;
 
 template<typename T>
 constexpr auto ArgumentCount = T::ArgumentCount;
