@@ -33,5 +33,21 @@ DoubleRegister::put(Word lower, Word upper) noexcept {
     _upper.put(upper);
 }
 
+DoubleRegister
+makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
+    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
+        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
+        return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
+    } else {
+        return DoubleRegister(bank[Byte(lower)], bank[Byte(upper)]);
+    }
+}
+
+DoubleRegister
+makePair(RegisterBank& bank, RegisterIndex lower) noexcept {
+    auto conv = static_cast<Byte>(lower);
+    return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
+}
+
     
 } // end namespace iris

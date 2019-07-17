@@ -707,9 +707,6 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
 
-
-
-
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
 
@@ -791,6 +788,8 @@ class DoubleRegister final {
         Register& _lower;
         Register& _upper;
 };
+DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 
 class Core {
     public:
