@@ -27,6 +27,11 @@
 
 namespace iris {
 
+void
+DoubleRegister::put(Word lower, Word upper) noexcept {
+    _lower.put(lower);
+    _upper.put(upper);
+}
 
     
 } // end namespace iris

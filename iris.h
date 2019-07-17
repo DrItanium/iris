@@ -42,7 +42,7 @@ inline constexpr bool false_v = false;
 using Word = uint16_t;
 using SignedWord = int16_t;
 using DoubleWord = uint32_t;
-using DoubleSignedWord = int32_t;
+using SignedDoubleWord = int32_t;
 using Byte = uint8_t;
 using SignedByte = int8_t;
 using RegisterIndex = std::byte;
@@ -709,6 +709,7 @@ constexpr auto RegisterCount = (0xFF + 1);
 
 
 
+
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
 
@@ -746,6 +747,62 @@ class IOMemoryBank {
     public:
         IOMemoryBank() = default;
         ~IOMemoryBank() = default;
+};
+
+class DoubleRegister final {
+    public:
+        constexpr DoubleRegister(Register& lower, Register& upper) : _lower(lower), _upper(upper) { }
+        constexpr Word upperHalf() const noexcept { return _upper.get<Word>(); }
+        constexpr Word lowerHalf() const noexcept { return _lower.get<Word>(); }
+        template<typename T = DoubleWord>
+        constexpr T get() const noexcept {
+            if constexpr (std::is_same_v<T, DoubleWord>) {
+                DoubleWord l = lowerHalf();
+                DoubleWord u = upperHalf();
+                return (u << 16) | l;
+            } else if constexpr (std::is_same_v<T, SignedDoubleWord>) {
+                union temporary {
+                    constexpr temporary(DoubleWord v) : _v(v) { }
+                    DoubleWord _v;
+                    SignedDoubleWord _s;
+                };
+                return temporary(get<DoubleWord>())._s;
+            } else {
+                static_assert(false_v<T>, "Illegal type requested");
+            }
+        }
+        void put(Word lower, Word upper) noexcept;
+        template<typename T = DoubleWord>
+        void put(T value) noexcept {
+            if constexpr (std::is_same_v<T, DoubleWord>) {
+                put(Word(value), Word(value >> 16));
+            } else if constexpr (std::is_same_v<T, SignedDoubleWord>) {
+                union temporary {
+                    constexpr temporary(SignedDoubleWord v) : _v(v) { }
+                    SignedDoubleWord _v;
+                    DoubleWord _u;
+                };
+                put<DoubleWord>(temporary(value)._u);
+            } else {
+                static_assert(false_v<T>, "Illegal type requested!");
+            }
+        }
+    private:
+        Register& _lower;
+        Register& _upper;
+};
+
+class Core {
+    public:
+        Core() = default;
+        ~Core() = default;
+    private:
+        RegisterBank _regs;
+        CodeMemoryBank _code;
+        DataMemoryBank _data;
+        StackMemoryBank _stack;
+        IOMemoryBank _io;
+
 };
 
 } // end namespace iris
