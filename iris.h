@@ -551,7 +551,6 @@ using U8Format = OneArgumentFormat<Byte>;
 using S8Format = OneArgumentFormat<SignedByte>;
 
 using DecodedInstruction = std::variant<
-            std::string,
             ThreeRegisterFormat,
             TwoRegisterU8Format,
             TwoRegisterS8Format,
@@ -604,10 +603,9 @@ using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::Arg
 
 #define CAT(a, b) PRIMITIVE_CAT(a, b)
 #define PRIMITIVE_CAT(a, b) a ## b
-constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept {
-    using namespace std::string_literals;
+constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
     if (auto op = inst.decodeOperation(); op) {
-    return std::visit([&inst](auto&& value) -> DecodedInstruction {
+    return std::visit([&inst](auto&& value) -> std::optional<DecodedInstruction> {
                 using K = std::decay_t<decltype(value)>;
 #define MakeCase(op) case K :: op : return InstructionArgumentFormat<K :: op >(inst)
 #define Y(g, op, f) PRIMITIVE_CAT(Action, g)(op, f)
@@ -626,7 +624,7 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
 #undef ActionCompare 
 #undef ActionMemory 
                     default:
-                        return "Unimplemented format!"s;
+                        return std::nullopt;
                 }
                 } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
                 switch (value) {
@@ -642,7 +640,7 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
 #undef ActionCompare 
 #undef ActionMemory
                     default:
-                        return "Unimplemented format!"s;
+                        return std::nullopt;
                 }
                 } else if constexpr (std::is_same_v<K, BranchKind>) {
                 switch (value) {
@@ -658,7 +656,7 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
 #undef ActionCompare 
 #undef ActionMemory
                     default:
-                        return "Unimplemented format!"s;
+                        return std::nullopt;
                 }
                 } else if constexpr (std::is_same_v<K, CompareKind>) {
                 switch (value) {
@@ -674,7 +672,7 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
 #undef ActionCompare 
 #undef ActionMemory
                     default:
-                        return "Unimplemented format!"s;
+                        return std::nullopt;
                 }
                 } else if constexpr (std::is_same_v<K, MemoryKind>) {
                 switch (value) {
@@ -692,14 +690,14 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
 #undef X
 #undef Y
                     default:
-                        return "Unimplemented format!"s;
+                        return std::nullopt;
                 }
                 } else {
                     static_assert(false_v<K>, "Unimplemented type!");
                 }
             }, *op);
     } else {
-        return "couldn't decode instruction!"s;
+        return std::nullopt;
     }
 
 }
