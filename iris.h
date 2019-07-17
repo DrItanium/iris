@@ -793,9 +793,21 @@ DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 
 class Core {
     public:
-        Core() = default;
-        ~Core() = default;
     private:
+#define X(group, oper, fmt) \
+        void op ## oper (const fmt ## Format &);
+#include "InstructionFormats.def"
+#undef X
+    private:
+        void invoke(DoubleWord bits);
+#define X(group) \
+        void invoke(const DecodedInstruction&, const GroupToOperationKind<Group:: group>&)
+        X(Arithmetic);
+        X(Memory);
+        X(Arithmetic2);
+        X(Branch);
+        X(Compare);
+#undef X
         RegisterBank _regs;
         CodeMemoryBank _code;
         DataMemoryBank _data;

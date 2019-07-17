@@ -49,5 +49,15 @@ makePair(RegisterBank& bank, RegisterIndex lower) noexcept {
     return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
 
+void 
+Core::invoke(DoubleWord ibits) {
+    Instruction inst(ibits);
+    if (auto operation = decodeInstruction(inst); operation) {
+        std::visit([this, &operation](auto&& kind) { invoke(*operation, kind); }, inst.decodeOperation().value());
+    } else {
+        throw "Bad operation!";
+    }
+}
+
     
 } // end namespace iris
