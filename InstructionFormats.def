@@ -1,0 +1,32 @@
+/**
+ * This file contains the binding between a given operation and its corresponding
+ * format. Update this file when adding new type information
+ */
+
+/// Format is: Group, Operation, ArgumentFormat
+#define Arithmetic(Operation, Format) X(Arithmetic, Operation, Format)
+#define Arithmetic2(Operation, Format) X(Arithmetic2, Operation, Format)
+#define Memory(Operation, Format) X(Memory, Operation, Format)
+#define Branch(Operation, Format) X(Branch, Operation, Format)
+#define Compare(Operation, Format) X(Compare, Operation, Format)
+#define ArithmeticSigned(Operation, Format) Arithmetic(Operation ## Signed, Format)
+#define ArithmeticUnsigned(Operation, Format) Arithmetic(Operation ## Unsigned, Format)
+#define ArithmeticSignedUnsigned(Operation, Format) \
+    ArithmeticSigned(Operation, Format) \
+    ArithmeticUnsigned(Operation, Format)
+Arithmetic(Error, ZeroArgument)
+ArithmeticSignedUnsigned(Add, ThreeRegister)
+ArithmeticSignedUnsigned(Subtract, ThreeRegister)
+ArithmeticSignedUnsigned(Multiply, ThreeRegister)
+ArithmeticSignedUnsigned(Divide, ThreeRegister)
+ArithmeticSignedUnsigned(Remainder, ThreeRegister)
+ArithmeticSignedUnsigned(ShiftLeft, ThreeRegister)
+ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
+#undef Compare
+#undef Branch
+#undef Memory
+#undef Arithmetic2
+#undef Arithmetic
+#undef ArithmeticSigned
+#undef ArithmeticUnsigned
+#undef ArithmeticSignedUnsigned

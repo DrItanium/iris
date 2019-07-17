@@ -130,24 +130,25 @@ constexpr bool isLegal(E kind) noexcept {
     return static_cast<UT>(kind) < static_cast<UT>(E::Count);
 }
 enum class ArithmeticKind : Byte {
-    Error,
-    AddSigned, 
+    Error, // zero arguments
+    // most of these operations are r8, r8, r8
+    AddSigned,
     AddUnsigned,
-    SubtractSigned, 
+    SubtractSigned,
     SubtractUnsigned,
-    MultiplySigned, 
+    MultiplySigned,
     MultiplyUnsigned,
-    DivideSigned, 
+    DivideSigned,
     DivideUnsigned,
-    RemainderSigned, 
+    RemainderSigned,
     RemainderUnsigned,
-    ShiftLeftSigned, 
+    ShiftLeftSigned,
     ShiftLeftUnsigned,
-    ShiftRightSigned, 
+    ShiftRightSigned,
     ShiftRightUnsigned,
     BitwiseAnd,
     BitwiseOr,
-    BitwiseNot,
+    BitwiseNot, // r8, r8
     BitwiseXor,
     BitwiseNor,
     BitwiseNand,
@@ -155,15 +156,16 @@ enum class ArithmeticKind : Byte {
     MaxUnsigned,
     MinSigned,
     MinUnsigned,
-    Increment,
-    Decrement,
-    Double,
-    Halve,
+    Increment, // r8, r8
+    Decrement, // r8, r8
+    Double, // r8, r8
+    Halve, // r8, r8
     Count,
 };
 static_assert(static_cast<Byte>(ArithmeticKind::Count) <= 32, "Too many arithmetic operations!");
 
 enum class Arithmetic2Kind : Byte {
+    // r8, r8, i8 (signed or unsigned depends on the instruction)
     AddSignedImmediate, 
     AddUnsignedImmediate,
     SubtractSignedImmediate, 
@@ -174,6 +176,7 @@ enum class Arithmetic2Kind : Byte {
     DivideUnsignedImmediate,
     RemainderSignedImmediate, 
     RemainderUnsignedImmediate,
+    // shifting greater than or equal to 16 bits will result in zero
     ShiftLeftSignedImmediate, 
     ShiftLeftUnsignedImmediate,
     ShiftRightSignedImmediate, 
@@ -231,20 +234,21 @@ enum class MemoryKind : Byte {
 };
 static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many memory operations!");
 enum class BranchKind : Byte {
-    JumpImmediate, 
-    JumpConditionalImmediate,
-    JumpRelativeImmediate, 
-    JumpConditionalRelativeImmediate,
-    JumpRegister, 
-    JumpConditionalRegister,
-    JumpRegisterAndLink, 
-    JumpImmediateAndLink,
-    JumpConditionalRegisterAndLink,
-    BranchSelect,
+    Immediate,  // imm16
+    ConditionalImmediate, // r8, u16
+    RelativeImmediate, // s8
+    ConditionalRelativeImmediate, // r8, s8
+    Register,  // r8
+    ConditionalRegister, // r8, r8 
+    RegisterAndLink,  // r8, r8
+    ImmediateAndLink, // r8 u16
+    ConditionalRegisterAndLink, // r8, r8, r8
+    Select,   // r8, r8, r8
     Count,
 };
 static_assert(static_cast<Byte>(BranchKind::Count) <= 32, "Too many branch operations!");
 enum class CompareKind : Byte {
+    // r8 r8 r8
     Equals, 
     NotEquals, 
     LessThanSigned, 
@@ -255,7 +259,21 @@ enum class CompareKind : Byte {
     LessThanOrEqualToUnsigned,
     GreaterThanOrEqualToSigned, 
     GreaterThanOrEqualToUnsigned,
-    Spaceship,
+    SpaceshipSigned,
+    SpaceshipUnsigned,
+    // r8 r8 i8
+    EqualsImmediate8,
+    NotEqualsImmediate8,
+    LessThanSignedImmediate8,
+    LessThanUnsignedImmediate8,
+    GreaterThanSignedImmediate8, 
+    GreaterThanUnsignedImmediate8,
+    LessThanOrEqualToSignedImmediate8, 
+    LessThanOrEqualToUnsignedImmediate8,
+    GreaterThanOrEqualToSignedImmediate8, 
+    GreaterThanOrEqualToUnsignedImmediate8,
+    SpaceshipSignedImmediate8,
+    SpaceshipUnsignedImmediate8,
     Count,
 };
 static_assert(static_cast<Byte>(CompareKind::Count) <= 32, "Too many branch operations!");
@@ -531,6 +549,22 @@ using S8Format = OneArgumentFormat<SignedByte>;
 
 template<typename T>
 constexpr auto getArgumentCount = T::ArgumentCount;
+
+template<auto value>
+struct OperationToArgumentFormat : public BindConstantToType<value> { 
+    static_assert(std::is_enum_v<decltype(value)>, "Incoming value must be an enum type!");
+};
+#define X(g, o, f) \
+    template<> \
+    struct OperationToArgumentFormat<GroupToOperationKind<Group:: g>:: o> : \
+    public BindConstantToType<GroupToOperationKind<Group:: g>:: o> { \
+            using ArgumentFormat = f ## Format ; \
+    };
+#include "InstructionFormats.def"
+#undef X
+
+template<auto value>
+using InstructionArgumentFormat = typename OperationToArgumentFormat<OperationKindToGroup<value>>::ArgumentFormat;
 
 static_assert(getArgumentCount<S8Format> == 1, "ArgumentCount sanity check failed!");
 
