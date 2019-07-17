@@ -202,7 +202,8 @@ enum class MemoryKind : Byte {
     /**
      * Assign an immediate value to a register aka load immediate
      */
-    AssignRegister,
+    AssignRegisterImmediate,
+    AssignRegisterSignedImmediate,
     // stack operations
     StackPush,
     StackPop,
