@@ -566,6 +566,9 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
     struct OperationToArgumentFormat<GroupToOperationKind<Group:: g>:: o> : \
     public BindConstantToType<GroupToOperationKind<Group:: g>:: o> { \
             using ArgumentFormat = f ## Format ; \
+            static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
+                return ArgumentFormat(inst); \
+            } \
     };
 #include "InstructionFormats.def"
 #undef X
