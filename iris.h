@@ -548,6 +548,22 @@ using S16Format = OneArgumentFormat<SignedWord>;
 using U8Format = OneArgumentFormat<Byte>;
 using S8Format = OneArgumentFormat<SignedByte>;
 
+using DecodedInstruction = std::variant<
+            std::string,
+            ThreeRegisterFormat,
+            TwoRegisterU8Format,
+            TwoRegisterS8Format,
+            TwoRegisterFormat,
+            OneRegisterU16Format,
+            OneRegisterS16Format,
+            OneRegisterU8Format,
+            OneRegisterS8Format,
+            OneRegisterFormat,
+            U16Format,
+            S16Format,
+            U8Format,
+            S8Format>;
+
 template<typename T>
 constexpr auto ArgumentCount = T::ArgumentCount;
 
@@ -576,6 +592,24 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
 template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<OperationKindToGroup<value>>::ArgumentFormat;
 
+
+#if 0
+constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept {
+    if (auto op = inst.decodeOperation(); op) {
+    std::visit([](auto&& value) {
+                using K = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<K, ArithmeticKind>) {
+                    
+                } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
+                    
+                }
+            }, *op);
+    } else {
+        return "couldn't decode instruction!";
+    }
+
+}
+#endif
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
