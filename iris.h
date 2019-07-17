@@ -293,7 +293,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
         BindConstantToType& operator=(BindConstantToType&&) = delete;
 };
 template<Group group>
-struct BindGroupToOperationKind : BindConstantToType<group> { };
+struct BindOperationKind : BindConstantToType<group> { };
 template<typename T>
 struct BindOperationToGroupKind { 
         BindOperationToGroupKind() = delete;
@@ -304,25 +304,25 @@ struct BindOperationToGroupKind {
         BindOperationToGroupKind& operator=(BindOperationToGroupKind&&) = delete;
 };
 
-#define GroupToOperationKindBinding(g,t) \
+#define OperationKindBinding(g,t) \
     template<> \
-    struct BindGroupToOperationKind<Group:: g> : BindConstantToType<Group:: g> { \
+    struct BindOperationKind<Group:: g> : BindConstantToType<Group:: g> { \
         using BoundType = t ; \
     }; \
     template<> \
     struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { }
-#define X(g) GroupToOperationKindBinding(g, g ## Kind)
+#define X(g) OperationKindBinding(g, g ## Kind)
 X(Arithmetic);
 X(Memory);
 X(Branch);
 X(Compare);
 X(Arithmetic2);
 #undef X
-#undef GroupToOperationKindBinding 
+#undef OperationKindBinding 
     
 
 template<Group group>
-using GroupToOperationKind = typename BindGroupToOperationKind<group>::BoundType;
+using OperationKind = typename BindOperationKind<group>::BoundType;
 template<typename T>
 constexpr auto OperationKindToGroup = BindOperationToGroupKind<T>::value;
 template<auto value>
@@ -333,25 +333,25 @@ constexpr auto operationValueToGroup(T) noexcept {
     return OperationKindToGroup<T>;
 }
 
-static_assert(std::is_same_v<GroupToOperationKind<Group::Arithmetic>, ArithmeticKind>, "Group to operation kind sanity check failed");
+static_assert(std::is_same_v<OperationKind<Group::Arithmetic>, ArithmeticKind>, "Group to operation kind sanity check failed");
 static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Reverse type binding check failed!");
 static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
-static_assert(OperationKindToGroup<GroupToOperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
+static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
 
 using OperationKinds = std::variant<
-    GroupToOperationKind<Group::Arithmetic>,
-    GroupToOperationKind<Group::Memory>,
-    GroupToOperationKind<Group::Branch>,
-    GroupToOperationKind<Group::Compare>,
-    GroupToOperationKind<Group::Arithmetic2>>;
+    OperationKind<Group::Arithmetic>,
+    OperationKind<Group::Memory>,
+    OperationKind<Group::Branch>,
+    OperationKind<Group::Compare>,
+    OperationKind<Group::Arithmetic2>>;
 using Operation = std::optional<OperationKinds>;
 
 
-template<Group g, GroupToOperationKind<g> op>
+template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
 
 template<Group g>
-using GroupToOpcodePair = std::tuple<decltype(g), GroupToOperationKind<g>>;
+using GroupToOpcodePair = std::tuple<decltype(g), OperationKind<g>>;
 
 constexpr Byte decodeGroupIndex(Byte raw) noexcept {
     return raw & 0x7;
@@ -365,7 +365,7 @@ constexpr Byte decodeOperationIndex(Byte raw ) noexcept {
 }
 constexpr Operation decodeOperation(Byte raw) noexcept {
     switch (decodeGroup(raw)) {
-#define X(k) case Group:: k : return static_cast<GroupToOperationKind<Group:: k>>(decodeOperationIndex(raw))
+#define X(k) case Group:: k : return static_cast<OperationKind<Group:: k>>(decodeOperationIndex(raw))
                 X(Arithmetic);
                 X(Memory);
                 X(Branch);
@@ -378,7 +378,7 @@ constexpr Operation decodeOperation(Byte raw) noexcept {
 }
 
 
-template<Group g, GroupToOperationKind<g> op>
+template<Group g, OperationKind<g> op>
 constexpr GroupToOpcodePair<g> MakeDecodedOpcode = std::make_tuple(g, op);
 
 template<Byte raw>
@@ -486,20 +486,19 @@ struct Instruction {
 };
 
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
+template<Group group, OperationKind<group> op>
 class ArgumentFormat {
     public:
-        explicit constexpr ArgumentFormat(const Instruction& inst) : _group(inst.decodeGroup()), _op(inst.decodeOperation()) { }
-        constexpr auto getGroup() const noexcept { return _group; }
-        constexpr auto getOperation() const noexcept { return _op; }
-    private:
-        Group _group;
-        Operation _op;
+        static constexpr auto EncodedOpcode = iris::EncodedOpcode<group, op>;
+        explicit constexpr ArgumentFormat(const Instruction&) = default;
+        constexpr auto getGroup() const noexcept { return group; }
+        constexpr auto getOperation() const noexcept { return op; }
 
 };
-template<typename T>
-class ThreeArgumentsFormat : public ArgumentFormat {
+template<typename T, Group group, OperationKind<group> op>
+class ThreeArgumentsFormat : public ArgumentFormat<group, op> {
     public:
-        using Parent = ArgumentFormat;
+        using Parent = ArgumentFormat<group, op>;
         static constexpr auto ArgumentCount = 3;
         explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
@@ -510,10 +509,10 @@ class ThreeArgumentsFormat : public ArgumentFormat {
         RegisterIndex _second;
         T _third;
 };
-template<typename T>
-class TwoArgumentsFormat : public ArgumentFormat {
+template<typename T, Group group, OperationKind<group> op>
+class TwoArgumentsFormat : public ArgumentFormat<group, op> {
     public:
-        using Parent = ArgumentFormat;
+        using Parent = ArgumentFormat<group, op>;
         static constexpr auto ArgumentCount = 2;
         explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
@@ -522,19 +521,20 @@ class TwoArgumentsFormat : public ArgumentFormat {
         RegisterIndex _first;
         T _second;
 };
-template<typename T>
-class OneArgumentFormat : public ArgumentFormat {
+template<typename T, Group group, OperationKind<group> op>
+class OneArgumentFormat : public ArgumentFormat<group, op> {
     public:
-        using Parent = ArgumentFormat;
+        using Parent = ArgumentFormat<group, op>;
         static constexpr auto ArgumentCount = 1;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
     private:
         T _first;
 };
-class ZeroArgumentFormat final : public ArgumentFormat { 
+template<Group group, OperationKind<group> op>
+class ZeroArgumentFormat final : public ArgumentFormat<group, op> { 
     public:
-        using Parent = ArgumentFormat;
+        using Parent = ArgumentFormat<group, op>;
         using Parent::Parent;
         static constexpr auto ArgumentCount = 0;
 };
@@ -583,8 +583,8 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
 };
 #define X(g, o, f) \
     template<> \
-    struct OperationToArgumentFormat<GroupToOperationKind<Group:: g>:: o> : \
-    public BindConstantToType<GroupToOperationKind<Group:: g>:: o> { \
+    struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
+    public BindConstantToType<OperationKind<Group:: g>:: o> { \
             using ArgumentFormat = f ## Format ; \
             static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
                 return ArgumentFormat(inst); \
@@ -597,7 +597,7 @@ template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
 
 #define X(g, o, f) \
-    static_assert(std::is_same_v<InstructionArgumentFormat<GroupToOperationKind<Group:: g>::o>, f ## Format>, "Sanity check failed on format mismatch");
+    static_assert(std::is_same_v<InstructionArgumentFormat<OperationKind<Group:: g>::o>, f ## Format>, "Sanity check failed on format mismatch");
 #include "InstructionFormats.def"
 #undef X
 
@@ -797,7 +797,7 @@ class Core {
     private:
         // use tag dispatch to call the right routines
 #define X(group, oper, fmt) \
-        void invoke(const fmt ## Format&, TagDispatchKind< GroupToOperationKind<Group:: group>:: oper>);
+        void invoke(const fmt ## Format&, TagDispatchKind< OperationKind<Group:: group>:: oper>);
 #include "InstructionFormats.def"
 #undef X
     private:
