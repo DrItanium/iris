@@ -549,8 +549,14 @@ using U8Format = OneArgumentFormat<Byte>;
 using S8Format = OneArgumentFormat<SignedByte>;
 
 template<typename T>
-constexpr auto getArgumentCount = T::ArgumentCount;
+constexpr auto ArgumentCount = T::ArgumentCount;
 
+template<typename T>
+constexpr auto getArgumentCount(T) noexcept {
+    return ArgumentCount<T>;
+}
+
+static_assert(ArgumentCount<S8Format> == 1, "ArgumentCount sanity check failed!");
 template<auto value>
 struct OperationToArgumentFormat : public BindConstantToType<value> { 
     static_assert(std::is_enum_v<decltype(value)>, "Incoming value must be an enum type!");
@@ -567,7 +573,6 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
 template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<OperationKindToGroup<value>>::ArgumentFormat;
 
-static_assert(getArgumentCount<S8Format> == 1, "ArgumentCount sanity check failed!");
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
