@@ -790,7 +790,6 @@ class DoubleRegister final {
 };
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
-
 class Core {
     public:
         template<auto value>
