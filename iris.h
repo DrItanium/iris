@@ -636,101 +636,14 @@ template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
 
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
-    if (auto op = inst.decodeOperation(); op) {
-    return std::visit([&inst](auto&& value) -> std::optional<DecodedInstruction> {
-                using K = std::decay_t<decltype(value)>;
-#define MakeCase(op) case K :: op : return InstructionArgumentFormat<K :: op >(inst)
-#define Y(g, op, f) PRIMITIVE_CAT(Action, g)(op, f)
-#define X(g, op, f) Y(g, op, f)
-                if constexpr (std::is_same_v<K, ArithmeticKind>) {
-                switch (value) {
-#define ActionArithmetic2(op, f)
-#define ActionBranch(op, f)
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic(op, f) MakeCase(op);
+    switch (inst.getOpcodeIndex()) {
+#define X(g, o, f) \
+        case iris::EncodedOpcode<Group:: g, OperationKind<Group:: g >:: o>: \
+             return OperationToFormat_t<iris::EncodedOpcode<Group:: g, OperationKind<Group:: g > :: o>>(inst);
 #include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory 
-                    default:
-                        return std::nullopt;
-                }
-                } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
-                switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f)
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) MakeCase(op);
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                    default:
-                        return std::nullopt;
-                }
-                } else if constexpr (std::is_same_v<K, BranchKind>) {
-                switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) MakeCase(op);
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                    default:
-                        return std::nullopt;
-                }
-                } else if constexpr (std::is_same_v<K, CompareKind>) {
-                switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) 
-#define ActionCompare(op, f) MakeCase(op);
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                    default:
-                        return std::nullopt;
-                }
-                } else if constexpr (std::is_same_v<K, MemoryKind>) {
-                switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) 
-#define ActionCompare(op, f) 
-#define ActionMemory(op, f) MakeCase(op);
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
 #undef X
-#undef Y
-#undef MakeCase
-                    default:
-                        return std::nullopt;
-                }
-                } else {
-                    static_assert(false_v<K>, "Unimplemented type!");
-                }
-            }, *op);
-    } else {
-        return std::nullopt;
+        default:
+            return std::nullopt;
     }
 }
 

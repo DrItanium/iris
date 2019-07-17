@@ -1,0 +1,52 @@
+Stack dump:
+0.	Program arguments: /usr/lib64/llvm/8/bin/clang-8 -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name iris.cc -mrelocation-model static -mthread-model posix -mdisable-fp-elim -fmath-errno -masm-verbose -mconstructor-aliases -munwind-tables -fuse-init-array -target-cpu x86-64 -dwarf-column-info -debugger-tuning=gdb -coverage-notes-file /home/jscoggins/dev/iris/iris.gcno -resource-dir /usr/lib64/llvm/8/bin/../../../../lib/clang/8.0.0 -internal-isystem /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/g++-v7 -internal-isystem /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/g++-v7/x86_64-pc-linux-gnu -internal-isystem /usr/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/g++-v7/backward -internal-isystem /usr/local/include -internal-isystem /usr/lib64/llvm/8/bin/../../../../lib/clang/8.0.0/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -std=c++17 -fdeprecated-macro -fdebug-compilation-dir /home/jscoggins/dev/iris -ferror-limit 19 -fmessage-length 147 -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fdiagnostics-show-option -fcolor-diagnostics -o iris.o -x c++ iris.cc 
+1.	./InstructionFormats.def:26:5 <Spelling=./iris.h:592:25>: current parser token '='
+2.	./iris.h:40:1: parsing namespace 'iris'
+3.	./InstructionFormats.def:26:5 <Spelling=./iris.h:590:16>: parsing struct/union/class body 'iris::final'
+ #0 0x00007fab52f549ea llvm::sys::PrintStackTrace(llvm::raw_ostream&) (/usr/lib64/llvm/8/bin/../lib64/libLLVMSupport.so.8+0x16d9ea)
+ #1 0x00007fab52f529c4 llvm::sys::RunSignalHandlers() (/usr/lib64/llvm/8/bin/../lib64/libLLVMSupport.so.8+0x16b9c4)
+ #2 0x00007fab52f52b45 (/usr/lib64/llvm/8/bin/../lib64/libLLVMSupport.so.8+0x16bb45)
+ #3 0x00007fab50489390 (/lib64/libc.so.6+0x38390)
+ #4 0x00007fab4ac32fd2 clang::Sema::ActOnCXXMemberDeclarator(clang::Scope*, clang::AccessSpecifier, clang::Declarator&, llvm::MutableArrayRef<clang::TemplateParameterList*>, clang::Expr*, clang::VirtSpecifiers const&, clang::InClassInitStyle) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangSema.so.8+0x323fd2)
+ #5 0x00007fab4b33014a clang::Parser::ParseCXXInlineMethodDef(clang::AccessSpecifier, clang::ParsedAttributes&, clang::ParsingDeclarator&, clang::Parser::ParsedTemplateInfo const&, clang::VirtSpecifiers const&, clang::SourceLocation) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x3d14a)
+ #6 0x00007fab4b36279d clang::Parser::ParseCXXClassMemberDeclaration(clang::AccessSpecifier, clang::ParsedAttributes&, clang::Parser::ParsedTemplateInfo const&, clang::ParsingDeclRAIIObject*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x6f79d)
+ #7 0x00007fab4b36405e clang::Parser::ParseCXXClassMemberDeclarationWithPragmas(clang::AccessSpecifier&, clang::Parser::ParsedAttributesWithRange&, clang::TypeSpecifierType, clang::Decl*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x7105e)
+ #8 0x00007fab4b3647dc clang::Parser::ParseCXXMemberSpecification(clang::SourceLocation, clang::SourceLocation, clang::Parser::ParsedAttributesWithRange&, unsigned int, clang::Decl*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x717dc)
+ #9 0x00007fab4b367209 clang::Parser::ParseClassSpecifier(clang::tok::TokenKind, clang::SourceLocation, clang::DeclSpec&, clang::Parser::ParsedTemplateInfo const&, clang::AccessSpecifier, bool, clang::Parser::DeclSpecContext, clang::Parser::ParsedAttributesWithRange&) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x74209)
+#10 0x00007fab4b341d3a clang::Parser::ParseDeclarationSpecifiers(clang::DeclSpec&, clang::Parser::ParsedTemplateInfo const&, clang::AccessSpecifier, clang::Parser::DeclSpecContext, clang::Parser::LateParsedAttrList*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x4ed3a)
+#11 0x00007fab4b3c6722 clang::Parser::ParseSingleDeclarationAfterTemplate(clang::DeclaratorContext, clang::Parser::ParsedTemplateInfo const&, clang::ParsingDeclRAIIObject&, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xd3722)
+#12 0x00007fab4b3cbf50 clang::Parser::ParseTemplateDeclarationOrSpecialization(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xd8f50)
+#13 0x00007fab4b3cc1e4 clang::Parser::ParseDeclarationStartingWithTemplate(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xd91e4)
+#14 0x00007fab4b3500d6 clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::Parser::ParsedAttributesWithRange&) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x5d0d6)
+#15 0x00007fab4b3db978 clang::Parser::ParseExternalDeclaration(clang::Parser::ParsedAttributesWithRange&, clang::ParsingDeclSpec*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xe8978)
+#16 0x00007fab4b35ddda clang::Parser::ParseInnerNamespace(llvm::SmallVector<clang::Parser::InnerNamespaceInfo, 4u> const&, unsigned int, clang::SourceLocation&, clang::ParsedAttributes&, clang::BalancedDelimiterTracker&) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x6adda)
+#17 0x00007fab4b35eb33 clang::Parser::ParseNamespace(clang::DeclaratorContext, clang::SourceLocation&, clang::SourceLocation) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x6bb33)
+#18 0x00007fab4b350156 clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::Parser::ParsedAttributesWithRange&) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x5d156)
+#19 0x00007fab4b3db978 clang::Parser::ParseExternalDeclaration(clang::Parser::ParsedAttributesWithRange&, clang::ParsingDeclSpec*) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xe8978)
+#20 0x00007fab4b3dc3a1 clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0xe93a1)
+#21 0x00007fab4b32b8e7 clang::ParseAST(clang::Sema&, bool, bool) (/usr/lib64/llvm/8/bin/../lib64/../lib64/libclangParse.so.8+0x388e7)
+#22 0x00007fab51e66975 clang::CodeGenAction::ExecuteAction() (/usr/lib64/llvm/8/bin/../lib64/libclangCodeGen.so.8+0x30b975)
+#23 0x00007fab514cbe86 clang::FrontendAction::Execute() (/usr/lib64/llvm/8/bin/../lib64/libclangFrontend.so.8+0xe2e86)
+#24 0x00007fab51483886 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) (/usr/lib64/llvm/8/bin/../lib64/libclangFrontend.so.8+0x9a886)
+#25 0x00007fab511e6177 clang::ExecuteCompilerInvocation(clang::CompilerInstance*) (/usr/lib64/llvm/8/bin/../lib64/libclangFrontendTool.so.8+0x5177)
+#26 0x00005628652cc4c8 cc1_main(llvm::ArrayRef<char const*>, char const*, void*) (/usr/lib64/llvm/8/bin/clang-8+0x134c8)
+#27 0x00005628652c973b main (/usr/lib64/llvm/8/bin/clang-8+0x1073b)
+#28 0x00007fab5047427b __libc_start_main (/lib64/libc.so.6+0x2327b)
+#29 0x00005628652ca33a _start (/usr/lib64/llvm/8/bin/clang-8+0x1133a)
+clang-8: error: unable to execute command: Segmentation fault
+clang-8: error: clang frontend command failed due to signal (use -v to see invocation)
+clang version 8.0.0 (tags/RELEASE_800/final)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/lib/llvm/8/bin
+clang-8: note: diagnostic msg: PLEASE submit a bug report to  and include the crash backtrace, preprocessed source, and associated run script.
+clang-8: note: diagnostic msg: 
+********************
+
+PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:
+Preprocessed source(s) and associated run script(s) are located at:
+clang-8: note: diagnostic msg: /tmp/iris-6c27de.cpp
+clang-8: note: diagnostic msg: /tmp/iris-6c27de.sh
+clang-8: note: diagnostic msg: 
+
+********************
