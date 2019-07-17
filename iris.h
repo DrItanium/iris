@@ -805,117 +805,14 @@ class DoubleRegister final {
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
-    public:
-        template<auto value>
-        using TagDispatchKind = std::integral_constant<decltype(value), value>;
     private:
         // use tag dispatch to call the right routines
 #define X(group, oper, fmt) \
-        void invoke(const fmt ## Format&, TagDispatchKind< OperationKind<Group:: group>:: oper>);
+        void invoke(const group ## oper ## Format &);
 #include "InstructionFormats.def"
 #undef X
     private:
         void invoke(DoubleWord bits);
-        template<typename Fmt>
-        void invoke(const Fmt& k) {
-            static_assert(std::is_base_of_v<ArgumentFormat, std::decay_t<Fmt>>);
-            std::visit([this, &k](auto&& value) {
-                using K = std::decay_t<decltype(value)>;
-#define MakeCase(op) case K :: op : { \
-                    if constexpr (std::is_same_v<InstructionArgumentFormat<K :: op>, \
-                            std::decay_t<Fmt>>) { \
-                        invoke(k, TagDispatchKind<K :: op>{}); \
-                    } else { \
-                        throw "Bad Instruction Invoke!"; \
-                    } \
-                    break; \
-                }
-#define Y(g, op, f) PRIMITIVE_CAT(Action, g)(op, f)
-#define X(g, op, f) Y(g, op, f)
-                if constexpr (std::is_same_v<K, ArithmeticKind>) {
-                    switch (value) {
-#define ActionArithmetic2(op, f)
-#define ActionBranch(op, f)
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic(op, f) MakeCase(op);
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory 
-                        default: throw "Bad kind!";
-                    }
-                } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
-                    switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f)
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) MakeCase(op);
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                        default: throw "Bad kind!";
-                    }
-                } else if constexpr (std::is_same_v<K, BranchKind>) {
-                    switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) MakeCase(op);
-#define ActionCompare(op, f)
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                        default: throw "Bad kind!";
-                    }
-                } else if constexpr (std::is_same_v<K, CompareKind>) {
-                    switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) 
-#define ActionCompare(op, f) MakeCase(op);
-#define ActionMemory(op, f)
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-                        default: throw "Bad kind!";
-                    }
-                } else if constexpr (std::is_same_v<K, MemoryKind>) {
-                    switch (value) {
-#define ActionArithmetic(op, f)
-#define ActionBranch(op, f) 
-#define ActionCompare(op, f) 
-#define ActionMemory(op, f) MakeCase(op);
-#define ActionArithmetic2(op, f) 
-#include "InstructionFormats.def"
-#undef ActionArithmetic2
-#undef ActionArithmetic 
-#undef ActionBranch 
-#undef ActionCompare 
-#undef ActionMemory
-#undef X
-#undef Y
-#undef MakeCase
-                        default: throw "Bad kind!";
-                    }
-
-                } else {
-                    throw "Bad kind!";
-                }
-            }, k.getOperation().value());
-        }
         RegisterBank _regs;
         CodeMemoryBank _code;
         DataMemoryBank _data;
