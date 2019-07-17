@@ -73,11 +73,11 @@ Core::invoke(const iris::ArithmeticErrorFormat&) {
 
 void
 Core::invoke(const iris::ArithmeticHalveFormat& s) {
-    unpackDestination(s.getFirst()).put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() / 2);
+    setRegister(s.getFirst(), getRegisterValue(s.getSecond()) / 2);
 }
 void
 Core::invoke(const iris::ArithmeticDoubleFormat & s) {
-    unpackDestination(s.getFirst()).put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() * 2);
+    setRegister(s.getFirst(), getRegisterValue(s.getSecond()) * 2);
 }
 void
 Core::invoke(const iris::ArithmeticIncrementFormat& s) {
@@ -86,6 +86,42 @@ Core::invoke(const iris::ArithmeticIncrementFormat& s) {
     } else {
         dest.put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() + 1);
     }
+}
+void
+Core::invoke(const iris::ArithmeticDecrementFormat& s) {
+    if (DestinationRegister dest = unpackDestination(s.getFirst()); s.getFirst() == s.getSecond()) {
+        --dest;
+    } else {
+        dest.put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() - 1);
+    }
+}
+void
+Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
+    setRegister(s.getFirst(), getRegisterValue(s.getSecond()));
+}
+void
+Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
+    auto dest, src = unpackDestination(s.getFirst()),
+                     unpackDestination(s.getSecond());
+    auto destValue = dest.get();
+    dest.put(src.get());
+    src.put(destValue);
+}
+
+void
+Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
+    setRegister(s.getFirst(), s.getSecond());
+}
+
+void
+Core::invoke(const iris::MemoryCodeLoadFormat& s) {
+    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
+    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
+}
+void
+Core::invoke(const iris::MemoryCodeStoreFormat& s) {
+    // CodeStore AddressRegister <= LowerRegister, UpperRegister
+    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
 }
 
 } // end namespace iris

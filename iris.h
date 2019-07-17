@@ -727,7 +727,15 @@ class Core {
 #undef X
     private:
         DestinationRegister unpackDestination(RegisterIndex idx) noexcept;
-        SourceRegister unpackSourceRegister(RegisterIndex idx) noexcept;
+        SourceRegister unpackSourceRegister(RegisterIndex idx) const noexcept;
+        template<typename T>
+        void setRegister(RegisterIndex idx, T value) noexcept {
+            unpackDestination(idx).put(value);
+        }
+        template<typename T = Word>
+        T getRegisterValue(RegisterIndex idx) const noexcept {
+            return unpackSourceRegister(idx).get<T>();
+        }
         void invoke(DoubleWord bits);
         RegisterBank _regs;
         CodeMemoryBank _code;
