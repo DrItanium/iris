@@ -66,4 +66,26 @@ Core::invoke(DoubleWord ibits) {
     }
 }
 
+void
+Core::invoke(const iris::ArithmeticErrorFormat&) {
+    throw "Error instruction!";
+}
+
+void
+Core::invoke(const iris::ArithmeticHalveFormat& s) {
+    unpackDestination(s.getFirst()).put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() / 2);
+}
+void
+Core::invoke(const iris::ArithmeticDoubleFormat & s) {
+    unpackDestination(s.getFirst()).put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() * 2);
+}
+void
+Core::invoke(const iris::ArithmeticIncrementFormat& s) {
+    if (DestinationRegister dest = unpackDestination(s.getFirst()); s.getFirst() == s.getSecond()) {
+        ++dest;
+    } else {
+        dest.put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() + 1);
+    }
+}
+
 } // end namespace iris

@@ -726,6 +726,8 @@ class Core {
 #include "InstructionFormats.def"
 #undef X
     private:
+        DestinationRegister unpackDestination(RegisterIndex idx) noexcept;
+        SourceRegister unpackSourceRegister(RegisterIndex idx) noexcept;
         void invoke(DoubleWord bits);
         RegisterBank _regs;
         CodeMemoryBank _code;
