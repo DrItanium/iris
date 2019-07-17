@@ -689,6 +689,7 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
 #undef ActionMemory
 #undef X
 #undef Y
+#undef MakeCase
                     default:
                         return std::nullopt;
                 }
@@ -699,8 +700,9 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     } else {
         return std::nullopt;
     }
-
 }
+
+
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
