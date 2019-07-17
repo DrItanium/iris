@@ -34,6 +34,8 @@
 #include <tuple>
 #include <cstddef>
 #include <string>
+#define CAT(a, b) PRIMITIVE_CAT(a, b)
+#define PRIMITIVE_CAT(a, b) a ## b
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -601,8 +603,6 @@ using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::Arg
 
 
 
-#define CAT(a, b) PRIMITIVE_CAT(a, b)
-#define PRIMITIVE_CAT(a, b) a ## b
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
     if (auto op = inst.decodeOperation(); op) {
     return std::visit([&inst](auto&& value) -> std::optional<DecodedInstruction> {
@@ -793,20 +793,32 @@ DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 
 class Core {
     public:
+        template<auto value>
+        using TagDispatchKind = std::integral_constant<decltype(value), value>;
     private:
+        // use tag dispatch to call the right routines
 #define X(group, oper, fmt) \
-        void op ## oper (const fmt ## Format &);
+        void invoke(const fmt ## Format&, TagDispatchKind< GroupToOperationKind<Group:: group>:: oper>);
 #include "InstructionFormats.def"
 #undef X
     private:
         void invoke(DoubleWord bits);
-#define X(group) \
-        void invoke(const DecodedInstruction&, const GroupToOperationKind<Group:: group>&)
-        X(Arithmetic);
-        X(Memory);
-        X(Arithmetic2);
-        X(Branch);
-        X(Compare);
+#define X(kind) \
+        void invoke(const kind& k)
+            X(ThreeRegisterFormat);
+            X(TwoRegisterU8Format);
+            X(TwoRegisterS8Format);
+            X(TwoRegisterFormat);
+            X(OneRegisterU16Format);
+            X(OneRegisterS16Format);
+            X(OneRegisterU8Format);
+            X(OneRegisterS8Format);
+            X(OneRegisterFormat);
+            X(U16Format);
+            X(S16Format);
+            X(U8Format);
+            X(S8Format);
+            X(ZeroArgumentFormat);
 #undef X
         RegisterBank _regs;
         CodeMemoryBank _code;
