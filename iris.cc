@@ -53,7 +53,7 @@ void
 Core::invoke(DoubleWord ibits) {
     Instruction inst(ibits);
     if (auto operation = decodeInstruction(inst); operation) {
-        std::visit([this](auto&& op) { invoke(op); });
+        std::visit([this](auto&& op) { invoke<std::decay_t<decltype(op)>>(op); }, operation.value());
     } else {
         throw "Bad operation!";
     }

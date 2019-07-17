@@ -810,7 +810,7 @@ class Core {
                 using K = std::decay_t<decltype(value)>;
 #define MakeCase(op) case K :: op : { \
                     if constexpr (std::is_same_v<InstructionArgumentFormat<K :: op>, \
-                            std::decay_t<Fmt>) { \
+                            std::decay_t<Fmt>>) { \
                         invoke(k, TagDispatchKind<K :: op>{}); \
                     } else { \
                         throw "Bad Instruction Invoke!"; \
@@ -901,8 +901,7 @@ class Core {
                 } else {
                     throw "Bad kind!";
                 }
-
-                    }, k.getOperation());
+            }, k.getOperation().value());
         }
         RegisterBank _regs;
         CodeMemoryBank _code;
