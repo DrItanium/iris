@@ -565,12 +565,38 @@ using U8Format = OneArgumentFormat<Byte, group, op>;
 template<Group group, OperationKind<group> op>
 using S8Format = OneArgumentFormat<SignedByte, group, op>;
 
+template<auto value>
+struct OperationToFormat final {
+    OperationToFormat() = delete;
+    ~OperationToFormat() = delete;
+    OperationToFormat(const OperationToFormat&) = delete;
+    OperationToFormat(OperationToFormat&&) = delete;
+    OperationToFormat& operator=(const OperationToFormat&) = delete;
+    OperationToFormat& operator=(OperationToFormat&&) = delete;
+    using Type = std::monostate;
+};
+template<auto value>
+using OperationToFormat_t = typename OperationToFormat<value>::Type;
+
+template<auto value>
+constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::monostate>;
+
 // define the actual instruction kinds
 #define X(g, o, f) \
     struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
         using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
         using Parent::Parent; \
-    };
+    }; \
+    template<> \
+struct OperationToFormat < OperationKind<Group:: g>:: o> final { \
+    OperationToFormat() = delete; \
+    ~OperationToFormat() = delete; \
+    OperationToFormat(const OperationToFormat&) = delete; \
+    OperationToFormat(OperationToFormat&&) = delete; \
+    OperationToFormat& operator=(const OperationToFormat&) = delete; \
+    OperationToFormat& operator=(OperationToFormat&&) = delete; \
+    using Type = g ## o ## Format ; \
+};
 #include "InstructionFormats.def"
 #undef X
 
@@ -609,13 +635,6 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
 
 template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
-
-#define X(g, o, f) \
-    static_assert(std::is_same_v<InstructionArgumentFormat<OperationKind<Group:: g>::o>, f ## Format>, "Sanity check failed on format mismatch");
-#include "InstructionFormats.def"
-#undef X
-
-
 
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
     if (auto op = inst.decodeOperation(); op) {
