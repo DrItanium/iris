@@ -100,12 +100,10 @@ Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
     setRegister(s.getFirst(), getRegisterValue(s.getSecond()));
 }
 void
-Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
-    auto dest, src = unpackDestination(s.getFirst()),
-                     unpackDestination(s.getSecond());
-    auto destValue = dest.get();
-    dest.put(src.get());
-    src.put(destValue);
+Core::invoke(const iris::MemorySwapRegistersFormat& s) {
+    auto firstValue = getRegisterValue<Word>(s.getFirst());
+    setRegister(s.getFirst(), getRegisterValue(s.getSecond()));
+    setRegister(s.getSecond(), firstValue);
 }
 
 void
