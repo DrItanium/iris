@@ -344,8 +344,6 @@ using OperationKinds = std::variant<
     OperationKind<Group::Branch>,
     OperationKind<Group::Compare>,
     OperationKind<Group::Arithmetic2>>;
-using Operation = std::optional<OperationKinds>;
-
 
 template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
@@ -363,27 +361,6 @@ constexpr Group decodeGroup(Byte raw) noexcept {
 constexpr Byte decodeOperationIndex(Byte raw ) noexcept {
     return (raw & 0xF8) >> 3;
 }
-constexpr Operation decodeOperation(Byte raw) noexcept {
-    switch (decodeGroup(raw)) {
-#define X(k) case Group:: k : return static_cast<OperationKind<Group:: k>>(decodeOperationIndex(raw))
-                X(Arithmetic);
-                X(Memory);
-                X(Branch);
-                X(Compare);
-                X(Arithmetic2);
-#undef X
-        default:
-            return std::nullopt;
-    }
-}
-
-
-template<Group g, OperationKind<g> op>
-constexpr GroupToOpcodePair<g> MakeDecodedOpcode = std::make_tuple(g, op);
-
-template<Byte raw>
-constexpr auto DecodedOpcode = MakeDecodedOpcode<decodeGroup(raw), decodeOperation(raw)>;
-
 
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 /**
@@ -430,8 +407,6 @@ struct Instruction {
             }
         }
     public:
-        using OptionalDecodedOperation = std::optional<Operation>;
-    public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
         constexpr Byte getLowestQuarter() const noexcept { return _bits & 0xFF; }
@@ -443,8 +418,6 @@ struct Instruction {
         constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
         constexpr Byte getGroupIndex() const noexcept { return iris::decodeGroupIndex(getOpcodeIndex()); }
         constexpr Byte getOperationIndex() const noexcept { return iris::decodeOperationIndex(getOpcodeIndex()); }
-        constexpr Group decodeGroup() const noexcept { return iris::decodeGroup(getOpcodeIndex()); }
-        constexpr Operation decodeOperation() const noexcept { return iris::decodeOperation(getOpcodeIndex()); }
     private:
         template<typename T>
         constexpr T innerGetIndex(Byte onDefault) const noexcept {
@@ -583,19 +556,19 @@ constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::
 
 // define the actual instruction kinds
 #define X(g, o, f) \
-    struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
-        using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
+    struct g ## o  final : public f  < Group:: g , OperationKind<Group:: g>:: o > { \
+        using Parent = f  < Group:: g , OperationKind<Group:: g>:: o >; \
         using Parent::Parent; \
     }; \
     template<> \
-struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
+struct OperationToFormat < g ## o  :: EncodedOpcode > final { \
     OperationToFormat() = delete; \
     ~OperationToFormat() = delete; \
     OperationToFormat(const OperationToFormat&) = delete; \
     OperationToFormat(OperationToFormat&&) = delete; \
     OperationToFormat& operator=(const OperationToFormat&) = delete; \
     OperationToFormat& operator=(OperationToFormat&&) = delete; \
-    using Type = g ## o ## Format ; \
+    using Type = g ## o  ; \
 };
 #include "InstructionFormats.def"
 #undef X
@@ -603,7 +576,7 @@ struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
 
 using DecodedInstruction = std::variant<
             std::monostate
-#define X(g, o, f) , g ## o ## Format 
+#define X(g, o, f) , g ## o  
 #include "InstructionFormats.def"
 #undef X
             >;
@@ -624,7 +597,7 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
     template<> \
     struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
     public BindConstantToType<OperationKind<Group:: g>:: o> { \
-            using ArgumentFormat = g ## o ## Format; \
+            using ArgumentFormat = g ## o ; \
             static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
                 return ArgumentFormat(inst); \
             } \
@@ -646,6 +619,16 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
             return std::nullopt;
     }
 }
+
+#define X(g, o, f) \
+    static_assert(std::is_same_v< \
+            OperationToFormat_t< \
+            iris::EncodedOpcode<Group:: g, \
+            OperationKind<Group:: g > :: o >>, \
+            g ## o  >, "Define mismatch error!");
+#include "InstructionFormats.def"
+#undef X
+
 
 
 
@@ -739,7 +722,7 @@ class Core {
     private:
         // use tag dispatch to call the right routines
 #define X(group, oper, fmt) \
-        void invoke(const group ## oper ## Format &);
+        void invoke(const group ## oper  &);
 #include "InstructionFormats.def"
 #undef X
     private:
