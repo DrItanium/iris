@@ -53,7 +53,14 @@ void
 Core::invoke(DoubleWord ibits) {
     Instruction inst(ibits);
     if (auto operation = decodeInstruction(inst); operation) {
-        std::visit([this](auto&& op) { invoke(op); }, *operation);
+        std::visit([this](auto&& op) { 
+                    using K = std::decay_t<decltype(op)>;
+                    if constexpr (std::is_same_v<std::monostate, K>) {
+                        throw "Unimplemented operation found!";
+                    } else {
+                        invoke(op);
+                    }
+                }, *operation);
     } else {
         throw "Bad operation!";
     }

@@ -490,7 +490,7 @@ template<Group group, OperationKind<group> op>
 class ArgumentFormat {
     public:
         static constexpr auto EncodedOpcode = iris::EncodedOpcode<group, op>;
-        explicit constexpr ArgumentFormat(const Instruction&) = default;
+        explicit constexpr ArgumentFormat(const Instruction&) { };
         constexpr auto getGroup() const noexcept { return group; }
         constexpr auto getOperation() const noexcept { return op; }
 
@@ -532,7 +532,7 @@ class OneArgumentFormat : public ArgumentFormat<group, op> {
         T _first;
 };
 template<Group group, OperationKind<group> op>
-class ZeroArgumentFormat final : public ArgumentFormat<group, op> { 
+class ZeroArgumentFormat : public ArgumentFormat<group, op> { 
     public:
         using Parent = ArgumentFormat<group, op>;
         using Parent::Parent;
@@ -565,7 +565,7 @@ using U8Format = OneArgumentFormat<Byte, group, op>;
 template<Group group, OperationKind<group> op>
 using S8Format = OneArgumentFormat<SignedByte, group, op>;
 
-template<auto value>
+template<Byte value>
 struct OperationToFormat final {
     OperationToFormat() = delete;
     ~OperationToFormat() = delete;
@@ -575,10 +575,10 @@ struct OperationToFormat final {
     OperationToFormat& operator=(OperationToFormat&&) = delete;
     using Type = std::monostate;
 };
-template<auto value>
+template<Byte value>
 using OperationToFormat_t = typename OperationToFormat<value>::Type;
 
-template<auto value>
+template<Byte value>
 constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::monostate>;
 
 // define the actual instruction kinds
@@ -588,7 +588,7 @@ constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::
         using Parent::Parent; \
     }; \
     template<> \
-struct OperationToFormat < OperationKind<Group:: g>:: o> final { \
+struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
     OperationToFormat() = delete; \
     ~OperationToFormat() = delete; \
     OperationToFormat(const OperationToFormat&) = delete; \
@@ -602,7 +602,7 @@ struct OperationToFormat < OperationKind<Group:: g>:: o> final { \
 
 
 using DecodedInstruction = std::variant<
-            std::monostate,
+            std::monostate
 #define X(g, o, f) , g ## o ## Format 
 #include "InstructionFormats.def"
 #undef X
@@ -616,7 +616,6 @@ constexpr auto getArgumentCount(T) noexcept {
     return ArgumentCount<T>;
 }
 
-static_assert(ArgumentCount<S8Format> == 1, "ArgumentCount sanity check failed!");
 template<auto value>
 struct OperationToArgumentFormat : public BindConstantToType<value> { 
     static_assert(std::is_enum_v<decltype(value)>, "Incoming value must be an enum type!");
@@ -625,7 +624,7 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
     template<> \
     struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
     public BindConstantToType<OperationKind<Group:: g>:: o> { \
-            using ArgumentFormat = f ## Format ; \
+            using ArgumentFormat = g ## o ## Format; \
             static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
                 return ArgumentFormat(inst); \
             } \
