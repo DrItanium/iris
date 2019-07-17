@@ -593,15 +593,108 @@ template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<OperationKindToGroup<value>>::ArgumentFormat;
 
 
-#if 0
 constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept {
     if (auto op = inst.decodeOperation(); op) {
     std::visit([](auto&& value) {
                 using K = std::decay_t<decltype(value)>;
+#define MakeCase(op) case K :: op : return InstructionArgumentFormat<K>(inst)
                 if constexpr (std::is_same_v<K, ArithmeticKind>) {
-                    
+                switch (value) {
+#define Arithmetic2(op, f)
+#define Branch(op, f)
+#define Compare(op, f)
+#define Memory(op, f)
+#define Arithmetic(op, f) MakeCase(op);
+#define X(g, op, f) \
+                g (op, f)
+#include "InstructionFormats.def"
+#undef X
+#undef Arithmetic2
+#undef Arithmetic 
+#undef Branch 
+#undef Compare 
+#undef Memory 
+                    default:
+                        throw "Unimplemented format!";
+                }
                 } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
-                    
+                switch (value) {
+#define Arithmetic(op, f)
+#define Branch(op, f)
+#define Compare(op, f)
+#define Memory(op, f)
+#define Arithmetic2(op, f) MakeCase(op);
+#define X(g, op, f) \
+                g (op, f)
+#include "InstructionFormats.def"
+#undef X
+#undef Arithmetic2
+#undef Arithmetic 
+#undef Branch 
+#undef Compare 
+#undef Memory
+                    default:
+                        throw "Unimplemented format!";
+                }
+                } else if constexpr (std::is_same_v<K, BranchKind>) {
+                switch (value) {
+#define Arithmetic(op, f)
+#define Branch(op, f) MakeCase(op);
+#define Compare(op, f)
+#define Memory(op, f)
+#define Arithmetic2(op, f) 
+#define X(g, op, f) \
+                g (op, f)
+#include "InstructionFormats.def"
+#undef X
+#undef Arithmetic2
+#undef Arithmetic 
+#undef Branch 
+#undef Compare 
+#undef Memory
+                    default:
+                        throw "Unimplemented format!";
+                }
+                } else if constexpr (std::is_same_v<K, CompareKind>) {
+                switch (value) {
+#define Arithmetic(op, f)
+#define Branch(op, f) 
+#define Compare(op, f) MakeCase(op);
+#define Memory(op, f)
+#define Arithmetic2(op, f) 
+#define X(g, op, f) \
+                g (op, f)
+#include "InstructionFormats.def"
+#undef X
+#undef Arithmetic2
+#undef Arithmetic 
+#undef Branch 
+#undef Compare 
+#undef Memory
+                    default:
+                        throw "Unimplemented format!";
+                }
+                } else if constexpr (std::is_same_v<K, MemoryKind>) {
+                switch (value) {
+#define Arithmetic(op, f)
+#define Branch(op, f) 
+#define Compare(op, f) 
+#define Memory(op, f) MakeCase(op);
+#define Arithmetic2(op, f) 
+#define X(g, op, f) \
+                g (op, f)
+#include "InstructionFormats.def"
+#undef X
+#undef Arithmetic2
+#undef Arithmetic 
+#undef Branch 
+#undef Compare 
+#undef Memory
+                    default:
+                        throw "Unimplemented format!";
+                }
+                } else {
+                    static_assert(false_v<K>, "Unimplemented type!");
                 }
             }, *op);
     } else {
@@ -609,7 +702,6 @@ constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept
     }
 
 }
-#endif
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
