@@ -4,12 +4,12 @@
  */
 
 /// Format is: Group, Operation, ArgumentFormat
-#define Arithmetic(Operation, Format) X(Arithmetic, Operation, Format)
-#define ArithmeticSigned(Operation, Format) Arithmetic(Operation ## Signed, Format)
-#define ArithmeticUnsigned(Operation, Format) Arithmetic(Operation ## Unsigned, Format)
-#define ArithmeticSignedUnsigned(Operation, Format) \
-    ArithmeticSigned(Operation, Format) \
-    ArithmeticUnsigned(Operation, Format)
+#define Arithmetic(op, Format) X(Arithmetic, op, Format)
+#define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
+#define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
+#define ArithmeticSignedUnsigned(op, Format) \
+    ArithmeticSigned(op, Format) \
+    ArithmeticUnsigned(op, Format)
 
     Arithmetic(Error, ZeroArgument)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
@@ -37,13 +37,12 @@
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
 
-#define Arithmetic2(Operation, Format) X(Arithmetic2, Operation, Format)
-#define Arithmetic2SignedImmediate(Operation) Arithmetic2(Operation ## SignedImmediate, TwoRegisterS8)
-#define Arithmetic2UnsignedImmediate(Operation) Arithmetic2(Operation ## UnsignedImmediate, TwoRegisterU8)
-#define Arithmetic2SignedUnsignedImmediate(Operation) \
-        Arithmetic2SignedImmediate(Operation) \
-
-    Arithmetic2UnsignedImmediate(Operation)
+#define Arithmetic2(op, Format) X(Arithmetic2, op, Format)
+#define Arithmetic2SignedImmediate(op) Arithmetic2(op ## SignedImmediate, TwoRegisterS8)
+#define Arithmetic2UnsignedImmediate(op) Arithmetic2(op ## UnsignedImmediate, TwoRegisterU8)
+#define Arithmetic2SignedUnsignedImmediate(op) \
+        Arithmetic2SignedImmediate(op) \
+        Arithmetic2UnsignedImmediate(op) 
     Arithmetic2SignedImmediate(Add)
     Arithmetic2SignedImmediate(Subtract)
     Arithmetic2SignedImmediate(Multiply)
@@ -51,37 +50,37 @@
     Arithmetic2SignedImmediate(Remainder)
     Arithmetic2SignedImmediate(ShiftLeft)
     Arithmetic2SignedImmediate(ShiftRight)
-    Arithmetic2(BitwiseAndImmediate, TwoRegisterU8);
-    Arithmetic2(BitwiseOrImmediate, TwoRegisterU8);
-    Arithmetic2(BitwiseNotImmediate, OneRegisterU16);
-    Arithmetic2(BitwiseXorImmediate, TwoRegisterU8);
-    Arithmetic2(BitwiseNorImmediate, TwoRegisterU8);
-    Arithmetic2(BitwiseNandImmediate, TwoRegisterU8);
+    Arithmetic2(BitwiseAndImmediate, TwoRegisterU8)
+    Arithmetic2(BitwiseOrImmediate, TwoRegisterU8)
+    Arithmetic2(BitwiseNotImmediate, OneRegisterU16)
+    Arithmetic2(BitwiseXorImmediate, TwoRegisterU8)
+    Arithmetic2(BitwiseNorImmediate, TwoRegisterU8)
+    Arithmetic2(BitwiseNandImmediate, TwoRegisterU8)
 #undef Arithmetic2
 #undef Arithmetic2SignedImmediate
 #undef Arithmetic2UnsignedImmediate 
 #undef Arithmetic2SignedUnsignedImmediate
 
 
-#define Memory(Operation, Format) X(Memory, Operation, Format)
+#define Memory(op, Format) X(Memory, op, Format)
 
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
     Memory(AssignRegisterSignedImmediate, OneRegisterS16)
-#define Stack(Operation, Format) Memory(Stack ## Operation, Format)
+#define Stack(op, Format) Memory(Stack ## op, Format)
     Stack(Push, TwoRegister)
     Stack(Pop, TwoRegister)
     Stack(PushImmediateValue, OneRegisterU16)
 #undef Stack
-#define Data(Operation, Format) Memory(Data ## Operation, Format)
+#define Data(op, Format) Memory(Data ## op, Format)
     Data(LoadWithSignedOffset, TwoRegisterS8)
     Data(StoreWithSignedOffset, TwoRegisterS8)
     Data(LoadWithUnsignedOffset, TwoRegisterU8)
     Data(StoreWithUnsignedOffset, TwoRegisterU8)
     Data(StoreImmediateValue, OneRegisterU16)
 #undef Data
-#define Code(Operation) Memory(Code ## Operation, ThreeRegister)
+#define Code(op) Memory(Code ## op, ThreeRegister)
     Code(Load)
     Code(Store)
     Code(LoadAndIncrement)
@@ -90,7 +89,7 @@
     Code(StoreAndDecrement)
 #undef Code
 
-#define IO(Operation, Format) Memory(IO ## Operation, Format)
+#define IO(op, Format) Memory(IO ## op, Format)
     IO(LoadWithSignedOffset, TwoRegisterS8)
     IO(StoreWithSignedOffset, TwoRegisterS8)
     IO(LoadWithUnsignedOffset, TwoRegisterU8)
@@ -99,8 +98,8 @@
 #undef IO
 
 #undef Memory
-#define Branch(Operation, Format) X(Branch, Operation, Format)
-    Branch(Immediate, U16Format)
+#define Branch(op, Format) X(Branch, op, Format)
+    Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(RelativeImmediate, OneRegisterS8)
     Branch(ConditionalRelativeImmediate, TwoRegisterS8)
@@ -111,13 +110,13 @@
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
 #undef Branch
-#define Compare(Operation, Format) X(Compare, Operation, Format)
-#define NormalCompare(Operation) Compare(Operation, ThreeRegister)
-#define NormalSignedCompare(Operation) NormalCompare(Operation ## Signed)
-#define NormalUnsignedCompare(Operation) NormalCompare(Operation ## Unsigned)
-#define NormalSignedUnsignedCompare(Operation) \
-        NormalSignedCompare(Operation) \
-        NormalUnsignedCompare(Operation)
+#define Compare(op, Format) X(Compare, op, Format)
+#define NormalCompare(op) Compare(op, ThreeRegister)
+#define NormalSignedCompare(op) NormalCompare(op ## Signed)
+#define NormalUnsignedCompare(op) NormalCompare(op ## Unsigned)
+#define NormalSignedUnsignedCompare(op) \
+        NormalSignedCompare(op) \
+        NormalUnsignedCompare(op)
     NormalCompare(Equals)
     NormalCompare(NotEquals)
     NormalSignedUnsignedCompare(LessThan)
@@ -129,13 +128,13 @@
 #undef NormalUnsignedCompare 
 #undef NormalCompare
 #undef NormalSignedUnsignedCompare
-#define RawImm8Compare(Operation, Format) Compare(Operation ## Immediate8, Format)
-#define Imm8Compare(Operation) RawImm8Compare(Operation, TwoRegisterU8)
-#define Imm8SignedCompare(Operation) RawImm8Compare(Operation ## Signed , TwoRegisterS8)
-#define Imm8UnsignedCompare(Operation) Imm8Compare(Operation ## Unsigned)
-#define Imm8SignedUnsignedCompare(Operation) \
-        Imm8SignedCompare(Operation) \
-        Imm8UnsignedCompare(Operation)
+#define RawImm8Compare(op, Format) Compare(op ## Immediate8, Format)
+#define Imm8Compare(op) RawImm8Compare(op, TwoRegisterU8)
+#define Imm8SignedCompare(op) RawImm8Compare(op ## Signed , TwoRegisterS8)
+#define Imm8UnsignedCompare(op) Imm8Compare(op ## Unsigned)
+#define Imm8SignedUnsignedCompare(op) \
+        Imm8SignedCompare(op) \
+        Imm8UnsignedCompare(op)
     Imm8Compare(Equals)
     Imm8Compare(NotEquals)
     Imm8SignedUnsignedCompare(LessThan)

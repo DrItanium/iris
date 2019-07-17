@@ -33,6 +33,7 @@
 #include <type_traits>
 #include <tuple>
 #include <cstddef>
+#include <string>
 
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
@@ -48,67 +49,68 @@ using RegisterIndex = std::byte;
 
 class Register final {
     public:
-        explicit constexpr Register(Word value = 0) noexcept : _value(value) { }
+        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
         constexpr Register(const Register& other) noexcept = default;
         constexpr Register(Register&& other) noexcept = default;
         ~Register() = default;
         Register& operator=(const Register& other) noexcept = default;
         Register& operator=(Register&& other) noexcept = default;
         constexpr Register& operator++() noexcept {
-            ++_value;
+            ++_storage._value;
             return *this;
         }
         constexpr Register& operator--() noexcept {
-            --_value;
+            --_storage._value;
             return *this;
         }
-        constexpr bool operator==(const Register& other) const noexcept { return other._value == _value; }
-        constexpr bool operator==(SignedWord other) const noexcept      { return _signedValue == other; }
-        constexpr bool operator==(Word other) const noexcept            { return _value == other; }
-        constexpr bool operator!=(const Register& other) const noexcept { return other._value != _value; }
-        constexpr bool operator!=(SignedWord other) const noexcept      { return other != _signedValue; }
-        constexpr bool operator!=(Word other) const noexcept            { return other != _value; }
-        constexpr bool operator<(const Register& other) const noexcept  { return _value < other._value; }
-        constexpr bool operator<(SignedWord other) const noexcept       { return _signedValue < other; }
-        constexpr bool operator<(Word other) const noexcept             { return _value < other; }
-        constexpr bool operator<=(const Register& other) const noexcept { return _value <= other._value; }
-        constexpr bool operator<=(SignedWord other) const noexcept      { return _signedValue <= other; }
-        constexpr bool operator<=(Word other) const noexcept            { return _value <= other; }
-        constexpr bool operator>(SignedWord other) const noexcept       { return _signedValue > other; }
-        constexpr bool operator>(Word other) const noexcept             { return _value > other; }
-        constexpr bool operator>(const Register& other) const noexcept  { return _value > other._value; }
-        constexpr bool operator>=(SignedWord other) const noexcept      { return _signedValue >= other; }
-        constexpr bool operator>=(Word other) const noexcept            { return _value >= other; }
-        constexpr bool operator>=(const Register& other) const noexcept { return _value >= other._value; }
+        constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
+        constexpr bool operator==(SignedWord other) const noexcept      { return get<SignedWord>() == other; }
+        constexpr bool operator==(Word other) const noexcept            { return get<Word>() == other; }
+        constexpr bool operator!=(const Register& other) const noexcept { return other.get<Word>() != get<Word>(); }
+        constexpr bool operator!=(SignedWord other) const noexcept      { return other != get<SignedWord>(); }
+        constexpr bool operator!=(Word other) const noexcept            { return other != get<Word>(); }
+        constexpr bool operator<(const Register& other) const noexcept  { return get<Word>() < other.get<Word>(); }
+        constexpr bool operator<(SignedWord other) const noexcept       { return get<SignedWord>() < other; }
+        constexpr bool operator<(Word other) const noexcept             { return get<Word>() < other; }
+        constexpr bool operator<=(const Register& other) const noexcept { return get<Word>() <= other.get<Word>(); }
+        constexpr bool operator<=(SignedWord other) const noexcept      { return get<SignedWord>() <= other; }
+        constexpr bool operator<=(Word other) const noexcept            { return get<Word>() <= other; }
+        constexpr bool operator>(SignedWord other) const noexcept       { return get<SignedWord>() > other; }
+        constexpr bool operator>(Word other) const noexcept             { return get<Word>() > other; }
+        constexpr bool operator>(const Register& other) const noexcept  { return get<Word>() > other.get<Word>(); }
+        constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
+        constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
+        constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
         template<typename T>
-        T get() const noexcept {
+        constexpr T get() const noexcept {
             using K = std::decay_t<T>;
             if constexpr (std::is_same_v<K, Word>) {
-                return _value;
+                return _storage._value;
             } else if constexpr (std::is_same_v<K, SignedWord>) {
-                return _signedValue;
+                return _storage._signedValue;
             } else {
                 static_assert(false_v<T>, "Illegal type requested!");
             }
         }
         template<typename T>
-        void put(T value) noexcept {
+        constexpr void put(T value) noexcept {
             using K = std::decay_t<T>;
             if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
-                _value = value;
+                _storage._value = value;
             } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
-                _signedValue = value;
+                _storage._signedValue = value;
             } else {
                 static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
             }
         }
-        explicit constexpr operator Word() const noexcept { return _value; }
-        explicit constexpr operator SignedWord() const noexcept { return _signedValue; }
+        explicit constexpr operator Word() const noexcept { return get<Word>(); }
+        explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
     private:
-        union {
+        union BackingStore {
+            constexpr BackingStore(Word v) : _value(v) { }
             Word _value;
             SignedWord _signedValue;
-        };
+        } _storage;
 };
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
@@ -415,12 +417,12 @@ struct Instruction {
             } else if constexpr (std::is_same_v<T, Byte>) {
                 return result;
             } else if constexpr (std::is_same_v<T, SignedByte>) {
-                union {
-                    Byte value;
-                    SignedByte sgned;
-                } assignable;
-                assignable.value = result;
-                return assignable.sgned;
+                union temporary {
+                    temporary(Byte u) : _u(u) { }
+                    Byte _u;
+                    SignedByte _s;
+                } ;
+                return temporary(result)._s;
             } else {
                 static_assert(false_v<T>, "Illegal type requested!");
             }
@@ -449,12 +451,12 @@ struct Instruction {
             if constexpr (std::is_same_v<T, Word>) {
                 return getImm16();
             } else if constexpr (std::is_same_v<T, SignedWord>) {
-                union {
+                union temporary {
+                    temporary(Word input) : u(input) { }
                     Word u;
                     SignedWord s;
-                } i16;
-                i16.u = getImm16();
-                return i16.s;
+                };
+                return temporary(getImm16()).s;
             } else if constexpr (std::is_same_v<T, Byte> || std::is_same_v<T, SignedByte>) {
                 return convertByteIndex<T>(getImm8());
             } else {
@@ -562,7 +564,8 @@ using DecodedInstruction = std::variant<
             U16Format,
             S16Format,
             U8Format,
-            S8Format>;
+            S8Format,
+            ZeroArgumentFormat>;
 
 template<typename T>
 constexpr auto ArgumentCount = T::ArgumentCount;
@@ -590,115 +593,113 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
 #undef X
 
 template<auto value>
-using InstructionArgumentFormat = typename OperationToArgumentFormat<OperationKindToGroup<value>>::ArgumentFormat;
+using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
 
-
-constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept {
-    if (auto op = inst.decodeOperation(); op) {
-    std::visit([](auto&& value) {
-                using K = std::decay_t<decltype(value)>;
-#define MakeCase(op) case K :: op : return InstructionArgumentFormat<K>(inst)
-                if constexpr (std::is_same_v<K, ArithmeticKind>) {
-                switch (value) {
-#define Arithmetic2(op, f)
-#define Branch(op, f)
-#define Compare(op, f)
-#define Memory(op, f)
-#define Arithmetic(op, f) MakeCase(op);
-#define X(g, op, f) \
-                g (op, f)
+#define X(g, o, f) \
+    static_assert(std::is_same_v<InstructionArgumentFormat<GroupToOperationKind<Group:: g>::o>, f ## Format>, "Sanity check failed on format mismatch");
 #include "InstructionFormats.def"
 #undef X
-#undef Arithmetic2
-#undef Arithmetic 
-#undef Branch 
-#undef Compare 
-#undef Memory 
+
+
+
+#define CAT(a, b) PRIMITIVE_CAT(a, b)
+#define PRIMITIVE_CAT(a, b) a ## b
+constexpr DecodedInstruction decodeInstruction(const Instruction& inst) noexcept {
+    using namespace std::string_literals;
+    if (auto op = inst.decodeOperation(); op) {
+    return std::visit([&inst](auto&& value) -> DecodedInstruction {
+                using K = std::decay_t<decltype(value)>;
+#define MakeCase(op) case K :: op : return InstructionArgumentFormat<K :: op >(inst)
+#define Y(g, op, f) PRIMITIVE_CAT(Action, g)(op, f)
+#define X(g, op, f) Y(g, op, f)
+                if constexpr (std::is_same_v<K, ArithmeticKind>) {
+                switch (value) {
+#define ActionArithmetic2(op, f)
+#define ActionBranch(op, f)
+#define ActionCompare(op, f)
+#define ActionMemory(op, f)
+#define ActionArithmetic(op, f) MakeCase(op);
+#include "InstructionFormats.def"
+#undef ActionArithmetic2
+#undef ActionArithmetic 
+#undef ActionBranch 
+#undef ActionCompare 
+#undef ActionMemory 
                     default:
-                        throw "Unimplemented format!";
+                        return "Unimplemented format!"s;
                 }
                 } else if constexpr (std::is_same_v<K, Arithmetic2Kind>) {
                 switch (value) {
-#define Arithmetic(op, f)
-#define Branch(op, f)
-#define Compare(op, f)
-#define Memory(op, f)
-#define Arithmetic2(op, f) MakeCase(op);
-#define X(g, op, f) \
-                g (op, f)
+#define ActionArithmetic(op, f)
+#define ActionBranch(op, f)
+#define ActionCompare(op, f)
+#define ActionMemory(op, f)
+#define ActionArithmetic2(op, f) MakeCase(op);
 #include "InstructionFormats.def"
-#undef X
-#undef Arithmetic2
-#undef Arithmetic 
-#undef Branch 
-#undef Compare 
-#undef Memory
+#undef ActionArithmetic2
+#undef ActionArithmetic 
+#undef ActionBranch 
+#undef ActionCompare 
+#undef ActionMemory
                     default:
-                        throw "Unimplemented format!";
+                        return "Unimplemented format!"s;
                 }
                 } else if constexpr (std::is_same_v<K, BranchKind>) {
                 switch (value) {
-#define Arithmetic(op, f)
-#define Branch(op, f) MakeCase(op);
-#define Compare(op, f)
-#define Memory(op, f)
-#define Arithmetic2(op, f) 
-#define X(g, op, f) \
-                g (op, f)
+#define ActionArithmetic(op, f)
+#define ActionBranch(op, f) MakeCase(op);
+#define ActionCompare(op, f)
+#define ActionMemory(op, f)
+#define ActionArithmetic2(op, f) 
 #include "InstructionFormats.def"
-#undef X
-#undef Arithmetic2
-#undef Arithmetic 
-#undef Branch 
-#undef Compare 
-#undef Memory
+#undef ActionArithmetic2
+#undef ActionArithmetic 
+#undef ActionBranch 
+#undef ActionCompare 
+#undef ActionMemory
                     default:
-                        throw "Unimplemented format!";
+                        return "Unimplemented format!"s;
                 }
                 } else if constexpr (std::is_same_v<K, CompareKind>) {
                 switch (value) {
-#define Arithmetic(op, f)
-#define Branch(op, f) 
-#define Compare(op, f) MakeCase(op);
-#define Memory(op, f)
-#define Arithmetic2(op, f) 
-#define X(g, op, f) \
-                g (op, f)
+#define ActionArithmetic(op, f)
+#define ActionBranch(op, f) 
+#define ActionCompare(op, f) MakeCase(op);
+#define ActionMemory(op, f)
+#define ActionArithmetic2(op, f) 
 #include "InstructionFormats.def"
-#undef X
-#undef Arithmetic2
-#undef Arithmetic 
-#undef Branch 
-#undef Compare 
-#undef Memory
+#undef ActionArithmetic2
+#undef ActionArithmetic 
+#undef ActionBranch 
+#undef ActionCompare 
+#undef ActionMemory
                     default:
-                        throw "Unimplemented format!";
+                        return "Unimplemented format!"s;
                 }
                 } else if constexpr (std::is_same_v<K, MemoryKind>) {
                 switch (value) {
-#define Arithmetic(op, f)
-#define Branch(op, f) 
-#define Compare(op, f) 
-#define Memory(op, f) MakeCase(op);
-#define Arithmetic2(op, f) 
-#define X(g, op, f) \
-                g (op, f)
+#define ActionArithmetic(op, f)
+#define ActionBranch(op, f) 
+#define ActionCompare(op, f) 
+#define ActionMemory(op, f) MakeCase(op);
+#define ActionArithmetic2(op, f) 
 #include "InstructionFormats.def"
+#undef ActionArithmetic2
+#undef ActionArithmetic 
+#undef ActionBranch 
+#undef ActionCompare 
+#undef ActionMemory
 #undef X
-#undef Arithmetic2
-#undef Arithmetic 
-#undef Branch 
-#undef Compare 
-#undef Memory
+#undef Y
                     default:
-                        throw "Unimplemented format!";
+                        return "Unimplemented format!"s;
                 }
                 } else {
                     static_assert(false_v<K>, "Unimplemented type!");
                 }
             }, *op);
     } else {
-        return "couldn't decode instruction!";
+        return "couldn't decode instruction!"s;
     }
 
 }
