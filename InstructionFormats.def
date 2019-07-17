@@ -5,15 +5,12 @@
 
 /// Format is: Group, Operation, ArgumentFormat
 #define Arithmetic(Operation, Format) X(Arithmetic, Operation, Format)
-#define Arithmetic2(Operation, Format) X(Arithmetic2, Operation, Format)
-#define Memory(Operation, Format) X(Memory, Operation, Format)
-#define Branch(Operation, Format) X(Branch, Operation, Format)
-#define Compare(Operation, Format) X(Compare, Operation, Format)
 #define ArithmeticSigned(Operation, Format) Arithmetic(Operation ## Signed, Format)
 #define ArithmeticUnsigned(Operation, Format) Arithmetic(Operation ## Unsigned, Format)
 #define ArithmeticSignedUnsigned(Operation, Format) \
     ArithmeticSigned(Operation, Format) \
     ArithmeticUnsigned(Operation, Format)
+
 Arithmetic(Error, ZeroArgument)
 ArithmeticSignedUnsigned(Add, ThreeRegister)
 ArithmeticSignedUnsigned(Subtract, ThreeRegister)
@@ -34,11 +31,40 @@ Arithmetic(Increment, TwoRegister)
 Arithmetic(Decrement, TwoRegister)
 Arithmetic(Double, TwoRegister)
 Arithmetic(Halve, TwoRegister)
+
 #undef Arithmetic
 #undef ArithmeticSigned
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
+
+#define Arithmetic2(Operation, Format) X(Arithmetic2, Operation, Format)
+#define Arithmetic2SignedImmediate(Operation) Arithmetic2(Operation ## SignedImmediate, TwoRegisterS8)
+#define Arithmetic2UnsignedImmediate(Operation) Arithmetic2(Operation ## UnsignedImmediate, TwoRegisterU8)
+#define Arithmetic2SignedUnsignedImmediate(Operation) \
+        Arithmetic2SignedImmediate(Operation) \
+        Arithmetic2UnsignedImmediate(Operation)
+Arithmetic2SignedImmediate(Add)
+Arithmetic2SignedImmediate(Subtract)
+Arithmetic2SignedImmediate(Multiply)
+Arithmetic2SignedImmediate(Divide)
+Arithmetic2SignedImmediate(Remainder)
+Arithmetic2SignedImmediate(ShiftLeft)
+Arithmetic2SignedImmediate(ShiftRight)
+Arithmetic2(BitwiseAndImmediate, TwoRegisterU8);
+Arithmetic2(BitwiseOrImmediate, TwoRegisterU8);
+Arithmetic2(BitwiseNotImmediate, OneRegisterU16);
+Arithmetic2(BitwiseXorImmediate, TwoRegisterU8);
+Arithmetic2(BitwiseNorImmediate, TwoRegisterU8);
+Arithmetic2(BitwiseNandImmediate, TwoRegisterU8);
+#undef Arithmetic2
+#undef Arithmetic2SignedImmediate
+#undef Arithmetic2UnsignedImmediate 
+#undef Arithmetic2SignedUnsignedImmediate
+
+
+#define Memory(Operation, Format) X(Memory, Operation, Format)
+#define Branch(Operation, Format) X(Branch, Operation, Format)
+#define Compare(Operation, Format) X(Compare, Operation, Format)
 #undef Compare
 #undef Branch
 #undef Memory
-#undef Arithmetic2
