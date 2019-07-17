@@ -556,19 +556,19 @@ constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::
 
 // define the actual instruction kinds
 #define X(g, o, f) \
-    struct g ## o  final : public f  < Group:: g , OperationKind<Group:: g>:: o > { \
-        using Parent = f  < Group:: g , OperationKind<Group:: g>:: o >; \
+    struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
+        using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
         using Parent::Parent; \
     }; \
     template<> \
-struct OperationToFormat < g ## o  :: EncodedOpcode > final { \
+struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
     OperationToFormat() = delete; \
     ~OperationToFormat() = delete; \
     OperationToFormat(const OperationToFormat&) = delete; \
     OperationToFormat(OperationToFormat&&) = delete; \
     OperationToFormat& operator=(const OperationToFormat&) = delete; \
     OperationToFormat& operator=(OperationToFormat&&) = delete; \
-    using Type = g ## o  ; \
+    using Type = g ## o ## Format ; \
 };
 #include "InstructionFormats.def"
 #undef X
@@ -576,7 +576,7 @@ struct OperationToFormat < g ## o  :: EncodedOpcode > final { \
 
 using DecodedInstruction = std::variant<
             std::monostate
-#define X(g, o, f) , g ## o  
+#define X(g, o, f) , g ## o ## Format 
 #include "InstructionFormats.def"
 #undef X
             >;
@@ -597,7 +597,7 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
     template<> \
     struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
     public BindConstantToType<OperationKind<Group:: g>:: o> { \
-            using ArgumentFormat = g ## o ; \
+            using ArgumentFormat = g ## o ## Format; \
             static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
                 return ArgumentFormat(inst); \
             } \
@@ -625,7 +625,7 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
             OperationToFormat_t< \
             iris::EncodedOpcode<Group:: g, \
             OperationKind<Group:: g > :: o >>, \
-            g ## o  >, "Define mismatch error!");
+            g ## o ## Format >, "Define mismatch error!");
 #include "InstructionFormats.def"
 #undef X
 
@@ -722,7 +722,7 @@ class Core {
     private:
         // use tag dispatch to call the right routines
 #define X(group, oper, fmt) \
-        void invoke(const group ## oper  &);
+        void invoke(const group ## oper ## Format &);
 #include "InstructionFormats.def"
 #undef X
     private:
