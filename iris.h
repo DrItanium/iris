@@ -36,7 +36,13 @@
 #include <string>
 #define CAT(a, b) PRIMITIVE_CAT(a, b)
 #define PRIMITIVE_CAT(a, b) a ## b
-
+#define NO_INSTANTIATE(kind) \
+    kind () = delete; \
+    ~ kind () = delete; \
+    kind ( const kind & ) = delete; \
+    kind ( kind && ) = delete; \
+    kind& operator=(const kind &) = delete; \
+    kind& operator=( kind &&) = delete;
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
 template<typename...>
@@ -50,15 +56,8 @@ using SignedByte = int8_t;
 using RegisterIndex = std::byte;
 template<auto value>
 struct BindConstantToType : std::integral_constant<decltype(value), value> {
-    public:
-        BindConstantToType() = delete;
-        ~BindConstantToType() = delete;
-        BindConstantToType(const BindConstantToType&) = delete;
-        BindConstantToType(BindConstantToType&&) = delete;
-        BindConstantToType& operator=(const BindConstantToType&) = delete;
-        BindConstantToType& operator=(BindConstantToType&&) = delete;
+        NO_INSTANTIATE(BindConstantToType);
 };
-
 
 // enumeration defines
 #define BeginGroups enum class Group : Byte {
@@ -91,12 +90,7 @@ template<Group group>
 struct BindOperationKind : BindConstantToType<group> { };
 template<typename T>
 struct BindOperationToGroupKind { 
-        BindOperationToGroupKind() = delete;
-        ~BindOperationToGroupKind() = delete;
-        BindOperationToGroupKind(const BindOperationToGroupKind&) = delete;
-        BindOperationToGroupKind(BindOperationToGroupKind&&) = delete;
-        BindOperationToGroupKind& operator=(const BindOperationToGroupKind&) = delete;
-        BindOperationToGroupKind& operator=(BindOperationToGroupKind&&) = delete;
+    NO_INSTANTIATE(BindOperationToGroupKind);
 };
 
 #define BeginKind(_)
@@ -327,12 +321,7 @@ using S8Format = OneArgumentFormat<SignedByte, group, op>;
 
 template<Byte value>
 struct OperationToFormat final {
-    OperationToFormat() = delete;
-    ~OperationToFormat() = delete;
-    OperationToFormat(const OperationToFormat&) = delete;
-    OperationToFormat(OperationToFormat&&) = delete;
-    OperationToFormat& operator=(const OperationToFormat&) = delete;
-    OperationToFormat& operator=(OperationToFormat&&) = delete;
+    NO_INSTANTIATE(OperationToFormat); 
     using Type = std::monostate;
 };
 template<Byte value>
@@ -354,12 +343,7 @@ constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::
     }; \
     template<> \
 struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
-    OperationToFormat() = delete; \
-    ~OperationToFormat() = delete; \
-    OperationToFormat(const OperationToFormat&) = delete; \
-    OperationToFormat(OperationToFormat&&) = delete; \
-    OperationToFormat& operator=(const OperationToFormat&) = delete; \
-    OperationToFormat& operator=(OperationToFormat&&) = delete; \
+    NO_INSTANTIATE(OperationToFormat); \
     using Type = g ## o ## Format ; \
 }; \
     static_assert(std::is_same_v< \
@@ -624,6 +608,7 @@ class Core {
 };
 
 } // end namespace iris
+#undef NO_INSTANTIATE
 
 
 #endif // end IRIS_H__
