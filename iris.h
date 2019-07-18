@@ -379,7 +379,12 @@ struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
     OperationToFormat& operator=(const OperationToFormat&) = delete; \
     OperationToFormat& operator=(OperationToFormat&&) = delete; \
     using Type = g ## o ## Format ; \
-};
+}; \
+    static_assert(std::is_same_v< \
+            OperationToFormat_t< \
+            iris::EncodedOpcode<Group:: g, \
+            OperationKind<Group:: g > :: o >>, \
+            g ## o ## Format >, "Define mismatch error!");
 #include "InstructionFormats.def"
 #undef X
 #undef BeginKind
@@ -387,7 +392,6 @@ struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
 #undef BeginGroups
 #undef EndGroups
 #undef Group
-
 
 using DecodedInstruction = std::variant<
             std::monostate
@@ -469,24 +473,6 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     }
 }
 
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
-#define X(g, o, f) \
-    static_assert(std::is_same_v< \
-            OperationToFormat_t< \
-            iris::EncodedOpcode<Group:: g, \
-            OperationKind<Group:: g > :: o >>, \
-            g ## o ## Format >, "Define mismatch error!");
-#include "InstructionFormats.def"
-#undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
 
 
 
