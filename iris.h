@@ -751,7 +751,6 @@ class Core {
         DataMemoryBank _data;
         StackMemoryBank _stack;
         IOMemoryBank _io;
-
 };
 
 } // end namespace iris
