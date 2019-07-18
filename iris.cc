@@ -74,19 +74,19 @@ Core::invoke(const iris::ArithmeticErrorFormat&) {
 void
 Core::invoke(const iris::ArithmeticHalveFormat& s) {
     auto [dest, src] = s.arguments();
-    setRegister(dest, getRegisterValue(src) / 2);
+    setRegisterValue(dest, getRegisterValue(src) / 2);
 }
 void
 Core::invoke(const iris::ArithmeticDoubleFormat & s) {
     auto [dest, src] = s.arguments();
-    setRegister(dest, getRegisterValue(src) * 2);
+    setRegisterValue(dest, getRegisterValue(src) * 2);
 }
 void
 Core::invoke(const iris::ArithmeticIncrementFormat& s) {
     if (auto [dest, src] = s.arguments(); dest == src) {
         incrementRegister(dest);
     } else {
-        setRegister(dest, getRegisterValue(src) + 1);
+        setRegisterValue(dest, getRegisterValue(src) + 1);
     }
 }
 void
@@ -94,26 +94,26 @@ Core::invoke(const iris::ArithmeticDecrementFormat& s) {
     if (auto [dest, src] = s.arguments(); dest == src) {
         decrementRegister(dest);
     } else {
-        setRegister(dest, getRegisterValue(src) - 1);
+        setRegisterValue(dest, getRegisterValue(src) - 1);
     }
 }
 void
 Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
     auto [dest, src] = s.arguments();
-    setRegister(dest, getRegisterValue(src));
+    setRegisterValue(dest, getRegisterValue(src));
 }
 void
 Core::invoke(const iris::MemorySwapRegistersFormat& s) {
     auto [ar, br] = s.arguments();
     auto aValue = getRegisterValue<Word>(ar);
-    setRegister(ar, getRegisterValue(br));
-    setRegister(br, aValue);
+    setRegisterValue(ar, getRegisterValue(br));
+    setRegisterValue(br, aValue);
 }
 
 void
 Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
     auto [dest, imm16] = s.arguments();
-    setRegister(dest, imm16);
+    setRegisterValue(dest, imm16);
 }
 
 void
@@ -172,7 +172,7 @@ Core::invoke(const iris::MemoryStackPushFormat& s) {
     // stack grows downward
     // StackPush StackPointerRegister SourceRegister
     auto [stackPointer, src] = s.arguments();
-    incrementRegister(stackPointer);
+    decrementRegister(stackPointer);
     _stack[getRegisterValue(stackPointer)] = getRegisterValue(src);
 }
 

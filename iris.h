@@ -738,7 +738,7 @@ class Core {
             --unpackDestination(idx);
         }
         template<typename T>
-        void setRegister(RegisterIndex idx, T value) noexcept {
+        void setRegisterValue(RegisterIndex idx, T value) noexcept {
             unpackDestination(idx).put(value);
         }
         template<typename T = Word>
