@@ -4,11 +4,11 @@
  */
 // separate group information
 BeginGroups
-Group(Arithmetic)
-Group(Memory)
-Group(Branch)
-Group(Compare)
-Group(Arithmetic2)
+    Group(Arithmetic)
+    Group(Memory)
+    Group(Branch)
+    Group(Compare)
+    Group(Arithmetic2)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)

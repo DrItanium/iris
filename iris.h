@@ -48,9 +48,19 @@ using SignedDoubleWord = int32_t;
 using Byte = uint8_t;
 using SignedByte = int8_t;
 using RegisterIndex = std::byte;
+template<auto value>
+struct BindConstantToType : std::integral_constant<decltype(value), value> {
+    public:
+        BindConstantToType() = delete;
+        ~BindConstantToType() = delete;
+        BindConstantToType(const BindConstantToType&) = delete;
+        BindConstantToType(BindConstantToType&&) = delete;
+        BindConstantToType& operator=(const BindConstantToType&) = delete;
+        BindConstantToType& operator=(BindConstantToType&&) = delete;
+};
 
 
-
+// enumeration defines
 #define BeginGroups enum class Group : Byte {
 #define EndGroups Count, }; \
     static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
@@ -76,23 +86,7 @@ using RegisterIndex = std::byte;
 #undef BeginGroups
 #undef EndGroups
 #undef Group
-template<typename E>
-constexpr bool isLegal(E kind) noexcept {
-    static_assert(std::is_enum_v<std::decay_t<E>>, "Kind provided must be an enum");
-    using UT = std::underlying_type_t<std::decay_t<E>>;
-    return static_cast<UT>(kind) < static_cast<UT>(E::Count);
-}
 
-template<auto value>
-struct BindConstantToType : std::integral_constant<decltype(value), value> {
-    public:
-        BindConstantToType() = delete;
-        ~BindConstantToType() = delete;
-        BindConstantToType(const BindConstantToType&) = delete;
-        BindConstantToType(BindConstantToType&&) = delete;
-        BindConstantToType& operator=(const BindConstantToType&) = delete;
-        BindConstantToType& operator=(BindConstantToType&&) = delete;
-};
 template<Group group>
 struct BindOperationKind : BindConstantToType<group> { };
 template<typename T>
@@ -135,29 +129,17 @@ constexpr auto OperationKindToGroup = BindOperationToGroupKind<T>::value;
 template<auto value>
 constexpr auto OperationValueToGroup = OperationKindToGroup<decltype(value)>;
 
-template<typename T>
-constexpr auto operationValueToGroup(T) noexcept {
-    return OperationKindToGroup<T>;
-}
-
 static_assert(std::is_same_v<OperationKind<Group::Arithmetic>, ArithmeticKind>, "Group to operation kind sanity check failed");
 static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Reverse type binding check failed!");
 static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
 static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
 
 
-
 template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
 
-template<Group g>
-using GroupToOpcodePair = std::tuple<decltype(g), OperationKind<g>>;
-
 constexpr Byte decodeGroupIndex(Byte raw) noexcept {
     return raw & 0x7;
-}
-constexpr Group decodeGroup(Byte raw) noexcept {
-    return static_cast<Group>(decodeGroupIndex(raw)); 
 }
 
 constexpr Byte decodeOperationIndex(Byte raw ) noexcept {
@@ -443,10 +425,6 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
             return std::nullopt;
     }
 }
-
-
-
-
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
