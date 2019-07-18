@@ -49,73 +49,6 @@ using Byte = uint8_t;
 using SignedByte = int8_t;
 using RegisterIndex = std::byte;
 
-class Register final {
-    public:
-        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
-        constexpr Register(const Register& other) noexcept = default;
-        constexpr Register(Register&& other) noexcept = default;
-        ~Register() = default;
-        Register& operator=(const Register& other) noexcept = default;
-        Register& operator=(Register&& other) noexcept = default;
-        constexpr Register& operator++() noexcept {
-            ++_storage._value;
-            return *this;
-        }
-        constexpr Register& operator--() noexcept {
-            --_storage._value;
-            return *this;
-        }
-        constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
-        constexpr bool operator==(SignedWord other) const noexcept      { return get<SignedWord>() == other; }
-        constexpr bool operator==(Word other) const noexcept            { return get<Word>() == other; }
-        constexpr bool operator!=(const Register& other) const noexcept { return other.get<Word>() != get<Word>(); }
-        constexpr bool operator!=(SignedWord other) const noexcept      { return other != get<SignedWord>(); }
-        constexpr bool operator!=(Word other) const noexcept            { return other != get<Word>(); }
-        constexpr bool operator<(const Register& other) const noexcept  { return get<Word>() < other.get<Word>(); }
-        constexpr bool operator<(SignedWord other) const noexcept       { return get<SignedWord>() < other; }
-        constexpr bool operator<(Word other) const noexcept             { return get<Word>() < other; }
-        constexpr bool operator<=(const Register& other) const noexcept { return get<Word>() <= other.get<Word>(); }
-        constexpr bool operator<=(SignedWord other) const noexcept      { return get<SignedWord>() <= other; }
-        constexpr bool operator<=(Word other) const noexcept            { return get<Word>() <= other; }
-        constexpr bool operator>(SignedWord other) const noexcept       { return get<SignedWord>() > other; }
-        constexpr bool operator>(Word other) const noexcept             { return get<Word>() > other; }
-        constexpr bool operator>(const Register& other) const noexcept  { return get<Word>() > other.get<Word>(); }
-        constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
-        constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
-        constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
-        template<typename T>
-        constexpr T get() const noexcept {
-            using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, Word>) {
-                return _storage._value;
-            } else if constexpr (std::is_same_v<K, SignedWord>) {
-                return _storage._signedValue;
-            } else {
-                static_assert(false_v<T>, "Illegal type requested!");
-            }
-        }
-        template<typename T>
-        constexpr void put(T value) noexcept {
-            using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
-                _storage._value = value;
-            } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
-                _storage._signedValue = value;
-            } else {
-                static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
-            }
-        }
-        explicit constexpr operator Word() const noexcept { return get<Word>(); }
-        explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
-    private:
-        union BackingStore {
-            constexpr BackingStore(Word v) : _value(v) { }
-            Word _value;
-            SignedWord _signedValue;
-        } _storage;
-};
-using DestinationRegister = Register&;
-using SourceRegister = const Register&;
 
 
 #define BeginGroups enum class Group : Byte {
@@ -212,12 +145,7 @@ static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Revers
 static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
 static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
 
-using OperationKinds = std::variant<
-    OperationKind<Group::Arithmetic>,
-    OperationKind<Group::Memory>,
-    OperationKind<Group::Branch>,
-    OperationKind<Group::Compare>,
-    OperationKind<Group::Arithmetic2>>;
+
 
 template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
@@ -565,6 +493,74 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 constexpr auto RegisterCount = (0xFF + 1);
+
+class Register final {
+    public:
+        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
+        constexpr Register(const Register& other) noexcept = default;
+        constexpr Register(Register&& other) noexcept = default;
+        ~Register() = default;
+        Register& operator=(const Register& other) noexcept = default;
+        Register& operator=(Register&& other) noexcept = default;
+        constexpr Register& operator++() noexcept {
+            ++_storage._value;
+            return *this;
+        }
+        constexpr Register& operator--() noexcept {
+            --_storage._value;
+            return *this;
+        }
+        constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
+        constexpr bool operator==(SignedWord other) const noexcept      { return get<SignedWord>() == other; }
+        constexpr bool operator==(Word other) const noexcept            { return get<Word>() == other; }
+        constexpr bool operator!=(const Register& other) const noexcept { return other.get<Word>() != get<Word>(); }
+        constexpr bool operator!=(SignedWord other) const noexcept      { return other != get<SignedWord>(); }
+        constexpr bool operator!=(Word other) const noexcept            { return other != get<Word>(); }
+        constexpr bool operator<(const Register& other) const noexcept  { return get<Word>() < other.get<Word>(); }
+        constexpr bool operator<(SignedWord other) const noexcept       { return get<SignedWord>() < other; }
+        constexpr bool operator<(Word other) const noexcept             { return get<Word>() < other; }
+        constexpr bool operator<=(const Register& other) const noexcept { return get<Word>() <= other.get<Word>(); }
+        constexpr bool operator<=(SignedWord other) const noexcept      { return get<SignedWord>() <= other; }
+        constexpr bool operator<=(Word other) const noexcept            { return get<Word>() <= other; }
+        constexpr bool operator>(SignedWord other) const noexcept       { return get<SignedWord>() > other; }
+        constexpr bool operator>(Word other) const noexcept             { return get<Word>() > other; }
+        constexpr bool operator>(const Register& other) const noexcept  { return get<Word>() > other.get<Word>(); }
+        constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
+        constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
+        constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
+        template<typename T>
+        constexpr T get() const noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, Word>) {
+                return _storage._value;
+            } else if constexpr (std::is_same_v<K, SignedWord>) {
+                return _storage._signedValue;
+            } else {
+                static_assert(false_v<T>, "Illegal type requested!");
+            }
+        }
+        template<typename T>
+        constexpr void put(T value) noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
+                _storage._value = value;
+            } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
+                _storage._signedValue = value;
+            } else {
+                static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
+            }
+        }
+        explicit constexpr operator Word() const noexcept { return get<Word>(); }
+        explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
+    private:
+        union BackingStore {
+            constexpr BackingStore(Word v) : _value(v) { }
+            Word _value;
+            SignedWord _signedValue;
+        } _storage;
+};
+using DestinationRegister = Register&;
+using SourceRegister = const Register&;
 
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
