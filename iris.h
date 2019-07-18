@@ -612,6 +612,10 @@ template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
 
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
+    // Since the opcode is stashed in the first byte we should switch on the 
+    // undecoded byte. The group and kind is still but only at compile time.
+    // This greatly cuts down on code complexity. When optimization is active 
+    // we even get a huge performance boost too :)
     switch (inst.getOpcodeIndex()) {
 #define X(g, o, f) \
         case iris::EncodedOpcode<Group:: g, OperationKind<Group:: g >:: o>: \
