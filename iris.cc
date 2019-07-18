@@ -73,79 +73,116 @@ Core::invoke(const iris::ArithmeticErrorFormat&) {
 
 void
 Core::invoke(const iris::ArithmeticHalveFormat& s) {
-    setRegister(s.getFirst(), getRegisterValue(s.getSecond()) / 2);
+    auto [dest, src] = s.arguments();
+    setRegister(dest, getRegisterValue(src) / 2);
 }
 void
 Core::invoke(const iris::ArithmeticDoubleFormat & s) {
-    setRegister(s.getFirst(), getRegisterValue(s.getSecond()) * 2);
+    auto [dest, src] = s.arguments();
+    setRegister(dest, getRegisterValue(src) * 2);
 }
 void
 Core::invoke(const iris::ArithmeticIncrementFormat& s) {
-    if (DestinationRegister dest = unpackDestination(s.getFirst()); s.getFirst() == s.getSecond()) {
-        ++dest;
+    if (auto [dest, src] = s.arguments(); dest == src) {
+        incrementRegister(dest);
     } else {
-        dest.put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() + 1);
+        setRegister(dest, getRegisterValue(src) + 1);
     }
 }
 void
 Core::invoke(const iris::ArithmeticDecrementFormat& s) {
-    if (DestinationRegister dest = unpackDestination(s.getFirst()); s.getFirst() == s.getSecond()) {
-        --dest;
+    if (auto [dest, src] = s.arguments(); dest == src) {
+        decrementRegister(dest);
     } else {
-        dest.put<Word>(unpackSourceRegister(s.getSecond()).get<Word>() - 1);
+        setRegister(dest, getRegisterValue(src) - 1);
     }
 }
 void
 Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
-    setRegister(s.getFirst(), getRegisterValue(s.getSecond()));
+    auto [dest, src] = s.arguments();
+    setRegister(dest, getRegisterValue(src));
 }
 void
 Core::invoke(const iris::MemorySwapRegistersFormat& s) {
-    auto firstValue = getRegisterValue<Word>(s.getFirst());
-    setRegister(s.getFirst(), getRegisterValue(s.getSecond()));
-    setRegister(s.getSecond(), firstValue);
+    auto [ar, br] = s.arguments();
+    auto aValue = getRegisterValue<Word>(ar);
+    setRegister(ar, getRegisterValue(br));
+    setRegister(br, aValue);
 }
 
 void
 Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
-    setRegister(s.getFirst(), s.getSecond());
+    auto [dest, imm16] = s.arguments();
+    setRegister(dest, imm16);
 }
 
 void
 Core::invoke(const iris::MemoryCodeLoadFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
+    auto [lower, upper, addr] = s.arguments();
+    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
-    decrementRegister(s.getThird());
+    auto [lower, upper, addr] = s.arguments();
+    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
+    decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
-    incrementRegister(s.getThird());
+    auto [lower, upper, addr] = s.arguments();
+    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
+    incrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
+    auto [addr, lower, upper ] = s.arguments();
+    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
 }
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
+    auto [addr, lower, upper ] = s.arguments();
+    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
     decrementRegister(s.getFirst());
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
-    incrementRegister(s.getFirst());
+    auto [addr, lower, upper ] = s.arguments();
+    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
+    incrementRegister(addr);
 }
+
+void
+Core::invoke(const iris::MemoryStackPopFormat& s) {
+    // so stack grows downward
+    // pops grow towards 0xFFFF
+    // StackPop StackPointerRegister DestinationRegister
+    auto [stackPointer, destination] = s.arguments();
+    setRegisterValue(destination, _stack[getRegisterValue(stackPointer)]);
+    incrementRegister(stackPointer);
+}
+void
+Core::invoke(const iris::MemoryStackPushFormat& s) {
+    // stack grows downward
+    // StackPush StackPointerRegister SourceRegister
+    auto [stackPointer, src] = s.arguments();
+    incrementRegister(stackPointer);
+    _stack[getRegisterValue(stackPointer)] = getRegisterValue(src);
+}
+
+void
+Core::invoke(const iris::MemoryStackPushImmediateValueFormat& s) {
+    auto [stackPointer, imm16] = s.arguments();
+    incrementRegister(stackPointer);
+    _stack[getRegisterValue(stackPointer)] = imm16;
+}
+
 
 
 } // end namespace iris

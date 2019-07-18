@@ -477,6 +477,7 @@ class ThreeArgumentsFormat : public ArgumentFormat<group, op> {
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr auto getThird() const noexcept { return _third; }
+        constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
     private:
         RegisterIndex _first;
         RegisterIndex _second;
@@ -490,6 +491,7 @@ class TwoArgumentsFormat : public ArgumentFormat<group, op> {
         explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
+        constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
     private:
         RegisterIndex _first;
         T _second;
@@ -501,6 +503,7 @@ class OneArgumentFormat : public ArgumentFormat<group, op> {
         static constexpr auto ArgumentCount = 1;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
+        constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
     private:
         T _first;
 };
