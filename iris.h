@@ -117,171 +117,39 @@ class Register final {
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
 
-enum class Group : Byte {
-    Arithmetic,
-    Memory,
-    Branch,
-    Compare,
-    Arithmetic2,
-    Count,
-};
-static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
 
+#define BeginGroups enum class Group : Byte {
+#define EndGroups Count, }; \
+    static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
+#define Group(v) v , 
+#define BeginKind(kind) enum class kind ## Kind : Byte { 
+#define EndKind(kind) Count, }; \
+    static_assert(static_cast<Byte>( kind ## Kind :: Count) <= 32, "Too many " #kind " operations defined!");
+#define GenerateArithmetic(o) o,
+#define GenerateArithmetic2(o) o,
+#define GenerateBranch(o) o,
+#define GenerateMemory(o) o,
+#define GenerateCompare(o) o,
+#define X(g, o, f) CAT(Generate, g)(o)
+#include "InstructionFormats.def"
+#undef GenerateArithmetic
+#undef GenerateArithmetic2
+#undef GenerateMemory
+#undef GenerateBranch
+#undef GenerateCompare
+#undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
 template<typename E>
 constexpr bool isLegal(E kind) noexcept {
     static_assert(std::is_enum_v<std::decay_t<E>>, "Kind provided must be an enum");
     using UT = std::underlying_type_t<std::decay_t<E>>;
     return static_cast<UT>(kind) < static_cast<UT>(E::Count);
 }
-enum class ArithmeticKind : Byte {
-    Error, // zero arguments
-    // most of these operations are r8, r8, r8
-    AddSigned,
-    AddUnsigned,
-    SubtractSigned,
-    SubtractUnsigned,
-    MultiplySigned,
-    MultiplyUnsigned,
-    DivideSigned,
-    DivideUnsigned,
-    RemainderSigned,
-    RemainderUnsigned,
-    ShiftLeftSigned,
-    ShiftLeftUnsigned,
-    ShiftRightSigned,
-    ShiftRightUnsigned,
-    BitwiseAnd,
-    BitwiseOr,
-    BitwiseNot, // r8, r8
-    BitwiseXor,
-    BitwiseNor,
-    BitwiseNand,
-    MaxSigned,
-    MaxUnsigned,
-    MinSigned,
-    MinUnsigned,
-    Increment, // r8, r8
-    Decrement, // r8, r8
-    Double, // r8, r8
-    Halve, // r8, r8
-    Count,
-};
-static_assert(static_cast<Byte>(ArithmeticKind::Count) <= 32, "Too many arithmetic operations!");
 
-enum class Arithmetic2Kind : Byte {
-    // r8, r8, i8 (signed or unsigned depends on the instruction)
-    AddSignedImmediate, 
-    AddUnsignedImmediate,
-    SubtractSignedImmediate, 
-    SubtractUnsignedImmediate,
-    MultiplySignedImmediate, 
-    MultiplyUnsignedImmediate,
-    DivideSignedImmediate, 
-    DivideUnsignedImmediate,
-    RemainderSignedImmediate, 
-    RemainderUnsignedImmediate,
-    // shifting greater than or equal to 16 bits will result in zero
-    ShiftLeftSignedImmediate, 
-    ShiftLeftUnsignedImmediate,
-    ShiftRightSignedImmediate, 
-    ShiftRightUnsignedImmediate,
-    BitwiseAndImmediate, 
-    BitwiseOrImmediate,
-    BitwiseNotImmediate, 
-    BitwiseXorImmediate,
-    BitwiseNorImmediate, 
-    BitwiseNandImmediate,
-    Count,
-};
-static_assert(static_cast<Byte>(Arithmetic2Kind::Count) <= 32, "Too many arithmetic 2 operations!");
-enum class MemoryKind : Byte {
-    /**
-     * Copy the contents of a register to another register aka move
-     */
-    CopyRegister,
-    /**
-     * Swap the contents of two registers
-     */
-    SwapRegisters,
-    /**
-     * Assign an immediate value to a register aka load immediate
-     */
-    AssignRegisterImmediate,
-    AssignRegisterSignedImmediate,
-    // stack operations
-    StackPush,
-    StackPop,
-    StackPushImmediateValue,
-    // So when dealing with data operations we have some interesting stuff to think about
-    // - There is always an offset that can either be a register or immediate
-    // - Because it can be register or immediate offset, there will need to be 
-    //   multiple forms of each instruction
-    // - Code modifications do not take offsets into account, however an increment
-    //   can happen automatically as part of the load store operation as well
-    // - Offsets can either be signed or unsigned
-    DataLoadWithSignedOffset, 
-    DataStoreWithSignedOffset, 
-    DataLoadWithUnsignedOffset,
-    DataStoreWithUnsignedOffset,
-    DataStoreImmediateValue, // store an imm16 into the target address
-    CodeLoad,
-    CodeStore,
-    CodeLoadAndIncrement,
-    CodeStoreAndIncrement,
-    CodeLoadAndDecrement,
-    CodeStoreAndDecrement,
-    IOLoadWithSignedOffset,
-    IOStoreWithSignedOffset,
-    IOLoadWithUnsignedOffset,
-    IOStoreWithUnsignedOffset,
-    IOStoreImmediateValue, // store an imm16 into the target address in IO space
-    Count,
-};
-static_assert(static_cast<Byte>(MemoryKind::Count) <= 32, "Too many memory operations!");
-enum class BranchKind : Byte {
-    Immediate,  // imm16
-    ConditionalImmediate, // r8, u16
-    RelativeImmediate, // s8
-    ConditionalRelativeImmediate, // r8, s8
-    Register,  // r8
-    ConditionalRegister, // r8, r8 
-    RegisterAndLink,  // r8, r8
-    ImmediateAndLink, // r8 u16
-    ConditionalRegisterAndLink, // r8, r8, r8
-    Select,   // r8, r8, r8
-    Count,
-};
-static_assert(static_cast<Byte>(BranchKind::Count) <= 32, "Too many branch operations!");
-enum class CompareKind : Byte {
-    // r8 r8 r8
-    Equals, 
-    NotEquals, 
-    LessThanSigned, 
-    LessThanUnsigned,
-    GreaterThanSigned, 
-    GreaterThanUnsigned,
-    LessThanOrEqualToSigned, 
-    LessThanOrEqualToUnsigned,
-    GreaterThanOrEqualToSigned, 
-    GreaterThanOrEqualToUnsigned,
-    SpaceshipSigned,
-    SpaceshipUnsigned,
-    // r8 r8 i8
-    EqualsImmediate8,
-    NotEqualsImmediate8,
-    LessThanSignedImmediate8,
-    LessThanUnsignedImmediate8,
-    GreaterThanSignedImmediate8, 
-    GreaterThanUnsignedImmediate8,
-    LessThanOrEqualToSignedImmediate8, 
-    LessThanOrEqualToUnsignedImmediate8,
-    GreaterThanOrEqualToSignedImmediate8, 
-    GreaterThanOrEqualToUnsignedImmediate8,
-    SpaceshipSignedImmediate8,
-    SpaceshipUnsignedImmediate8,
-    Count,
-};
-static_assert(static_cast<Byte>(CompareKind::Count) <= 32, "Too many branch operations!");
 template<auto value>
 struct BindConstantToType : std::integral_constant<decltype(value), value> {
     public:
@@ -304,21 +172,27 @@ struct BindOperationToGroupKind {
         BindOperationToGroupKind& operator=(BindOperationToGroupKind&&) = delete;
 };
 
+#define BeginKind(_)
+#define EndKind(_)
+#define BeginGroups
+#define EndGroups
 #define OperationKindBinding(g,t) \
     template<> \
     struct BindOperationKind<Group:: g> : BindConstantToType<Group:: g> { \
         using BoundType = t ; \
     }; \
     template<> \
-    struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { }
-#define X(g) OperationKindBinding(g, g ## Kind)
-X(Arithmetic);
-X(Memory);
-X(Branch);
-X(Compare);
-X(Arithmetic2);
+    struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { };
+#define Group(g) OperationKindBinding(g, g ## Kind)
+#define X(g, o, f)
+#include "InstructionFormats.def"
 #undef X
+#undef Group
 #undef OperationKindBinding 
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
     
 
 template<Group group>
@@ -558,6 +432,11 @@ template<Byte value>
 constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::monostate>;
 
 // define the actual instruction kinds
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(g, o, f) \
     struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
         using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
@@ -575,13 +454,28 @@ struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
 };
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
 
 
 using DecodedInstruction = std::variant<
             std::monostate
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(g, o, f) , g ## o ## Format 
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
             >;
 
 template<typename T>
@@ -596,6 +490,11 @@ template<auto value>
 struct OperationToArgumentFormat : public BindConstantToType<value> { 
     static_assert(std::is_enum_v<decltype(value)>, "Incoming value must be an enum type!");
 };
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(g, o, f) \
     template<> \
     struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
@@ -607,6 +506,11 @@ struct OperationToArgumentFormat : public BindConstantToType<value> {
     };
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
 
 template<auto value>
 using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
@@ -617,16 +521,31 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     // This greatly cuts down on code complexity. When optimization is active 
     // we even get a huge performance boost too :)
     switch (inst.getOpcodeIndex()) {
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(g, o, f) \
         case iris::EncodedOpcode<Group:: g, OperationKind<Group:: g >:: o>: \
              return OperationToFormat_t<iris::EncodedOpcode<Group:: g, OperationKind<Group:: g > :: o>>(inst);
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
         default:
             return std::nullopt;
     }
 }
 
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(g, o, f) \
     static_assert(std::is_same_v< \
             OperationToFormat_t< \
@@ -635,6 +554,11 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
             g ## o ## Format >, "Define mismatch error!");
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
 
 
 
@@ -728,10 +652,20 @@ DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
     private:
         // use tag dispatch to call the right routines
+#define BeginGroups
+#define EndGroups
+#define Group(_)
+#define BeginKind(_)
+#define EndKind(_)
 #define X(group, oper, fmt) \
         void invoke(const group ## oper ## Format &);
 #include "InstructionFormats.def"
 #undef X
+#undef BeginKind
+#undef EndKind
+#undef BeginGroups
+#undef EndGroups
+#undef Group
     private:
         DestinationRegister unpackDestination(RegisterIndex idx) noexcept;
         SourceRegister unpackSourceRegister(RegisterIndex idx) const noexcept;
