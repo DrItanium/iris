@@ -728,6 +728,12 @@ class Core {
     private:
         DestinationRegister unpackDestination(RegisterIndex idx) noexcept;
         SourceRegister unpackSourceRegister(RegisterIndex idx) const noexcept;
+        inline void incrementRegister(RegisterIndex idx) noexcept {
+            ++unpackDestination(idx);
+        }
+        inline void decrementRegister(RegisterIndex idx) noexcept {
+            --unpackDestination(idx);
+        }
         template<typename T>
         void setRegister(RegisterIndex idx, T value) noexcept {
             unpackDestination(idx).put(value);

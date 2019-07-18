@@ -117,9 +117,35 @@ Core::invoke(const iris::MemoryCodeLoadFormat& s) {
     makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
 }
 void
+Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
+    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
+    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
+    decrementRegister(s.getThird());
+}
+void
+Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
+    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
+    makePair(_regs, s.getFirst(), s.getSecond()).put(_code[getRegisterValue(s.getThird())]);
+    incrementRegister(s.getThird());
+}
+void
 Core::invoke(const iris::MemoryCodeStoreFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
     _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
 }
+
+void
+Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
+    // CodeStore AddressRegister <= LowerRegister, UpperRegister
+    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
+    decrementRegister(s.getFirst());
+}
+void
+Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
+    // CodeStore AddressRegister <= LowerRegister, UpperRegister
+    _code[getRegisterValue(s.getFirst())] = makePair(_regs, s.getSecond(), s.getThird()).get();
+    incrementRegister(s.getFirst());
+}
+
 
 } // end namespace iris
