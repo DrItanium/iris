@@ -184,5 +184,27 @@ Core::invoke(const iris::MemoryStackPushImmediateValueFormat& s) {
 }
 
 
+void
+Core::invoke(const iris::BranchSelectFormat& s) {
+    // BranchSelect ConditionalRegister TrueAddress FalseAddress
+    auto [ cond, onTrue, onFalse] = s.arguments();
+    _ip.put(getRegisterValue(getRegisterValue(cond) != 0 ? onTrue : onFalse));
+}
+void
+Core::invoke(const iris::BranchImmediateFormat& s) {
+    // BranchImmediate imm16
+    auto [ imm16 ] = s.arguments();
+    _ip.put(imm16);
+}
+void
+Core::invoke(const iris::CompareEqualsFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(src0) == getRegisterValue(src1));
+}
+void
+Core::invoke(const iris::CompareNotEqualsFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(src0) != getRegisterValue(src1));
+}
 
 } // end namespace iris
