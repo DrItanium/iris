@@ -418,35 +418,6 @@ constexpr auto getArgumentCount(T) noexcept {
     return ArgumentCount<T>;
 }
 
-template<auto value>
-struct OperationToArgumentFormat : public BindConstantToType<value> { 
-    static_assert(std::is_enum_v<decltype(value)>, "Incoming value must be an enum type!");
-};
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
-#define X(g, o, f) \
-    template<> \
-    struct OperationToArgumentFormat<OperationKind<Group:: g>:: o> : \
-    public BindConstantToType<OperationKind<Group:: g>:: o> { \
-            using ArgumentFormat = g ## o ## Format; \
-            static constexpr ArgumentFormat make(const Instruction& inst) noexcept { \
-                return ArgumentFormat(inst); \
-            } \
-    };
-#include "InstructionFormats.def"
-#undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
-
-template<auto value>
-using InstructionArgumentFormat = typename OperationToArgumentFormat<value>::ArgumentFormat;
-
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 
     // undecoded byte. The group and kind is still but only at compile time.
