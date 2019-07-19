@@ -468,5 +468,34 @@ Core::invoke(const iris::Arithmetic2MaxImmediate16Format& s) {
     setRegisterValue(dest, std::max(getRegisterValue(dest), imm16));
 }
 
+void
+Core::invoke(const iris::BranchConditionalImmediateFormat& s) {
+    auto [ cond, to ] = s.arguments();
+    if (getRegisterValue(cond) != 0) {
+        _ip.put(to);
+    }
+}
+
+void
+Core::invoke(const iris::BranchRegisterAndLinkFormat& s) {
+    auto [ address, link ] = s.arguments();
+    setRegisterValue(link, _ip.get() + 1);
+    _ip.put(getRegisterValue(address));
+}
+void
+Core::invoke(const iris::BranchImmediateAndLinkFormat& s) {
+    auto [ link, imm16 ] = s.arguments();
+    setRegisterValue(link, _ip.get() + 1);
+    _ip.put(imm16);
+}
+void
+Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
+    auto [ dest, cond, link ] = s.arguments();
+    if (getRegisterValue(cond) != 0) {
+        setRegisterValue(link, _ip.get() + 1);
+        _ip.put(getRegisterValue(dest));
+    }
+}
+
 
 } // end namespace iris
