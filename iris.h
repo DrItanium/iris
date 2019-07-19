@@ -602,6 +602,8 @@ class Core {
         inline void decrementRegister(RegisterIndex idx) noexcept {
             --getDestinationRegister(idx);
         }
+        inline auto getDoubleWord(RegisterIndex lower, RegisterIndex upper) noexcept { return getDoubleRegister(lower, upper).get(); }
+        inline auto getDoubleWord(RegisterIndex lower) noexcept                      { return getDoubleRegister(lower).get(); }
         template<typename T>
         void setRegisterValue(RegisterIndex idx, T value) noexcept {
             getDestinationRegister(idx).put(value);

@@ -74,6 +74,10 @@ SourceRegister
 Core::getSourceRegister(RegisterIndex idx) const noexcept {
     return _regs[static_cast<Byte>(idx)];
 }
+DoubleRegister
+Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) noexcept {
+    return makePair(_regs, lower, upper);
+}
 void
 Core::invoke(const iris::ArithmeticErrorFormat&) {
     throw "Error instruction!";
@@ -128,41 +132,41 @@ void
 Core::invoke(const iris::MemoryCodeLoadFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
     auto [lower, upper, addr] = s.arguments();
-    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
+    getDoubleRegister(lower, upper).put(_code[getRegisterValue(addr)]);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
     auto [lower, upper, addr] = s.arguments();
-    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
+    getDoubleRegister(lower, upper).put(_code[getRegisterValue(addr)]);
     decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
     auto [lower, upper, addr] = s.arguments();
-    makePair(_regs, lower, upper).put(_code[getRegisterValue(addr)]);
+    getDoubleRegister(lower, upper).put(_code[getRegisterValue(addr)]);
     incrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
     auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
+    _code[getRegisterValue(addr)] = getDoubleWord(lower, upper);
 }
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
     auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
+    _code[getRegisterValue(addr)] = getDoubleWord(lower, upper);
     decrementRegister(s.getFirst());
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister, UpperRegister
     auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = makePair(_regs, lower, upper).get();
+    _code[getRegisterValue(addr)] = getDoubleWord(lower, upper);
     incrementRegister(addr);
 }
 
