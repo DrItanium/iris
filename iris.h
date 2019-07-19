@@ -590,21 +590,25 @@ class Core {
 #undef EndGroups
 #undef Group
     private:
-        DestinationRegister unpackDestination(RegisterIndex idx) noexcept;
-        SourceRegister unpackSourceRegister(RegisterIndex idx) const noexcept;
+        DestinationRegister getDestinationRegister(RegisterIndex idx) noexcept;
+        SourceRegister getSourceRegister(RegisterIndex idx) const noexcept;
+        DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
+        inline DoubleRegister getDoubleRegister(RegisterIndex start) noexcept {
+            return getDoubleRegister(start, static_cast<RegisterIndex>( static_cast<Byte>(start) + 1));
+        }
         inline void incrementRegister(RegisterIndex idx) noexcept {
-            ++unpackDestination(idx);
+            ++getDestinationRegister(idx);
         }
         inline void decrementRegister(RegisterIndex idx) noexcept {
-            --unpackDestination(idx);
+            --getDestinationRegister(idx);
         }
         template<typename T>
         void setRegisterValue(RegisterIndex idx, T value) noexcept {
-            unpackDestination(idx).put(value);
+            getDestinationRegister(idx).put(value);
         }
         template<typename T = Word>
         T getRegisterValue(RegisterIndex idx) const noexcept {
-            return unpackSourceRegister(idx).get<T>();
+            return getSourceRegister(idx).get<T>();
         }
         void invoke(DoubleWord bits);
         RegisterBank _regs;

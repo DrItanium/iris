@@ -66,6 +66,14 @@ Core::invoke(DoubleWord ibits) {
     }
 }
 
+DestinationRegister
+Core::getDestinationRegister(RegisterIndex idx) noexcept {
+    return _regs[static_cast<Byte>(idx)];
+}
+SourceRegister
+Core::getSourceRegister(RegisterIndex idx) const noexcept {
+    return _regs[static_cast<Byte>(idx)];
+}
 void
 Core::invoke(const iris::ArithmeticErrorFormat&) {
     throw "Error instruction!";
@@ -199,12 +207,12 @@ Core::invoke(const iris::BranchImmediateFormat& s) {
 void
 Core::invoke(const iris::CompareEqualsFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src0) == getRegisterValue(src1));
+    setRegisterValue(dest, getSourceRegister(src0) == getSourceRegister(src1));
 }
 void
 Core::invoke(const iris::CompareNotEqualsFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src0) != getRegisterValue(src1));
+    setRegisterValue(dest, getSourceRegister(src0) != getSourceRegister(src1));
 }
 
 void
