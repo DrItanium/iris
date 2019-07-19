@@ -207,4 +207,48 @@ Core::invoke(const iris::CompareNotEqualsFormat& s) {
     setRegisterValue(dest, getRegisterValue(src0) != getRegisterValue(src1));
 }
 
+void
+Core::invoke(const iris::CompareLessThanOrEqualToSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) <= getRegisterValue<SignedWord>(src1));
+}
+
+void
+Core::invoke(const iris::CompareLessThanOrEqualToUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) <= getRegisterValue<Word>(src1));
+}
+
+void
+Core::invoke(const iris::CompareLessThanUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) < getRegisterValue<Word>(src1));
+}
+void
+Core::invoke(const iris::CompareLessThanSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) < getRegisterValue<SignedWord>(src1));
+}
+void
+Core::invoke(const iris::CompareGreaterThanOrEqualToSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) >= getRegisterValue<SignedWord>(src1));
+}
+
+void
+Core::invoke(const iris::CompareGreaterThanOrEqualToUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) >= getRegisterValue<Word>(src1));
+}
+void
+Core::invoke(const iris::CompareGreaterThanUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) > getRegisterValue<Word>(src1));
+}
+void
+Core::invoke(const iris::CompareGreaterThanSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) > getRegisterValue<SignedWord>(src1));
+}
+
 } // end namespace iris
