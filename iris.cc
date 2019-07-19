@@ -509,5 +509,34 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
     }
 }
 
+void
+Core::invoke(const iris::MemoryDataLoadWithSignedOffsetFormat& s) {
+    auto [ dest, loc, offset ] = s.arguments();
+    setRegisterValue(dest, _data[static_cast<Word>(getRegisterValue<SignedWord>(loc) + static_cast<SignedWord>(offset))]);
+}
+void
+Core::invoke(const iris::MemoryDataLoadWithUnsignedOffsetFormat& s) {
+    auto [ dest, loc, offset ] = s.arguments();
+    setRegisterValue(dest, _data[getRegisterValue<Word>(loc) + static_cast<Word>(offset)]);
+}
+void
+Core::invoke(const iris::MemoryDataStoreImmediateValueFormat& s) {
+    auto [ addr, imm16 ] = s.arguments();
+    _data[getRegisterValue(addr)] = imm16;
+}
+
+void
+Core::invoke(const iris::MemoryDataStoreWithSignedOffsetFormat& s) {
+    auto [ dest, value, offset ] = s.arguments();
+    auto address = static_cast<Word>(getRegisterValue<SignedWord>(dest) + static_cast<SignedWord>(offset));
+    _data[address] = getRegisterValue(value);
+}
+void
+Core::invoke(const iris::MemoryDataStoreWithUnsignedOffsetFormat& s) {
+    auto [ dest, value, offset ] = s.arguments();
+    auto address = getRegisterValue<Word>(dest) + static_cast<Word>(offset);
+    _data[address] = getRegisterValue(value);
+}
+
 
 } // end namespace iris
