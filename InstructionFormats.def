@@ -60,12 +60,17 @@ BeginKind(Arithmetic2)
     Arithmetic2SignedUnsignedImmediate(Remainder)
     Arithmetic2SignedUnsignedImmediate(ShiftLeft)
     Arithmetic2SignedUnsignedImmediate(ShiftRight)
-    Arithmetic2(BitwiseAndImmediate, TwoRegisterU8)
-    Arithmetic2(BitwiseOrImmediate, TwoRegisterU8)
-    Arithmetic2(BitwiseNotImmediate, OneRegisterU16)
-    Arithmetic2(BitwiseXorImmediate, TwoRegisterU8)
-    Arithmetic2(BitwiseNorImmediate, TwoRegisterU8)
-    Arithmetic2(BitwiseNandImmediate, TwoRegisterU8)
+    Arithmetic2(BitwiseAndImmediate8, TwoRegisterU8)
+    Arithmetic2(BitwiseOrImmediate8, TwoRegisterU8)
+    Arithmetic2(BitwiseXorImmediate8, TwoRegisterU8)
+    Arithmetic2(BitwiseNorImmediate8, TwoRegisterU8)
+    Arithmetic2(BitwiseNandImmediate8, TwoRegisterU8)
+    // dest = dest op u16 instruction versions, these are destructive
+    Arithmetic2(BitwiseOrImmediate16, OneRegisterU16) 
+    Arithmetic2(BitwiseAndImmediate16, OneRegisterU16) 
+    Arithmetic2(BitwiseXorImmediate16, OneRegisterU16) 
+    Arithmetic2(BitwiseNorImmediate16, OneRegisterU16) 
+    Arithmetic2(BitwiseNandImmediate16, OneRegisterU16) 
 #undef Arithmetic2
 #undef Arithmetic2SignedImmediate
 #undef Arithmetic2UnsignedImmediate 

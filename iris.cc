@@ -306,35 +306,114 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
     setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
 }
 
+#define X(op, act) \
+    void \
+    Core::invoke ( const iris:: Arithmetic2 ## op ## SignedImmediateFormat & s) { \
+        auto [ dest, src0, s8 ] = s.arguments(); \
+        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) act static_cast<SignedWord>(s8)); \
+    } \
+    void \
+    Core::invoke ( const iris:: Arithmetic2 ## op ## UnsignedImmediateFormat & s) { \
+        auto [ dest, src0, u8 ] = s.arguments(); \
+        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
+    }
+X(Multiply, *);
+X(Add, +);
+X(Subtract, -);
+X(ShiftLeft, <<);
+X(ShiftRight, >>);
+#undef X
 void
-Core::invoke(const iris::Arithmetic2MultiplySignedImmediateFormat& s) {
-    auto [ dest, src0, s8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) * static_cast<SignedWord>(s8));
+Core::invoke(const iris::Arithmetic2DivideSignedImmediateFormat& s) {
+    if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
+        throw "Divide by zero!";
+    } else {
+        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) / static_cast<SignedWord>(s8));
+    }
 }
 void
-Core::invoke(const iris::Arithmetic2MultiplyUnsignedImmediateFormat& s) {
-    auto [ dest, src0, u8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) * static_cast<Word>(u8));
+Core::invoke(const iris::Arithmetic2DivideUnsignedImmediateFormat& s) {
+    if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
+        throw "Divide by zero!";
+    } else {
+        setRegisterValue(dest, getRegisterValue<Word>(src0) / static_cast<Word>(u8));
+    }
 }
 void
-Core::invoke(const iris::Arithmetic2AddSignedImmediateFormat& s) {
-    auto [ dest, src0, s8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) + static_cast<SignedWord>(s8));
+Core::invoke(const iris::Arithmetic2RemainderSignedImmediateFormat& s) {
+    if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
+        throw "Remainder by zero!";
+    } else {
+        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) % static_cast<SignedWord>(s8));
+    }
 }
 void
-Core::invoke(const iris::Arithmetic2AddUnsignedImmediateFormat& s) {
-    auto [ dest, src0, u8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) + static_cast<Word>(u8));
+Core::invoke(const iris::Arithmetic2RemainderUnsignedImmediateFormat& s) {
+    if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
+        throw "Remainder by zero!";
+    } else {
+        setRegisterValue(dest, getRegisterValue<Word>(src0) % static_cast<Word>(u8));
+    }
+}
+
+void
+Core::invoke(const iris::Arithmetic2BitwiseOrImmediate8Format& s) {
+    if (auto [ dest, src0, imm8 ] = s.arguments(); imm8 == 0) {
+        // oring with zero acts as a move
+        setRegisterValue(dest, getRegisterValue(src0));
+    } else {
+        setRegisterValue(dest, getRegisterValue(src0) | static_cast<Word>(imm8));
+    }
 }
 void
-Core::invoke(const iris::Arithmetic2SubtractSignedImmediateFormat& s) {
-    auto [ dest, src0, s8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) - static_cast<SignedWord>(s8));
+Core::invoke(const iris::Arithmetic2BitwiseAndImmediate8Format& s) {
+    if (auto [ dest, src0, imm8 ] = s.arguments(); imm8 == 0) {
+        // anding with zero acts as a clear out
+        setRegisterValue(dest, 0);
+    } else {
+        setRegisterValue(dest, getRegisterValue(src0) & static_cast<Word>(imm8));
+    }
 }
 void
-Core::invoke(const iris::Arithmetic2SubtractUnsignedImmediateFormat& s) {
-    auto [ dest, src0, u8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) - static_cast<Word>(u8));
+Core::invoke(const iris::Arithmetic2BitwiseXorImmediate8Format& s) {
+    auto [ dest, src0, imm8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(src0) ^ static_cast<Word>(imm8));
 }
+void
+Core::invoke(const iris::Arithmetic2BitwiseNandImmediate8Format& s) {
+    auto [ dest, src0, imm8 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(src0) & static_cast<Word>(imm8)));
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseNorImmediate8Format& s) {
+    auto [ dest, src0, imm8 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(src0) | static_cast<Word>(imm8)));
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseOrImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(dest) | imm16);
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseAndImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(dest) & imm16);
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseXorImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(dest) ^ imm16);
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseNorImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(dest) | imm16));
+}
+void
+Core::invoke(const iris::Arithmetic2BitwiseNandImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(dest) & imm16));
+}
+
 
 } // end namespace iris
