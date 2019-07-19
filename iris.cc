@@ -456,5 +456,17 @@ Core::invoke(const iris::Arithmetic2MinUnsignedImmediateFormat& s) {
     setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
 }
 
+void
+Core::invoke(const iris::Arithmetic2MinImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, std::min(getRegisterValue(dest), imm16));
+}
+
+void
+Core::invoke(const iris::Arithmetic2MaxImmediate16Format& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    setRegisterValue(dest, std::max(getRegisterValue(dest), imm16));
+}
+
 
 } // end namespace iris

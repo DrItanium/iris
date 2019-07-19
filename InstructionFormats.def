@@ -73,6 +73,8 @@ BeginKind(Arithmetic2)
     Arithmetic2(BitwiseXorImmediate16, OneRegisterU16) 
     Arithmetic2(BitwiseNorImmediate16, OneRegisterU16) 
     Arithmetic2(BitwiseNandImmediate16, OneRegisterU16) 
+    Arithmetic2(MaxImmediate16, OneRegisterU16)
+    Arithmetic2(MinImmediate16, OneRegisterU16)
 #undef Arithmetic2
 #undef Arithmetic2SignedImmediate
 #undef Arithmetic2UnsignedImmediate 
