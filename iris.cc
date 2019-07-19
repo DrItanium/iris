@@ -251,4 +251,5 @@ Core::invoke(const iris::CompareGreaterThanSignedFormat& s) {
     setRegisterValue(dest, getRegisterValue<SignedWord>(src0) > getRegisterValue<SignedWord>(src1));
 }
 
+
 } // end namespace iris

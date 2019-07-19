@@ -149,7 +149,7 @@ BeginKind(Compare)
     NormalSignedUnsignedCompare(GreaterThan)
     NormalSignedUnsignedCompare(LessThanOrEqualTo)
     NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
-    NormalSignedUnsignedCompare(Spaceship)
+    //NormalSignedUnsignedCompare(Spaceship)
 #undef NormalSignedCompare
 #undef NormalUnsignedCompare 
 #undef NormalCompare
@@ -167,7 +167,7 @@ BeginKind(Compare)
     Imm8SignedUnsignedCompare(GreaterThan)
     Imm8SignedUnsignedCompare(LessThanOrEqualTo)
     Imm8SignedUnsignedCompare(GreaterThanOrEqualTo)
-    Imm8SignedUnsignedCompare(Spaceship)
+    //Imm8SignedUnsignedCompare(Spaceship)
 #undef Imm8SignedUnsignedCompare
 #undef RawImm8Compare
 #undef Imm8Compare
