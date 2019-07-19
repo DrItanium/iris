@@ -295,5 +295,16 @@ Core::invoke(const iris::CompareGreaterThanSignedImmediate8Format& s) {
     setRegisterValue(dest, getRegisterValue<SignedWord>(src0) > static_cast<SignedWord>(src1));
 }
 
+void
+Core::invoke(const iris::CompareEqualsImmediate8Format& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(src0) == static_cast<Word>(src1));
+}
+void
+Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
+}
+
 
 } // end namespace iris
