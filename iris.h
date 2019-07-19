@@ -432,9 +432,11 @@ class Register final {
         constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
         constexpr bool operator==(SignedWord other) const noexcept      { return get<SignedWord>() == other; }
         constexpr bool operator==(Word other) const noexcept            { return get<Word>() == other; }
+        constexpr bool operator==(bool other) const noexcept            { return get<bool>() == other; }
         constexpr bool operator!=(const Register& other) const noexcept { return other.get<Word>() != get<Word>(); }
         constexpr bool operator!=(SignedWord other) const noexcept      { return other != get<SignedWord>(); }
         constexpr bool operator!=(Word other) const noexcept            { return other != get<Word>(); }
+        constexpr bool operator!=(bool other) const noexcept            { return other != get<bool>(); }
         constexpr bool operator<(const Register& other) const noexcept  { return get<Word>() < other.get<Word>(); }
         constexpr bool operator<(SignedWord other) const noexcept       { return get<SignedWord>() < other; }
         constexpr bool operator<(Word other) const noexcept             { return get<Word>() < other; }
@@ -454,6 +456,8 @@ class Register final {
                 return _storage._value;
             } else if constexpr (std::is_same_v<K, SignedWord>) {
                 return _storage._signedValue;
+            } else if constexpr (std::is_same_v<K, bool>) {
+                return _storage._value != 0;
             } else {
                 static_assert(false_v<T>, "Illegal type requested!");
             }
@@ -465,12 +469,15 @@ class Register final {
                 _storage._value = value;
             } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
                 _storage._signedValue = value;
+            } else if constexpr (std::is_same_v<K, bool> || std::is_convertible_v<K, bool>) {
+                _storage._value = value ? 0xFFFF : 0;
             } else {
                 static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
             }
         }
         explicit constexpr operator Word() const noexcept { return get<Word>(); }
         explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
+        constexpr operator bool() const noexcept { return get<bool>(); }
     private:
         union BackingStore {
             constexpr BackingStore(Word v) : _value(v) { }
