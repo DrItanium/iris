@@ -415,6 +415,7 @@ constexpr auto RegisterCount = (0xFF + 1);
 
 class Register final {
     public:
+        explicit constexpr Register(bool value) noexcept : _storage(value ? 0xFFFF : 0) { }
         explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
         constexpr Register(const Register& other) noexcept = default;
         constexpr Register(Register&& other) noexcept = default;
