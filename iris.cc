@@ -415,5 +415,46 @@ Core::invoke(const iris::Arithmetic2BitwiseNandImmediate16Format& s) {
     setRegisterValue(dest, ~(getRegisterValue(dest) & imm16));
 }
 
+void
+Core::invoke(const iris::ArithmeticMaxSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::max(getRegisterValue<SignedWord>(src0), getRegisterValue<SignedWord>(src1)));
+}
+void
+Core::invoke(const iris::ArithmeticMaxUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::max(getRegisterValue<Word>(src0), getRegisterValue<Word>(src1)));
+}
+void
+Core::invoke(const iris::ArithmeticMinSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::min(getRegisterValue<SignedWord>(src0), getRegisterValue<SignedWord>(src1)));
+}
+void
+Core::invoke(const iris::ArithmeticMinUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), getRegisterValue<Word>(src1)));
+}
+void
+Core::invoke(const iris::Arithmetic2MaxSignedImmediateFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::max(getRegisterValue<SignedWord>(src0), static_cast<SignedWord>(src1)));
+}
+void
+Core::invoke(const iris::Arithmetic2MaxUnsignedImmediateFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::max(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
+}
+void
+Core::invoke(const iris::Arithmetic2MinSignedImmediateFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::min(getRegisterValue<SignedWord>(src0), static_cast<SignedWord>(src1)));
+}
+void
+Core::invoke(const iris::Arithmetic2MinUnsignedImmediateFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
+}
+
 
 } // end namespace iris
