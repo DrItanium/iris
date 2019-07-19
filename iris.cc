@@ -306,5 +306,35 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
     setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
 }
 
+void
+Core::invoke(const iris::Arithmetic2MultiplySignedImmediateFormat& s) {
+    auto [ dest, src0, s8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) * static_cast<SignedWord>(s8));
+}
+void
+Core::invoke(const iris::Arithmetic2MultiplyUnsignedImmediateFormat& s) {
+    auto [ dest, src0, u8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) * static_cast<Word>(u8));
+}
+void
+Core::invoke(const iris::Arithmetic2AddSignedImmediateFormat& s) {
+    auto [ dest, src0, s8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) + static_cast<SignedWord>(s8));
+}
+void
+Core::invoke(const iris::Arithmetic2AddUnsignedImmediateFormat& s) {
+    auto [ dest, src0, u8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) + static_cast<Word>(u8));
+}
+void
+Core::invoke(const iris::Arithmetic2SubtractSignedImmediateFormat& s) {
+    auto [ dest, src0, s8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) - static_cast<SignedWord>(s8));
+}
+void
+Core::invoke(const iris::Arithmetic2SubtractUnsignedImmediateFormat& s) {
+    auto [ dest, src0, u8 ] = s.arguments();
+    setRegisterValue(dest, getRegisterValue<Word>(src0) - static_cast<Word>(u8));
+}
 
 } // end namespace iris
