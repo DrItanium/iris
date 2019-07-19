@@ -447,7 +447,7 @@ class Register final {
         constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
         constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
         constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
-        template<typename T>
+        template<typename T = Word>
         constexpr T get() const noexcept {
             using K = std::decay_t<T>;
             if constexpr (std::is_same_v<K, Word>) {
