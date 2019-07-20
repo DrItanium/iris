@@ -537,6 +537,24 @@ Core::invoke(const iris::MemoryDataStoreWithUnsignedOffsetFormat& s) {
     auto address = getRegisterValue<Word>(dest) + static_cast<Word>(offset);
     _data[address] = getRegisterValue(value);
 }
-
+#define Y(name, op, suffix, types) \
+    void \
+    Core::invoke( const iris:: Arithmetic ## name ## suffix & s ) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue<types>(dest, getRegisterValue<types>(src0) op getRegisterValue<types>(src1)); \
+    }
+#define X(name, op) \
+    Y(name, op, SignedFormat, SignedWord); \
+    Y(name, op, UnsignedFormat, Word)
+X(Add, +);
+X(Subtract, -);
+X(Multiply, *);
+X(ShiftRight, >>);
+X(ShiftLeft, <<);
+Y(BitwiseAnd, &, Format, Word);
+Y(BitwiseOr, |, Format, Word);
+Y(BitwiseXor, ^, Format, Word);
+#undef X
+#undef Y
 
 } // end namespace iris
