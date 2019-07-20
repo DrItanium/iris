@@ -47,12 +47,15 @@ namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
 template<typename...>
 inline constexpr bool false_v = false;
-using Word = uint16_t;
+using UnsignedWord = uint16_t;
 using SignedWord = int16_t;
-using DoubleWord = uint32_t;
+using UnsignedDoubleWord = uint32_t;
 using SignedDoubleWord = int32_t;
-using Byte = uint8_t;
+using Word = UnsignedWord;
+using DoubleWord = UnsignedDoubleWord;
+using UnsignedByte = uint8_t;
 using SignedByte = int8_t;
+using Byte = UnsignedByte;
 using RegisterIndex = std::byte;
 template<auto value>
 struct BindConstantToType : std::integral_constant<decltype(value), value> {

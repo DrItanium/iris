@@ -557,4 +557,42 @@ Y(BitwiseXor, ^, Format, Word);
 #undef X
 #undef Y
 
+void 
+Core::invoke(const iris::ArithmeticDivideSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
+        throw "Divide by zero!";
+    } else {
+        setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) / denominator);
+    }
+}
+void 
+Core::invoke(const iris::ArithmeticDivideUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
+        throw "Divide by zero!";
+    } else {
+        setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) / denominator);
+    }
+}
+
+void 
+Core::invoke(const iris::ArithmeticRemainderSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
+        throw "Remainder by zero!";
+    } else {
+        setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) % denominator);
+    }
+}
+void 
+Core::invoke(const iris::ArithmeticRemainderUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
+        throw "Remainder by zero!";
+    } else {
+        setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) % denominator);
+    }
+}
+
 } // end namespace iris
