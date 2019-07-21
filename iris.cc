@@ -723,4 +723,90 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleSubtractUnsignedFormat& s
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() - getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMultiplySignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() * getDoubleRegister(src1).get<SignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMultiplyUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() * getDoubleRegister(src1).get<UnsignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftLeftSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() << getDoubleRegister(src1).get<SignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftLeftUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() << getDoubleRegister(src1).get<UnsignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftRightSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() >> getDoubleRegister(src1).get<SignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftRightUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() >> getDoubleRegister(src1).get<UnsignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMinSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(std::min(getDoubleRegister(src0).get<SignedDoubleWord>() , getDoubleRegister(src1).get<SignedDoubleWord>()));
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMinUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(std::min(getDoubleRegister(src0).get<UnsignedDoubleWord>() , getDoubleRegister(src1).get<UnsignedDoubleWord>()));
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMaxSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(std::max(getDoubleRegister(src0).get<SignedDoubleWord>() , getDoubleRegister(src1).get<SignedDoubleWord>()));
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleMaxUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(std::max(getDoubleRegister(src0).get<UnsignedDoubleWord>() , getDoubleRegister(src1).get<UnsignedDoubleWord>()));
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getDoubleRegister(src1).get<SignedDoubleWord>(); denominator != 0) {
+        getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() / denominator);
+    } else {
+        throw "Divide by zero!";
+    }
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getDoubleRegister(src1).get<UnsignedDoubleWord>(); denominator != 0) {
+        getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() / denominator);
+    } else {
+        throw "Divide by zero!";
+    }
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getDoubleRegister(src1).get<SignedDoubleWord>(); denominator != 0) {
+        getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() % denominator);
+    } else {
+        throw "Remainder by zero!";
+    }
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    if (auto denominator = getDoubleRegister(src1).get<UnsignedDoubleWord>(); denominator != 0) {
+        getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() % denominator);
+    } else {
+        throw "Remainder by zero!";
+    }
+}
 } // end namespace iris
