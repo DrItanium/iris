@@ -28,6 +28,18 @@
 #include "iris.h"
 namespace iris {
 
+class TerminateDevice : public MMIOEntry {
+    public:
+        TerminateDevice(iris::Core& c);
+        virtual ~TerminateDevice() = default;
+        Word read() const override;
+        void write(Word value) override;
+    private:
+        Core& _core;
+        Word _terminateCode = 0;
+};
+
+
 } // end namespace iris
 #endif // end IRIS_IODEVICES_H__
 
