@@ -683,7 +683,20 @@ Core::invoke(const iris::MemoryIOStoreWithUnsignedOffsetFormat& s) {
     _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
 }
 
-
-// TODO implement the IO memory space interaction operations
-
+Word
+IOMemoryBank::load(Address address) {
+    return _storage[address].read();
+}
+void
+IOMemoryBank::store(Address address, Word value) {
+    _storage[address].write(value);
+}
+void
+IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
+    _storage[address] = LambdaMMIOEntry(read, write);
+}
+void
+IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
+    _storage[address] = CaptiveMMIOEntry(entry);
+}
 } // end namespace iris
