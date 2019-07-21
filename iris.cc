@@ -809,4 +809,35 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderUnsignedFormat& 
         throw "Remainder by zero!";
     }
 }
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseOrFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get() | getDoubleRegister(src1).get());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseAndFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get() & getDoubleRegister(src1).get());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseXorFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get() ^ getDoubleRegister(src1).get());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNandFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(~(getDoubleRegister(src0).get() & getDoubleRegister(src1).get()));
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNorFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(~(getDoubleRegister(src0).get() | getDoubleRegister(src1).get()));
+}
+
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNotFormat& s) {
+    auto [ dest, src ] = s.arguments();
+    getDoubleRegister(dest).put(~getDoubleRegister(src).get());
+}
 } // end namespace iris
