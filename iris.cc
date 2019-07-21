@@ -710,7 +710,7 @@ IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
     _storage[address] = CaptiveMMIOEntry(entry);
 }
 void
-Core::invoke(const iris::OtherTerminateFormat&) {
+Core::terminateExecution() noexcept {
     _executing = false;
 }
 void

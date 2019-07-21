@@ -10,7 +10,6 @@ BeginGroups
     Group(Compare)
     Group(Arithmetic2)
     Group(DoubleRegister)
-    Group(Other)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)
@@ -189,11 +188,6 @@ BeginKind(Compare)
 #undef Compare
 EndKind(Compare)
 
-BeginKind(Other)
-#define Other(op, Format) X(Other, op, Format)
-    Other(Terminate, ZeroArgument)
-#undef Other
-EndKind(Other)
 BeginKind(DoubleRegister)
 #define DoubleRegister(op, Format) X(DoubleRegister, Double ## op, Format)
 #define DoubleRegisterSignedUnsigned(op, Format) \

@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <string>
 #include <functional>
+#include <map>
 #define CAT(a, b) PRIMITIVE_CAT(a, b)
 #define PRIMITIVE_CAT(a, b) a ## b
 #define NO_INSTANTIATE(kind) \
@@ -77,7 +78,6 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #define GenerateBranch(o) o,
 #define GenerateMemory(o) o,
 #define GenerateCompare(o) o,
-#define GenerateOther(o) o,
 #define GenerateDoubleRegister(o) o,
 #define X(g, o, f) CAT(Generate, g)(o)
 #include "InstructionFormats.def"
@@ -86,7 +86,6 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #undef GenerateMemory
 #undef GenerateBranch
 #undef GenerateCompare
-#undef GenerateOther
 #undef GenerateDoubleRegister
 #undef X
 #undef BeginKind
@@ -526,6 +525,56 @@ using DataMemoryBank = MemoryBank<Word>;
  * the number of registers.
  */
 using StackMemoryBank = MemoryBank<Word>;
+using MMIOWriteFunction = std::function<void(Word)>;
+using MMIOReadFunction = std::function<Word()>;
+struct MMIOEntry {
+    public:
+        MMIOEntry() = default;
+        virtual ~MMIOEntry() = default;
+        virtual void write(Word) {
+            // do nothing
+        }
+        virtual Word read() const {
+            return 0;
+        }
+
+};
+struct LambdaMMIOEntry : MMIOEntry {
+    public:
+        LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { }) : _read(read), _write(write) { }
+        virtual ~LambdaMMIOEntry() = default;
+        void write(Word value) override {
+            _write(value);
+        }
+        Word read() const override {
+            return _read();
+        }
+    private:
+        MMIOReadFunction _read;
+        MMIOWriteFunction _write;
+
+};
+struct CaptiveMMIOEntry : MMIOEntry {
+    public:
+        CaptiveMMIOEntry(MMIOEntry& other) : _other(other) { }
+        virtual ~CaptiveMMIOEntry() = default;
+        void write(Word value) override {
+            _other.write(value);
+        }
+        Word read() const override {
+            return _other.read();
+        }
+    private:
+        MMIOEntry& _other;
+};
+/**
+ * Description of the io memory map to be installed into IO memory
+ */
+using IOMemoryMap = std::map<Address, 
+                             std::variant<MMIOEntry, 
+                                          std::tuple<MMIOReadFunction, MMIOWriteFunction>,
+                                          MMIOReadFunction,
+                                          MMIOWriteFunction>>;
 /**
  * the MMIO space that is exposed to the program, one registers functions at
  * addresses into the space. Writing to an address which is not registers
@@ -533,48 +582,6 @@ using StackMemoryBank = MemoryBank<Word>;
  */
 class IOMemoryBank {
     public:
-        using MMIOWriteFunction = std::function<void(Word)>;
-        using MMIOReadFunction = std::function<Word()>;
-        struct MMIOEntry {
-            public:
-                MMIOEntry() = default;
-                virtual ~MMIOEntry() = default;
-                virtual void write(Word) {
-                    // do nothing
-                }
-                virtual Word read() const {
-                    return 0;
-                }
-
-        };
-        struct LambdaMMIOEntry : MMIOEntry {
-            public:
-                LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { }) : _read(read), _write(write) { }
-                virtual ~LambdaMMIOEntry() = default;
-                void write(Word value) override {
-                    _write(value);
-                }
-                Word read() const override {
-                    return _read();
-                }
-            private:
-                MMIOReadFunction _read;
-                MMIOWriteFunction _write;
-
-        };
-        struct CaptiveMMIOEntry : MMIOEntry {
-            public:
-                CaptiveMMIOEntry(MMIOEntry& other) : _other(other) { }
-                virtual ~CaptiveMMIOEntry() = default;
-                void write(Word value) override {
-                    _other.write(value);
-                }
-                Word read() const override {
-                    return _other.read();
-                }
-            private:
-                MMIOEntry& _other;
-        };
         using MMIOTable = NumericalStorageBank<MMIOEntry, MemoryBankElementCount>;
     public:
         IOMemoryBank() = default;
@@ -583,6 +590,7 @@ class IOMemoryBank {
         void store(Address address, Word value);
         void mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write);
         void mapIntoMemory(Address address, MMIOEntry& entry);
+        void installMemoryMap(IOMemoryMap& map);
     private:
         IOMemoryBank::MMIOTable _storage;
 
@@ -637,6 +645,10 @@ class Core {
         Core();
         ~Core() = default;
         void run();
+        void terminateExecution() noexcept;
+        void installIOMemoryMap(IOMemoryMap& map) {
+            _io.installMemoryMap(map);
+        }
     private:
         // use tag dispatch to call the right routines
 #define BeginGroups
