@@ -77,6 +77,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #define GenerateBranch(o) o,
 #define GenerateMemory(o) o,
 #define GenerateCompare(o) o,
+#define GenerateMisc(o) o,
 #define X(g, o, f) CAT(Generate, g)(o)
 #include "InstructionFormats.def"
 #undef GenerateArithmetic
@@ -84,6 +85,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #undef GenerateMemory
 #undef GenerateBranch
 #undef GenerateCompare
+#undef GenerateMisc
 #undef X
 #undef BeginKind
 #undef EndKind
@@ -675,6 +677,7 @@ class Core {
         StackMemoryBank _stack;
         IOMemoryBank _io;
         Register _ip;
+        bool _executing = false;
 };
 
 } // end namespace iris

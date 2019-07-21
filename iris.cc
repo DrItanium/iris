@@ -699,4 +699,8 @@ void
 IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
     _storage[address] = CaptiveMMIOEntry(entry);
 }
+void
+Core::invoke(const iris::MiscTerminateFormat&) {
+    _executing = false;
+}
 } // end namespace iris

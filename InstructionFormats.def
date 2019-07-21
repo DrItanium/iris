@@ -9,6 +9,7 @@ BeginGroups
     Group(Branch)
     Group(Compare)
     Group(Arithmetic2)
+    Group(Misc)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)
@@ -186,3 +187,9 @@ BeginKind(Compare)
 
 #undef Compare
 EndKind(Compare)
+
+BeginKind(Misc)
+#define Misc(op, Format) X(Misc, op, Format)
+    Misc(Terminate, ZeroArgument)
+#undef Misc
+EndKind(Misc)
