@@ -34,6 +34,7 @@
 #include <tuple>
 #include <cstddef>
 #include <string>
+#include <functional>
 #define CAT(a, b) PRIMITIVE_CAT(a, b)
 #define PRIMITIVE_CAT(a, b) a ## b
 #define NO_INSTANTIATE(kind) \
@@ -57,6 +58,7 @@ using UnsignedByte = uint8_t;
 using SignedByte = int8_t;
 using Byte = UnsignedByte;
 using RegisterIndex = std::byte;
+using Address = UnsignedWord;
 template<auto value>
 struct BindConstantToType : std::integral_constant<decltype(value), value> {
         NO_INSTANTIATE(BindConstantToType);
@@ -527,8 +529,59 @@ using StackMemoryBank = MemoryBank<Word>;
  */
 class IOMemoryBank {
     public:
+        using MMIOWriteFunction = std::function<void(Word)>;
+        using MMIOReadFunction = std::function<Word()>;
+        struct MMIOEntry {
+            public:
+                MMIOEntry() = default;
+                virtual ~MMIOEntry() = default;
+                virtual void write(Word) {
+                    // do nothing
+                }
+                virtual Word read() const {
+                    return 0;
+                }
+
+        };
+        struct LambdaMMIOEntry : MMIOEntry {
+            public:
+                LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { }) : _read(read), _write(write) { }
+                virtual ~LambdaMMIOEntry() = default;
+                void write(Word value) override {
+                    _write(value);
+                }
+                Word read() const override {
+                    return _read();
+                }
+            private:
+                MMIOReadFunction _read;
+                MMIOWriteFunction _write;
+
+        };
+        struct CaptiveMMIOEntry : MMIOEntry {
+            public:
+                CaptiveMMIOEntry(MMIOEntry& other) : _other(other) { }
+                virtual ~CaptiveMMIOEntry() = default;
+                void write(Word value) override {
+                    _other.write(value);
+                }
+                Word read() const override {
+                    return _other.read();
+                }
+            private:
+                MMIOEntry& _other;
+        };
+        using MMIOTable = NumericalStorageBank<MMIOEntry, MemoryBankElementCount>;
+    public:
         IOMemoryBank() = default;
         ~IOMemoryBank() = default;
+        Word load(Address address);
+        void store(Address address, Word value);
+        void mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write);
+        void mapIntoMemory(Address address, MMIOEntry& entry);
+    private:
+        IOMemoryBank::MMIOTable _storage;
+
 };
 
 class DoubleRegister final {

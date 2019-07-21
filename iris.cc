@@ -657,30 +657,30 @@ Core::invoke(const iris::MemoryAssignRegisterSignedImmediateFormat& s) {
 void
 Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
     auto [ dest, imm16 ] = s.arguments();
-    /// @todo finish
+    _io.store(getRegisterValue<Address>(dest), imm16);
 }
 
 void
 Core::invoke(const iris::MemoryIOLoadWithSignedOffsetFormat& s) {
     auto [ dest, addr, offset ] = s.arguments();
-    /// @todo finish
+    setRegisterValue(dest, _io.load(static_cast<Address>( getRegisterValue<SignedWord>(addr) + offset )));
 }
 
 void
 Core::invoke(const iris::MemoryIOStoreWithSignedOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
-    /// @todo finish
+    _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
 }
 
 void
 Core::invoke(const iris::MemoryIOLoadWithUnsignedOffsetFormat& s) {
     auto [ dest, addr, offset ] = s.arguments();
-    /// @todo finish
+    setRegisterValue(dest, _io.load(getRegisterValue(addr) + offset));
 }
 void
 Core::invoke(const iris::MemoryIOStoreWithUnsignedOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
-    /// @todo finish
+    _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
 }
 
 
