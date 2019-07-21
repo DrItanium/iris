@@ -203,12 +203,14 @@ Core::invoke(const iris::BranchSelectFormat& s) {
     // BranchSelect ConditionalRegister TrueAddress FalseAddress
     auto [ cond, onTrue, onFalse] = s.arguments();
     _ip.put(getRegisterValue(getRegisterValue(cond) != 0 ? onTrue : onFalse));
+    _advanceIP = false;
 }
 void
 Core::invoke(const iris::BranchImmediateFormat& s) {
     // BranchImmediate imm16
     auto [ imm16 ] = s.arguments();
     _ip.put(imm16);
+    _advanceIP = false;
 }
 void
 Core::invoke(const iris::CompareEqualsFormat& s) {
@@ -488,6 +490,7 @@ Core::invoke(const iris::BranchConditionalImmediateFormat& s) {
     auto [ cond, to ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {
         _ip.put(to);
+        _advanceIP = false;
     }
 }
 
@@ -496,12 +499,14 @@ Core::invoke(const iris::BranchRegisterAndLinkFormat& s) {
     auto [ address, link ] = s.arguments();
     setRegisterValue(link, _ip.get() + 1);
     _ip.put(getRegisterValue(address));
+    _advanceIP = false;
 }
 void
 Core::invoke(const iris::BranchImmediateAndLinkFormat& s) {
     auto [ link, imm16 ] = s.arguments();
     setRegisterValue(link, _ip.get() + 1);
     _ip.put(imm16);
+    _advanceIP = false;
 }
 void
 Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
@@ -509,6 +514,7 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
     if (getRegisterValue<bool>(cond)) {
         setRegisterValue(link, _ip.get() + 1);
         _ip.put(getRegisterValue(dest));
+        _advanceIP = false;
     }
 }
 
@@ -602,6 +608,7 @@ void
 Core::invoke(const iris::BranchRegisterFormat& s) {
     auto [ dest ] = s.arguments();
     _ip.put(getRegisterValue(dest));
+    _advanceIP = false;
 }
 
 void
@@ -623,12 +630,14 @@ void
 Core::invoke(const iris::BranchRelativeImmediateFormat& s) {
     auto [ s8 ] = s.arguments();
     _ip.put<SignedWord>(_ip.get<SignedWord>() + s8);
+    _advanceIP = false;
 }
 
 void
 Core::invoke(const iris::BranchConditionalRegisterFormat& s) {
     if (auto [ dest, cond ] = s.arguments(); getRegisterValue<bool>(cond)) {
         _ip.put(getRegisterValue(dest));
+        _advanceIP = false;
     }
 }
 void
@@ -636,6 +645,7 @@ Core::invoke(const iris::BranchConditionalRelativeImmediateFormat& s) {
     auto [ cond, offset ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {
         _ip.put(_ip.get<SignedWord>() + offset);
+        _advanceIP = false;
     }
 }
 void
@@ -840,4 +850,26 @@ Core::invoke(const iris::DoubleRegisterDoubleBitwiseNotFormat& s) {
     auto [ dest, src ] = s.arguments();
     getDoubleRegister(dest).put(~getDoubleRegister(src).get());
 }
+void
+Core::cycle() {
+    // load an instruction from the current instruction pointer
+    invoke(_code[_ip.get()]);
+    if (_advanceIP) {
+        ++_ip;
+    }
+    _advanceIP = true;
+}
+
+void
+Core::run() {
+    _executing = true;
+    do {
+        try {
+            cycle();
+        } catch (...) {
+            /// @todo implement logic to handle edge cases such as divide by zero and other such handling
+        }
+    } while (_executing);
+}
+
 } // end namespace iris

@@ -78,7 +78,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #define GenerateMemory(o) o,
 #define GenerateCompare(o) o,
 #define GenerateOther(o) o,
-#define GenerateDoubleRegisterArithmetic(o) o,
+#define GenerateDoubleRegister(o) o,
 #define X(g, o, f) CAT(Generate, g)(o)
 #include "InstructionFormats.def"
 #undef GenerateArithmetic
@@ -87,7 +87,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #undef GenerateBranch
 #undef GenerateCompare
 #undef GenerateOther
-#undef GenerateDoubleRegisterArithmetic
+#undef GenerateDoubleRegister
 #undef X
 #undef BeginKind
 #undef EndKind
@@ -633,6 +633,10 @@ class DoubleRegister final {
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
+    public:
+        Core();
+        ~Core() = default;
+        void run();
     private:
         // use tag dispatch to call the right routines
 #define BeginGroups
@@ -649,6 +653,8 @@ class Core {
 #undef BeginGroups
 #undef EndGroups
 #undef Group
+    private:
+        void cycle();
     private:
         DestinationRegister getDestinationRegister(RegisterIndex idx) noexcept;
         SourceRegister getSourceRegister(RegisterIndex idx) const noexcept;
@@ -680,6 +686,7 @@ class Core {
         IOMemoryBank _io;
         Register _ip;
         bool _executing = false;
+        bool _advanceIP = true;
 };
 
 } // end namespace iris
