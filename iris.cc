@@ -116,10 +116,11 @@ Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
 }
 void
 Core::invoke(const iris::MemorySwapRegistersFormat& s) {
-    auto [ar, br] = s.arguments();
-    auto aValue = getRegisterValue<Word>(ar);
-    setRegisterValue(ar, getRegisterValue(br));
-    setRegisterValue(br, aValue);
+    if (auto [ar, br] = s.arguments(); ar != br) {
+        auto aValue = getRegisterValue<Word>(ar);
+        setRegisterValue(ar, getRegisterValue(br));
+        setRegisterValue(br, aValue);
+    } 
 }
 
 void
@@ -483,7 +484,7 @@ Core::invoke(const iris::Arithmetic2MaxImmediate16Format& s) {
 void
 Core::invoke(const iris::BranchConditionalImmediateFormat& s) {
     auto [ cond, to ] = s.arguments();
-    if (getRegisterValue(cond) != 0) {
+    if (getRegisterValue<bool>(cond)) {
         _ip.put(to);
     }
 }
@@ -503,7 +504,7 @@ Core::invoke(const iris::BranchImmediateAndLinkFormat& s) {
 void
 Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
     auto [ dest, cond, link ] = s.arguments();
-    if (getRegisterValue(cond) != 0) {
+    if (getRegisterValue<bool>(cond)) {
         setRegisterValue(link, _ip.get() + 1);
         _ip.put(getRegisterValue(dest));
     }
@@ -621,5 +622,20 @@ Core::invoke(const iris::BranchRelativeImmediateFormat& s) {
     auto [ s8 ] = s.arguments();
     _ip.put<SignedWord>(_ip.get<SignedWord>() + s8);
 }
+
+void
+Core::invoke(const iris::BranchConditionalRegisterFormat& s) {
+    if (auto [ dest, cond ] = s.arguments(); getRegisterValue<bool>(cond)) {
+        _ip.put(getRegisterValue(dest));
+    }
+}
+void
+Core::invoke(const iris::MemoryAssignRegisterSignedImmediateFormat& s) {
+    auto [ dest, s16 ] = s.arguments();
+    setRegisterValue(dest, s16);
+}
+
+
+// TODO implement the IO memory space interaction operations
 
 } // end namespace iris
