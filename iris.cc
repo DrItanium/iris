@@ -111,8 +111,9 @@ Core::invoke(const iris::ArithmeticDecrementFormat& s) {
 }
 void
 Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
-    auto [dest, src] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src));
+    if (auto [dest, src] = s.arguments(); dest != src) {
+        setRegisterValue(dest, getRegisterValue(src));
+    }
 }
 void
 Core::invoke(const iris::MemorySwapRegistersFormat& s) {
@@ -336,6 +337,7 @@ X(Subtract, -);
 X(ShiftLeft, <<);
 X(ShiftRight, >>);
 #undef X
+
 void
 Core::invoke(const iris::Arithmetic2DivideSignedImmediateFormat& s) {
     if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
@@ -630,9 +632,55 @@ Core::invoke(const iris::BranchConditionalRegisterFormat& s) {
     }
 }
 void
+Core::invoke(const iris::BranchConditionalRelativeImmediateFormat& s) {
+    auto [ cond, offset ] = s.arguments();
+    if (getRegisterValue<bool>(cond)) {
+        _ip.put(_ip.get<SignedWord>() + offset);
+    }
+}
+void
+Core::invoke(const iris::MemoryMoveToIPFormat& s) {
+    auto [ src ] = s.arguments();
+    _ip.put(getRegisterValue(src));
+}
+void
+Core::invoke(const iris::MemoryMoveFromIPFormat& s) {
+    auto [ dest ] = s.arguments();
+    setRegisterValue(dest, _ip.get());
+}
+void
 Core::invoke(const iris::MemoryAssignRegisterSignedImmediateFormat& s) {
     auto [ dest, s16 ] = s.arguments();
     setRegisterValue(dest, s16);
+}
+
+void
+Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
+    auto [ dest, imm16 ] = s.arguments();
+    /// @todo finish
+}
+
+void
+Core::invoke(const iris::MemoryIOLoadWithSignedOffsetFormat& s) {
+    auto [ dest, addr, offset ] = s.arguments();
+    /// @todo finish
+}
+
+void
+Core::invoke(const iris::MemoryIOStoreWithSignedOffsetFormat& s) {
+    auto [ dest, value, offset ] = s.arguments();
+    /// @todo finish
+}
+
+void
+Core::invoke(const iris::MemoryIOLoadWithUnsignedOffsetFormat& s) {
+    auto [ dest, addr, offset ] = s.arguments();
+    /// @todo finish
+}
+void
+Core::invoke(const iris::MemoryIOStoreWithUnsignedOffsetFormat& s) {
+    auto [ dest, value, offset ] = s.arguments();
+    /// @todo finish
 }
 
 

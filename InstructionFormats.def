@@ -127,7 +127,8 @@ BeginKind(Memory)
     IO(StoreWithUnsignedOffset, TwoRegisterU8)
     IO(StoreImmediateValue, OneRegisterU16)
 #undef IO
-
+    Memory(MoveFromIP, OneRegister)
+    Memory(MoveToIP, OneRegister)
 #undef Memory
 EndKind(Memory)
 BeginKind(Branch)
@@ -135,7 +136,7 @@ BeginKind(Branch)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(RelativeImmediate, S8)
-    Branch(ConditionalRelativeImmediate, TwoRegisterS8)
+    Branch(ConditionalRelativeImmediate, OneRegisterS8)
     Branch(Register, OneRegister)
     Branch(ConditionalRegister, TwoRegister)
     Branch(RegisterAndLink, TwoRegister)
