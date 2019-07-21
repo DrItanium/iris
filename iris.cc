@@ -703,4 +703,24 @@ void
 Core::invoke(const iris::OtherTerminateFormat&) {
     _executing = false;
 }
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleAddSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() + getDoubleRegister(src1).get<SignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleAddUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() + getDoubleRegister(src1).get<UnsignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleSubtractSignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() - getDoubleRegister(src1).get<SignedDoubleWord>());
+}
+void
+Core::invoke(const iris::DoubleRegisterArithmeticDoubleSubtractUnsignedFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() - getDoubleRegister(src1).get<UnsignedDoubleWord>());
+}
 } // end namespace iris
