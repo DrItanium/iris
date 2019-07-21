@@ -595,4 +595,31 @@ Core::invoke(const iris::ArithmeticRemainderUnsignedFormat& s) {
     }
 }
 
+void
+Core::invoke(const iris::BranchRegisterFormat& s) {
+    auto [ dest ] = s.arguments();
+    _ip.put(getRegisterValue(dest));
+}
+
+void
+Core::invoke(const iris::ArithmeticBitwiseNorFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(src0) | getRegisterValue(src1)));
+}
+void
+Core::invoke(const iris::ArithmeticBitwiseNandFormat& s) {
+    auto [ dest, src0, src1 ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(src0) & getRegisterValue(src1)));
+}
+void
+Core::invoke(const iris::ArithmeticBitwiseNotFormat& s) {
+    auto [ dest, src ] = s.arguments();
+    setRegisterValue(dest, ~(getRegisterValue(src)));
+}
+void
+Core::invoke(const iris::BranchRelativeImmediateFormat& s) {
+    auto [ s8 ] = s.arguments();
+    _ip.put<SignedWord>(_ip.get<SignedWord>() + s8);
+}
+
 } // end namespace iris
