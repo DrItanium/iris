@@ -9,7 +9,8 @@ BeginGroups
     Group(Branch)
     Group(Compare)
     Group(Arithmetic2)
-    Group(Misc)
+    Group(DoubleRegisterArithmetic)
+    Group(Other)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)
@@ -188,8 +189,27 @@ BeginKind(Compare)
 #undef Compare
 EndKind(Compare)
 
-BeginKind(Misc)
-#define Misc(op, Format) X(Misc, op, Format)
-    Misc(Terminate, ZeroArgument)
-#undef Misc
-EndKind(Misc)
+BeginKind(Other)
+#define Other(op, Format) X(Other, op, Format)
+    Other(Terminate, ZeroArgument)
+#undef Other
+EndKind(Other)
+BeginKind(DoubleRegisterArithmetic)
+#define DoubleArith(op, Format) X(DoubleRegisterArithmetic, Double ## op, Format)
+    DoubleArith(Add, ThreeRegister)
+    DoubleArith(Subtract, ThreeRegister)
+    DoubleArith(Multiply, ThreeRegister)
+    DoubleArith(Divide, ThreeRegister)
+    DoubleArith(Remainder, ThreeRegister)
+    DoubleArith(ShiftLeft, ThreeRegister)
+    DoubleArith(ShiftRight, ThreeRegister)
+    DoubleArith(BitwiseAnd, ThreeRegister)
+    DoubleArith(BitwiseOr, ThreeRegister)
+    DoubleArith(BitwiseNot, TwoRegister)
+    DoubleArith(BitwiseXor, ThreeRegister)
+    DoubleArith(BitwiseNor, ThreeRegister)
+    DoubleArith(BitwiseNand, ThreeRegister)
+    DoubleArith(Min, ThreeRegister)
+    DoubleArith(Max, ThreeRegister)
+#undef DoubleArith
+EndKind(DoubleRegisterArithmetic)
