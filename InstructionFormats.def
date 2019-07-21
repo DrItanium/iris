@@ -9,7 +9,7 @@ BeginGroups
     Group(Branch)
     Group(Compare)
     Group(Arithmetic2)
-    Group(DoubleRegisterArithmetic)
+    Group(DoubleRegister)
     Group(Other)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
@@ -194,26 +194,26 @@ BeginKind(Other)
     Other(Terminate, ZeroArgument)
 #undef Other
 EndKind(Other)
-BeginKind(DoubleRegisterArithmetic)
-#define DoubleArith(op, Format) X(DoubleRegisterArithmetic, Double ## op, Format)
-#define DoubleArithSignedUnsigned(op, Format) \
-        DoubleArith(op ## Signed, Format) \
-        DoubleArith(op ## Unsigned, Format)
-    DoubleArithSignedUnsigned(Add, ThreeRegister)
-    DoubleArithSignedUnsigned(Subtract, ThreeRegister)
-    DoubleArithSignedUnsigned(Multiply, ThreeRegister)
-    DoubleArithSignedUnsigned(Divide, ThreeRegister)
-    DoubleArithSignedUnsigned(Remainder, ThreeRegister)
-    DoubleArithSignedUnsigned(ShiftLeft, ThreeRegister)
-    DoubleArithSignedUnsigned(ShiftRight, ThreeRegister)
-    DoubleArith(BitwiseAnd, ThreeRegister)
-    DoubleArith(BitwiseOr, ThreeRegister)
-    DoubleArith(BitwiseNot, TwoRegister)
-    DoubleArith(BitwiseXor, ThreeRegister)
-    DoubleArith(BitwiseNor, ThreeRegister)
-    DoubleArith(BitwiseNand, ThreeRegister)
-    DoubleArithSignedUnsigned(Min, ThreeRegister)
-    DoubleArithSignedUnsigned(Max, ThreeRegister)
-#undef DoubleArithSignedUnsigned
-#undef DoubleArith
-EndKind(DoubleRegisterArithmetic)
+BeginKind(DoubleRegister)
+#define DoubleRegister(op, Format) X(DoubleRegister, Double ## op, Format)
+#define DoubleRegisterSignedUnsigned(op, Format) \
+        DoubleRegister(op ## Signed, Format) \
+        DoubleRegister(op ## Unsigned, Format)
+    DoubleRegisterSignedUnsigned(Add, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Subtract, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Multiply, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Divide, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Remainder, ThreeRegister)
+    DoubleRegisterSignedUnsigned(ShiftLeft, ThreeRegister)
+    DoubleRegisterSignedUnsigned(ShiftRight, ThreeRegister)
+    DoubleRegister(BitwiseAnd, ThreeRegister)
+    DoubleRegister(BitwiseOr, ThreeRegister)
+    DoubleRegister(BitwiseNot, TwoRegister)
+    DoubleRegister(BitwiseXor, ThreeRegister)
+    DoubleRegister(BitwiseNor, ThreeRegister)
+    DoubleRegister(BitwiseNand, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
+#undef DoubleRegisterSignedUnsigned
+#undef DoubleRegister
+EndKind(DoubleRegister)

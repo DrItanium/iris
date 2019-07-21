@@ -704,77 +704,77 @@ Core::invoke(const iris::OtherTerminateFormat&) {
     _executing = false;
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleAddSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleAddSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() + getDoubleRegister(src1).get<SignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleAddUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleAddUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() + getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleSubtractSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleSubtractSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() - getDoubleRegister(src1).get<SignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleSubtractUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleSubtractUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() - getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMultiplySignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMultiplySignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() * getDoubleRegister(src1).get<SignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMultiplyUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMultiplyUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() * getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftLeftSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleShiftLeftSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() << getDoubleRegister(src1).get<SignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftLeftUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleShiftLeftUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() << getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftRightSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleShiftRightSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() >> getDoubleRegister(src1).get<SignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleShiftRightUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleShiftRightUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() >> getDoubleRegister(src1).get<UnsignedDoubleWord>());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMinSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMinSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(std::min(getDoubleRegister(src0).get<SignedDoubleWord>() , getDoubleRegister(src1).get<SignedDoubleWord>()));
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMinUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMinUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(std::min(getDoubleRegister(src0).get<UnsignedDoubleWord>() , getDoubleRegister(src1).get<UnsignedDoubleWord>()));
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMaxSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMaxSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(std::max(getDoubleRegister(src0).get<SignedDoubleWord>() , getDoubleRegister(src1).get<SignedDoubleWord>()));
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleMaxUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleMaxUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(std::max(getDoubleRegister(src0).get<UnsignedDoubleWord>() , getDoubleRegister(src1).get<UnsignedDoubleWord>()));
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleDivideSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getDoubleRegister(src1).get<SignedDoubleWord>(); denominator != 0) {
         getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() / denominator);
@@ -783,7 +783,7 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideSignedFormat& s) {
     }
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleDivideUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getDoubleRegister(src1).get<UnsignedDoubleWord>(); denominator != 0) {
         getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() / denominator);
@@ -792,7 +792,7 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleDivideUnsignedFormat& s) 
     }
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderSignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleRemainderSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getDoubleRegister(src1).get<SignedDoubleWord>(); denominator != 0) {
         getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() % denominator);
@@ -801,7 +801,7 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderSignedFormat& s)
     }
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderUnsignedFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleRemainderUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getDoubleRegister(src1).get<UnsignedDoubleWord>(); denominator != 0) {
         getDoubleRegister(dest).put(getDoubleRegister(src0).get<UnsignedDoubleWord>() % denominator);
@@ -810,33 +810,33 @@ Core::invoke(const iris::DoubleRegisterArithmeticDoubleRemainderUnsignedFormat& 
     }
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseOrFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseOrFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get() | getDoubleRegister(src1).get());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseAndFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseAndFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get() & getDoubleRegister(src1).get());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseXorFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseXorFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get() ^ getDoubleRegister(src1).get());
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNandFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseNandFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(~(getDoubleRegister(src0).get() & getDoubleRegister(src1).get()));
 }
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNorFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseNorFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(~(getDoubleRegister(src0).get() | getDoubleRegister(src1).get()));
 }
 
 void
-Core::invoke(const iris::DoubleRegisterArithmeticDoubleBitwiseNotFormat& s) {
+Core::invoke(const iris::DoubleRegisterDoubleBitwiseNotFormat& s) {
     auto [ dest, src ] = s.arguments();
     getDoubleRegister(dest).put(~getDoubleRegister(src).get());
 }
