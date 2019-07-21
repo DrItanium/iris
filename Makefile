@@ -1,26 +1,38 @@
+include config.mk
 
-all: operations.clp
+CORE_OBJS := iris.o 
 
-operations.clp: common.clp \
-				generator.clp \
-				reset_run_exit.clp \
-				build_instruction_description.clp \
-				build_instruction_functions.clp \
-				parse_knowledge_desc.clp 
-	@echo Making operations.clp
-	@maya -f2 generator.clp -f2 reset_run_exit.clp | tee operations.clp 
+IRIS_ARCHIVE := libiris.a
+
+OBJS := $(CORE_OBJS) 
+PROGS := $(IRIS_ARCHIVE) 
+
+
+all: options $(PROGS)
+
+options:
+	@echo Build Options
+	@echo ------------------
+	@echo CXXFLAGS = ${CXXFLAGS}
+	@echo LDFLAGS = ${LDFLAGS}
+	@echo ------------------
+
+$(IRIS_ARCHIVE): $(CORE_OBJS)
+	@echo AR ${IRIS_ARCHIVE}
+	@${AR} rcs ${IRIS_ARCHIVE} ${CORE_OBJS}
+
+.cc.o :
+	@echo CXX $<
+	@${CXX} -I. ${CXXFLAGS} -c $< -o $@
 
 clean: 
-	@echo Cleaning
-	@rm -f operations.clp
+	@echo Cleaning...
+	@rm -f ${OBJS} ${PROGS}
 
-.PHONY: shell all
 
-knowledge_desc.clp: common.clp
-parse_knowledge_desc.clp: common.clp knowledge_desc.clp
-build_instruction_functions.clp: common.clp
-build_instruction_description.clp: common.clp 
-generator.clp: common.clp build_instruction_functions.clp \
-	           parse_knowledge_desc.clp \
-			   build_instruction_description.clp \
-			   knowledge_desc.clp
+
+.PHONY: options
+
+# generated via g++ -MM -std=c++17 *.cc
+
+iris.o: iris.cc iris.h InstructionFormats.def
