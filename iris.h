@@ -531,24 +531,16 @@ struct MMIOEntry {
     public:
         MMIOEntry() = default;
         virtual ~MMIOEntry() = default;
-        virtual void write(Word) {
-            // do nothing
-        }
-        virtual Word read() const {
-            return 0;
-        }
+        virtual void write(Word);
+        virtual Word read() const;
 
 };
 struct LambdaMMIOEntry : MMIOEntry {
     public:
-        LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { }) : _read(read), _write(write) { }
+        LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { });
         virtual ~LambdaMMIOEntry() = default;
-        void write(Word value) override {
-            _write(value);
-        }
-        Word read() const override {
-            return _read();
-        }
+        void write(Word value) override;
+        Word read() const override;
     private:
         MMIOReadFunction _read;
         MMIOWriteFunction _write;
@@ -556,14 +548,10 @@ struct LambdaMMIOEntry : MMIOEntry {
 };
 struct CaptiveMMIOEntry : MMIOEntry {
     public:
-        CaptiveMMIOEntry(MMIOEntry& other) : _other(other) { }
+        CaptiveMMIOEntry(MMIOEntry& other);
         virtual ~CaptiveMMIOEntry() = default;
-        void write(Word value) override {
-            _other.write(value);
-        }
-        Word read() const override {
-            return _other.read();
-        }
+        void write(Word value) override;
+        Word read() const override;
     private:
         MMIOEntry& _other;
 };
@@ -645,10 +633,7 @@ class Core {
         Core() = default;
         ~Core() = default;
         void run();
-        void terminateExecution() noexcept;
-        void installIOMemoryMap(IOMemoryMap& map) {
-            _io.installMemoryMap(map);
-        }
+        void installIOMemoryMap(IOMemoryMap& map);
     private:
         // use tag dispatch to call the right routines
 #define BeginGroups

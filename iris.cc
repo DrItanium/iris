@@ -710,10 +710,6 @@ IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
     _storage[address] = CaptiveMMIOEntry(entry);
 }
 void
-Core::terminateExecution() noexcept {
-    _executing = false;
-}
-void
 Core::invoke(const iris::DoubleRegisterDoubleAddSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     getDoubleRegister(dest).put(getDoubleRegister(src0).get<SignedDoubleWord>() + getDoubleRegister(src1).get<SignedDoubleWord>());
@@ -876,5 +872,39 @@ void
 Core::invoke(const iris::MemoryTerminateFormat&) {
     _executing = false;
 }
+
+void
+MMIOEntry::write(iris::Word) {
+
+}
+
+Word
+MMIOEntry::read() const {
+    return 0;
+}
+
+void
+LambdaMMIOEntry::write(Word value) {
+    _write(value);
+}
+
+Word
+LambdaMMIOEntry::read() const {
+    return _read();
+}
+
+void
+CaptiveMMIOEntry::write(Word value) {
+    _other.write(value);
+}
+
+Word
+CaptiveMMIOEntry::read() const {
+    return _other.read();
+}
+
+LambdaMMIOEntry::LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
+CaptiveMMIOEntry::CaptiveMMIOEntry(MMIOEntry& capture) : _other(capture) { }
+
 
 } // end namespace iris
