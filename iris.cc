@@ -872,4 +872,9 @@ Core::run() {
     } while (_executing);
 }
 
+void
+Core::invoke(const iris::MemoryTerminateFormat&) {
+    _executing = false;
+}
+
 } // end namespace iris

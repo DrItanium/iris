@@ -642,7 +642,7 @@ DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noe
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
     public:
-        Core();
+        Core() = default;
         ~Core() = default;
         void run();
         void terminateExecution() noexcept;
