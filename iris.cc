@@ -34,7 +34,7 @@ DoubleRegister::put(Word lower, Word upper) noexcept {
 }
 
 DoubleRegister
-makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
+DoubleRegister::makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
@@ -44,7 +44,7 @@ makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept 
 }
 
 const DoubleRegister
-makePair(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
+DoubleRegister::makePair(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
@@ -54,12 +54,12 @@ makePair(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noe
 }
 
 DoubleRegister
-makePair(RegisterBank& bank, RegisterIndex lower) noexcept {
+DoubleRegister::makePair(RegisterBank& bank, RegisterIndex lower) noexcept {
     auto conv = static_cast<Byte>(lower);
     return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
 const DoubleRegister
-makePair(const RegisterBank& bank, RegisterIndex lower) noexcept {
+DoubleRegister::makePair(const RegisterBank& bank, RegisterIndex lower) noexcept {
     auto conv = static_cast<Byte>(lower);
     return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
@@ -91,12 +91,12 @@ Core::getSourceRegister(RegisterIndex idx) const noexcept {
 }
 DoubleRegister
 Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) noexcept {
-    return makePair(_regs, lower, upper);
+    return DoubleRegister::makePair(_regs, lower, upper);
 }
 
 const DoubleRegister
 Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
-    return makePair(_regs, lower, upper);
+    return DoubleRegister::makePair(_regs, lower, upper);
 }
 
 void

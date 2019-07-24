@@ -140,14 +140,6 @@ static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::A
 template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
 
-constexpr Byte decodeGroupIndex(Byte raw) noexcept {
-    return raw & 0x7;
-}
-
-constexpr Byte decodeOperationIndex(Byte raw ) noexcept {
-    return (raw & 0xF8) >> 3;
-}
-
 /// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
 /**
  * The fields of an iris instruction are:
@@ -202,8 +194,6 @@ struct Instruction {
         constexpr Word getUpperHalf() const noexcept { return (_bits >> 16); }
         constexpr Word getLowerHalf() const noexcept { return _bits; }
         constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
-        constexpr Byte getGroupIndex() const noexcept { return iris::decodeGroupIndex(getOpcodeIndex()); }
-        constexpr Byte getOperationIndex() const noexcept { return iris::decodeOperationIndex(getOpcodeIndex()); }
     private:
         template<typename T>
         constexpr T innerGetIndex(Byte onDefault) const noexcept {
@@ -239,7 +229,6 @@ struct Instruction {
         }
         constexpr Byte getImm8() const noexcept { return getSource1Index<Byte>(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
-        constexpr auto rawBits() const noexcept { return _bits; }
     private:
         DoubleWord _bits;
 };
@@ -411,8 +400,8 @@ constexpr auto RegisterCount = (0xFF + 1);
 
 class Register final {
     public:
-        explicit constexpr Register(bool value) noexcept : _storage(value ? 0xFFFF : 0) { }
         explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
+        explicit constexpr Register(bool value) noexcept : _storage(value ? 0xFFFF : 0) { }
         constexpr Register(const Register& other) noexcept = default;
         constexpr Register(Register&& other) noexcept = default;
         ~Register() = default;
@@ -574,6 +563,11 @@ class IOMemoryBank {
 
 class DoubleRegister final {
     public:
+        static DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+        static DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
+        static const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+        static const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a) noexcept;
+    public:
         constexpr DoubleRegister(Register& lower, Register& upper) : _lower(lower), _upper(upper) { }
         constexpr DoubleRegister(const Register& lower, const Register& upper) : _lower(const_cast<Register&>(lower)), _upper(const_cast<Register&>(upper)) { }
         constexpr Word upperHalf() const noexcept { return _upper.get<Word>(); }
@@ -615,10 +609,6 @@ class DoubleRegister final {
         Register& _lower;
         Register& _upper;
 };
-DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
-const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
     public:
         Core() = default;
