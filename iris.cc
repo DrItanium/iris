@@ -774,11 +774,6 @@ Core::run() {
 }
 
 void
-Core::invoke(const iris::MemoryTerminateFormat&) {
-    _executing = false;
-}
-
-void
 MMIOEntry::write(Core&, iris::Word) {
 
 }
@@ -810,6 +805,11 @@ CaptiveMMIOEntry::read(Core& c) {
 
 LambdaMMIOEntry::LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
 CaptiveMMIOEntry::CaptiveMMIOEntry(MMIOEntry& capture) : _other(capture) { }
+
+void
+Core::terminateCycle() {
+    _executing = false;
+}
 
 
 } // end namespace iris

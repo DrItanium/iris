@@ -85,7 +85,6 @@ EndKind(Arithmetic2)
 
 BeginKind(Memory)
 #define Memory(op, Format) X(Memory, op, Format)
-    Memory(Terminate, ZeroArgument)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)

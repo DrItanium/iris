@@ -617,6 +617,7 @@ class Core {
         ~Core() = default;
         void run();
         void installIOMemoryMap(IOMemoryMap& map);
+        void terminateCycle();
     private:
         // use tag dispatch to call the right routines
 #define BeginGroups
