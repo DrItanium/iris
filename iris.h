@@ -690,10 +690,6 @@ class Core {
         inline T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
             return getDoubleRegister(lower).get<T>();
         }
-        inline auto getDoubleWord(RegisterIndex lower, RegisterIndex upper) const noexcept { 
-            return getDoubleRegisterValue(lower, upper); 
-        }
-        inline auto getDoubleWord(RegisterIndex lower) const noexcept                      { return getDoubleRegisterValue(lower); }
         template<typename T>
         inline void setRegisterValue(RegisterIndex idx, T value) noexcept {
             getDestinationRegister(idx).put(value);
