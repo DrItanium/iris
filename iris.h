@@ -501,23 +501,24 @@ using DataMemoryBank = MemoryBank<Word>;
  * to stack memory. However, the number of stack pointers is only limited by
  * the number of registers.
  */
+class Core;
 using StackMemoryBank = MemoryBank<Word>;
-using MMIOWriteFunction = std::function<void(Word)>;
-using MMIOReadFunction = std::function<Word()>;
+using MMIOWriteFunction = std::function<void(Core&, Word)>;
+using MMIOReadFunction = std::function<Word(Core&)>;
 struct MMIOEntry {
     public:
         MMIOEntry() = default;
         virtual ~MMIOEntry() = default;
-        virtual void write(Word);
-        virtual Word read() const;
+        virtual void write(Core&, Word);
+        virtual Word read(Core&);
 
 };
 struct LambdaMMIOEntry : MMIOEntry {
     public:
-        LambdaMMIOEntry(MMIOReadFunction read = []() -> Word { return 0; }, MMIOWriteFunction write = [](Word) { });
+        LambdaMMIOEntry(MMIOReadFunction read = [](Core&) -> Word { return 0; }, MMIOWriteFunction write = [](Core&, Word) { });
         virtual ~LambdaMMIOEntry() = default;
-        void write(Word value) override;
-        Word read() const override;
+        void write(Core&, Word value) override;
+        Word read(Core&) override;
     private:
         MMIOReadFunction _read;
         MMIOWriteFunction _write;
@@ -527,8 +528,8 @@ struct CaptiveMMIOEntry : MMIOEntry {
     public:
         CaptiveMMIOEntry(MMIOEntry& other);
         virtual ~CaptiveMMIOEntry() = default;
-        void write(Word value) override;
-        Word read() const override;
+        void write(Core&, Word) override;
+        Word read(Core&) override;
     private:
         MMIOEntry& _other;
 };
@@ -549,7 +550,7 @@ class IOMemoryBank {
     public:
         using MMIOTable = NumericalStorageBank<MMIOEntry, MemoryBankElementCount>;
     public:
-        IOMemoryBank() = default;
+        IOMemoryBank(Core& c) : _core(c) { }
         ~IOMemoryBank() = default;
         Word load(Address address);
         void store(Address address, Word value);
@@ -557,6 +558,7 @@ class IOMemoryBank {
         void mapIntoMemory(Address address, MMIOEntry& entry);
         void installMemoryMap(IOMemoryMap& map);
     private:
+        Core& _core;
         IOMemoryBank::MMIOTable _storage;
 
 };
@@ -611,7 +613,7 @@ class DoubleRegister final {
 };
 class Core {
     public:
-        Core() = default;
+        Core() : _io(*this) { }
         ~Core() = default;
         void run();
         void installIOMemoryMap(IOMemoryMap& map);

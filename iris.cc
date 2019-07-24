@@ -660,11 +660,11 @@ Core::invoke(const iris::MemoryIOStoreWithUnsignedOffsetFormat& s) {
 
 Word
 IOMemoryBank::load(Address address) {
-    return _storage[address].read();
+    return _storage[address].read(_core);
 }
 void
 IOMemoryBank::store(Address address, Word value) {
-    _storage[address].write(value);
+    _storage[address].write(_core, value);
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
@@ -779,33 +779,33 @@ Core::invoke(const iris::MemoryTerminateFormat&) {
 }
 
 void
-MMIOEntry::write(iris::Word) {
+MMIOEntry::write(Core&, iris::Word) {
 
 }
 
 Word
-MMIOEntry::read() const {
+MMIOEntry::read(Core&) {
     return 0;
 }
 
 void
-LambdaMMIOEntry::write(Word value) {
-    _write(value);
+LambdaMMIOEntry::write(Core& c, Word value) {
+    _write(c, value);
 }
 
 Word
-LambdaMMIOEntry::read() const {
-    return _read();
+LambdaMMIOEntry::read(Core& c) {
+    return _read(c);
 }
 
 void
-CaptiveMMIOEntry::write(Word value) {
-    _other.write(value);
+CaptiveMMIOEntry::write(Core& c, Word value) {
+    _other.write(c, value);
 }
 
 Word
-CaptiveMMIOEntry::read() const {
-    return _other.read();
+CaptiveMMIOEntry::read(Core& c) {
+    return _other.read(c);
 }
 
 LambdaMMIOEntry::LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
