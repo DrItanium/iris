@@ -587,6 +587,7 @@ class IOMemoryBank {
 class DoubleRegister final {
     public:
         constexpr DoubleRegister(Register& lower, Register& upper) : _lower(lower), _upper(upper) { }
+        constexpr DoubleRegister(const Register& lower, const Register& upper) : _lower(const_cast<Register&>(lower)), _upper(const_cast<Register&>(upper)) { }
         constexpr Word upperHalf() const noexcept { return _upper.get<Word>(); }
         constexpr Word lowerHalf() const noexcept { return _lower.get<Word>(); }
         template<typename T = DoubleWord>
@@ -628,6 +629,8 @@ class DoubleRegister final {
 };
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
 DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
+const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a) noexcept;
 class Core {
     public:
         Core() = default;
@@ -656,6 +659,12 @@ class Core {
         DestinationRegister getDestinationRegister(RegisterIndex idx) noexcept;
         SourceRegister getSourceRegister(RegisterIndex idx) const noexcept;
         DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
+        const DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
+        void invoke(DoubleWord bits);
+    private:
+        inline const DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
+            return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
+        }
         inline DoubleRegister getDoubleRegister(RegisterIndex start) noexcept {
             return getDoubleRegister(start, static_cast<RegisterIndex>( static_cast<Byte>(start) + 1));
         }
@@ -665,17 +674,35 @@ class Core {
         inline void decrementRegister(RegisterIndex idx) noexcept {
             --getDestinationRegister(idx);
         }
-        inline auto getDoubleWord(RegisterIndex lower, RegisterIndex upper) noexcept { return getDoubleRegister(lower, upper).get(); }
-        inline auto getDoubleWord(RegisterIndex lower) noexcept                      { return getDoubleRegister(lower).get(); }
         template<typename T>
-        void setRegisterValue(RegisterIndex idx, T value) noexcept {
+        inline void setDoubleRegisterValue(RegisterIndex lower, RegisterIndex upper, T value) noexcept {
+            getDoubleRegister(lower, upper).put<T>(value);
+        }
+        template<typename T>
+        inline void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
+            getDoubleRegister(lower).put<T>(value);
+        }
+        template<typename T = DoubleWord>
+        inline T getDoubleRegisterValue(RegisterIndex lower, RegisterIndex upper) const noexcept {
+            return getDoubleRegister(lower, upper).get<T>();
+        }
+        template<typename T = DoubleWord>
+        inline T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
+            return getDoubleRegister(lower).get<T>();
+        }
+        inline auto getDoubleWord(RegisterIndex lower, RegisterIndex upper) const noexcept { 
+            return getDoubleRegisterValue(lower, upper); 
+        }
+        inline auto getDoubleWord(RegisterIndex lower) const noexcept                      { return getDoubleRegisterValue(lower); }
+        template<typename T>
+        inline void setRegisterValue(RegisterIndex idx, T value) noexcept {
             getDestinationRegister(idx).put(value);
         }
         template<typename T = Word>
-        T getRegisterValue(RegisterIndex idx) const noexcept {
+        inline T getRegisterValue(RegisterIndex idx) const noexcept {
             return getSourceRegister(idx).get<T>();
         }
-        void invoke(DoubleWord bits);
+    private:
         RegisterBank _regs;
         CodeMemoryBank _code;
         DataMemoryBank _data;
