@@ -258,7 +258,6 @@ template<typename T, Group group, OperationKind<group> op>
 class ThreeArgumentsFormat : public ArgumentFormat<group, op> {
     public:
         using Parent = ArgumentFormat<group, op>;
-        static constexpr auto ArgumentCount = 3;
         explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
@@ -273,7 +272,6 @@ template<typename T, Group group, OperationKind<group> op>
 class TwoArgumentsFormat : public ArgumentFormat<group, op> {
     public:
         using Parent = ArgumentFormat<group, op>;
-        static constexpr auto ArgumentCount = 2;
         explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
@@ -286,7 +284,6 @@ template<typename T, Group group, OperationKind<group> op>
 class OneArgumentFormat : public ArgumentFormat<group, op> {
     public:
         using Parent = ArgumentFormat<group, op>;
-        static constexpr auto ArgumentCount = 1;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
@@ -298,7 +295,6 @@ class ZeroArgumentFormat : public ArgumentFormat<group, op> {
     public:
         using Parent = ArgumentFormat<group, op>;
         using Parent::Parent;
-        static constexpr auto ArgumentCount = 0;
 };
 template<Group group, OperationKind<group> op>
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, group, op>;
@@ -383,14 +379,6 @@ using DecodedInstruction = std::variant<
 #undef EndGroups
 #undef Group
             >;
-
-template<typename T>
-constexpr auto ArgumentCount = T::ArgumentCount;
-
-template<typename T>
-constexpr auto getArgumentCount(T) noexcept {
-    return ArgumentCount<T>;
-}
 
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 

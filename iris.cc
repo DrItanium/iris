@@ -223,14 +223,13 @@ void
 Core::invoke(const iris::BranchSelectFormat& s) {
     // BranchSelect ConditionalRegister TrueAddress FalseAddress
     auto [ cond, onTrue, onFalse] = s.arguments();
-    _ip.put(getRegisterValue(getRegisterValue(cond) != 0 ? onTrue : onFalse));
+    _ip.put(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
     _advanceIP = false;
 }
 void
 Core::invoke(const iris::BranchImmediateFormat& s) {
     // BranchImmediate imm16
-    auto [ imm16 ] = s.arguments();
-    _ip.put(imm16);
+    _ip.put(s.getFirst());
     _advanceIP = false;
 }
 void
@@ -243,94 +242,39 @@ Core::invoke(const iris::CompareNotEqualsFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, getSourceRegister(src0) != getSourceRegister(src1));
 }
+#define Y(name, op, kind) \
+    void \
+    Core::invoke(const iris:: Compare ## name ## kind ## Format & s) { \
+        using T = kind ## Word ; \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, \
+                getRegisterValue<T>(src0) op \
+                getRegisterValue<T>(src1)); \
+    }
+#define X(name, op) \
+    Y(name, op, Signed); \
+    Y(name, op, Unsigned);
+X(LessThanOrEqualTo, <=);
+X(LessThan, <);
+X(GreaterThanOrEqualTo, >=);
+X(GreaterThan, >);
+#undef Y
+#define Y(name, op, kind) \
+    void \
+    Core::invoke(const iris:: Compare ## name ## kind ## Immediate8Format & s) { \
+        using T = kind ## Word ; \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, \
+                getRegisterValue<T>(src0) op \
+                static_cast<T>(src1)); \
+    }
+X(LessThanOrEqualTo, <=);
+X(LessThan, <);
+X(GreaterThanOrEqualTo, >=);
+X(GreaterThan, >);
+#undef Y
+#undef X
 
-void
-Core::invoke(const iris::CompareLessThanOrEqualToSignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) <= getRegisterValue<SignedWord>(src1));
-}
-
-void
-Core::invoke(const iris::CompareLessThanOrEqualToUnsignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) <= getRegisterValue<Word>(src1));
-}
-
-void
-Core::invoke(const iris::CompareLessThanUnsignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) < getRegisterValue<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareLessThanSignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) < getRegisterValue<SignedWord>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanOrEqualToSignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) >= getRegisterValue<SignedWord>(src1));
-}
-
-void
-Core::invoke(const iris::CompareGreaterThanOrEqualToUnsignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) >= getRegisterValue<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanUnsignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) > getRegisterValue<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanSignedFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) > getRegisterValue<SignedWord>(src1));
-}
-
-void
-Core::invoke(const iris::CompareLessThanOrEqualToSignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) <= static_cast<SignedWord>(src1));
-}
-
-void
-Core::invoke(const iris::CompareLessThanOrEqualToUnsignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) <= static_cast<Word>(src1));
-}
-
-void
-Core::invoke(const iris::CompareLessThanUnsignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) < static_cast<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareLessThanSignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) < static_cast<SignedWord>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanOrEqualToSignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) >= static_cast<SignedWord>(src1));
-}
-
-void
-Core::invoke(const iris::CompareGreaterThanOrEqualToUnsignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) >= static_cast<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanUnsignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<Word>(src0) > static_cast<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareGreaterThanSignedImmediate8Format& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue<SignedWord>(src0) > static_cast<SignedWord>(src1));
-}
 
 void
 Core::invoke(const iris::CompareEqualsImmediate8Format& s) {
