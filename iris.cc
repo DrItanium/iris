@@ -841,14 +841,14 @@ Core::readTerminateCell(Core& c) {
 }
 
 void
-Core::invoke(const iris::DoubleRegisterDoubleIOLoadWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryDoubleIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
     auto baseAddress = getRegisterValue(addr) + offset;
     reg.put(loadIO(baseAddress), loadIO(baseAddress + 1));
 }
 void
-Core::invoke(const iris::DoubleRegisterDoubleDataLoadWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryDoubleDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
     auto baseAddress = getRegisterValue(addr) + offset;
@@ -856,7 +856,7 @@ Core::invoke(const iris::DoubleRegisterDoubleDataLoadWithOffsetFormat& s) {
 }
 
 void
-Core::invoke(const iris::DoubleRegisterDoubleIOStoreWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryDoubleIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
     auto baseAddress = getRegisterValue(addr) + offset;
@@ -864,7 +864,7 @@ Core::invoke(const iris::DoubleRegisterDoubleIOStoreWithOffsetFormat& s) {
     storeIO(baseAddress+1, reg.upperHalf());
 }
 void
-Core::invoke(const iris::DoubleRegisterDoubleDataStoreWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
     auto baseAddress = getRegisterValue(addr) + offset;
@@ -945,7 +945,7 @@ QuadRegister::put(UnsignedDoubleWord lower, UnsignedDoubleWord upper) noexcept {
 }
 
 void
-Core::invoke(const iris::QuadRegisterQuadIOLoadWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     getQuadRegister(storage).put(loadIO(baseAddress),
@@ -954,7 +954,7 @@ Core::invoke(const iris::QuadRegisterQuadIOLoadWithOffsetFormat& s) {
             loadIO(baseAddress+3));
 }
 void
-Core::invoke(const iris::QuadRegisterQuadDataLoadWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     getQuadRegister(storage).put(loadData(baseAddress),
@@ -964,7 +964,7 @@ Core::invoke(const iris::QuadRegisterQuadDataLoadWithOffsetFormat& s) {
 }
 
 void
-Core::invoke(const iris::QuadRegisterQuadCodeLoadWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     getQuadRegister(storage).put(loadCode(baseAddress),
@@ -972,7 +972,7 @@ Core::invoke(const iris::QuadRegisterQuadCodeLoadWithOffsetFormat& s) {
 }
 
 void
-Core::invoke(const iris::QuadRegisterQuadCodeStoreWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadCodeStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     auto reg = getQuadRegister(storage);
@@ -981,7 +981,7 @@ Core::invoke(const iris::QuadRegisterQuadCodeStoreWithOffsetFormat& s) {
 }
 
 void
-Core::invoke(const iris::QuadRegisterQuadDataStoreWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     auto reg = getQuadRegister(storage);
@@ -991,7 +991,7 @@ Core::invoke(const iris::QuadRegisterQuadDataStoreWithOffsetFormat& s) {
     storeData(baseAddress+3, reg.highestWord());
 }
 void
-Core::invoke(const iris::QuadRegisterQuadIOStoreWithOffsetFormat& s) {
+Core::invoke(const iris::MemoryQuadIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     auto reg = getQuadRegister(storage);
