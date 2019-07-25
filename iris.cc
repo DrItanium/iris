@@ -152,10 +152,10 @@ Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
 }
 
 void
-Core::invoke(const iris::MemoryCodeLoadFormat& s) {
+Core::invoke(const iris::MemoryCodeLoadWithOffsetFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower] = s.arguments();
-    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
+    auto [addr, lower, offset] = s.arguments();
+    setDoubleRegisterValue(lower, _code[getRegisterValue(addr) + offset]);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
@@ -172,10 +172,10 @@ Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     incrementRegister(addr);
 }
 void
-Core::invoke(const iris::MemoryCodeStoreFormat& s) {
+Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
-    auto [addr, lower ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
+    auto [addr, lower, offset ] = s.arguments();
+    _code[getRegisterValue(addr) + offset] = getDoubleRegisterValue(lower);
 }
 
 void
@@ -484,12 +484,7 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
 }
 
 void
-Core::invoke(const iris::MemoryDataLoadWithSignedOffsetFormat& s) {
-    auto [ dest, loc, offset ] = s.arguments();
-    setRegisterValue(dest, _data[static_cast<Word>(getRegisterValue<SignedWord>(loc) + static_cast<SignedWord>(offset))]);
-}
-void
-Core::invoke(const iris::MemoryDataLoadWithUnsignedOffsetFormat& s) {
+Core::invoke(const iris::MemoryDataLoadWithOffsetFormat& s) {
     auto [ dest, loc, offset ] = s.arguments();
     setRegisterValue(dest, _data[getRegisterValue<Word>(loc) + static_cast<Word>(offset)]);
 }
@@ -500,13 +495,7 @@ Core::invoke(const iris::MemoryDataStoreImmediateValueFormat& s) {
 }
 
 void
-Core::invoke(const iris::MemoryDataStoreWithSignedOffsetFormat& s) {
-    auto [ dest, value, offset ] = s.arguments();
-    auto address = static_cast<Word>(getRegisterValue<SignedWord>(dest) + static_cast<SignedWord>(offset));
-    _data[address] = getRegisterValue(value);
-}
-void
-Core::invoke(const iris::MemoryDataStoreWithUnsignedOffsetFormat& s) {
+Core::invoke(const iris::MemoryDataStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
     auto address = getRegisterValue<Word>(dest) + static_cast<Word>(offset);
     _data[address] = getRegisterValue(value);
@@ -660,24 +649,12 @@ Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
 }
 
 void
-Core::invoke(const iris::MemoryIOLoadWithSignedOffsetFormat& s) {
-    auto [ dest, addr, offset ] = s.arguments();
-    setRegisterValue(dest, _io.load(static_cast<Address>( getRegisterValue<SignedWord>(addr) + offset )));
-}
-
-void
-Core::invoke(const iris::MemoryIOStoreWithSignedOffsetFormat& s) {
-    auto [ dest, value, offset ] = s.arguments();
-    _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
-}
-
-void
-Core::invoke(const iris::MemoryIOLoadWithUnsignedOffsetFormat& s) {
+Core::invoke(const iris::MemoryIOLoadWithOffsetFormat& s) {
     auto [ dest, addr, offset ] = s.arguments();
     setRegisterValue(dest, _io.load(getRegisterValue(addr) + offset));
 }
 void
-Core::invoke(const iris::MemoryIOStoreWithUnsignedOffsetFormat& s) {
+Core::invoke(const iris::MemoryIOStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
     _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
 }
@@ -844,5 +821,7 @@ Word
 Core::readTerminateCell(Core& c) {
     return c._terminateCell;
 }
+
+
 
 } // end namespace iris

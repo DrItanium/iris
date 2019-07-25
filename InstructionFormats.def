@@ -109,26 +109,22 @@ BeginKind(Memory)
     // Other notes:
     // DataStoreImmediateValue stores an imm16 at the given target address in data space
     // IOStoreImmediateValue stores an imm16 at the given target address in IO space
-    Data(LoadWithSignedOffset, TwoRegisterS8)
-    Data(StoreWithSignedOffset, TwoRegisterS8)
-    Data(LoadWithUnsignedOffset, TwoRegisterU8)
-    Data(StoreWithUnsignedOffset, TwoRegisterU8)
+    Data(LoadWithOffset, TwoRegisterU8)
+    Data(StoreWithOffset, TwoRegisterU8)
     Data(StoreImmediateValue, OneRegisterU16)
 #undef Data
-#define Code(op) Memory(Code ## op, TwoRegister)
-    Code(Load)
-    Code(Store)
-    Code(LoadAndIncrement)
-    Code(StoreAndIncrement)
-    Code(LoadAndDecrement)
-    Code(StoreAndDecrement)
+#define Code(op, Format) Memory(Code ## op, Format)
+    Code(LoadWithOffset, TwoRegisterU8)
+    Code(StoreWithOffset, TwoRegisterU8)
+    Code(LoadAndIncrement, TwoRegister)
+    Code(StoreAndIncrement, TwoRegister)
+    Code(LoadAndDecrement, TwoRegister)
+    Code(StoreAndDecrement, TwoRegister)
 #undef Code
 
 #define IO(op, Format) Memory(IO ## op, Format)
-    IO(LoadWithSignedOffset, TwoRegisterS8)
-    IO(StoreWithSignedOffset, TwoRegisterS8)
-    IO(LoadWithUnsignedOffset, TwoRegisterU8)
-    IO(StoreWithUnsignedOffset, TwoRegisterU8)
+    IO(LoadWithOffset, TwoRegisterU8)
+    IO(StoreWithOffset, TwoRegisterU8)
     IO(StoreImmediateValue, OneRegisterU16)
 #undef IO
     Memory(MoveFromIP, OneRegister)
