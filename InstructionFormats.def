@@ -211,6 +211,8 @@ BeginKind(DoubleRegister)
     DoubleRegister(DataStoreWithOffset, TwoRegisterU8)
     DoubleRegister(IOLoadWithOffset, TwoRegisterU8)
     DoubleRegister(IOStoreWithOffset, TwoRegisterU8)
+//    DoubleRegister(StackPush, TwoRegister)
+//    DoubleRegister(StackPop, TwoRegister)
 #undef DoubleRegisterSignedUnsigned
 #undef DoubleRegister
 EndKind(DoubleRegister)
@@ -222,5 +224,7 @@ BeginKind(QuadRegister)
     QuadRegister(DataLoadWithOffset, TwoRegisterU8)
     QuadRegister(IOStoreWithOffset, TwoRegisterU8)
     QuadRegister(IOLoadWithOffset, TwoRegisterU8)
+//    QuadRegister(StackPush, TwoRegister)
+//    QuadRegister(StackPop, TwoRegister)
 #undef QuadRegister
 EndKind(QuadRegister)
