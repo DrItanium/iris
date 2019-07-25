@@ -702,6 +702,7 @@ class Core {
         inline T getRegisterValue(RegisterIndex idx) const noexcept {
             return getSourceRegister(idx).get<T>();
         }
+        constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;

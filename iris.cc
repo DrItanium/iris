@@ -839,7 +839,7 @@ IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
 void
 Core::terminateCore(Core& c, Word code) {
     c.terminateCycle();
-    _terminateCell = code;
+    c._terminateCell = code;
 }
 Word
 Core::readTerminateCell(Core& c) {
