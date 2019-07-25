@@ -984,20 +984,20 @@ Core::invoke(const iris::QuadRegisterQuadDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     auto reg = getQuadRegister(storage);
-    storeData(baseAddress, reg.lowest());
-    storeData(baseAddress+1, reg.lower());
-    storeData(baseAddress+2, reg.higher());
-    storeData(baseAddress+3, reg.highest());
+    storeData(baseAddress, reg.lowestWord());
+    storeData(baseAddress+1, reg.lowerWord());
+    storeData(baseAddress+2, reg.higherWord());
+    storeData(baseAddress+3, reg.highestWord());
 }
 void
 Core::invoke(const iris::QuadRegisterQuadIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     auto baseAddress = getRegisterValue(addr) + offset;
     auto reg = getQuadRegister(storage);
-    storeIO(baseAddress, reg.lowest());
-    storeIO(baseAddress+1, reg.lower());
-    storeIO(baseAddress+2, reg.higher());
-    storeIO(baseAddress+3, reg.highest());
+    storeIO(baseAddress, reg.lowestWord());
+    storeIO(baseAddress+1, reg.lowerWord());
+    storeIO(baseAddress+2, reg.higherWord());
+    storeIO(baseAddress+3, reg.highestWord());
 }
 
 } // end namespace iris
