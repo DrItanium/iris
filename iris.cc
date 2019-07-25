@@ -116,18 +116,19 @@ Core::invoke(const iris::ArithmeticDoubleFormat & s) {
 }
 void
 Core::invoke(const iris::ArithmeticIncrementFormat& s) {
-    if (auto [dest, src] = s.arguments(); dest == src) {
-        incrementRegister(dest);
+    // always have to add one to by
+    if (auto [dest, src, by] = s.arguments(); dest == src) {
+        incrementRegister(dest, by);
     } else {
-        setRegisterValue(dest, getRegisterValue(src) + 1);
+        setRegisterValue(dest, getRegisterValue(src) + (by + 1));
     }
 }
 void
 Core::invoke(const iris::ArithmeticDecrementFormat& s) {
-    if (auto [dest, src] = s.arguments(); dest == src) {
-        decrementRegister(dest);
+    if (auto [dest, src, by] = s.arguments(); dest == src) {
+        decrementRegister(dest, by);
     } else {
-        setRegisterValue(dest, getRegisterValue(src) - 1);
+        setRegisterValue(dest, getRegisterValue(src) - (by + 1));
     }
 }
 void
@@ -168,16 +169,16 @@ Core::invoke(const iris::MemoryCodeLoadWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower] = s.arguments();
+    auto [addr, lower, factor] = s.arguments();
     setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
-    decrementRegister(addr);
+    decrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower] = s.arguments();
+    auto [addr, lower, factor] = s.arguments();
     setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
-    incrementRegister(addr);
+    incrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
@@ -189,16 +190,16 @@ Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
-    auto [addr, lower ] = s.arguments();
+    auto [addr, lower, factor ] = s.arguments();
     storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
-    decrementRegister(addr);
+    decrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (implied UpperRegister)
-    auto [addr, lower ] = s.arguments();
+    auto [addr, lower, factor ] = s.arguments();
     storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
-    incrementRegister(addr);
+    incrementRegister(addr, factor);
 }
 
 void

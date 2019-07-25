@@ -772,11 +772,21 @@ class Core {
         inline DoubleRegister getDoubleRegister(RegisterIndex start) noexcept {
             return getDoubleRegister(start, static_cast<RegisterIndex>( static_cast<Byte>(start) + 1));
         }
-        inline void incrementRegister(RegisterIndex idx) noexcept {
-            ++getDestinationRegister(idx);
+        inline void incrementRegister(RegisterIndex idx, std::underlying_type_t<RegisterIndex> times = 0) noexcept {
+            // it is impossible to actually do zero here!
+            if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
+                ++getDestinationRegister(idx);
+            } else {
+                setRegisterValue(idx, getRegisterValue(idx) + actualCount);
+            }
         }
-        inline void decrementRegister(RegisterIndex idx) noexcept {
-            --getDestinationRegister(idx);
+        inline void decrementRegister(RegisterIndex idx, std::underlying_type_t<RegisterIndex> times = 0) noexcept {
+            // it is impossible to actually do zero here!
+            if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
+                --getDestinationRegister(idx);
+            } else {
+                setRegisterValue(idx, getRegisterValue(idx) - actualCount);
+            }
         }
         template<typename T>
         inline void setDoubleRegisterValue(RegisterIndex lower, RegisterIndex upper, T value) noexcept {
