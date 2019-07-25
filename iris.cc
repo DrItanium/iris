@@ -151,45 +151,53 @@ Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
     setRegisterValue(dest, imm16);
 }
 
+DoubleWord
+Core::loadCode(Address addr) {
+    return _code[addr];
+}
+void
+Core::storeCode(Address addr, DoubleWord w) {
+    _code[addr] = w;
+}
 void
 Core::invoke(const iris::MemoryCodeLoadWithOffsetFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower, offset] = s.arguments();
-    setDoubleRegisterValue(lower, _code[getRegisterValue(addr) + offset]);
+    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr) + offset));
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower] = s.arguments();
-    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
+    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
     decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower] = s.arguments();
-    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
+    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
     incrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
     auto [addr, lower, offset ] = s.arguments();
-    _code[getRegisterValue(addr) + offset] = getDoubleRegisterValue(lower);
+    storeCode(getRegisterValue(addr) + offset, getDoubleRegisterValue(lower));
 }
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
     auto [addr, lower ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
+    storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
     decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (implied UpperRegister)
     auto [addr, lower ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
+    storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
     incrementRegister(addr);
 }
 
@@ -486,19 +494,28 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
 void
 Core::invoke(const iris::MemoryDataLoadWithOffsetFormat& s) {
     auto [ dest, loc, offset ] = s.arguments();
-    setRegisterValue(dest, _data[getRegisterValue<Word>(loc) + static_cast<Word>(offset)]);
+    setRegisterValue(dest, loadData(getRegisterValue<Word>(loc) + static_cast<Word>(offset)));
 }
 void
 Core::invoke(const iris::MemoryDataStoreImmediateValueFormat& s) {
     auto [ addr, imm16 ] = s.arguments();
-    _data[getRegisterValue(addr)] = imm16;
+    storeData(getRegisterValue(addr), imm16);
+}
+
+void 
+Core::storeData(Address addr, Word value) {
+    _data[addr] = value;
+}
+Word
+Core::loadData(Address addr) {
+    return _data[addr];
 }
 
 void
 Core::invoke(const iris::MemoryDataStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
     auto address = getRegisterValue<Word>(dest) + static_cast<Word>(offset);
-    _data[address] = getRegisterValue(value);
+    storeData(address, getRegisterValue(value));
 }
 #define Y(name, op, suffix, types) \
     void \
@@ -645,18 +662,18 @@ Core::invoke(const iris::MemoryAssignRegisterSignedImmediateFormat& s) {
 void
 Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
     auto [ dest, imm16 ] = s.arguments();
-    _io.store(getRegisterValue<Address>(dest), imm16);
+    storeIO(getRegisterValue<Address>(dest), imm16);
 }
 
 void
 Core::invoke(const iris::MemoryIOLoadWithOffsetFormat& s) {
     auto [ dest, addr, offset ] = s.arguments();
-    setRegisterValue(dest, _io.load(getRegisterValue(addr) + offset));
+    setRegisterValue(dest, loadIO(getRegisterValue(addr) + offset));
 }
 void
 Core::invoke(const iris::MemoryIOStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
-    _io.store(getRegisterValue(dest) + offset, getRegisterValue(value));
+    storeIO(getRegisterValue(dest) + offset, getRegisterValue(value));
 }
 
 Word
@@ -738,7 +755,7 @@ X(Remainder, %);
 void
 Core::cycle() {
     // load an instruction from the current instruction pointer
-    invoke(_code[_ip.get()]);
+    invoke(loadCode(_ip.get()));
     if (_advanceIP) {
         ++_ip;
     }
@@ -822,6 +839,97 @@ Core::readTerminateCell(Core& c) {
     return c._terminateCell;
 }
 
+void
+Core::invoke(const iris::QuadRegisterQuadIOLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+}
+void
+Core::invoke(const iris::DoubleRegisterDoubleIOLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    DoubleRegister reg = getDoubleRegister(storage);
+    auto baseAddress = addr + offset;
+    reg.put(loadIO(baseAddress), loadIO(baseAddress + 1));
+}
+void
+Core::invoke(const iris::DoubleRegisterDoubleDataLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    DoubleRegister reg = getDoubleRegister(storage);
+    auto baseAddress = addr + offset;
+    reg.put(loadData(baseAddress), loadData(baseAddress + 1));
+}
 
+void
+Core::invoke(const iris::DoubleRegisterDoubleIOStoreWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    DoubleRegister reg = getDoubleRegister(storage);
+    auto baseAddress = addr + offset;
+    storeIO(baseAddress, reg.lowerHalf());
+    storeIO(baseAddress+1, reg.upperHalf());
+}
+void
+Core::invoke(const iris::DoubleRegisterDoubleDataStoreWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    DoubleRegister reg = getDoubleRegister(storage);
+    auto baseAddress = addr + offset;
+    storeData(baseAddress, reg.lowerHalf());
+    storeData(baseAddress+1, reg.upperHalf());
+}
+
+Word
+Core::loadIO(Address addr) {
+    return _io.load(addr);
+}
+
+void
+Core::storeIO(Address addr, Word value) {
+    _io.store(addr, value);
+}
+
+void
+QuadRegister::put(Word a, Word b, Word c, Word d) noexcept {
+    _lowest.put(a);
+    _lower.put(b);
+    _higher.put(c);
+    _highest.put(d);
+}
+constexpr RegisterIndex increment(RegisterIndex input, std::underlying_type_t<RegisterIndex> by = 1) noexcept {
+    return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(input) + by);
+}
+const QuadRegister
+QuadRegister::make(const RegisterBank& reg, RegisterIndex lowest) {
+    return make(reg, lowest, increment(lowest), 
+                     increment(lowest, 2), increment(lowest, 3));
+}
+QuadRegister
+QuadRegister::make(RegisterBank& reg, RegisterIndex lowest) {
+    return make(reg, lowest, increment(lowest), 
+                     increment(lowest, 2), increment(lowest, 3));
+}
+
+const QuadRegister
+QuadRegister::make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) {
+    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
+        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
+        return QuadRegister(bank[Byte(a & registerBankMask)], 
+                bank[Byte(b & registerBankMask)],
+                bank[Byte(c & registerBankMask)],
+                bank[Byte(d & registerBankMask)]);
+    } else {
+        return QuadRegister(bank[Byte(a)], bank[Byte(b)], bank[Byte(c)], bank[Byte(d)]);
+    }
+}
+
+QuadRegister
+QuadRegister::make(RegisterBank& reg, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) {
+    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
+        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
+        return QuadRegister(bank[Byte(a & registerBankMask)], 
+                bank[Byte(b & registerBankMask)],
+                bank[Byte(c & registerBankMask)],
+                bank[Byte(d & registerBankMask)]);
+    } else {
+        return QuadRegister(bank[Byte(a)], bank[Byte(b)], bank[Byte(c)], bank[Byte(d)]);
+    }
+}
 
 } // end namespace iris
