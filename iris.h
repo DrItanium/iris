@@ -157,7 +157,14 @@ static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::A
 template<Group g, OperationKind<g> op>
 constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
 
-/// @todo introduce compile time sanity checks to make sure that the index does not go out of range!
+template<typename T, typename R, T mask, T shift>
+constexpr R decodeBits(T value) noexcept {
+    if constexpr (shift > 0) {
+        return static_cast<R>((value & mask) >> shift);
+    } else {
+        return static_cast<R>((value & mask));
+    }
+}
 /**
  * The fields of an iris instruction are:
  * [0,7] Opcode
@@ -180,7 +187,9 @@ constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte
  * Opcode (0arg)
  *
  * All of the fields are always in the same place as well. Thus, requesting a destination
- * as an imm16 will actually pull from the Immediate16 field.
+ * as an imm16 will actually pull from the Immediate16 field. Group and Operation are actually
+ * implied, the simulator just dispatches on the 8-bit code directly. The separation is 
+ * purely there to separate instructions out. 
  */
 struct Instruction {
     private:
@@ -204,10 +213,18 @@ struct Instruction {
     public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
         ~Instruction() = default;
-        constexpr Byte getLowestQuarter() const noexcept { return _bits & 0xFF; }
-        constexpr Byte getLowerQuarter() const noexcept { return (_bits & 0xFF00) >> 8; }
-        constexpr Byte getHigherQuarter() const noexcept { return (_bits & 0xFF0000) >> 16; }
-        constexpr Byte getHighestQuarter() const noexcept { return (_bits & 0xFF000000) >> 24; }
+        constexpr Byte getLowestQuarter() const noexcept { 
+            return decodeBits<DoubleWord, Byte, 0xFF, 0>(_bits); 
+        }
+        constexpr Byte getLowerQuarter() const noexcept { 
+            return decodeBits<DoubleWord, Byte, 0xFF00, 8>(_bits);
+        }
+        constexpr Byte getHigherQuarter() const noexcept { 
+            return decodeBits<DoubleWord, Byte, 0xFF0000, 16>(_bits);
+        }
+        constexpr Byte getHighestQuarter() const noexcept { 
+            return decodeBits<DoubleWord, Byte, 0xFF000000, 24>(_bits);
+        }
         constexpr Word getUpperHalf() const noexcept { return (_bits >> 16); }
         constexpr Word getLowerHalf() const noexcept { return _bits; }
         constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
