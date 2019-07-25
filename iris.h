@@ -556,14 +556,18 @@ struct CaptiveMMIOEntry : MMIOEntry {
     private:
         MMIOEntry& _other;
 };
+class IOMemoryBank;
+using ComplexMemoryMapping = std::function<void(IOMemoryBank&, Address)>;
+using MemoryMapEntryKind = std::variant<MMIOEntry,
+      std::tuple<MMIOReadFunction, MMIOWriteFunction>,
+      MMIOReadFunction,
+      MMIOWriteFunction,
+      ComplexMemoryMapping>;
+using MemoryMapEntry = std::tuple<Address, MemoryMapEntryKind>;
 /**
  * Description of the io memory map to be installed into IO memory
  */
-using IOMemoryMap = std::map<Address, 
-                             std::variant<MMIOEntry, 
-                                          std::tuple<MMIOReadFunction, MMIOWriteFunction>,
-                                          MMIOReadFunction,
-                                          MMIOWriteFunction>>;
+using IOMemoryMap = std::map<Address, MemoryMapEntryKind>;
 /**
  * the MMIO space that is exposed to the program, one registers functions at
  * addresses into the space. Writing to an address which is not registers
@@ -582,6 +586,7 @@ class IOMemoryBank {
         void mapIntoMemory(Address, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOEntry&);
+        void mapIntoMemory(Address, ComplexMemoryMapping);
         void installMemoryMap(const IOMemoryMap&);
     private:
         Core& _core;

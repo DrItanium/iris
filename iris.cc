@@ -830,6 +830,10 @@ IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
         std::visit([this, addr](auto&& value) { mapIntoMemory(addr, value); }, value);
     }
 }
+void
+IOMemoryBank::mapIntoMemory(Address baseAddress, ComplexMemoryMapping fn) {
+    fn(*this, baseAddress);
+}
 
 void
 Core::terminateCore(Core& c, Word code) {
