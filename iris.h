@@ -631,7 +631,12 @@ class DoubleRegister final {
 };
 class Core {
     public:
-        Core() : _io(*this) { }
+        static void terminateCore(Core&, Word);
+        static Word readTerminateCell(Core&);
+        static void illegalWriteError(Core&, Word);
+        static Word illegalReadError(Core&);
+    public:
+        Core();
         ~Core() = default;
         void run();
         void installIOMemoryMap(const IOMemoryMap& map);
@@ -706,6 +711,7 @@ class Core {
         Register _ip;
         bool _executing = false;
         bool _advanceIP = true;
+        Word _terminateCell = 0;
 };
 
 } // end namespace iris

@@ -836,5 +836,33 @@ IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
     }
 }
 
+void
+Core::terminateCore(Core& c, Word code) {
+    c.terminateCycle();
+    _terminateCell = code;
+}
+Word
+Core::readTerminateCell(Core& c) {
+    return c._terminateCell;
+}
+
+void
+Core::illegalWriteError(Core&, Word) {
+    throw "Illegal IO Write!";
+}
+
+Word
+Core::illegalReadError(Core&) {
+    throw "Illegal IO Read!";
+    return 0; // for completeness
+}
+
+Core::Core() : _io(*this) {
+    // map every cell in io space to throw on access
+    for (auto i = 0; i < MemoryBankElementCount; ++i) {
+        _io.mapIntoMemory(i, illegalReadError, illegalWriteError);
+    }
+}
+
 
 } // end namespace iris
