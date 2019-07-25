@@ -530,7 +530,15 @@ struct MMIOEntry {
 };
 struct LambdaMMIOEntry : MMIOEntry {
     public:
-        LambdaMMIOEntry(MMIOReadFunction read = [](Core&) -> Word { return 0; }, MMIOWriteFunction write = [](Core&, Word) { });
+        static void illegalWriteError(Core&, Word) {
+            throw "Illegal IO Write!";
+        }
+        static Word illegalReadError(Core&) {
+            throw "Illegal IO Read!";
+            return 0;
+        }
+    public:
+        LambdaMMIOEntry(MMIOReadFunction read = illegalReadError, MMIOWriteFunction write = illegalWriteError);
         virtual ~LambdaMMIOEntry() = default;
         void write(Core&, Word value) override;
         Word read(Core&) override;
@@ -633,8 +641,6 @@ class Core {
     public:
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
-        static void illegalWriteError(Core&, Word);
-        static Word illegalReadError(Core&);
     public:
         Core();
         ~Core() = default;
