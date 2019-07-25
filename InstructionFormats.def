@@ -38,8 +38,6 @@ BeginKind(Arithmetic)
     Arithmetic(BitwiseNand, ThreeRegister)
     ArithmeticSignedUnsigned(Max, ThreeRegister)
     ArithmeticSignedUnsigned(Min, ThreeRegister)
-    Arithmetic(Increment, TwoRegisterU8)
-    Arithmetic(Decrement, TwoRegisterU8)
 
 #undef Arithmetic
 #undef ArithmeticSigned
