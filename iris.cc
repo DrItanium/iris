@@ -907,7 +907,7 @@ QuadRegister::make(RegisterBank& reg, RegisterIndex lowest) {
 }
 
 const QuadRegister
-QuadRegister::make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) {
+QuadRegister::make(const RegisterBank& bank, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return QuadRegister(bank[Byte(a & registerBankMask)], 
@@ -920,7 +920,7 @@ QuadRegister::make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b, Re
 }
 
 QuadRegister
-QuadRegister::make(RegisterBank& reg, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) {
+QuadRegister::make(RegisterBank& bank, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return QuadRegister(bank[Byte(a & registerBankMask)], 
