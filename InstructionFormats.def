@@ -40,8 +40,6 @@ BeginKind(Arithmetic)
     ArithmeticSignedUnsigned(Min, ThreeRegister)
     Arithmetic(Increment, TwoRegisterU8)
     Arithmetic(Decrement, TwoRegisterU8)
-    Arithmetic(Double, TwoRegister)
-    Arithmetic(Halve, TwoRegister)
 
 #undef Arithmetic
 #undef ArithmeticSigned
