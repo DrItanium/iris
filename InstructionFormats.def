@@ -2,6 +2,8 @@
  * This file contains the binding between a given operation and its corresponding
  * format. Update this file when adding new type information
  */
+// double and quad register formats always use each register field as the lowest
+// portion of the composed value
 // separate group information
 BeginGroups
     Group(Arithmetic)
@@ -10,6 +12,7 @@ BeginGroups
     Group(Compare)
     Group(Arithmetic2)
     Group(DoubleRegister)
+    Group(QuadRegister)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)
@@ -112,7 +115,7 @@ BeginKind(Memory)
     Data(StoreWithUnsignedOffset, TwoRegisterU8)
     Data(StoreImmediateValue, OneRegisterU16)
 #undef Data
-#define Code(op) Memory(Code ## op, ThreeRegister)
+#define Code(op) Memory(Code ## op, TwoRegister)
     Code(Load)
     Code(Store)
     Code(LoadAndIncrement)
@@ -200,14 +203,28 @@ BeginKind(DoubleRegister)
     DoubleRegisterSignedUnsigned(Remainder, ThreeRegister)
     DoubleRegisterSignedUnsigned(ShiftLeft, ThreeRegister)
     DoubleRegisterSignedUnsigned(ShiftRight, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
     DoubleRegister(BitwiseAnd, ThreeRegister)
     DoubleRegister(BitwiseOr, ThreeRegister)
     DoubleRegister(BitwiseNot, TwoRegister)
     DoubleRegister(BitwiseXor, ThreeRegister)
     DoubleRegister(BitwiseNor, ThreeRegister)
     DoubleRegister(BitwiseNand, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
+    DoubleRegister(DataLoadWithOffset, TwoRegister)
+    DoubleRegister(DataStoreWithOffset, TwoRegister)
+    DoubleRegister(IOLoadWithOffset, TwoRegister)
+    DoubleRegister(IOStoreWithOffset, TwoRegister)
 #undef DoubleRegisterSignedUnsigned
 #undef DoubleRegister
 EndKind(DoubleRegister)
+BeginKind(QuadRegister)
+#define QuadRegister(op, Format) X(QuadRegister, Quad ## op, Format)
+    QuadRegister(CodeStoreWithOffset, TwoRegister)
+    QuadRegister(CodeLoadWithOffset, TwoRegister)
+    QuadRegister(DataStoreWithOffset, TwoRegister)
+    QuadRegister(DataLoadWithOffset, TwoRegister)
+    QuadRegister(IOStoreWithOffset, TwoRegister)
+    QuadRegister(IOLoadWithOffset, TwoRegister)
+#undef QuadRegister
+EndKind(QuadRegister)

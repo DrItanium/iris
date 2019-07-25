@@ -94,6 +94,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #define GenerateMemory(o) o,
 #define GenerateCompare(o) o,
 #define GenerateDoubleRegister(o) o,
+#define GenerateQuadRegister(o) o,
 #define X(g, o, f) CAT(Generate, g)(o)
 #include "InstructionFormats.def"
 #undef GenerateArithmetic
@@ -102,6 +103,7 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
 #undef GenerateBranch
 #undef GenerateCompare
 #undef GenerateDoubleRegister
+#undef GenerateQuadRegister
 #undef X
 #undef BeginKind
 #undef EndKind

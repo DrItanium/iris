@@ -153,43 +153,43 @@ Core::invoke(const iris::MemoryAssignRegisterImmediateFormat& s) {
 
 void
 Core::invoke(const iris::MemoryCodeLoadFormat& s) {
-    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    auto [lower, upper, addr] = s.arguments();
-    setDoubleRegisterValue(lower, upper, _code[getRegisterValue(addr)]);
+    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
+    auto [addr, lower] = s.arguments();
+    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
-    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    auto [lower, upper, addr] = s.arguments();
-    setDoubleRegisterValue(lower, upper, _code[getRegisterValue(addr)]);
+    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
+    auto [addr, lower] = s.arguments();
+    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
     decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
-    // CodeLoad LowerRegister, UpperRegister <= AddressRegister 
-    auto [lower, upper, addr] = s.arguments();
-    setDoubleRegisterValue(lower, upper, _code[getRegisterValue(addr)]);
+    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
+    auto [addr, lower] = s.arguments();
+    setDoubleRegisterValue(lower, _code[getRegisterValue(addr)]);
     incrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreFormat& s) {
-    // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower, upper);
+    // CodeStore AddressRegister <= LowerRegister (upper register implied)
+    auto [addr, lower ] = s.arguments();
+    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
 }
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
-    // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower, upper);
-    decrementRegister(s.getFirst());
+    // CodeStore AddressRegister <= LowerRegister (upper register implied)
+    auto [addr, lower ] = s.arguments();
+    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
+    decrementRegister(addr);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
-    // CodeStore AddressRegister <= LowerRegister, UpperRegister
-    auto [addr, lower, upper ] = s.arguments();
-    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower, upper);
+    // CodeStore AddressRegister <= LowerRegister (implied UpperRegister)
+    auto [addr, lower ] = s.arguments();
+    _code[getRegisterValue(addr)] = getDoubleRegisterValue(lower);
     incrementRegister(addr);
 }
 
