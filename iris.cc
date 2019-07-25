@@ -674,6 +674,19 @@ void
 IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
     _storage[address] = CaptiveMMIOEntry(entry);
 }
+void
+IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
+    mapIntoMemory(addr, r, [](Core&, Word) { });
+}
+void
+IOMemoryBank::mapIntoMemory(Address addr, MMIOWriteFunction w) {
+    mapIntoMemory(addr, [](Core&) -> Word { return 0; }, w);
+}
+void
+IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> t) {
+    auto [ r, w ] = t;
+    mapIntoMemory(addr, r, w);
+}
 #define Y(name, op, kind) \
     void \
     Core::invoke(const iris::DoubleRegisterDouble ## name ## kind ## Format & s) { \
@@ -774,7 +787,7 @@ Core::run() {
 }
 
 void
-MMIOEntry::write(Core&, iris::Word) {
+MMIOEntry::write(Core&, Word) {
 
 }
 
@@ -809,6 +822,18 @@ CaptiveMMIOEntry::CaptiveMMIOEntry(MMIOEntry& capture) : _other(capture) { }
 void
 Core::terminateCycle() {
     _executing = false;
+}
+
+void
+Core::installIOMemoryMap(const IOMemoryMap& map) {
+    _io.installMemoryMap(map);
+}
+void
+IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
+    for (const auto& entry : map) {
+        auto [ addr, value ] = entry;
+        std::visit([this, addr](auto&& value) { mapIntoMemory(addr, value); }, value);
+    }
 }
 
 

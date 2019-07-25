@@ -49,6 +49,21 @@ namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
 template<typename...>
 inline constexpr bool false_v = false;
+
+/**
+ *
+ * Allow a separate lambda to be defined for each specific std::visit case.
+ * Found on the internet in many places
+ * @tparam Ts the functions that make up the dispatch logic
+ */
+template<typename ... Ts> 
+struct overloaded : Ts... 
+{
+    using Ts::operator()...;
+};
+
+template<typename ... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
 using UnsignedWord = uint16_t;
 using SignedWord = int16_t;
 using UnsignedDoubleWord = uint32_t;
@@ -552,11 +567,14 @@ class IOMemoryBank {
     public:
         IOMemoryBank(Core& c) : _core(c) { }
         ~IOMemoryBank() = default;
-        Word load(Address address);
-        void store(Address address, Word value);
-        void mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write);
-        void mapIntoMemory(Address address, MMIOEntry& entry);
-        void installMemoryMap(IOMemoryMap& map);
+        Word load(Address);
+        void store(Address, Word);
+        void mapIntoMemory(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
+        void mapIntoMemory(Address, MMIOReadFunction);
+        void mapIntoMemory(Address, MMIOWriteFunction);
+        void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
+        void mapIntoMemory(Address, MMIOEntry&);
+        void installMemoryMap(const IOMemoryMap&);
     private:
         Core& _core;
         IOMemoryBank::MMIOTable _storage;
@@ -616,7 +634,7 @@ class Core {
         Core() : _io(*this) { }
         ~Core() = default;
         void run();
-        void installIOMemoryMap(IOMemoryMap& map);
+        void installIOMemoryMap(const IOMemoryMap& map);
         void terminateCycle();
     private:
         // use tag dispatch to call the right routines
