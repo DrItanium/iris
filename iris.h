@@ -635,6 +635,8 @@ class QuadRegister final {
         constexpr auto lowerWord() const noexcept { return _lower.get(); }
         constexpr auto higherWord() const noexcept { return _higher.get(); }
         constexpr auto highestWord() const noexcept { return _highest.get(); }
+        constexpr auto lowerHalf() const noexcept { return DoubleWord(lowestWord()) | (DoubleWord(lowerWord()) << 16); }
+        constexpr auto upperHalf() const noexcept { return DoubleWord(higherWord()) | (DoubleWord(highestWord()) << 16); }
         template<typename T = UnsignedQuadWord>
         constexpr T get() const noexcept {
             if constexpr (std::is_same_v<T, UnsignedQuadWord>) {
@@ -655,6 +657,7 @@ class QuadRegister final {
             }
         }
         void put(Word lowest, Word lower, Word higher, Word highest) noexcept;
+        void put(UnsignedDoubleWord lower, UnsignedDoubleWord upper) noexcept;
         template<typename T = UnsignedQuadWord>
         void put(T value) noexcept {
             if constexpr (std::is_same_v<T, UnsignedQuadWord>) {
@@ -760,6 +763,8 @@ class Core {
         DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
         const DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
         void invoke(DoubleWord bits);
+        QuadRegister getQuadRegister(RegisterIndex start) noexcept;
+        const QuadRegister getQuadRegister(RegisterIndex start) const noexcept;
     private:
         inline const DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
             return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));

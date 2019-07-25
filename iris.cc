@@ -840,10 +840,6 @@ Core::readTerminateCell(Core& c) {
 }
 
 void
-Core::invoke(const iris::QuadRegisterQuadIOLoadWithOffsetFormat& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-}
-void
 Core::invoke(const iris::DoubleRegisterDoubleIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
@@ -896,12 +892,12 @@ constexpr RegisterIndex increment(RegisterIndex input, std::underlying_type_t<Re
     return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(input) + by);
 }
 const QuadRegister
-QuadRegister::make(const RegisterBank& reg, RegisterIndex lowest) {
+QuadRegister::make(const RegisterBank& reg, RegisterIndex lowest) noexcept {
     return make(reg, lowest, increment(lowest), 
                      increment(lowest, 2), increment(lowest, 3));
 }
 QuadRegister
-QuadRegister::make(RegisterBank& reg, RegisterIndex lowest) {
+QuadRegister::make(RegisterBank& reg, RegisterIndex lowest) noexcept {
     return make(reg, lowest, increment(lowest), 
                      increment(lowest, 2), increment(lowest, 3));
 }
@@ -930,6 +926,78 @@ QuadRegister::make(RegisterBank& bank, RegisterIndex a, RegisterIndex b, Registe
     } else {
         return QuadRegister(bank[Byte(a)], bank[Byte(b)], bank[Byte(c)], bank[Byte(d)]);
     }
+}
+
+QuadRegister
+Core::getQuadRegister(RegisterIndex start) noexcept {
+    return QuadRegister::make(_regs, start);
+}
+
+const QuadRegister
+Core::getQuadRegister(RegisterIndex start) const noexcept {
+    return QuadRegister::make(_regs, start);
+}
+
+void 
+QuadRegister::put(UnsignedDoubleWord lower, UnsignedDoubleWord upper) noexcept {
+    put(lower, lower >> 16, upper, upper >> 16);
+}
+
+void
+Core::invoke(const iris::QuadRegisterQuadIOLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    getQuadRegister(storage).put(loadIO(baseAddress),
+            loadIO(baseAddress+1),
+            loadIO(baseAddress+2),
+            loadIO(baseAddress+3));
+}
+void
+Core::invoke(const iris::QuadRegisterQuadDataLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    getQuadRegister(storage).put(loadData(baseAddress),
+            loadData(baseAddress+1),
+            loadData(baseAddress+2),
+            loadData(baseAddress+3));
+}
+
+void
+Core::invoke(const iris::QuadRegisterQuadCodeLoadWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    getQuadRegister(storage).put(loadCode(baseAddress),
+                                 loadCode(baseAddress+1));
+}
+
+void
+Core::invoke(const iris::QuadRegisterQuadCodeStoreWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    auto reg = getQuadRegister(storage);
+    storeCode(baseAddress, reg.lowerHalf());
+    storeCode(baseAddress+1, reg.upperHalf());
+}
+
+void
+Core::invoke(const iris::QuadRegisterQuadDataStoreWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    auto reg = getQuadRegister(storage);
+    storeData(baseAddress, reg.lowest());
+    storeData(baseAddress+1, reg.lower());
+    storeData(baseAddress+2, reg.higher());
+    storeData(baseAddress+3, reg.highest());
+}
+void
+Core::invoke(const iris::QuadRegisterQuadIOStoreWithOffsetFormat& s) {
+    auto [ addr, storage, offset ] = s.arguments();
+    auto baseAddress = getRegisterValue(addr) + offset;
+    auto reg = getQuadRegister(storage);
+    storeIO(baseAddress, reg.lowest());
+    storeIO(baseAddress+1, reg.lower());
+    storeIO(baseAddress+2, reg.higher());
+    storeIO(baseAddress+3, reg.highest());
 }
 
 } // end namespace iris
