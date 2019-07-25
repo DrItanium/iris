@@ -525,9 +525,6 @@ X(Subtract, -);
 X(Multiply, *);
 X(ShiftRight, >>);
 X(ShiftLeft, <<);
-Y(BitwiseAnd, &, Format, Word);
-Y(BitwiseOr, |, Format, Word);
-Y(BitwiseXor, ^, Format, Word);
 #undef X
 #undef Y
 
@@ -575,22 +572,49 @@ Core::invoke(const iris::BranchRegisterFormat& s) {
     _ip.put(getRegisterValue(dest));
     _advanceIP = false;
 }
+#define Y(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Format & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
+    } \
+    void \
+    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setDoubleRegisterValue(dest, ~(getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
+    }
+#define X(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Format & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, (getRegisterValue(src0) op getRegisterValue(src1))); \
+    } \
+    void \
+    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setDoubleRegisterValue(dest, (getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
+    }
+#define Z(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Format & s) { \
+        auto [ dest, src ] = s.arguments(); \
+        setRegisterValue(dest, op(getRegisterValue(src))); \
+    } \
+    void \
+    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+        auto [ dest, src ] = s.arguments(); \
+        setDoubleRegisterValue(dest, op(getDoubleRegisterValue(src))); \
+    }
 
-void
-Core::invoke(const iris::ArithmeticBitwiseNorFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(src0) | getRegisterValue(src1)));
-}
-void
-Core::invoke(const iris::ArithmeticBitwiseNandFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(src0) & getRegisterValue(src1)));
-}
-void
-Core::invoke(const iris::ArithmeticBitwiseNotFormat& s) {
-    auto [ dest, src ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(src)));
-}
+Y(BitwiseNor, |);
+Y(BitwiseNand, &);
+X(BitwiseAnd, &);
+X(BitwiseOr, |);
+X(BitwiseXor, ^);
+Z(BitwiseNot, ~);
+#undef Y
+#undef X
+#undef Z
 void
 Core::invoke(const iris::BranchRelativeImmediateFormat& s) {
     auto [ s8 ] = s.arguments();
@@ -733,37 +757,7 @@ X(Max, std::max);
 X(Divide, /);
 X(Remainder, %);
 #undef X
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseOrFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setDoubleRegisterValue(dest, getDoubleRegisterValue(src0) | getDoubleRegisterValue(src1));
-}
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseAndFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setDoubleRegisterValue(dest, getDoubleRegisterValue(src0) & getDoubleRegisterValue(src1));
-}
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseXorFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setDoubleRegisterValue(dest, getDoubleRegisterValue(src0) ^ getDoubleRegisterValue(src1));
-}
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseNandFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setDoubleRegisterValue(dest, ~(getDoubleRegisterValue(src0) & getDoubleRegisterValue(src1)));
-}
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseNorFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setDoubleRegisterValue(dest, ~(getDoubleRegisterValue(src0) | getDoubleRegisterValue(src1)));
-}
 
-void
-Core::invoke(const iris::DoubleRegisterDoubleBitwiseNotFormat& s) {
-    auto [ dest, src ] = s.arguments();
-    setDoubleRegisterValue(dest, ~getDoubleRegisterValue(src));
-}
 void
 Core::cycle() {
     // load an instruction from the current instruction pointer
