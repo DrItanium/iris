@@ -700,11 +700,11 @@ IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
 }
 void
 IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
-    mapIntoMemory(addr, r, [](Core&, Word) { });
+    mapIntoMemory(addr, r, LambdaMMIOEntry::illegalWriteError);
 }
 void
 IOMemoryBank::mapIntoMemory(Address addr, MMIOWriteFunction w) {
-    mapIntoMemory(addr, [](Core&) -> Word { return 0; }, w);
+    mapIntoMemory(addr, LambdaMMIOEntry::illegalReadError, w);
 }
 void
 IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> t) {
@@ -840,8 +840,5 @@ Word
 Core::readTerminateCell(Core& c) {
     return c._terminateCell;
 }
-
-Core::Core() : _io(*this) { }
-
 
 } // end namespace iris

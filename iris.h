@@ -642,7 +642,7 @@ class Core {
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
     public:
-        Core();
+        Core() : _io(*this) { }
         ~Core() = default;
         void run();
         void installIOMemoryMap(const IOMemoryMap& map);
