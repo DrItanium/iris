@@ -843,14 +843,14 @@ void
 Core::invoke(const iris::DoubleRegisterDoubleIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = addr + offset;
+    auto baseAddress = getRegisterValue(addr) + offset;
     reg.put(loadIO(baseAddress), loadIO(baseAddress + 1));
 }
 void
 Core::invoke(const iris::DoubleRegisterDoubleDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = addr + offset;
+    auto baseAddress = getRegisterValue(addr) + offset;
     reg.put(loadData(baseAddress), loadData(baseAddress + 1));
 }
 
@@ -858,7 +858,7 @@ void
 Core::invoke(const iris::DoubleRegisterDoubleIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = addr + offset;
+    auto baseAddress = getRegisterValue(addr) + offset;
     storeIO(baseAddress, reg.lowerHalf());
     storeIO(baseAddress+1, reg.upperHalf());
 }
@@ -866,7 +866,7 @@ void
 Core::invoke(const iris::DoubleRegisterDoubleDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = addr + offset;
+    auto baseAddress = getRegisterValue(addr) + offset;
     storeData(baseAddress, reg.lowerHalf());
     storeData(baseAddress+1, reg.upperHalf());
 }

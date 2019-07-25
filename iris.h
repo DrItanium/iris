@@ -808,7 +808,7 @@ class Core {
         void storeIO(Address, Word);
         Word loadData(Address);
         void storeData(Address, Word);
-        DoubleWord loadCode(Address, Byte);
+        DoubleWord loadCode(Address);
         void storeCode(Address, DoubleWord);
     private:
         RegisterBank _regs;
