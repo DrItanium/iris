@@ -328,65 +328,6 @@ Core::invoke(const iris::Arithmetic2RemainderUnsignedImmediateFormat& s) {
 }
 
 void
-Core::invoke(const iris::Arithmetic2BitwiseOrImmediate8Format& s) {
-    if (auto [ dest, src0, imm8 ] = s.arguments(); imm8 == 0) {
-        // oring with zero acts as a move
-        setRegisterValue(dest, getRegisterValue(src0));
-    } else {
-        setRegisterValue(dest, getRegisterValue(src0) | static_cast<Word>(imm8));
-    }
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseAndImmediate8Format& s) {
-    if (auto [ dest, src0, imm8 ] = s.arguments(); imm8 == 0) {
-        // anding with zero acts as a clear out
-        setRegisterValue(dest, 0);
-    } else {
-        setRegisterValue(dest, getRegisterValue(src0) & static_cast<Word>(imm8));
-    }
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseXorImmediate8Format& s) {
-    auto [ dest, src0, imm8 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src0) ^ static_cast<Word>(imm8));
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseNandImmediate8Format& s) {
-    auto [ dest, src0, imm8 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(src0) & static_cast<Word>(imm8)));
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseNorImmediate8Format& s) {
-    auto [ dest, src0, imm8 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(src0) | static_cast<Word>(imm8)));
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseOrImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(dest) | imm16);
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseAndImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(dest) & imm16);
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseXorImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(dest) ^ imm16);
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseNorImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(dest) | imm16));
-}
-void
-Core::invoke(const iris::Arithmetic2BitwiseNandImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, ~(getRegisterValue(dest) & imm16));
-}
-
-void
 Core::invoke(const iris::ArithmeticMaxSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, std::max(getRegisterValue<SignedWord>(src0), getRegisterValue<SignedWord>(src1)));
@@ -425,18 +366,6 @@ void
 Core::invoke(const iris::Arithmetic2MinUnsignedImmediateFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
-}
-
-void
-Core::invoke(const iris::Arithmetic2MinImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, std::min(getRegisterValue(dest), imm16));
-}
-
-void
-Core::invoke(const iris::Arithmetic2MaxImmediate16Format& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    setRegisterValue(dest, std::max(getRegisterValue(dest), imm16));
 }
 
 void
