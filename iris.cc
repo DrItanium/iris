@@ -105,33 +105,6 @@ Core::invoke(const iris::ArithmeticErrorFormat&) {
 }
 
 void
-Core::invoke(const iris::ArithmeticHalveFormat& s) {
-    auto [dest, src] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src) / 2);
-}
-void
-Core::invoke(const iris::ArithmeticDoubleFormat & s) {
-    auto [dest, src] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src) * 2);
-}
-void
-Core::invoke(const iris::ArithmeticIncrementFormat& s) {
-    // always have to add one to by
-    if (auto [dest, src, by] = s.arguments(); dest == src) {
-        incrementRegister(dest, by);
-    } else {
-        setRegisterValue(dest, getRegisterValue(src) + (by + 1));
-    }
-}
-void
-Core::invoke(const iris::ArithmeticDecrementFormat& s) {
-    if (auto [dest, src, by] = s.arguments(); dest == src) {
-        decrementRegister(dest, by);
-    } else {
-        setRegisterValue(dest, getRegisterValue(src) - (by + 1));
-    }
-}
-void
 Core::invoke(const iris::MemoryCopyRegisterFormat& s) {
     if (auto [dest, src] = s.arguments(); dest != src) {
         setRegisterValue(dest, getRegisterValue(src));
@@ -586,7 +559,7 @@ Core::invoke(const iris::BranchRegisterFormat& s) {
         setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
     } \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## Format & s) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue(dest, ~(getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
     }
@@ -597,7 +570,7 @@ Core::invoke(const iris::BranchRegisterFormat& s) {
         setRegisterValue(dest, (getRegisterValue(src0) op getRegisterValue(src1))); \
     } \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## Format & s) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue(dest, (getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
     }
@@ -608,7 +581,7 @@ Core::invoke(const iris::BranchRegisterFormat& s) {
         setRegisterValue(dest, op(getRegisterValue(src))); \
     } \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## Format & s) { \
         auto [ dest, src ] = s.arguments(); \
         setDoubleRegisterValue(dest, op(getDoubleRegisterValue(src))); \
     }
