@@ -58,29 +58,35 @@ BeginKind(Arithmetic2)
 #define Arithmetic2UnsignedImmediate(op) Arithmetic2(op ## UnsignedImmediate, TwoRegisterU8)
 #define Arithmetic2SignedUnsignedImmediate(op) \
         Arithmetic2SignedImmediate(op) \
-        Arithmetic2UnsignedImmediate(op) 
+    // increment is adding one to register
+    // decrement is subtracting one from the register
     Arithmetic2SignedUnsignedImmediate(Add)
     Arithmetic2SignedUnsignedImmediate(Subtract)
+    // double is multiply by two or shift left by two
     Arithmetic2SignedUnsignedImmediate(Multiply)
+    // halve is divide by two or shift right by two imm
     Arithmetic2SignedUnsignedImmediate(Divide)
     Arithmetic2SignedUnsignedImmediate(Remainder)
-    Arithmetic2SignedUnsignedImmediate(ShiftLeft)
-    Arithmetic2SignedUnsignedImmediate(ShiftRight)
-    Arithmetic2SignedUnsignedImmediate(Max)
-    Arithmetic2SignedUnsignedImmediate(Min)
-    Arithmetic2(BitwiseAndImmediate8, TwoRegisterU8)
-    Arithmetic2(BitwiseOrImmediate8, TwoRegisterU8)
-    Arithmetic2(BitwiseXorImmediate8, TwoRegisterU8)
-    Arithmetic2(BitwiseNorImmediate8, TwoRegisterU8)
-    Arithmetic2(BitwiseNandImmediate8, TwoRegisterU8)
-    // dest = dest op u16 instruction versions, these are destructive
-    Arithmetic2(BitwiseOrImmediate16, OneRegisterU16) 
-    Arithmetic2(BitwiseAndImmediate16, OneRegisterU16) 
-    Arithmetic2(BitwiseXorImmediate16, OneRegisterU16) 
-    Arithmetic2(BitwiseNorImmediate16, OneRegisterU16) 
-    Arithmetic2(BitwiseNandImmediate16, OneRegisterU16) 
-    Arithmetic2(MaxImmediate16, OneRegisterU16)
-    Arithmetic2(MinImmediate16, OneRegisterU16)
+    // double and triple can be defined in terms of this operation
+    Arithmetic2UnsignedImmediate(ShiftLeft)
+    Arithmetic2UnsignedImmediate(ShiftRight)
+    // destructive direct operations can be simulated with multiple 
+    // separate instructions
+#define DoubleRegister(op, Format) X(Arithmetic2, Double ## op, Format)
+#define DoubleRegisterSignedUnsigned(op, Format) \
+        DoubleRegister(op ## Signed, Format) \
+        DoubleRegister(op ## Unsigned, Format)
+    DoubleRegisterSignedUnsigned(Add, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Subtract, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Multiply, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Divide, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Remainder, ThreeRegister)
+    DoubleRegisterSignedUnsigned(ShiftLeft, ThreeRegister)
+    DoubleRegisterSignedUnsigned(ShiftRight, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
+    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
+#undef DoubleRegisterSignedUnsigned
+#undef DoubleRegister
 #undef Arithmetic2
 #undef Arithmetic2SignedImmediate
 #undef Arithmetic2UnsignedImmediate 
@@ -93,7 +99,7 @@ BeginKind(Memory)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
-    Memory(AssignRegisterSignedImmediate, OneRegisterS16)
+    // signed version is very easy to emulate in an assembler
 #define Stack(op, Format) Memory(Stack ## op, Format)
     Stack(Push, TwoRegister)
     Stack(Pop, TwoRegister)

@@ -627,11 +627,6 @@ Core::invoke(const iris::MemoryMoveFromIPFormat& s) {
     auto [ dest ] = s.arguments();
     setRegisterValue(dest, _ip.get());
 }
-void
-Core::invoke(const iris::MemoryAssignRegisterSignedImmediateFormat& s) {
-    auto [ dest, s16 ] = s.arguments();
-    setRegisterValue(dest, s16);
-}
 
 void
 Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
