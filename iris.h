@@ -69,15 +69,15 @@ using Address = UnsignedWord;
 using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
-enum class Opcodes : UnsignedWord {
 
-// enumeration defines
+enum class Opcodes : UnsignedWord {
 #define X(g, o, f) g ## o ,
 #include "InstructionFormats.def"
 #undef X
     Count,
 };
-static_assert(static_cast<std::underlying_type_t<Opcodes>>(Opcodes::Count) <= 0x100, "Too many opcodes defined!");
+using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
+static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= 0x100, "Too many opcodes defined!");
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
@@ -191,7 +191,8 @@ static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size misma
 template<Opcodes op>
 class ArgumentFormat {
     public:
-        static constexpr std::underlying_type_t<Opcodes> RawValue = static_cast<std::underlying_type_t<Opcodes>>(op);
+        static constexpr OpcodesNumericType
+        static constexpr RawValue = static_cast<OpcodesNumericType>(op);
         static constexpr auto TargetOpcode = op;
         explicit constexpr ArgumentFormat(const Instruction&) { };
         constexpr auto getOpcode() const noexcept { return op; }
