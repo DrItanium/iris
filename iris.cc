@@ -283,6 +283,13 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
 X(Multiply, *);
 X(Add, +);
 X(Subtract, -);
+#undef X
+#define X(op, act) \
+    void \
+    Core::invoke ( const iris:: Arithmetic2 ## op ## UnsignedImmediateFormat & s) { \
+        auto [ dest, src0, u8 ] = s.arguments(); \
+        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
+    }
 X(ShiftLeft, <<);
 X(ShiftRight, >>);
 #undef X

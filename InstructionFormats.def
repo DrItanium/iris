@@ -57,6 +57,7 @@ BeginKind(Arithmetic2)
 #define Arithmetic2UnsignedImmediate(op) Arithmetic2(op ## UnsignedImmediate, TwoRegisterU8)
 #define Arithmetic2SignedUnsignedImmediate(op) \
         Arithmetic2SignedImmediate(op) \
+        Arithmetic2UnsignedImmediate(op)
     // increment is adding one to register
     // decrement is subtracting one from the register
     Arithmetic2SignedUnsignedImmediate(Add)
