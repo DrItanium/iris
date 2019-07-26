@@ -83,80 +83,15 @@ struct BindConstantToType : std::integral_constant<decltype(value), value> {
         NO_INSTANTIATE(BindConstantToType);
 };
 
+enum class Opcodes : UnsignedWord {
+
 // enumeration defines
-#define BeginGroups enum class Group : Byte {
-#define EndGroups Count, }; \
-    static_assert(static_cast<Byte>(Group::Count) <= 8, "Too many groups defined!");
-#define Group(v) v , 
-#define BeginKind(kind) enum class kind ## Kind : Byte { 
-#define EndKind(kind) Count, }; \
-    static_assert(static_cast<Byte>( kind ## Kind :: Count) <= 32, "Too many " #kind " operations defined!");
-#define GenerateArithmetic(o) o,
-#define GenerateArithmetic2(o) o,
-#define GenerateBranch(o) o,
-#define GenerateMemory(o) o,
-#define GenerateCompare(o) o,
-#define GenerateDoubleRegister(o) o,
-#define X(g, o, f) CAT(Generate, g)(o)
+#define X(g, o, f) g ## o ,
 #include "InstructionFormats.def"
-#undef GenerateArithmetic
-#undef GenerateArithmetic2
-#undef GenerateMemory
-#undef GenerateBranch
-#undef GenerateCompare
-#undef GenerateDoubleRegister
 #undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
-
-template<Group group>
-struct BindOperationKind : BindConstantToType<group> { };
-template<typename T>
-struct BindOperationToGroupKind { 
-    NO_INSTANTIATE(BindOperationToGroupKind);
+    Count,
 };
-
-#define BeginKind(_)
-#define EndKind(_)
-#define BeginGroups
-#define EndGroups
-#define OperationKindBinding(g,t) \
-    template<> \
-    struct BindOperationKind<Group:: g> : BindConstantToType<Group:: g> { \
-        using BoundType = t ; \
-    }; \
-    template<> \
-    struct BindOperationToGroupKind<t> : BindConstantToType<Group:: g> { };
-#define Group(g) OperationKindBinding(g, g ## Kind)
-#define X(g, o, f)
-#include "InstructionFormats.def"
-#undef X
-#undef Group
-#undef OperationKindBinding 
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-    
-
-template<Group group>
-using OperationKind = typename BindOperationKind<group>::BoundType;
-template<typename T>
-constexpr auto OperationKindToGroup = BindOperationToGroupKind<T>::value;
-template<auto value>
-constexpr auto OperationValueToGroup = OperationKindToGroup<decltype(value)>;
-
-static_assert(std::is_same_v<OperationKind<Group::Arithmetic>, ArithmeticKind>, "Group to operation kind sanity check failed");
-static_assert(OperationKindToGroup<ArithmeticKind> == Group::Arithmetic, "Reverse type binding check failed!");
-static_assert(OperationValueToGroup<ArithmeticKind::AddSigned> == Group::Arithmetic, "Reverse value binding check failed!");
-static_assert(OperationKindToGroup<OperationKind<Group::Arithmetic>> == Group::Arithmetic, "Forward then reverse binding check failed!");
-
-
-template<Group g, OperationKind<g> op>
-constexpr Byte EncodedOpcode = (static_cast<Byte>(g) & 0x7) | ((static_cast<Byte>(op) & 0x1F) << 3);
+static_assert(static_cast<std::underlying_type_t<Opcodes>>(Opcodes::Count) <= 0x100, "Too many opcodes defined!");
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
@@ -169,8 +104,6 @@ constexpr R decodeBits(T value) noexcept {
 /**
  * The fields of an iris instruction are:
  * [0,7] Opcode
- * [0,2] Group
- * [3,7] Operation
  * [8,15] Destination
  * [16,23] Source0
  * [24,31] Source1
@@ -269,19 +202,18 @@ struct Instruction {
 };
 
 static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
-template<Group group, OperationKind<group> op>
+template<Opcodes op>
 class ArgumentFormat {
     public:
-        static constexpr auto EncodedOpcode = iris::EncodedOpcode<group, op>;
+        static constexpr std::underlying_type_t<Opcodes> RawValue = static_cast<std::underlying_type_t<Opcodes>>(op);
+        static constexpr auto TargetOpcode = op;
         explicit constexpr ArgumentFormat(const Instruction&) { };
-        constexpr auto getGroup() const noexcept { return group; }
-        constexpr auto getOperation() const noexcept { return op; }
-
+        constexpr auto getOpcode() const noexcept { return op; }
 };
-template<typename T, Group group, OperationKind<group> op>
-class ThreeArgumentsFormat : public ArgumentFormat<group, op> {
+template<typename T, Opcodes op>
+class ThreeArgumentsFormat : public ArgumentFormat<op> {
     public:
-        using Parent = ArgumentFormat<group, op>;
+        using Parent = ArgumentFormat<op>;
         explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
@@ -292,10 +224,10 @@ class ThreeArgumentsFormat : public ArgumentFormat<group, op> {
         RegisterIndex _second;
         T _third;
 };
-template<typename T, Group group, OperationKind<group> op>
-class TwoArgumentsFormat : public ArgumentFormat<group, op> {
+template<typename T, Opcodes op>
+class TwoArgumentsFormat : public ArgumentFormat<op> {
     public:
-        using Parent = ArgumentFormat<group, op>;
+        using Parent = ArgumentFormat<op>;
         explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
@@ -304,48 +236,48 @@ class TwoArgumentsFormat : public ArgumentFormat<group, op> {
         RegisterIndex _first;
         T _second;
 };
-template<typename T, Group group, OperationKind<group> op>
-class OneArgumentFormat : public ArgumentFormat<group, op> {
+template<typename T, Opcodes op>
+class OneArgumentFormat : public ArgumentFormat<op> {
     public:
-        using Parent = ArgumentFormat<group, op>;
+        using Parent = ArgumentFormat<op>;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
     private:
         T _first;
 };
-template<Group group, OperationKind<group> op>
-class ZeroArgumentFormat : public ArgumentFormat<group, op> { 
+template<Opcodes op>
+class ZeroArgumentFormat : public ArgumentFormat<op> { 
     public:
-        using Parent = ArgumentFormat<group, op>;
+        using Parent = ArgumentFormat<op>;
         using Parent::Parent;
 };
-template<Group group, OperationKind<group> op>
-using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, group, op>;
-template<Group group, OperationKind<group> op>
-using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, group, op>;
-template<Group group, OperationKind<group> op>
-using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, group, op>;
-template<Group group, OperationKind<group> op>
-using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, group, op>;
-template<Group group, OperationKind<group> op>
-using OneRegisterU16Format = TwoArgumentsFormat<Word, group, op>;
-template<Group group, OperationKind<group> op>
-using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, group, op>;
-template<Group group, OperationKind<group> op>
-using OneRegisterU8Format = TwoArgumentsFormat<Byte, group, op>;
-template<Group group, OperationKind<group> op>
-using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, group, op>;
-template<Group group, OperationKind<group> op>
-using OneRegisterFormat = OneArgumentFormat<RegisterIndex, group, op>;
-template<Group group, OperationKind<group> op>
-using U16Format = OneArgumentFormat<Word, group, op>;
-template<Group group, OperationKind<group> op>
-using S16Format = OneArgumentFormat<SignedWord, group, op>;
-template<Group group, OperationKind<group> op>
-using U8Format = OneArgumentFormat<Byte, group, op>;
-template<Group group, OperationKind<group> op>
-using S8Format = OneArgumentFormat<SignedByte, group, op>;
+template<Opcodes op>
+using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
+template<Opcodes op>
+using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, op>;
+template<Opcodes op>
+using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, op>;
+template<Opcodes op>
+using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
+template<Opcodes op>
+using OneRegisterU16Format = TwoArgumentsFormat<Word, op>;
+template<Opcodes op>
+using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
+template<Opcodes op>
+using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
+template<Opcodes op>
+using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
+template<Opcodes op>
+using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
+template<Opcodes op>
+using U16Format = OneArgumentFormat<Word, op>;
+template<Opcodes op>
+using S16Format = OneArgumentFormat<SignedWord, op>;
+template<Opcodes op>
+using U8Format = OneArgumentFormat<Byte, op>;
+template<Opcodes op>
+using S8Format = OneArgumentFormat<SignedByte, op>;
 
 template<Byte value>
 struct OperationToFormat final {
@@ -355,53 +287,28 @@ struct OperationToFormat final {
 template<Byte value>
 using OperationToFormat_t = typename OperationToFormat<value>::Type;
 
-template<Byte value>
-constexpr auto BoundToFormat = !std::is_same_v<OperationToFormat_t<value>, std::monostate>;
-
 // define the actual instruction kinds
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
 #define X(g, o, f) \
-    struct g ## o ## Format final : public f ## Format < Group:: g , OperationKind<Group:: g>:: o > { \
-        using Parent = f ## Format < Group:: g , OperationKind<Group:: g>:: o >; \
+    struct g ## o ## Format final : public f ## Format < Opcodes :: g ## o > { \
+        using Parent = f ## Format < Opcodes:: g ## o > ; \
         using Parent::Parent; \
     }; \
     template<> \
-struct OperationToFormat < g ## o ## Format :: EncodedOpcode > final { \
+struct OperationToFormat < g ## o ## Format :: RawValue > final { \
     NO_INSTANTIATE(OperationToFormat); \
     using Type = g ## o ## Format ; \
 }; \
     static_assert(std::is_same_v< \
-            OperationToFormat_t< \
-            iris::EncodedOpcode<Group:: g, \
-            OperationKind<Group:: g > :: o >>, \
-            g ## o ## Format >, "Define mismatch error!");
+            OperationToFormat_t<g ## o ## Format :: RawValue>, \
+            g ## o ## Format>, "Define mismatch error!");
 #include "InstructionFormats.def"
 #undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
 
 using DecodedInstruction = std::variant<
             std::monostate
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
 #define X(g, o, f) , g ## o ## Format 
 #include "InstructionFormats.def"
 #undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
             >;
 
 constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
@@ -410,21 +317,11 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     // This greatly cuts down on code complexity. When optimization is active 
     // we even get a huge performance boost too :)
     switch (inst.getOpcodeIndex()) {
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
 #define X(g, o, f) \
-        case iris::EncodedOpcode<Group:: g, OperationKind<Group:: g >:: o>: \
-             return OperationToFormat_t<iris::EncodedOpcode<Group:: g, OperationKind<Group:: g > :: o>>(inst);
+        case Opcodes:: g ## o: \
+             return OperationToFormat_t<g ## o ## Format>(inst); 
 #include "InstructionFormats.def"
 #undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
         default:
             return std::nullopt;
     }

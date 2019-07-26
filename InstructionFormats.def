@@ -5,15 +5,15 @@
 // double and quad register formats always use each register field as the lowest
 // portion of the composed value
 // separate group information
-BeginGroups
-    Group(Arithmetic)
-    Group(Memory)
-    Group(Branch)
-    Group(Compare)
-    Group(Arithmetic2)
-EndGroups
+//BeginGroups
+//    Group(Arithmetic)
+//    Group(Memory)
+//    Group(Branch)
+//    Group(Compare)
+//    Group(Arithmetic2)
+//EndGroups
 /// Format is: Group, Operation, ArgumentFormat
-BeginKind(Arithmetic)
+//BeginKind(Arithmetic)
 #define Arithmetic(op, Format) X(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
 #define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
@@ -49,9 +49,9 @@ BeginKind(Arithmetic)
 #undef ArithmeticSigned
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
-EndKind(Arithmetic)
+//EndKind(Arithmetic)
 
-BeginKind(Arithmetic2)
+//BeginKind(Arithmetic2)
 #define Arithmetic2(op, Format) X(Arithmetic2, op, Format)
 #define Arithmetic2SignedImmediate(op) Arithmetic2(op ## SignedImmediate, TwoRegisterS8)
 #define Arithmetic2UnsignedImmediate(op) Arithmetic2(op ## UnsignedImmediate, TwoRegisterU8)
@@ -91,10 +91,10 @@ BeginKind(Arithmetic2)
 #undef Arithmetic2SignedImmediate
 #undef Arithmetic2UnsignedImmediate 
 #undef Arithmetic2SignedUnsignedImmediate
-EndKind(Arithmetic2)
+//EndKind(Arithmetic2)
 
 
-BeginKind(Memory)
+//BeginKind(Memory)
 #define Memory(op, Format) X(Memory, op, Format)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
@@ -148,8 +148,8 @@ BeginKind(Memory)
     Memory(QuadIOStoreWithOffset, TwoRegisterU8)
     Memory(QuadIOLoadWithOffset, TwoRegisterU8)
 #undef Memory
-EndKind(Memory)
-BeginKind(Branch)
+//EndKind(Memory)
+//BeginKind(Branch)
 #define Branch(op, Format) X(Branch, op, Format)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
@@ -162,8 +162,8 @@ BeginKind(Branch)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
 #undef Branch
-EndKind(Branch)
-BeginKind(Compare)
+//EndKind(Branch)
+//BeginKind(Compare)
 #define Compare(op, Format) X(Compare, op, Format)
 #define NormalCompare(op) Compare(op, ThreeRegister)
 #define NormalSignedCompare(op) NormalCompare(op ## Signed)
@@ -203,5 +203,5 @@ BeginKind(Compare)
 #undef Imm8UnsignedCompare
 
 #undef Compare
-EndKind(Compare)
+//EndKind(Compare)
 
