@@ -36,15 +36,6 @@
 #include <string>
 #include <functional>
 #include <map>
-#define CAT(a, b) PRIMITIVE_CAT(a, b)
-#define PRIMITIVE_CAT(a, b) a ## b
-#define NO_INSTANTIATE(kind) \
-    kind () = delete; \
-    ~ kind () = delete; \
-    kind ( const kind & ) = delete; \
-    kind ( kind && ) = delete; \
-    kind& operator=(const kind &) = delete; \
-    kind& operator=( kind &&) = delete;
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
 template<typename...>
@@ -78,11 +69,6 @@ using Address = UnsignedWord;
 using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
-template<auto value>
-struct BindConstantToType : std::integral_constant<decltype(value), value> {
-        NO_INSTANTIATE(BindConstantToType);
-};
-
 enum class Opcodes : UnsignedWord {
 
 // enumeration defines
@@ -279,29 +265,12 @@ using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>
 using S8Format = OneArgumentFormat<SignedByte, op>;
 
-template<std::underlying_type_t<Opcodes> value>
-struct OperationToFormat final {
-    NO_INSTANTIATE(OperationToFormat); 
-    using Type = std::monostate;
-};
-template<std::underlying_type_t<Opcodes> value>
-using OperationToFormat_t = typename OperationToFormat<value>::Type;
-
-
 // define the actual instruction kinds
 #define X(g, o, f) \
     struct g ## o ## Format final : public f ## Format < Opcodes :: g ## o > { \
         using Parent = f ## Format < Opcodes:: g ## o > ; \
         using Parent::Parent; \
-    }; \
-    template<> \
-struct OperationToFormat < g ## o ## Format :: RawValue > final { \
-    NO_INSTANTIATE(OperationToFormat); \
-    using Type = g ## o ## Format ; \
-}; \
-    static_assert(std::is_same_v< \
-            OperationToFormat_t<g ## o ## Format :: RawValue>, \
-            g ## o ## Format>, "Define mismatch error!");
+    };
 #include "InstructionFormats.def"
 #undef X
 
@@ -320,7 +289,7 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     switch (inst.getOpcodeIndex()) {
 #define X(g, o, f) \
         case g ## o ## Format :: RawValue : \
-             return OperationToFormat_t<g ## o ## Format :: RawValue>(inst); 
+             return g ## o ## Format ( inst ) ;
 #include "InstructionFormats.def"
 #undef X
         default:
@@ -637,20 +606,10 @@ class Core {
         void terminateCycle();
     private:
         // use tag dispatch to call the right routines
-#define BeginGroups
-#define EndGroups
-#define Group(_)
-#define BeginKind(_)
-#define EndKind(_)
 #define X(group, oper, fmt) \
         void invoke(const group ## oper ## Format &);
 #include "InstructionFormats.def"
 #undef X
-#undef BeginKind
-#undef EndKind
-#undef BeginGroups
-#undef EndGroups
-#undef Group
     private:
         void cycle();
     private:
@@ -729,7 +688,6 @@ class Core {
 };
 
 } // end namespace iris
-#undef NO_INSTANTIATE
 
 
 #endif // end IRIS_H__

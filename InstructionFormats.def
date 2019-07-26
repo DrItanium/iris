@@ -2,25 +2,21 @@
  * This file contains the binding between a given operation and its corresponding
  * format. Update this file when adding new type information
  */
-// double and quad register formats always use each register field as the lowest
-// portion of the composed value
-// separate group information
-//BeginGroups
-//    Group(Arithmetic)
-//    Group(Memory)
-//    Group(Branch)
-//    Group(Compare)
-//    Group(Arithmetic2)
-//EndGroups
-/// Format is: Group, Operation, ArgumentFormat
-//BeginKind(Arithmetic)
 #define Arithmetic(op, Format) X(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
 #define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
 #define ArithmeticSignedUnsigned(op, Format) \
     ArithmeticSigned(op, Format) \
     ArithmeticUnsigned(op, Format)
-
+#define ArithmeticSignedImmediate(op) Arithmetic(op ## SignedImmediate, TwoRegisterS8)
+#define ArithmeticUnsignedImmediate(op) Arithmetic(op ## UnsignedImmediate, TwoRegisterU8)
+#define ArithmeticSignedUnsignedImmediate(op) \
+        ArithmeticSignedImmediate(op) \
+        ArithmeticUnsignedImmediate(op)
+#define DoubleRegister(op, Format) X(Arithmetic, Double ## op, Format)
+#define DoubleRegisterSignedUnsigned(op, Format) \
+        DoubleRegister(op ## Signed, Format) \
+        DoubleRegister(op ## Unsigned, Format)
     Arithmetic(Error, ZeroArgument)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
@@ -37,45 +33,26 @@
     Arithmetic(BitwiseXor, ThreeRegister)
     Arithmetic(BitwiseNor, ThreeRegister)
     Arithmetic(BitwiseNand, ThreeRegister)
-#define DoubleRegister(op, Format) X(Arithmetic, Double ## op, Format)
+    // increment is adding one to register
+    // decrement is subtracting one from the register
+    ArithmeticSignedUnsignedImmediate(Add)
+    ArithmeticSignedUnsignedImmediate(Subtract)
+    // double is multiply by two or shift left by two
+    ArithmeticSignedUnsignedImmediate(Multiply)
+    // halve is divide by two or shift right by two imm
+    ArithmeticSignedUnsignedImmediate(Divide)
+    ArithmeticSignedUnsignedImmediate(Remainder)
+    // double and triple can be defined in terms of this operation
+    ArithmeticUnsignedImmediate(ShiftLeft)
+    ArithmeticUnsignedImmediate(ShiftRight)
+    // destructive direct operations can be simulated with multiple 
+    // separate instructions
     DoubleRegister(BitwiseAnd, ThreeRegister)
     DoubleRegister(BitwiseOr, ThreeRegister)
     DoubleRegister(BitwiseNot, TwoRegister)
     DoubleRegister(BitwiseXor, ThreeRegister)
     DoubleRegister(BitwiseNor, ThreeRegister)
     DoubleRegister(BitwiseNand, ThreeRegister)
-#undef DoubleRegister
-#undef Arithmetic
-#undef ArithmeticSigned
-#undef ArithmeticUnsigned
-#undef ArithmeticSignedUnsigned
-//EndKind(Arithmetic)
-
-//BeginKind(Arithmetic2)
-#define Arithmetic2(op, Format) X(Arithmetic2, op, Format)
-#define Arithmetic2SignedImmediate(op) Arithmetic2(op ## SignedImmediate, TwoRegisterS8)
-#define Arithmetic2UnsignedImmediate(op) Arithmetic2(op ## UnsignedImmediate, TwoRegisterU8)
-#define Arithmetic2SignedUnsignedImmediate(op) \
-        Arithmetic2SignedImmediate(op) \
-        Arithmetic2UnsignedImmediate(op)
-    // increment is adding one to register
-    // decrement is subtracting one from the register
-    Arithmetic2SignedUnsignedImmediate(Add)
-    Arithmetic2SignedUnsignedImmediate(Subtract)
-    // double is multiply by two or shift left by two
-    Arithmetic2SignedUnsignedImmediate(Multiply)
-    // halve is divide by two or shift right by two imm
-    Arithmetic2SignedUnsignedImmediate(Divide)
-    Arithmetic2SignedUnsignedImmediate(Remainder)
-    // double and triple can be defined in terms of this operation
-    Arithmetic2UnsignedImmediate(ShiftLeft)
-    Arithmetic2UnsignedImmediate(ShiftRight)
-    // destructive direct operations can be simulated with multiple 
-    // separate instructions
-#define DoubleRegister(op, Format) X(Arithmetic2, Double ## op, Format)
-#define DoubleRegisterSignedUnsigned(op, Format) \
-        DoubleRegister(op ## Signed, Format) \
-        DoubleRegister(op ## Unsigned, Format)
     DoubleRegisterSignedUnsigned(Add, ThreeRegister)
     DoubleRegisterSignedUnsigned(Subtract, ThreeRegister)
     DoubleRegisterSignedUnsigned(Multiply, ThreeRegister)
@@ -87,25 +64,25 @@
     DoubleRegisterSignedUnsigned(Max, ThreeRegister)
 #undef DoubleRegisterSignedUnsigned
 #undef DoubleRegister
-#undef Arithmetic2
-#undef Arithmetic2SignedImmediate
-#undef Arithmetic2UnsignedImmediate 
-#undef Arithmetic2SignedUnsignedImmediate
-//EndKind(Arithmetic2)
+#undef ArithmeticSignedImmediate
+#undef ArithmeticUnsignedImmediate
+#undef Arithmetic
+#undef ArithmeticSigned
+#undef ArithmeticUnsigned
+#undef ArithmeticSignedUnsigned
 
-
-//BeginKind(Memory)
 #define Memory(op, Format) X(Memory, op, Format)
+#define Stack(op, Format) Memory(Stack ## op, Format)
+#define Data(op, Format) Memory(Data ## op, Format)
+#define Code(op, Format) Memory(Code ## op, Format)
+#define IO(op, Format) Memory(IO ## op, Format)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
     // signed version is very easy to emulate in an assembler
-#define Stack(op, Format) Memory(Stack ## op, Format)
     Stack(Push, TwoRegister)
     Stack(Pop, TwoRegister)
     Stack(PushImmediateValue, OneRegisterU16)
-#undef Stack
-#define Data(op, Format) Memory(Data ## op, Format)
     // So when dealing with data operations we have some interesting stuff to think about
     // - There is always an offset that can either be a register or immediate
     // - Because it can be register or immediate offset, there will need to be 
@@ -120,21 +97,16 @@
     Data(LoadWithOffset, TwoRegisterU8)
     Data(StoreWithOffset, TwoRegisterU8)
     Data(StoreImmediateValue, OneRegisterU16)
-#undef Data
-#define Code(op, Format) Memory(Code ## op, Format)
     Code(LoadWithOffset, TwoRegisterU8)
     Code(StoreWithOffset, TwoRegisterU8)
     Code(LoadAndIncrement, TwoRegisterU8)
     Code(StoreAndIncrement, TwoRegisterU8)
     Code(LoadAndDecrement, TwoRegisterU8)
     Code(StoreAndDecrement, TwoRegisterU8)
-#undef Code
 
-#define IO(op, Format) Memory(IO ## op, Format)
     IO(LoadWithOffset, TwoRegisterU8)
     IO(StoreWithOffset, TwoRegisterU8)
     IO(StoreImmediateValue, OneRegisterU16)
-#undef IO
     Memory(MoveFromIP, OneRegister)
     Memory(MoveToIP, OneRegister)
     Memory(DoubleDataLoadWithOffset, TwoRegisterU8)
@@ -147,9 +119,12 @@
     Memory(QuadDataLoadWithOffset, TwoRegisterU8)
     Memory(QuadIOStoreWithOffset, TwoRegisterU8)
     Memory(QuadIOLoadWithOffset, TwoRegisterU8)
+#undef Stack
+#undef Data
+#undef Code
+#undef IO
 #undef Memory
-//EndKind(Memory)
-//BeginKind(Branch)
+
 #define Branch(op, Format) X(Branch, op, Format)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
@@ -162,8 +137,6 @@
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
 #undef Branch
-//EndKind(Branch)
-//BeginKind(Compare)
 #define Compare(op, Format) X(Compare, op, Format)
 #define NormalCompare(op) Compare(op, ThreeRegister)
 #define NormalSignedCompare(op) NormalCompare(op ## Signed)
@@ -171,17 +144,6 @@
 #define NormalSignedUnsignedCompare(op) \
         NormalSignedCompare(op) \
         NormalUnsignedCompare(op)
-    NormalCompare(Equals)
-    NormalCompare(NotEquals)
-    NormalSignedUnsignedCompare(LessThan)
-    NormalSignedUnsignedCompare(GreaterThan)
-    NormalSignedUnsignedCompare(LessThanOrEqualTo)
-    NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
-    //NormalSignedUnsignedCompare(Spaceship)
-#undef NormalSignedCompare
-#undef NormalUnsignedCompare 
-#undef NormalCompare
-#undef NormalSignedUnsignedCompare
 #define RawImm8Compare(op, Format) Compare(op ## Immediate8, Format)
 #define Imm8Compare(op) RawImm8Compare(op, TwoRegisterU8)
 #define Imm8SignedCompare(op) RawImm8Compare(op ## Signed , TwoRegisterS8)
@@ -189,6 +151,13 @@
 #define Imm8SignedUnsignedCompare(op) \
         Imm8SignedCompare(op) \
         Imm8UnsignedCompare(op)
+    NormalCompare(Equals)
+    NormalCompare(NotEquals)
+    NormalSignedUnsignedCompare(LessThan)
+    NormalSignedUnsignedCompare(GreaterThan)
+    NormalSignedUnsignedCompare(LessThanOrEqualTo)
+    NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
+    //NormalSignedUnsignedCompare(Spaceship)
     Imm8Compare(Equals)
     Imm8Compare(NotEquals)
     Imm8SignedUnsignedCompare(LessThan)
@@ -196,6 +165,11 @@
     Imm8SignedUnsignedCompare(LessThanOrEqualTo)
     Imm8SignedUnsignedCompare(GreaterThanOrEqualTo)
     //Imm8SignedUnsignedCompare(Spaceship)
+
+#undef NormalSignedCompare
+#undef NormalUnsignedCompare 
+#undef NormalCompare
+#undef NormalSignedUnsignedCompare
 #undef Imm8SignedUnsignedCompare
 #undef RawImm8Compare
 #undef Imm8Compare
@@ -203,5 +177,4 @@
 #undef Imm8UnsignedCompare
 
 #undef Compare
-//EndKind(Compare)
 
