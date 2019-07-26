@@ -271,12 +271,12 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
 
 #define X(op, act) \
     void \
-    Core::invoke ( const iris:: Arithmetic2 ## op ## SignedImmediateFormat & s) { \
+    Core::invoke ( const iris:: Arithmetic ## op ## SignedImmediateFormat & s) { \
         auto [ dest, src0, s8 ] = s.arguments(); \
         setRegisterValue(dest, getRegisterValue<SignedWord>(src0) act static_cast<SignedWord>(s8)); \
     } \
     void \
-    Core::invoke ( const iris:: Arithmetic2 ## op ## UnsignedImmediateFormat & s) { \
+    Core::invoke ( const iris:: Arithmetic ## op ## UnsignedImmediateFormat & s) { \
         auto [ dest, src0, u8 ] = s.arguments(); \
         setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
     }
@@ -286,7 +286,7 @@ X(Subtract, -);
 #undef X
 #define X(op, act) \
     void \
-    Core::invoke ( const iris:: Arithmetic2 ## op ## UnsignedImmediateFormat & s) { \
+    Core::invoke ( const iris:: Arithmetic ## op ## UnsignedImmediateFormat & s) { \
         auto [ dest, src0, u8 ] = s.arguments(); \
         setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
     }
@@ -295,7 +295,7 @@ X(ShiftRight, >>);
 #undef X
 
 void
-Core::invoke(const iris::Arithmetic2DivideSignedImmediateFormat& s) {
+Core::invoke(const iris::ArithmeticDivideSignedImmediateFormat& s) {
     if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
         throw "Divide by zero!";
     } else {
@@ -303,7 +303,7 @@ Core::invoke(const iris::Arithmetic2DivideSignedImmediateFormat& s) {
     }
 }
 void
-Core::invoke(const iris::Arithmetic2DivideUnsignedImmediateFormat& s) {
+Core::invoke(const iris::ArithmeticDivideUnsignedImmediateFormat& s) {
     if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
         throw "Divide by zero!";
     } else {
@@ -311,7 +311,7 @@ Core::invoke(const iris::Arithmetic2DivideUnsignedImmediateFormat& s) {
     }
 }
 void
-Core::invoke(const iris::Arithmetic2RemainderSignedImmediateFormat& s) {
+Core::invoke(const iris::ArithmeticRemainderSignedImmediateFormat& s) {
     if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
         throw "Remainder by zero!";
     } else {
@@ -319,7 +319,7 @@ Core::invoke(const iris::Arithmetic2RemainderSignedImmediateFormat& s) {
     }
 }
 void
-Core::invoke(const iris::Arithmetic2RemainderUnsignedImmediateFormat& s) {
+Core::invoke(const iris::ArithmeticRemainderUnsignedImmediateFormat& s) {
     if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
         throw "Remainder by zero!";
     } else {
@@ -592,7 +592,7 @@ IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWrite
 }
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue<T>(dest, \
@@ -610,7 +610,7 @@ X(ShiftRight, >>);
 #undef Y
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue<T>(dest, op ( \
@@ -622,7 +622,7 @@ X(Max, std::max);
 #undef Y
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         if (auto denominator = getDoubleRegisterValue < T > (src1); denominator != 0) { \
