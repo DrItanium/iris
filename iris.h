@@ -191,8 +191,7 @@ static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size misma
 template<Opcodes op>
 class ArgumentFormat {
     public:
-        static constexpr OpcodesNumericType
-        static constexpr RawValue = static_cast<OpcodesNumericType>(op);
+        static constexpr OpcodesNumericType RawValue = static_cast<OpcodesNumericType>(op);
         static constexpr auto TargetOpcode = op;
         explicit constexpr ArgumentFormat(const Instruction&) { };
         constexpr auto getOpcode() const noexcept { return op; }
