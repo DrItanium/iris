@@ -347,26 +347,6 @@ Core::invoke(const iris::ArithmeticMinUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), getRegisterValue<Word>(src1)));
 }
-void
-Core::invoke(const iris::Arithmetic2MaxSignedImmediateFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::max(getRegisterValue<SignedWord>(src0), static_cast<SignedWord>(src1)));
-}
-void
-Core::invoke(const iris::Arithmetic2MaxUnsignedImmediateFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::max(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
-}
-void
-Core::invoke(const iris::Arithmetic2MinSignedImmediateFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::min(getRegisterValue<SignedWord>(src0), static_cast<SignedWord>(src1)));
-}
-void
-Core::invoke(const iris::Arithmetic2MinUnsignedImmediateFormat& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), static_cast<Word>(src1)));
-}
 
 void
 Core::invoke(const iris::BranchConditionalImmediateFormat& s) {
