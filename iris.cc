@@ -34,7 +34,7 @@ DoubleRegister::put(Word lower, Word upper) noexcept {
 }
 
 DoubleRegister
-DoubleRegister::makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
+DoubleRegister::make(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
@@ -44,7 +44,7 @@ DoubleRegister::makePair(RegisterBank& bank, RegisterIndex lower, RegisterIndex 
 }
 
 const DoubleRegister
-DoubleRegister::makePair(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
+DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
     if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
         constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
         return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
@@ -54,14 +54,14 @@ DoubleRegister::makePair(const RegisterBank& bank, RegisterIndex lower, Register
 }
 
 DoubleRegister
-DoubleRegister::makePair(RegisterBank& bank, RegisterIndex lower) noexcept {
+DoubleRegister::make(RegisterBank& bank, RegisterIndex lower) noexcept {
     auto conv = static_cast<Byte>(lower);
-    return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
+    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
 const DoubleRegister
-DoubleRegister::makePair(const RegisterBank& bank, RegisterIndex lower) noexcept {
+DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower) noexcept {
     auto conv = static_cast<Byte>(lower);
-    return makePair(bank, lower, static_cast<RegisterIndex>(conv + 1));
+    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
 
 void 
@@ -91,12 +91,12 @@ Core::getSourceRegister(RegisterIndex idx) const noexcept {
 }
 DoubleRegister
 Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) noexcept {
-    return DoubleRegister::makePair(_regs, lower, upper);
+    return DoubleRegister::make(_regs, lower, upper);
 }
 
 const DoubleRegister
 Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
-    return DoubleRegister::makePair(_regs, lower, upper);
+    return DoubleRegister::make(_regs, lower, upper);
 }
 
 void
@@ -162,7 +162,7 @@ Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
-    // CodeStore AddressRegister <= LowerRegister (upper register implied)
+    // CodeStore AddressRegister <= LowerRegister Offset ( An add of one is implied so the range is [0,257])
     auto [addr, lower, factor ] = s.arguments();
     storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
     decrementRegister(addr, factor);

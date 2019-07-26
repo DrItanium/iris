@@ -681,10 +681,10 @@ class QuadRegister final {
 };
 class DoubleRegister final {
     public:
-        static DoubleRegister makePair(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-        static DoubleRegister makePair(RegisterBank& reg, RegisterIndex a) noexcept;
-        static const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-        static const DoubleRegister makePair(const RegisterBank& reg, RegisterIndex a) noexcept;
+        static DoubleRegister make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+        static DoubleRegister make(RegisterBank& reg, RegisterIndex a) noexcept;
+        static const DoubleRegister make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
+        static const DoubleRegister make(const RegisterBank& reg, RegisterIndex a) noexcept;
     public:
         constexpr DoubleRegister(Register& lower, Register& upper) : _lower(lower), _upper(upper) { }
         constexpr DoubleRegister(const Register& lower, const Register& upper) : _lower(const_cast<Register&>(lower)), _upper(const_cast<Register&>(upper)) { }
