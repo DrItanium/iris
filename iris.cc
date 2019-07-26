@@ -676,7 +676,7 @@ IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWrite
 }
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue<T>(dest, \
@@ -694,7 +694,7 @@ X(ShiftRight, >>);
 #undef Y
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setDoubleRegisterValue<T>(dest, op ( \
@@ -706,7 +706,7 @@ X(Max, std::max);
 #undef Y
 #define Y(name, op, kind) \
     void \
-    Core::invoke(const iris::DoubleRegisterDouble ## name ## kind ## Format & s) { \
+    Core::invoke(const iris::Arithmetic2Double ## name ## kind ## Format & s) { \
         using T = kind ## DoubleWord ; \
         auto [ dest, src0, src1 ] = s.arguments(); \
         if (auto denominator = getDoubleRegisterValue < T > (src1); denominator != 0) { \

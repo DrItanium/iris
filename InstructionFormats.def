@@ -11,7 +11,6 @@ BeginGroups
     Group(Branch)
     Group(Compare)
     Group(Arithmetic2)
-    Group(DoubleRegister)
 EndGroups
 /// Format is: Group, Operation, ArgumentFormat
 BeginKind(Arithmetic)
@@ -205,20 +204,3 @@ BeginKind(Compare)
 #undef Compare
 EndKind(Compare)
 
-BeginKind(DoubleRegister)
-#define DoubleRegister(op, Format) X(DoubleRegister, Double ## op, Format)
-#define DoubleRegisterSignedUnsigned(op, Format) \
-        DoubleRegister(op ## Signed, Format) \
-        DoubleRegister(op ## Unsigned, Format)
-    DoubleRegisterSignedUnsigned(Add, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Subtract, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Multiply, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Divide, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Remainder, ThreeRegister)
-    DoubleRegisterSignedUnsigned(ShiftLeft, ThreeRegister)
-    DoubleRegisterSignedUnsigned(ShiftRight, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
-#undef DoubleRegisterSignedUnsigned
-#undef DoubleRegister
-EndKind(DoubleRegister)
