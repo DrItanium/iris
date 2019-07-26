@@ -279,13 +279,14 @@ using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>
 using S8Format = OneArgumentFormat<SignedByte, op>;
 
-template<Byte value>
+template<std::underlying_type_t<Opcodes> value>
 struct OperationToFormat final {
     NO_INSTANTIATE(OperationToFormat); 
     using Type = std::monostate;
 };
-template<Byte value>
+template<std::underlying_type_t<Opcodes> value>
 using OperationToFormat_t = typename OperationToFormat<value>::Type;
+
 
 // define the actual instruction kinds
 #define X(g, o, f) \
@@ -318,8 +319,8 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     // we even get a huge performance boost too :)
     switch (inst.getOpcodeIndex()) {
 #define X(g, o, f) \
-        case Opcodes:: g ## o: \
-             return OperationToFormat_t<g ## o ## Format>(inst); 
+        case g ## o ## Format :: RawValue : \
+             return OperationToFormat_t<g ## o ## Format :: RawValue>(inst); 
 #include "InstructionFormats.def"
 #undef X
         default:
