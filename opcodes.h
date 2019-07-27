@@ -164,6 +164,13 @@ struct Instruction {
         void setHighestQuarter(Byte value) noexcept;
         void setLowerHalf(UnsignedWord value) noexcept;
         void setUpperHalf(UnsignedWord value) noexcept;
+        void setImm16(UnsignedWord value) noexcept;
+        void setImm8(UnsignedByte value) noexcept;
+        void setArg0(RegisterIndex value) noexcept;
+        void setArg1(RegisterIndex value) noexcept;
+        void setArg2(RegisterIndex value) noexcept;
+        void setOpcode(Opcodes opcode) noexcept;
+        void setOpcode(UnsignedByte value) noexcept;
     private:
         DoubleWord _bits;
 };

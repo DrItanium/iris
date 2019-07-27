@@ -44,10 +44,38 @@ Instruction::setHighestQuarter(Byte value) noexcept {
 }
 void 
 Instruction::setLowerHalf(UnsignedWord value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0x0000'FFFF, 0>(_bits, value);
+    _bits = iris::setLowerHalf(_bits, value);
 }
 void 
 Instruction::setUpperHalf(UnsignedWord value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0xFFFF'0000, 16>(_bits, value);
+    _bits = iris::setUpperHalf(_bits, value);
+}
+void
+Instruction::setImm16(UnsignedWord value) noexcept {
+    setUpperHalf(value);
+}
+void
+Instruction::setImm8(UnsignedByte value) noexcept {
+    setHighestQuarter(value);
+}
+void
+Instruction::setArg0(RegisterIndex value) noexcept {
+    setLowerQuarter(static_cast<Byte>(value));
+}
+void
+Instruction::setArg1(RegisterIndex value) noexcept {
+    setHigherQuarter(static_cast<Byte>(value));
+}
+void
+Instruction::setArg2(RegisterIndex value) noexcept {
+    setHighestQuarter(static_cast<Byte>(value));
+}
+void
+Instruction::setOpcode(Opcodes opcode) noexcept {
+    setOpcode(static_cast<UnsignedByte>(opcode));
+}
+void
+Instruction::setOpcode(UnsignedByte value) noexcept {
+    setLowestQuarter(value);
 }
 } // end namespace iris

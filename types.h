@@ -96,6 +96,12 @@ constexpr UnsignedByte getUpperHalf(UnsignedWord word) noexcept {
 constexpr UnsignedByte getLowerHalf(UnsignedWord word) noexcept {
     return decodeBits<decltype(word), UnsignedByte, 0x00FF, 0>(word);
 }
+constexpr UnsignedDoubleWord setUpperHalf(UnsignedDoubleWord word, UnsignedWord value) noexcept {
+    return encodeBits<decltype(word), decltype(value), 0xFFFF'0000, 16>(word, value);
+}
+constexpr UnsignedDoubleWord setLowerHalf(UnsignedDoubleWord word, UnsignedWord value) noexcept {
+    return encodeBits<decltype(word), decltype(value), 0x0000'FFFF, 0>(word, value);
+}
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
