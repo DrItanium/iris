@@ -38,4 +38,4 @@ clean:
 
 exceptions.o: exceptions.cc exceptions.h types.h
 iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h
+ exceptions.h IODevices.h

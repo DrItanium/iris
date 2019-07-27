@@ -41,10 +41,9 @@
 #include "types.h"
 #include "opcodes.h"
 #include "exceptions.h"
+#include "IODevices.h"
 namespace iris {
 
-constexpr auto MemoryBankElementCount = (0xFFFF + 1);
-constexpr auto RegisterCount = (0xFF + 1);
 
 
 
@@ -124,110 +123,7 @@ class Register final {
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
 
-template<typename T, size_t capacity>
-using NumericalStorageBank = std::array<T, capacity>;
 
-using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
-/**
- * Generic template for defining a memory bank of 2^16 elements.
- * @tparam T the type of each memory bank cell
- */
-template<typename T>
-using MemoryBank = NumericalStorageBank<std::enable_if_t<std::is_integral_v<T>, T>, MemoryBankElementCount>;
-/**
- * Separate memory space that holds the instructions the iris core executes;
- * DoubleWords are stored in this location.
- */
-using CodeMemoryBank = MemoryBank<DoubleWord>;
-
-/**
- * Location to store data values in an iris core; 2^16 words worth of storage
- * is provided by default.
- */
-using DataMemoryBank = MemoryBank<Word>;
-/**
- * Iris comes equipped with a full 2^16 words worth of stack space that is
- * accessed by separate instructions. It is only possible to do pushes and pops
- * to stack memory. However, the number of stack pointers is only limited by
- * the number of registers.
- */
-class Core;
-using StackMemoryBank = MemoryBank<Word>;
-using MMIOWriteFunction = std::function<void(Core&, Word)>;
-using MMIOReadFunction = std::function<Word(Core&)>;
-struct MMIOEntry {
-    public:
-        MMIOEntry() = default;
-        virtual ~MMIOEntry() = default;
-        virtual void write(Core&, Word);
-        virtual Word read(Core&);
-
-};
-struct LambdaMMIOEntry : MMIOEntry {
-    public:
-        static void illegalWriteError(Core&, Word) {
-            throw MemoryStoreException("illegal io write!");
-        }
-        static Word illegalReadError(Core&) {
-            throw MemoryLoadException("illegal io read!");
-            return 0;
-        }
-    public:
-        LambdaMMIOEntry(MMIOReadFunction read = illegalReadError, MMIOWriteFunction write = illegalWriteError);
-        virtual ~LambdaMMIOEntry() = default;
-        void write(Core&, Word value) override;
-        Word read(Core&) override;
-    private:
-        MMIOReadFunction _read;
-        MMIOWriteFunction _write;
-
-};
-struct CaptiveMMIOEntry : MMIOEntry {
-    public:
-        CaptiveMMIOEntry(MMIOEntry& other);
-        virtual ~CaptiveMMIOEntry() = default;
-        void write(Core&, Word) override;
-        Word read(Core&) override;
-    private:
-        MMIOEntry& _other;
-};
-class IOMemoryBank;
-using ComplexMemoryMapping = std::function<void(IOMemoryBank&, Address)>;
-using MemoryMapEntryKind = std::variant<MMIOEntry,
-      std::tuple<MMIOReadFunction, MMIOWriteFunction>,
-      MMIOReadFunction,
-      MMIOWriteFunction,
-      ComplexMemoryMapping>;
-using MemoryMapEntry = std::tuple<Address, MemoryMapEntryKind>;
-/**
- * Description of the io memory map to be installed into IO memory
- */
-using IOMemoryMap = std::map<Address, MemoryMapEntryKind>;
-/**
- * the MMIO space that is exposed to the program, one registers functions at
- * addresses into the space. Writing to an address which is not registers
- * results in nothing happening. Reading from an address will return all ones.
- */
-class IOMemoryBank {
-    public:
-        using MMIOTable = NumericalStorageBank<MMIOEntry, MemoryBankElementCount>;
-    public:
-        IOMemoryBank(Core& c) : _core(c) { }
-        ~IOMemoryBank() = default;
-        Word load(Address);
-        void store(Address, Word);
-        void mapIntoMemory(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
-        void mapIntoMemory(Address, MMIOReadFunction);
-        void mapIntoMemory(Address, MMIOWriteFunction);
-        void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
-        void mapIntoMemory(Address, MMIOEntry&);
-        void mapIntoMemory(Address, ComplexMemoryMapping);
-        void installMemoryMap(const IOMemoryMap&);
-    private:
-        Core& _core;
-        IOMemoryBank::MMIOTable _storage;
-
-};
 class QuadRegister final {
     public:
         static QuadRegister make(RegisterBank& reg, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) noexcept;
@@ -342,6 +238,8 @@ class DoubleRegister final {
         Register& _lower;
         Register& _upper;
 };
+constexpr auto RegisterCount = (0xFF + 1);
+using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 class Core {
     public:
         static void terminateCore(Core&, Word);
