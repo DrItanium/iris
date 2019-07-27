@@ -27,6 +27,7 @@
 #define IRIS_OPCODES_H__
 #include <variant>
 #include <optional>
+#include <tuple>
 #include "types.h"
 
 namespace iris {
@@ -39,6 +40,17 @@ namespace iris {
     constexpr auto MaximumOpcodeCount = (0xFF + 1);
     using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
     static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
+    // forward declare the formats
+#define X(g, o, f) struct g ## o ## Format ; 
+#include "InstructionFormats.def"
+#undef X
+
+using DecodedInstruction = std::variant<
+            std::monostate
+#define X(g, o, f) , g ## o ## Format 
+#include "InstructionFormats.def"
+#undef X
+            >;
 
 /**
  * The fields of an iris instruction are:
@@ -136,6 +148,7 @@ struct Instruction {
         }
         constexpr Byte getImm8() const noexcept { return getSource1Index<Byte>(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
+        constexpr std::optional<DecodedInstruction> decode() const noexcept;
     private:
         DoubleWord _bits;
 };
@@ -227,27 +240,19 @@ using S8Format = OneArgumentFormat<SignedByte, op>;
 #include "InstructionFormats.def"
 #undef X
 
-using DecodedInstruction = std::variant<
-            std::monostate
-#define X(g, o, f) , g ## o ## Format 
-#include "InstructionFormats.def"
-#undef X
-            >;
-
-constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction& inst) noexcept {
+constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 
     // undecoded byte. The group and kind is still but only at compile time.
     // This greatly cuts down on code complexity. When optimization is active 
     // we even get a huge performance boost too :)
-    switch (inst.getOpcodeIndex()) {
-#define X(g, o, f) \
-        case g ## o ## Format :: RawValue : \
-             return g ## o ## Format ( inst ) ;
+    switch (getOpcodeIndex()) {
+#define X(g, o, f) case g ## o ## Format :: RawValue : return g ## o ## Format ( *this ) ;
 #include "InstructionFormats.def"
 #undef X
         default:
             return std::nullopt;
     }
 }
+
 } // end namespace iris
 #endif // end IRIS_OPCODES_H__

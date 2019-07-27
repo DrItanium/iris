@@ -23,13 +23,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "types.h"
 #include "iris.h"
+#include "opcodes.h"
 
 namespace iris {
 void 
 Core::invoke(DoubleWord ibits) {
     Instruction inst(ibits);
-    if (auto operation = decodeInstruction(inst); operation) {
+    if (auto operation = inst.decode(); operation) {
         std::visit([this](auto&& op) { 
                     using K = std::decay_t<decltype(op)>;
                     if constexpr (std::is_same_v<std::monostate, K>) {

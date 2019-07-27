@@ -39,11 +39,14 @@
 #include <exception>
 #include <sstream>
 #include "types.h"
-#include "opcodes.h"
 #include "exceptions.h"
 #include "IODevices.h"
 #include "register.h"
 namespace iris {
+#define X(group, oper, fmt) \
+    class group ## oper ## Format ;
+#include "InstructionFormats.def"
+#undef X
 class Core {
     public:
         static void terminateCore(Core&, Word);
