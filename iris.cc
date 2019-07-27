@@ -653,6 +653,8 @@ Core::run() {
     do {
         try {
             cycle();
+        } catch (DivideByZeroException& ex) {
+            /// @todo try to dispatch to an interrupt vector...
         } catch (Exception& ex) {
             /// @todo implement logic to handle edge cases such as divide by zero and other such handling
         }
