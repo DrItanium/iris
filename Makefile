@@ -3,7 +3,8 @@ include config.mk
 CORE_OBJS := iris.o \
 	exceptions.o \
 	invoke.o \
-	register.o
+	register.o \
+	logic.o
 
 IRIS_ARCHIVE := libiris.a
 
@@ -42,5 +43,7 @@ exceptions.o: exceptions.cc exceptions.h types.h
 invoke.o: invoke.cc iris.h types.h opcodes.h InstructionFormats.def \
  exceptions.h IODevices.h register.h
 iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
+ exceptions.h IODevices.h register.h
+logic.o: logic.cc iris.h types.h opcodes.h InstructionFormats.def \
  exceptions.h IODevices.h register.h
 register.o: register.cc register.h types.h
