@@ -27,42 +27,6 @@
 
 namespace iris {
 
-void
-DoubleRegister::put(Word lower, Word upper) noexcept {
-    _lower.put(lower);
-    _upper.put(upper);
-}
-
-DoubleRegister
-DoubleRegister::make(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
-    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
-    } else {
-        return DoubleRegister(bank[Byte(lower)], bank[Byte(upper)]);
-    }
-}
-
-const DoubleRegister
-DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
-    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
-    } else {
-        return DoubleRegister(bank[Byte(lower)], bank[Byte(upper)]);
-    }
-}
-
-DoubleRegister
-DoubleRegister::make(RegisterBank& bank, RegisterIndex lower) noexcept {
-    auto conv = static_cast<Byte>(lower);
-    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
-}
-const DoubleRegister
-DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower) noexcept {
-    auto conv = static_cast<Byte>(lower);
-    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
-}
 
 
 DestinationRegister
@@ -752,52 +716,6 @@ Core::storeIO(Address addr, Word value) {
     _io.store(addr, value);
 }
 
-void
-QuadRegister::put(Word a, Word b, Word c, Word d) noexcept {
-    _lowest.put(a);
-    _lower.put(b);
-    _higher.put(c);
-    _highest.put(d);
-}
-constexpr RegisterIndex increment(RegisterIndex input, std::underlying_type_t<RegisterIndex> by = 1) noexcept {
-    return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(input) + by);
-}
-const QuadRegister
-QuadRegister::make(const RegisterBank& reg, RegisterIndex lowest) noexcept {
-    return make(reg, lowest, increment(lowest), 
-                     increment(lowest, 2), increment(lowest, 3));
-}
-QuadRegister
-QuadRegister::make(RegisterBank& reg, RegisterIndex lowest) noexcept {
-    return make(reg, lowest, increment(lowest), 
-                     increment(lowest, 2), increment(lowest, 3));
-}
-
-const QuadRegister
-QuadRegister::make(const RegisterBank& bank, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) noexcept {
-    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return QuadRegister(bank[Byte(a & registerBankMask)], 
-                bank[Byte(b & registerBankMask)],
-                bank[Byte(c & registerBankMask)],
-                bank[Byte(d & registerBankMask)]);
-    } else {
-        return QuadRegister(bank[Byte(a)], bank[Byte(b)], bank[Byte(c)], bank[Byte(d)]);
-    }
-}
-
-QuadRegister
-QuadRegister::make(RegisterBank& bank, RegisterIndex a, RegisterIndex b, RegisterIndex c, RegisterIndex d) noexcept {
-    if constexpr (!std::is_same_v<Byte, std::underlying_type_t<RegisterIndex>>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return QuadRegister(bank[Byte(a & registerBankMask)], 
-                bank[Byte(b & registerBankMask)],
-                bank[Byte(c & registerBankMask)],
-                bank[Byte(d & registerBankMask)]);
-    } else {
-        return QuadRegister(bank[Byte(a)], bank[Byte(b)], bank[Byte(c)], bank[Byte(d)]);
-    }
-}
 
 QuadRegister
 Core::getQuadRegister(RegisterIndex start) noexcept {
@@ -809,10 +727,6 @@ Core::getQuadRegister(RegisterIndex start) const noexcept {
     return QuadRegister::make(_regs, start);
 }
 
-void 
-QuadRegister::put(UnsignedDoubleWord lower, UnsignedDoubleWord upper) noexcept {
-    put(lower, lower >> 16, upper, upper >> 16);
-}
 
 void
 Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
