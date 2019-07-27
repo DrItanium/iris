@@ -123,6 +123,8 @@ class Register final {
 using DestinationRegister = Register&;
 using SourceRegister = const Register&;
 
+constexpr auto RegisterCount = (0xFF + 1);
+using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 
 class QuadRegister final {
     public:
@@ -238,8 +240,6 @@ class DoubleRegister final {
         Register& _lower;
         Register& _upper;
 };
-constexpr auto RegisterCount = (0xFF + 1);
-using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 class Core {
     public:
         static void terminateCore(Core&, Word);

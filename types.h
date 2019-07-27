@@ -26,17 +26,9 @@
 #ifndef IRIS_TYPES_H__
 #define IRIS_TYPES_H__
 #include <cstdint>
-#include <variant>
-#include <optional>
 #include <array>
-#include <iostream>
 #include <type_traits>
-#include <tuple>
 #include <cstddef>
-#include <string>
-#include <functional>
-#include <map>
-#include <exception>
 #include <sstream>
 
 namespace iris {
@@ -74,10 +66,6 @@ using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
 
-template<typename ... Args>
-void print(std::ostream& os, Args&& ... args) noexcept {
-    (os <<  ... << args) << std::endl;
-}
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {

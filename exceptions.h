@@ -30,6 +30,10 @@
 #include "types.h"
 namespace iris {
 
+template<typename ... Args>
+void print(std::ostream& os, Args&& ... args) noexcept {
+    (os <<  ... << args) << std::endl;
+}
 class Exception : public std::exception {
     public:
         template<typename ... Args>
