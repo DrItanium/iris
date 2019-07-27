@@ -55,18 +55,18 @@ using DecodedInstruction = std::variant<
 /**
  * The fields of an iris instruction are:
  * [0,7] Opcode
- * [8,15] Destination
- * [16,23] Source0
- * [24,31] Source1
+ * [8,15] Arg0 
+ * [16,23] Arg1 
+ * [24,31] Arg2 
  * [16,31] Immediate16
  * [24,31] Immediate8
  *
  * The formats are:
- * Opcode, Destination, Source0, Source1 (3reg)
- * Opcode, Destination, Source0, Immediate8 (2reg+i8)
- * Opcode, Destination, Immediate16 (1reg + i16)
- * Opcode, Destination, Source0 (2reg)
- * Opcode, Destination (1reg)
+ * Opcode, Arg0, Arg1, Arg2(3reg)
+ * Opcode, Arg0, Arg1, Immediate8 (2reg+i8)
+ * Opcode, Arg0, Immediate16 (1reg + i16)
+ * Opcode, Arg0, Arg1 (2reg)
+ * Opcode, Arg0 (1reg)
  * Opcode, Immediate8 (i8)
  * Opcode, Immediate16 (i16)
  * Opcode (0arg)
@@ -115,38 +115,45 @@ struct Instruction {
         constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
     private:
         template<typename T>
-        constexpr T innerGetIndex(Byte onDefault) const noexcept {
-            // some extra logic must go into here for the formats to make sense
-            // we always extract imm16 from the same location in the instruction
-            if constexpr (std::is_same_v<T, Word>) {
-                return getImm16();
-            } else if constexpr (std::is_same_v<T, SignedWord>) {
-                union temporary {
-                    temporary(Word input) : u(input) { }
-                    Word u;
-                    SignedWord s;
-                };
-                return temporary(getImm16()).s;
-            } else if constexpr (std::is_same_v<T, Byte> || std::is_same_v<T, SignedByte>) {
-                return convertByteIndex<T>(getImm8());
-            } else {
-                return convertByteIndex<T>(onDefault);
-            }
-        }
+        static constexpr auto IsU8 = std::is_same_v<std::decay_t<T>, UnsignedByte>;
+        template<typename T>
+        static constexpr auto IsS8 = std::is_same_v<std::decay_t<T>, SignedByte>;
+        template<typename T>
+        static constexpr auto IsImm8 = IsU8<T> || IsS8<T>;
+        template<typename T>
+        static constexpr auto IsImm16 = std::is_same_v<std::decay_t<T>, Word>;
     public:
         template<typename T = RegisterIndex>
-        constexpr T getDestinationIndex() const noexcept { 
-            return innerGetIndex<T>(getLowerQuarter()); 
+        constexpr T getArg0() const noexcept { 
+            if constexpr (IsImm16<T>) {
+                return getImm16();
+            } else if constexpr (IsImm8<T>) {
+                return convertByteIndex<T>(getImm8());
+            } else {
+                return convertByteIndex<T>(getLowerQuarter());
+            }
         }
         template<typename T = RegisterIndex>
-        constexpr T getSource0Index() const noexcept {
-            return innerGetIndex<T>(getHigherQuarter());
+        constexpr T getArg1() const noexcept {
+            if constexpr (IsImm16<T>) {
+                return getImm16();
+            } else if constexpr (IsImm8<T>) {
+                return convertByteIndex<T>(getImm8());
+            } else {
+                return convertByteIndex<T>(getHigherQuarter());
+            }
         }
         template<typename T = RegisterIndex>
-        constexpr T getSource1Index() const noexcept { 
-            return convertByteIndex<T>(getHighestQuarter()); 
+        constexpr T getArg2() const noexcept { 
+            if constexpr (IsImm16<T>) {
+                return getImm16();
+            } else if constexpr (IsImm8<T>) {
+                return convertByteIndex<T>(getImm8());
+            } else {
+                return convertByteIndex<T>(getHighestQuarter());
+            }
         }
-        constexpr Byte getImm8() const noexcept { return getSource1Index<Byte>(); }
+        constexpr Byte getImm8() const noexcept { return getArg2<Byte>(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
         constexpr std::optional<DecodedInstruction> decode() const noexcept;
     private:
@@ -166,7 +173,7 @@ template<typename T, Opcodes op>
 class ThreeArgumentsFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
-        explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index()), _third(inst.getSource1Index<T>()) { }
+        explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1()), _third(inst.getArg2<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr auto getThird() const noexcept { return _third; }
@@ -180,7 +187,7 @@ template<typename T, Opcodes op>
 class TwoArgumentsFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
-        explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex()), _second(inst.getSource0Index<T>()) { }
+        explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
@@ -192,7 +199,7 @@ template<typename T, Opcodes op>
 class OneArgumentFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
-        explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getDestinationIndex<T>()) { }
+        explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
     private:
@@ -215,8 +222,6 @@ using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
 template<Opcodes op>
 using OneRegisterU16Format = TwoArgumentsFormat<Word, op>;
 template<Opcodes op>
-using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
-template<Opcodes op>
 using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
 template<Opcodes op>
 using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
@@ -224,8 +229,6 @@ template<Opcodes op>
 using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
 template<Opcodes op>
 using U16Format = OneArgumentFormat<Word, op>;
-template<Opcodes op>
-using S16Format = OneArgumentFormat<SignedWord, op>;
 template<Opcodes op>
 using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>
