@@ -4,7 +4,8 @@ CORE_OBJS := iris.o \
 	exceptions.o \
 	invoke.o \
 	register.o \
-	logic.o
+	logic.o \
+	IODevices.o 
 
 IRIS_ARCHIVE := libiris.a
 
@@ -42,6 +43,7 @@ clean:
 exceptions.o: exceptions.cc exceptions.h types.h
 invoke.o: invoke.cc iris.h types.h opcodes.h InstructionFormats.def \
  exceptions.h IODevices.h register.h
+IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
 iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
  exceptions.h IODevices.h register.h
 logic.o: logic.cc iris.h types.h opcodes.h InstructionFormats.def \

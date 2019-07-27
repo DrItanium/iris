@@ -67,35 +67,6 @@ Core::loadData(Address addr) {
 }
 
 
-Word
-IOMemoryBank::load(Address address) {
-    return _storage[address].read(_core);
-}
-void
-IOMemoryBank::store(Address address, Word value) {
-    _storage[address].write(_core, value);
-}
-void
-IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
-    _storage[address] = LambdaMMIOEntry(read, write);
-}
-void
-IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
-    _storage[address] = CaptiveMMIOEntry(entry);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
-    mapIntoMemory(addr, r, LambdaMMIOEntry::illegalWriteError);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, MMIOWriteFunction w) {
-    mapIntoMemory(addr, LambdaMMIOEntry::illegalReadError, w);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> t) {
-    auto [ r, w ] = t;
-    mapIntoMemory(addr, r, w);
-}
 
 void
 Core::cycle() {
@@ -121,39 +92,6 @@ Core::run() {
     } while (_executing);
 }
 
-void
-MMIOEntry::write(Core&, Word) {
-    throw MemoryStoreException("illegal io write!");
-}
-
-Word
-MMIOEntry::read(Core&) {
-    throw MemoryLoadException("illegal io read!");
-    return 0;
-}
-
-void
-LambdaMMIOEntry::write(Core& c, Word value) {
-    _write(c, value);
-}
-
-Word
-LambdaMMIOEntry::read(Core& c) {
-    return _read(c);
-}
-
-void
-CaptiveMMIOEntry::write(Core& c, Word value) {
-    _other.write(c, value);
-}
-
-Word
-CaptiveMMIOEntry::read(Core& c) {
-    return _other.read(c);
-}
-
-LambdaMMIOEntry::LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
-CaptiveMMIOEntry::CaptiveMMIOEntry(MMIOEntry& capture) : _other(capture) { }
 
 void
 Core::terminateCycle() {
@@ -163,17 +101,6 @@ Core::terminateCycle() {
 void
 Core::installIOMemoryMap(const IOMemoryMap& map) {
     _io.installMemoryMap(map);
-}
-void
-IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
-    for (const auto& entry : map) {
-        auto [ addr, value ] = entry;
-        std::visit([this, addr](auto&& value) { mapIntoMemory(addr, value); }, value);
-    }
-}
-void
-IOMemoryBank::mapIntoMemory(Address baseAddress, ComplexMemoryMapping fn) {
-    fn(*this, baseAddress);
 }
 
 void
