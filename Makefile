@@ -39,6 +39,6 @@ clean:
 
 exceptions.o: exceptions.cc exceptions.h types.h
 invoke.o: invoke.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h IODevices.h
+ exceptions.h IODevices.h register.h
 iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h IODevices.h
+ exceptions.h IODevices.h register.h
