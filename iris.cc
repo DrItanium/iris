@@ -71,13 +71,13 @@ Core::invoke(DoubleWord ibits) {
         std::visit([this](auto&& op) { 
                     using K = std::decay_t<decltype(op)>;
                     if constexpr (std::is_same_v<std::monostate, K>) {
-                        throw "Unimplemented operation found!";
+                        throw UnimplementedOperationException();
                     } else {
                         invoke(op);
                     }
                 }, *operation);
     } else {
-        throw "Bad operation!";
+        throw BadOperationException();
     }
 }
 
@@ -101,7 +101,7 @@ Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept
 
 void
 Core::invoke(const iris::ArithmeticErrorFormat&) {
-    throw "Error instruction!";
+    throw ErrorInstructionException();
 }
 
 void
@@ -297,7 +297,7 @@ X(ShiftRight, >>);
 void
 Core::invoke(const iris::ArithmeticDivideSignedImmediateFormat& s) {
     if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
-        throw "Divide by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue(dest, getRegisterValue<SignedWord>(src0) / static_cast<SignedWord>(s8));
     }
@@ -305,7 +305,7 @@ Core::invoke(const iris::ArithmeticDivideSignedImmediateFormat& s) {
 void
 Core::invoke(const iris::ArithmeticDivideUnsignedImmediateFormat& s) {
     if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
-        throw "Divide by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue(dest, getRegisterValue<Word>(src0) / static_cast<Word>(u8));
     }
@@ -313,7 +313,7 @@ Core::invoke(const iris::ArithmeticDivideUnsignedImmediateFormat& s) {
 void
 Core::invoke(const iris::ArithmeticRemainderSignedImmediateFormat& s) {
     if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
-        throw "Remainder by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue(dest, getRegisterValue<SignedWord>(src0) % static_cast<SignedWord>(s8));
     }
@@ -321,7 +321,7 @@ Core::invoke(const iris::ArithmeticRemainderSignedImmediateFormat& s) {
 void
 Core::invoke(const iris::ArithmeticRemainderUnsignedImmediateFormat& s) {
     if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
-        throw "Remainder by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue(dest, getRegisterValue<Word>(src0) % static_cast<Word>(u8));
     }
@@ -428,7 +428,7 @@ void
 Core::invoke(const iris::ArithmeticDivideSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
-        throw "Divide by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) / denominator);
     }
@@ -437,7 +437,7 @@ void
 Core::invoke(const iris::ArithmeticDivideUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
-        throw "Divide by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) / denominator);
     }
@@ -447,7 +447,7 @@ void
 Core::invoke(const iris::ArithmeticRemainderSignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
-        throw "Remainder by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) % denominator);
     }
@@ -456,7 +456,7 @@ void
 Core::invoke(const iris::ArithmeticRemainderUnsignedFormat& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
-        throw "Remainder by zero!";
+        throw DivideByZeroException();
     } else {
         setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) % denominator);
     }
@@ -630,7 +630,7 @@ X(Max, std::max);
                 getDoubleRegisterValue<T>(src0) op \
                 getDoubleRegisterValue<T>(src1)); \
         } else { \
-            throw "Divide by zero!"; \
+            throw DivideByZeroException(); \
         } \
     }
 X(Divide, /);
@@ -653,7 +653,7 @@ Core::run() {
     do {
         try {
             cycle();
-        } catch (...) {
+        } catch (Exception& ex) {
             /// @todo implement logic to handle edge cases such as divide by zero and other such handling
         }
     } while (_executing);
@@ -661,12 +661,12 @@ Core::run() {
 
 void
 MMIOEntry::write(Core&, Word) {
-    throw "Illegal IO write";
+    throw MemoryStoreException("illegal io write!");
 }
 
 Word
 MMIOEntry::read(Core&) {
-    throw "Illegal IO read!";
+    throw MemoryLoadException("illegal io read!");
     return 0;
 }
 
@@ -883,6 +883,11 @@ Core::invoke(const iris::MemoryQuadIOStoreWithOffsetFormat& s) {
     storeIO(baseAddress+1, reg.lowerWord());
     storeIO(baseAddress+2, reg.higherWord());
     storeIO(baseAddress+3, reg.highestWord());
+}
+
+const char*
+Exception::what() const noexcept {
+    return _msg.c_str();
 }
 
 } // end namespace iris

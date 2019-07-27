@@ -36,6 +36,8 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <exception>
+#include <sstream>
 namespace iris {
 // false_v taken from https://quuxplusone.github.io/blog/2018/04/02/false-v/
 template<typename...>
@@ -70,14 +72,68 @@ using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
 
+template<typename ... Args>
+void print(std::ostream& os, Args&& ... args) noexcept {
+    (os <<  ... << args) << std::endl;
+}
+
+class Exception : public std::exception {
+    public:
+        template<typename ... Args>
+        Exception(Args&& ... args) noexcept {
+            std::ostringstream os;
+            print(os, args...);
+            _msg = os.str();
+        }
+        virtual ~Exception() = default;
+        virtual const char* what() const noexcept override final;
+        auto message() const { return _msg; }
+    private:
+        std::string _msg;
+};
+class UnimplementedOperationException : public Exception {
+    public:
+        UnimplementedOperationException() noexcept : Exception("Unimplemented operation") { }
+        virtual ~UnimplementedOperationException() = default;
+};
+class BadOperationException : public Exception {
+    public:
+        BadOperationException() noexcept : Exception("Bad operation") { }
+        virtual ~BadOperationException() = default;
+};
+class ErrorInstructionException : public Exception {
+    public:
+        ErrorInstructionException() noexcept : Exception("Error instruction raised!") { }
+        virtual ~ErrorInstructionException() = default;
+};
+class DivideByZeroException : public Exception {
+    public:
+        DivideByZeroException() noexcept : Exception("Divide by zero!") { }
+        virtual ~DivideByZeroException() = default;
+};
+class MemoryLoadException : public Exception {
+    public:
+        template<typename ... Args>
+        MemoryLoadException(Args&& ... args) noexcept : Exception("MemoryLoadException: ", std::forward<Args>...) { }
+        virtual ~MemoryLoadException() = default;
+};
+class MemoryStoreException : public Exception {
+    public:
+        template<typename ... Args>
+        MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward<Args>...) { }
+        virtual ~MemoryStoreException() = default;
+};
 enum class Opcodes : UnsignedWord {
 #define X(g, o, f) g ## o ,
 #include "InstructionFormats.def"
 #undef X
     Count,
 };
+constexpr auto MaximumOpcodeCount = (0xFF + 1);
+constexpr auto MemoryBankElementCount = (0xFFFF + 1);
+constexpr auto RegisterCount = (0xFF + 1);
 using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
-static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= 0x100, "Too many opcodes defined!");
+static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
@@ -297,8 +353,6 @@ constexpr std::optional<DecodedInstruction> decodeInstruction(const Instruction&
     }
 }
 
-constexpr auto MemoryBankElementCount = (0xFFFF + 1);
-constexpr auto RegisterCount = (0xFF + 1);
 
 class Register final {
     public:
@@ -418,10 +472,10 @@ struct MMIOEntry {
 struct LambdaMMIOEntry : MMIOEntry {
     public:
         static void illegalWriteError(Core&, Word) {
-            throw "Illegal IO Write!";
+            throw MemoryStoreException("illegal io write!");
         }
         static Word illegalReadError(Core&) {
-            throw "Illegal IO Read!";
+            throw MemoryLoadException("illegal io read!");
             return 0;
         }
     public:
