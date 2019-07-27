@@ -41,11 +41,11 @@ clean:
 # generated via g++ -MM -std=c++17 *.cc
 
 exceptions.o: exceptions.cc exceptions.h types.h
-invoke.o: invoke.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h IODevices.h register.h
+invoke.o: invoke.cc types.h iris.h exceptions.h IODevices.h register.h \
+ InstructionFormats.def opcodes.h
 IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
-iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h IODevices.h register.h
-logic.o: logic.cc iris.h types.h opcodes.h InstructionFormats.def \
- exceptions.h IODevices.h register.h
+iris.o: iris.cc iris.h types.h exceptions.h IODevices.h register.h \
+ InstructionFormats.def
+logic.o: logic.cc iris.h types.h exceptions.h IODevices.h register.h \
+ InstructionFormats.def opcodes.h
 register.o: register.cc register.h types.h
