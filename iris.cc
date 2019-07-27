@@ -887,9 +887,4 @@ Core::invoke(const iris::MemoryQuadIOStoreWithOffsetFormat& s) {
     storeIO(baseAddress+3, reg.highestWord());
 }
 
-const char*
-Exception::what() const noexcept {
-    return _msg.c_str();
-}
-
 } // end namespace iris

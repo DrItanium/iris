@@ -1,6 +1,7 @@
 include config.mk
 
-CORE_OBJS := iris.o 
+CORE_OBJS := iris.o \
+	exceptions.o
 
 IRIS_ARCHIVE := libiris.a
 
@@ -35,4 +36,6 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
-iris.o: iris.cc iris.h InstructionFormats.def
+exceptions.o: exceptions.cc exceptions.h types.h
+iris.o: iris.cc iris.h types.h opcodes.h InstructionFormats.def \
+ exceptions.h
