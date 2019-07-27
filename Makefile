@@ -50,4 +50,7 @@ iris.o: iris.cc iris.h types.h exceptions.h IODevices.h register.h \
  InstructionFormats.def
 logic.o: logic.cc iris.h types.h exceptions.h IODevices.h register.h \
  InstructionFormats.def opcodes.h
+opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def
+opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h IODevices.h \
+ register.h InstructionFormats.def
 register.o: register.cc register.h types.h
