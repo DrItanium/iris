@@ -188,17 +188,18 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Format& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
 }
-
 #define X(op, act) \
     void \
     Core::invoke ( const iris:: Arithmetic ## op ## SignedImmediateFormat & s) { \
+        using T = SignedWord; \
         auto [ dest, src0, s8 ] = s.arguments(); \
-        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) act static_cast<SignedWord>(s8)); \
+        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) act static_cast<T>(s8)); \
     } \
     void \
     Core::invoke ( const iris:: Arithmetic ## op ## UnsignedImmediateFormat & s) { \
+        using T = UnsignedWord; \
         auto [ dest, src0, u8 ] = s.arguments(); \
-        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
+        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<T>(u8)); \
     }
 X(Multiply, *);
 X(Add, +);

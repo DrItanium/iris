@@ -97,7 +97,6 @@ struct Instruction {
         }
     public:
         explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
-        ~Instruction() = default;
         constexpr Byte getLowestQuarter() const noexcept { 
             return decodeBits<DoubleWord, Byte, 0xFF, 0>(_bits); 
         }
@@ -168,6 +167,7 @@ class ArgumentFormat {
         static constexpr auto TargetOpcode = op;
         explicit constexpr ArgumentFormat(const Instruction&) { };
         constexpr auto getOpcode() const noexcept { return op; }
+        constexpr auto getRawValue() const noexcept { return RawValue; }
 };
 template<typename T, Opcodes op>
 class ThreeArgumentsFormat : public ArgumentFormat<op> {
