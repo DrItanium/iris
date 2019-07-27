@@ -96,7 +96,7 @@ struct Instruction {
             }
         }
     public:
-        explicit constexpr Instruction(DoubleWord bits) noexcept : _bits(bits) { }
+        explicit constexpr Instruction(DoubleWord bits = 0) noexcept : _bits(bits) { }
         constexpr Byte getLowestQuarter() const noexcept { 
             return decodeBits<DoubleWord, Byte, 0xFF, 0>(_bits); 
         }
@@ -155,6 +155,15 @@ struct Instruction {
         constexpr Byte getImm8() const noexcept { return getArg2<Byte>(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
         constexpr std::optional<DecodedInstruction> decode() const noexcept;
+        constexpr auto getRawBits() const noexcept { return _bits; }
+        
+    public:
+        void setLowestQuarter(Byte value) noexcept;
+        void setLowerQuarter(Byte value) noexcept;
+        void setHigherQuarter(Byte value) noexcept;
+        void setHighestQuarter(Byte value) noexcept;
+        void setLowerHalf(UnsignedWord value) noexcept;
+        void setUpperHalf(UnsignedWord value) noexcept;
     private:
         DoubleWord _bits;
 };
@@ -256,6 +265,7 @@ constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept
             return std::nullopt;
     }
 }
+
 
 } // end namespace iris
 #endif // end IRIS_OPCODES_H__

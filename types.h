@@ -69,11 +69,32 @@ using QuadWord = UnsignedQuadWord;
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
-    if constexpr (shift > 0) {
+    if constexpr (shift != 0) {
         return static_cast<R>((value & mask) >> shift);
     } else {
         return static_cast<R>((value & mask));
     }
+}
+template<typename T, typename R, T mask, T shift>
+constexpr T encodeBits(T input, R value) noexcept {
+    if constexpr (shift != 0)  {
+        return static_cast<T>((input & ~mask) | ((static_cast<T>(value) << shift) & mask));
+    } else {
+        return static_cast<T>((input & ~mask) | ((static_cast<T>(value)) & mask));
+    }
+}
+constexpr UnsignedWord getUpperHalf(UnsignedDoubleWord word) noexcept {
+    return decodeBits<decltype(word), UnsignedWord, 0xFFFF'0000, 16>(word);
+}
+constexpr UnsignedWord getLowerHalf(UnsignedDoubleWord word) noexcept {
+    return decodeBits<decltype(word), UnsignedWord, 0x0000'FFFF, 0>(word);
+}
+
+constexpr UnsignedByte getUpperHalf(UnsignedWord word) noexcept {
+    return decodeBits<decltype(word), UnsignedByte, 0xFF00, 8>(word);
+}
+constexpr UnsignedByte getLowerHalf(UnsignedWord word) noexcept {
+    return decodeBits<decltype(word), UnsignedByte, 0x00FF, 0>(word);
 }
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
 template<typename T, size_t capacity>
