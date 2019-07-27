@@ -114,13 +114,13 @@ class DivideByZeroException : public Exception {
 class MemoryLoadException : public Exception {
     public:
         template<typename ... Args>
-        MemoryLoadException(Args&& ... args) noexcept : Exception("MemoryLoadException: ", std::forward<Args>...) { }
+        MemoryLoadException(Args&& ... args) noexcept : Exception("MemoryLoadException: ", std::forward(args)...) { }
         virtual ~MemoryLoadException() = default;
 };
 class MemoryStoreException : public Exception {
     public:
         template<typename ... Args>
-        MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward<Args>...) { }
+        MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward(args)...) { }
         virtual ~MemoryStoreException() = default;
 };
 enum class Opcodes : UnsignedWord {
