@@ -25,6 +25,7 @@
  */
 #ifndef IRIS_IODEVICES_H__
 #define IRIS_IODEVICES_H__
+#include <functional>
 #include "types.h"
 #include "exceptions.h"
 namespace iris {
