@@ -64,22 +64,6 @@ DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower) noexcept {
     return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
 }
 
-void 
-Core::invoke(DoubleWord ibits) {
-    Instruction inst(ibits);
-    if (auto operation = decodeInstruction(inst); operation) {
-        std::visit([this](auto&& op) { 
-                    using K = std::decay_t<decltype(op)>;
-                    if constexpr (std::is_same_v<std::monostate, K>) {
-                        throw UnimplementedOperationException();
-                    } else {
-                        invoke(op);
-                    }
-                }, *operation);
-    } else {
-        throw BadOperationException();
-    }
-}
 
 DestinationRegister
 Core::getDestinationRegister(RegisterIndex idx) noexcept {
