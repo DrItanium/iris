@@ -71,10 +71,10 @@ class Core {
             }
         }
         inline DoubleWord loadCode(RegisterIndex addr, Address offset) {
-            return loadCode(getRegisterValue<Address>(addr, offset));
+            return loadCode<Address>(getRegisterValue<Address>(addr, offset));
         }
         inline DoubleWord loadCode(Address addr, Address offset) {
-            return loadCode(addr + offset);
+            return loadCode<Address>(addr + offset);
         }
 
         template<typename T>
@@ -89,10 +89,10 @@ class Core {
             }
         }
         inline Word loadIO(RegisterIndex addr, Address offset) {
-            return loadIO(getRegisterValue<Address>(addr, offset));
+            return loadIO<Address>(getRegisterValue<Address>(addr, offset));
         }
         inline Word loadIO(Address addr, Address offset) {
-            return loadIO(addr + offset);
+            return loadIO<Address>(addr + offset);
         }
         template<typename T>
         Word loadStack(T addr) {
@@ -105,7 +105,7 @@ class Core {
                 static_assert(false_v<K>, "Illegal type!");
             }
         }
-        template<typename T>
+        template<typename T, typename R = Word>
         Word loadData(T addr) {
             using K = std::decay_t<T>;
             if constexpr (std::is_same_v<K, RegisterIndex>) {
@@ -116,11 +116,25 @@ class Core {
                 static_assert(false_v<K>, "Illegal type!");
             }
         }
+        inline Word loadData(RegisterIndex addr, Address offset) {
+            return loadData<Address>(getRegisterValue<Address>(addr, offset));
+        }
+        inline Word loadData(Address addr, Address offset) {
+            return loadData<Address>(addr + offset);
+        }
         template<typename A, typename V>
         void storeData(A address, V value) {
             if constexpr (std::is_same_v<A, Address>) {
                 if constexpr (std::is_same_v<V, Word>) {
                     _data[address] = value;
+                } else if constexpr (std::is_same_v<V, DoubleWord>) {
+                    _data[address] = value;
+                    _data[address+1] = value >> 16;
+                } else if constexpr (std::is_same_v<V, DoubleWord>) {
+                    _data[address] = value;
+                    _data[address+1] = value >> 16;
+                    _data[address+2] = value >> 32;
+                    _data[address+3] = value >> 48;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[address] = getRegisterValue(value);
                 } else {
@@ -179,6 +193,9 @@ class Core {
             if constexpr (std::is_same_v<A, Address>) {
                 if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[address] = value;
+                } else if constexpr (std::is_same_v<V, QuadWord>) {
+                    _data[address] = value;
+                    _data[address + 1] = value >> 32;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[address] = getDoubleRegisterValue(value);
                 } else {
@@ -188,6 +205,9 @@ class Core {
                 auto addr = getRegisterValue(address);
                 if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[addr] = value;
+                } else if constexpr (std::is_same_v<V, QuadWord>) {
+                    _data[addr] = value;
+                    _data[addr + 1] = value >> 32;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[addr] = getDoubleRegisterValue(value);
                 } else {
@@ -206,6 +226,14 @@ class Core {
             if constexpr (std::is_same_v<A, Address>) {
                 if constexpr (std::is_same_v<V, Word>) {
                     _io.store(address, value);
+                } else if constexpr (std::is_same_v<V, DoubleWord>) {
+                    _io.store(address, value);
+                    _io.store(address + 1, value >> 16);
+                } else if constexpr (std::is_same_v<V, QuadWord>) {
+                    _io.store(address, value);
+                    _io.store(address + 1, value >> 16);
+                    _io.store(address + 2, value >> 32);
+                    _io.store(address + 3, value >> 48);
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _io.store(address, getRegisterValue(value));
                 } else {
@@ -215,6 +243,14 @@ class Core {
                 auto addr = getRegisterValue(address);
                 if constexpr (std::is_same_v<V, Word>) {
                     _io.store(addr, value);
+                } else if constexpr (std::is_same_v<V, DoubleWord>) {
+                    _io.store(address, value);
+                    _io.store(address + 1, value >> 16);
+                } else if constexpr (std::is_same_v<V, QuadWord>) {
+                    _io.store(address, value);
+                    _io.store(address + 1, value >> 16);
+                    _io.store(address + 2, value >> 32);
+                    _io.store(address + 3, value >> 48);
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     if (address == value) {
                         _io.store(addr, addr);
@@ -232,6 +268,48 @@ class Core {
         inline void storeIO(RegisterIndex addr, V value, Address offset) {
             return storeIO(getRegisterValue<Address>(addr, offset), value);
         }
+        inline void storeIO(RegisterIndex addr, const DoubleRegister& reg, Address offset) { return storeIO(addr, reg.get(), offset); }
+        inline void storeIO(RegisterIndex addr, const QuadRegister& reg, Address offset) { return storeIO(addr, reg.get(), offset); }
+        inline void storeIO(RegisterIndex addr, const Register& reg, Address offset) { return storeIO(addr, reg.get(), offset); }
+        inline void storeData(RegisterIndex addr, const DoubleRegister& reg, Address offset) { return storeData(addr, reg.get(), offset); }
+        inline void storeData(RegisterIndex addr, const QuadRegister& reg, Address offset) { return storeData(addr, reg.get(), offset); }
+        inline void storeData(RegisterIndex addr, const Register& reg, Address offset) { return storeData(addr, reg.get(), offset); }
+        inline void storeStack(RegisterIndex addr, const Register& reg) { return storeStack(addr, reg.get()); }
+        inline void storeCode(RegisterIndex addr, const DoubleRegister& reg, Address offset) { return storeCode(addr, reg.get(), offset); }
+        inline void storeCode(RegisterIndex addr, const QuadRegister& reg, Address offset) { return storeCode(addr, reg.get(), offset); }
+        template<typename R = Word>
+        inline R loadData(RegisterIndex addr, Address offset) {
+            auto loc = getRegisterValue<Address>(addr, offset); 
+            if constexpr (std::is_same_v<R, QuadWord>) {
+                auto lowest = static_cast<QuadWord>(loadData<Address>(loc));
+                auto lower = static_cast<QuadWord>(loadData<Address>(loc+1)) << 16;
+                auto higher = static_cast<QuadWord>(loadData<Address>(loc+2)) << 32;
+                auto highest = static_cast<QuadWord>(loadData<Address>(loc+3)) << 48;
+                return lowest | lower | higher | highest;
+            } else if constexpr (std::is_same_v<R, DoubleWord>) {
+                auto low = static_cast<DoubleWord>(loadData<Address>(loc));
+                auto high = static_cast<DoubleWord>(loadData<Address>(loc+1)) << 16;
+                return low | high;
+            } else if constexpr (std::is_same_v<R, Word>) {
+                return loadData(loc);
+            } else {
+                static_assert(false_v<R>, "Bad return kind!");
+            }
+        }
+        template<typename R = DoubleWord>
+        inline R loadCode(RegisterIndex addr, Address offset) {
+            auto loc = getRegisterValue<Address>(addr, offset); 
+            if constexpr (std::is_same_v<R, QuadWord>) {
+                auto lower = static_cast<QuadWord>(loadCode<Address>(loc));
+                auto upper = static_cast<QuadWord>(loadCode<Address>(loc+1)) << 32; 
+                return lower | upper;
+            } else if constexpr (std::is_same_v<R, DoubleWord>) {
+                return loadCode(loc);
+            } else {
+                static_assert(false_v<R>, "Bad return kind!");
+            }
+        }
+
     private:
         // use tag dispatch to call the right routines
 #define X(title, fmt) \

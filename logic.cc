@@ -520,87 +520,75 @@ void
 Core::invoke(const iris::MemoryDoubleIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
-    reg.put(loadIO(baseAddress), loadIO(baseAddress + 1));
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
+    reg.put(loadIO<Address>(baseAddress), loadIO<Address>(baseAddress + 1_addr));
 }
 void
 Core::invoke(const iris::MemoryDoubleDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
-    reg.put(loadData(baseAddress), loadData(baseAddress + 1));
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
+    reg.put(loadData<Address>(baseAddress), loadData<Address>(baseAddress + 1_addr));
 }
 
 void
 Core::invoke(const iris::MemoryDoubleIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue<Address>(addr,  offset);
-    storeIO(baseAddress, reg.lowerHalf());
-    storeIO(baseAddress+1, reg.upperHalf());
+    storeIO(addr, reg, offset);
 }
 void
 Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
-    storeData(baseAddress, reg.lowerHalf());
-    storeData(baseAddress+1, reg.upperHalf());
+    storeData(addr, reg, offset);
 }
 void
 Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
-    getQuadRegister(storage).put(loadIO(baseAddress),
-            loadIO(baseAddress+1),
-            loadIO(baseAddress+2),
-            loadIO(baseAddress+3));
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
+    getQuadRegister(storage).put(
+            loadIO<Address>(baseAddress),
+            loadIO<Address>(baseAddress + 1_addr),
+            loadIO<Address>(baseAddress + 2_addr),
+            loadIO<Address>(baseAddress + 3_addr));
 }
 void
 Core::invoke(const iris::MemoryQuadDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
     getQuadRegister(storage).put(loadData(baseAddress),
-            loadData(baseAddress+1),
-            loadData(baseAddress+2),
-            loadData(baseAddress+3));
+            loadData(baseAddress+1_addr),
+            loadData(baseAddress+2_addr),
+            loadData(baseAddress+3_addr));
 }
 
 void
 Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
     getQuadRegister(storage).put(loadCode(baseAddress),
-                                 loadCode(baseAddress+1));
+                                 loadCode(baseAddress+1_addr));
 }
 
 void
 Core::invoke(const iris::MemoryQuadCodeStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
-    storeCode(baseAddress, reg.lowerHalf());
-    storeCode(baseAddress+1, reg.upperHalf());
+    storeCode(addr, reg, offset);
 }
 
 void
 Core::invoke(const iris::MemoryQuadDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
-    storeData(baseAddress, reg.lowestWord());
-    storeData(baseAddress+1, reg.lowerWord());
-    storeData(baseAddress+2, reg.higherWord());
-    storeData(baseAddress+3, reg.highestWord());
+    storeData(addr, reg, offset);
 }
 void
 Core::invoke(const iris::MemoryQuadIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue<Address>(addr, offset);
+    Address baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
-    storeIO(baseAddress, reg.lowestWord());
-    storeIO(baseAddress+1, reg.lowerWord());
-    storeIO(baseAddress+2, reg.higherWord());
-    storeIO(baseAddress+3, reg.highestWord());
+    storeIO(addr, reg, offset);
 }
 } // end namespace iris

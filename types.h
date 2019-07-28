@@ -131,6 +131,8 @@ using DataMemoryBank = MemoryBank<Word>;
  */
 using StackMemoryBank = MemoryBank<Word>;
 
+constexpr Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<Address>(conversion); }
+constexpr UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
 
 } // end namespace iris
 
