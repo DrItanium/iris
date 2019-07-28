@@ -29,7 +29,7 @@
 namespace iris {
 
 void
-Core::invoke(const iris::ArithmeticErrorFormat&) {
+Core::invoke(const iris::ErrorFormat&) {
     throw ErrorInstructionException();
 }
 

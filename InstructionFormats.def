@@ -2,6 +2,8 @@
  * This file contains the binding between a given operation and its corresponding
  * format. Update this file when adding new type information
  */
+// error is just zero and is not part of a group
+X(Error, ZeroArgument)
 #define Instruction(group, op, Format) X(group ## op, Format)
 #define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
@@ -18,7 +20,6 @@
 #define DoubleRegisterSignedUnsigned(op, Format) \
         DoubleRegister(op ## Signed, Format) \
         DoubleRegister(op ## Unsigned, Format)
-    Arithmetic(Error, ZeroArgument)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
     ArithmeticSignedUnsigned(Multiply, ThreeRegister)
