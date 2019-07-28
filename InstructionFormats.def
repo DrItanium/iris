@@ -2,7 +2,8 @@
  * This file contains the binding between a given operation and its corresponding
  * format. Update this file when adding new type information
  */
-#define Arithmetic(op, Format) X(Arithmetic, op, Format)
+#define Instruction(group, op, Format) X(group ## op, Format)
+#define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
 #define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
 #define ArithmeticSignedUnsigned(op, Format) \
@@ -13,7 +14,7 @@
 #define ArithmeticSignedUnsignedImmediate(op) \
         ArithmeticSignedImmediate(op) \
         ArithmeticUnsignedImmediate(op)
-#define DoubleRegister(op, Format) X(Arithmetic, Double ## op, Format)
+#define DoubleRegister(op, Format) Instruction(Arithmetic, Double ## op, Format)
 #define DoubleRegisterSignedUnsigned(op, Format) \
         DoubleRegister(op ## Signed, Format) \
         DoubleRegister(op ## Unsigned, Format)
@@ -71,7 +72,7 @@
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
 
-#define Memory(op, Format) X(Memory, op, Format)
+#define Memory(op, Format) Instruction(Memory, op, Format)
 #define Stack(op, Format) Memory(Stack ## op, Format)
 #define Data(op, Format) Memory(Data ## op, Format)
 #define Code(op, Format) Memory(Code ## op, Format)
@@ -125,7 +126,7 @@
 #undef IO
 #undef Memory
 
-#define Branch(op, Format) X(Branch, op, Format)
+#define Branch(op, Format) Instruction(Branch, op, Format)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(RelativeImmediate, S8)
@@ -137,7 +138,7 @@
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
 #undef Branch
-#define Compare(op, Format) X(Compare, op, Format)
+#define Compare(op, Format) Instruction(Compare, op, Format)
 #define NormalCompare(op) Compare(op, ThreeRegister)
 #define NormalSignedCompare(op) NormalCompare(op ## Signed)
 #define NormalUnsignedCompare(op) NormalCompare(op ## Unsigned)
@@ -177,4 +178,5 @@
 #undef Imm8UnsignedCompare
 
 #undef Compare
+#undef Instruction
 

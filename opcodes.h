@@ -32,7 +32,7 @@
 
 namespace iris {
     enum class Opcodes : UnsignedWord {
-#define X(g, o, f) g ## o ,
+#define X(t, _) t ,
 #include "InstructionFormats.def"
 #undef X
         Count,
@@ -41,13 +41,13 @@ namespace iris {
     using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
     static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
     // forward declare the formats
-#define X(g, o, f) struct g ## o ## Format ; 
+#define X(t, f) struct t ## Format ; 
 #include "InstructionFormats.def"
 #undef X
 
 using DecodedInstruction = std::variant<
             std::monostate
-#define X(g, o, f) , g ## o ## Format 
+#define X(t, f) , t ## Format 
 #include "InstructionFormats.def"
 #undef X
             >;
@@ -311,9 +311,9 @@ template<Opcodes op>
 using S8Format = OneArgumentFormat<SignedByte, op>;
 
 // define the actual instruction kinds
-#define X(g, o, f) \
-    struct g ## o ## Format final : public f ## Format < Opcodes :: g ## o > { \
-        using Parent = f ## Format < Opcodes:: g ## o > ; \
+#define X(t, f) \
+    struct t ## Format final : public f ## Format < Opcodes :: t > { \
+        using Parent = f ## Format < Opcodes:: t > ; \
         using Parent::Parent; \
     };
 #include "InstructionFormats.def"
@@ -325,7 +325,7 @@ constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept
     // This greatly cuts down on code complexity. When optimization is active 
     // we even get a huge performance boost too :)
     switch (getOpcodeIndex()) {
-#define X(g, o, f) case g ## o ## Format :: RawValue : return g ## o ## Format ( *this ) ;
+#define X(t, f) case t ## Format :: RawValue : return t ## Format ( *this ) ;
 #include "InstructionFormats.def"
 #undef X
         default:

@@ -43,8 +43,8 @@
 #include "IODevices.h"
 #include "register.h"
 namespace iris {
-#define X(group, oper, fmt) \
-    class group ## oper ## Format ;
+#define X(title , fmt) \
+    class title ## Format ;
 #include "InstructionFormats.def"
 #undef X
 class Core {
@@ -59,8 +59,8 @@ class Core {
         void terminateCycle();
     private:
         // use tag dispatch to call the right routines
-#define X(group, oper, fmt) \
-        void invoke(const group ## oper ## Format &);
+#define X(title, fmt) \
+        void invoke(const title ## Format &);
 #include "InstructionFormats.def"
 #undef X
     private:
