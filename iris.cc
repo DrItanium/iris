@@ -48,26 +48,6 @@ Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept
 }
 
 
-DoubleWord
-Core::loadCode(Address addr) {
-    return _code[addr];
-}
-void
-Core::storeCode(Address addr, DoubleWord w) {
-    _code[addr] = w;
-}
-
-void 
-Core::storeData(Address addr, Word value) {
-    _data[addr] = value;
-}
-Word
-Core::loadData(Address addr) {
-    return _data[addr];
-}
-
-
-
 void
 Core::cycle() {
     // load an instruction from the current instruction pointer
@@ -114,17 +94,6 @@ Core::readTerminateCell(Core& c) {
 }
 
 
-Word
-Core::loadIO(Address addr) {
-    return _io.load(addr);
-}
-
-void
-Core::storeIO(Address addr, Word value) {
-    _io.store(addr, value);
-}
-
-
 QuadRegister
 Core::getQuadRegister(RegisterIndex start) noexcept {
     return QuadRegister::make(_regs, start);
@@ -134,7 +103,5 @@ const QuadRegister
 Core::getQuadRegister(RegisterIndex start) const noexcept {
     return QuadRegister::make(_regs, start);
 }
-
-
 
 } // end namespace iris

@@ -57,41 +57,41 @@ void
 Core::invoke(const iris::MemoryCodeLoadWithOffsetFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower, offset] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr) + offset));
+    setDoubleRegisterValue(lower, loadCode(addr, offset));
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower, factor] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
+    setDoubleRegisterValue(lower, loadCode(addr));
     decrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeLoadAndIncrementFormat& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
     auto [addr, lower, factor] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(getRegisterValue(addr)));
+    setDoubleRegisterValue(lower, loadCode(addr));
     incrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreWithOffsetFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
     auto [addr, lower, offset ] = s.arguments();
-    storeCode(getRegisterValue(addr) + offset, getDoubleRegisterValue(lower));
+    storeCode(addr, lower, offset);
 }
 
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister Offset ( An add of one is implied so the range is [0,257])
     auto [addr, lower, factor ] = s.arguments();
-    storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
+    storeCode(addr, lower);
     decrementRegister(addr, factor);
 }
 void
 Core::invoke(const iris::MemoryCodeStoreAndIncrementFormat& s) {
     // CodeStore AddressRegister <= LowerRegister (implied UpperRegister)
     auto [addr, lower, factor ] = s.arguments();
-    storeCode(getRegisterValue(addr), getDoubleRegisterValue(lower));
+    storeCode(addr, lower);
     incrementRegister(addr, factor);
 }
 
@@ -101,7 +101,7 @@ Core::invoke(const iris::MemoryStackPopFormat& s) {
     // pops grow towards 0xFFFF
     // StackPop StackPointerRegister DestinationRegister
     auto [stackPointer, destination] = s.arguments();
-    setRegisterValue(destination, _stack[getRegisterValue(stackPointer)]);
+    setRegisterValue(destination, loadStack(stackPointer));
     incrementRegister(stackPointer);
 }
 void
@@ -110,14 +110,14 @@ Core::invoke(const iris::MemoryStackPushFormat& s) {
     // StackPush StackPointerRegister SourceRegister
     auto [stackPointer, src] = s.arguments();
     decrementRegister(stackPointer);
-    _stack[getRegisterValue(stackPointer)] = getRegisterValue(src);
+    storeStack(stackPointer, src);
 }
 
 void
 Core::invoke(const iris::MemoryStackPushImmediateValueFormat& s) {
     auto [stackPointer, imm16] = s.arguments();
     incrementRegister(stackPointer);
-    _stack[getRegisterValue(stackPointer)] = imm16;
+    storeStack(stackPointer, imm16);
 }
 
 
@@ -305,18 +305,17 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkFormat& s) {
 void
 Core::invoke(const iris::MemoryDataLoadWithOffsetFormat& s) {
     auto [ dest, loc, offset ] = s.arguments();
-    setRegisterValue(dest, loadData(getRegisterValue<Word>(loc) + static_cast<Word>(offset)));
+    setRegisterValue(dest, loadData(loc, offset));
 }
 void
 Core::invoke(const iris::MemoryDataStoreImmediateValueFormat& s) {
     auto [ addr, imm16 ] = s.arguments();
-    storeData(getRegisterValue(addr), imm16);
+    storeData(addr, imm16);
 }
 void
 Core::invoke(const iris::MemoryDataStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
-    auto address = getRegisterValue<Word>(dest) + static_cast<Word>(offset);
-    storeData(address, getRegisterValue(value));
+    storeData(dest, value, offset);
 }
 #define Y(name, op, suffix, types) \
     void \
@@ -458,18 +457,18 @@ Core::invoke(const iris::MemoryMoveFromIPFormat& s) {
 void
 Core::invoke(const iris::MemoryIOStoreImmediateValueFormat& s) {
     auto [ dest, imm16 ] = s.arguments();
-    storeIO(getRegisterValue<Address>(dest), imm16);
+    storeIO(dest, imm16);
 }
 
 void
 Core::invoke(const iris::MemoryIOLoadWithOffsetFormat& s) {
     auto [ dest, addr, offset ] = s.arguments();
-    setRegisterValue(dest, loadIO(getRegisterValue(addr) + offset));
+    setRegisterValue(dest, loadIO(addr, offset));
 }
 void
 Core::invoke(const iris::MemoryIOStoreWithOffsetFormat& s) {
     auto [ dest, value, offset ] = s.arguments();
-    storeIO(getRegisterValue(dest) + offset, getRegisterValue(value));
+    storeIO(dest, value, offset);
 }
 #define Y(name, op, kind) \
     void \
@@ -521,14 +520,14 @@ void
 Core::invoke(const iris::MemoryDoubleIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     reg.put(loadIO(baseAddress), loadIO(baseAddress + 1));
 }
 void
 Core::invoke(const iris::MemoryDoubleDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     reg.put(loadData(baseAddress), loadData(baseAddress + 1));
 }
 
@@ -536,7 +535,7 @@ void
 Core::invoke(const iris::MemoryDoubleIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr,  offset);
     storeIO(baseAddress, reg.lowerHalf());
     storeIO(baseAddress+1, reg.upperHalf());
 }
@@ -544,14 +543,14 @@ void
 Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
     DoubleRegister reg = getDoubleRegister(storage);
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     storeData(baseAddress, reg.lowerHalf());
     storeData(baseAddress+1, reg.upperHalf());
 }
 void
 Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     getQuadRegister(storage).put(loadIO(baseAddress),
             loadIO(baseAddress+1),
             loadIO(baseAddress+2),
@@ -560,7 +559,7 @@ Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     getQuadRegister(storage).put(loadData(baseAddress),
             loadData(baseAddress+1),
             loadData(baseAddress+2),
@@ -570,7 +569,7 @@ Core::invoke(const iris::MemoryQuadDataLoadWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     getQuadRegister(storage).put(loadCode(baseAddress),
                                  loadCode(baseAddress+1));
 }
@@ -578,7 +577,7 @@ Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadCodeStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
     storeCode(baseAddress, reg.lowerHalf());
     storeCode(baseAddress+1, reg.upperHalf());
@@ -587,7 +586,7 @@ Core::invoke(const iris::MemoryQuadCodeStoreWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadDataStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
     storeData(baseAddress, reg.lowestWord());
     storeData(baseAddress+1, reg.lowerWord());
@@ -597,7 +596,7 @@ Core::invoke(const iris::MemoryQuadDataStoreWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadIOStoreWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    auto baseAddress = getRegisterValue(addr) + offset;
+    auto baseAddress = getRegisterValue<Address>(addr, offset);
     auto reg = getQuadRegister(storage);
     storeIO(baseAddress, reg.lowestWord());
     storeIO(baseAddress+1, reg.lowerWord());
