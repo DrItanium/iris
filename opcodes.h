@@ -97,6 +97,19 @@ struct Instruction {
         }
     public:
         explicit constexpr Instruction(DoubleWord bits = 0) noexcept : _bits(bits) { }
+        explicit Instruction(Opcodes opcode) noexcept;
+        template<typename T>
+        Instruction(Opcodes opcode, T arg0) noexcept : Instruction(opcode) {
+            setArg0(arg0);
+        }
+        template<typename T0, typename T1>
+        Instruction(Opcodes opcode, T0 arg0, T1 arg1) noexcept : Instruction(opcode, arg0) {
+            setArg1(arg1);
+        }
+        template<typename T0, typename T1, typename T2>
+        Instruction(Opcodes opcode, T0 arg0, T1 arg1, T2 arg2) noexcept : Instruction(opcode, arg0, arg1) {
+            setArg2(arg2);
+        }
         constexpr Byte getLowestQuarter() const noexcept { 
             return decodeBits<DoubleWord, Byte, 0xFF, 0>(_bits); 
         }
@@ -171,6 +184,45 @@ struct Instruction {
         void setArg2(RegisterIndex value) noexcept;
         void setOpcode(Opcodes opcode) noexcept;
         void setOpcode(UnsignedByte value) noexcept;
+        template<typename T>
+        void setArg0(T value) {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, RegisterIndex>) {
+                setArg0(value);
+            } else if constexpr (std::is_same_v<K, UnsignedByte>) {
+                setImm8(value);
+            } else if constexpr (std::is_same_v<K, UnsignedWord>) {
+                setImm16(value);
+            } else {
+                static_assert(false_v<T>, "Illegal type!");
+            }
+        }
+        template<typename T>
+        void setArg1(T value) {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, RegisterIndex>) {
+                setArg1(value);
+            } else if constexpr (std::is_same_v<K, UnsignedByte>) {
+                setImm8(value);
+            } else if constexpr (std::is_same_v<K, UnsignedWord>) {
+                setImm16(value);
+            } else {
+                static_assert(false_v<T>, "Illegal type!");
+            }
+        }
+        template<typename T>
+        void setArg2(T value) {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, RegisterIndex>) {
+                setArg2(value);
+            } else if constexpr (std::is_same_v<K, UnsignedByte>) {
+                setImm8(value);
+            } else if constexpr (std::is_same_v<K, UnsignedWord>) {
+                setImm16(value);
+            } else {
+                static_assert(false_v<T>, "Illegal type!");
+            }
+        }
     private:
         DoubleWord _bits;
 };
@@ -181,7 +233,8 @@ class ArgumentFormat {
     public:
         static constexpr OpcodesNumericType RawValue = static_cast<OpcodesNumericType>(op);
         static constexpr auto TargetOpcode = op;
-        explicit constexpr ArgumentFormat(const Instruction&) { };
+        explicit constexpr ArgumentFormat(const Instruction&) { }
+        constexpr ArgumentFormat() = default;
         constexpr auto getOpcode() const noexcept { return op; }
         constexpr auto getRawValue() const noexcept { return RawValue; }
 };
@@ -190,10 +243,12 @@ class ThreeArgumentsFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1()), _third(inst.getArg2<T>()) { }
+        constexpr ThreeArgumentsFormat(RegisterIndex first, RegisterIndex second, T third) : _first(first), _second(second), _third(third) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr auto getThird() const noexcept { return _third; }
         constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
+        operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
     private:
         RegisterIndex _first;
         RegisterIndex _second;
@@ -204,9 +259,11 @@ class TwoArgumentsFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1<T>()) { }
+        constexpr TwoArgumentsFormat(RegisterIndex first, T second) : _first(first), _second(second) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
+        operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
     private:
         RegisterIndex _first;
         T _second;
@@ -216,8 +273,10 @@ class OneArgumentFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
+        explicit constexpr OneArgumentFormat(T first) : _first(first) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
+        operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
     private:
         T _first;
 };
@@ -226,6 +285,7 @@ class ZeroArgumentFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         using Parent::Parent;
+        operator Instruction() const noexcept { return { this->getOpcode() }; }
 };
 template<Opcodes op>
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
@@ -272,7 +332,6 @@ constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept
             return std::nullopt;
     }
 }
-
 
 } // end namespace iris
 #endif // end IRIS_OPCODES_H__

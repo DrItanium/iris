@@ -78,4 +78,9 @@ void
 Instruction::setOpcode(UnsignedByte value) noexcept {
     setLowestQuarter(value);
 }
+
+Instruction::Instruction(Opcodes opcode) noexcept {
+    setOpcode(opcode);
+}
+
 } // end namespace iris
