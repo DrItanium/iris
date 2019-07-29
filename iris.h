@@ -51,6 +51,7 @@ class Core {
     public:
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
+        static void installTerminationCode(IOMemoryBank& c, Address addr);
     public:
         Core() : _io(*this) { }
         ~Core() = default;
@@ -418,6 +419,7 @@ class Core {
         bool _advanceIP = true;
         Word _terminateCell = 0;
 };
+
 
 } // end namespace iris
 

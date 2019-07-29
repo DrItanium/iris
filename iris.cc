@@ -104,4 +104,9 @@ Core::getQuadRegister(RegisterIndex start) const noexcept {
     return QuadRegister::make(_regs, start);
 }
 
+void
+Core::installTerminationCode(IOMemoryBank& c, Address addr) {
+    c.mapIntoMemory(addr, readTerminateCell, terminateCore);
+}
+
 } // end namespace iris

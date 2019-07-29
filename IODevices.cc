@@ -100,4 +100,97 @@ void
 IOMemoryBank::mapIntoMemory(Address baseAddress, ComplexMemoryMapping fn) {
     fn(*this, baseAddress);
 }
+RandomNumberGenerator::RandomNumberGenerator() : _seed(std::mt19937_64::default_seed), _current(0), _rng() { }
+
+ComplexMemoryMapping
+RandomNumberGenerator::mapping() {
+    return [this](IOMemoryBank& bank, Address baseOffset) {
+        // mapping is as follows
+        bank.installMemoryMap({ 
+                { baseOffset, seedLowest() },
+                { baseOffset + 1, seedLower() },
+                { baseOffset + 2, seedHigher() }, 
+                { baseOffset + 3, seedHighest() },
+                { baseOffset + 4, seedCommit() },
+                { baseOffset + 5, rngLowest() },
+                { baseOffset + 6, rngLower() },
+                { baseOffset + 7, rngHigher() },
+                { baseOffset + 8, rngHighest() },
+                { baseOffset + 9, rngNext() },
+                });
+
+    };
+}
+MemoryCellAction 
+RandomNumberGenerator::seedLowest() {
+    return std::make_tuple([this](Core&) { return Word(_seed); },
+                           [this](Core&, Word value) { 
+                           _seed = encodeBits<UnsignedQuadWord, Word, 
+                                              0x0000'0000'0000'FFFF,
+                                              0>(_seed, value); 
+                                              });
+}
+MemoryCellAction 
+RandomNumberGenerator::seedLower() {
+    return std::make_tuple([this](Core&) { return Word(_seed >> 16); },
+                           [this](Core&, Word value) { 
+                           _seed = encodeBits<UnsignedQuadWord, Word, 
+                                              0x0000'0000'FFFF'0000,
+                                              16>(_seed, value); 
+                                              });
+}
+MemoryCellAction 
+RandomNumberGenerator::seedHigher() {
+    return std::make_tuple([this](Core&) { return Word(_seed >> 32); },
+                           [this](Core&, Word value) { 
+                           _seed = encodeBits<UnsignedQuadWord, Word, 
+                                              0x0000'FFFF'0000'0000,
+                                              32>(_seed, value); 
+                                              });
+}
+MemoryCellAction 
+RandomNumberGenerator::seedHighest() {
+    return std::make_tuple([this](Core&) { return Word(_seed >> 48); },
+                           [this](Core&, Word value) { 
+                           _seed = encodeBits<UnsignedQuadWord, Word, 
+                                              0xFFFF'0000'0000'0000,
+                                              48>(_seed, value); 
+                                              });
+}
+MemoryCellAction
+RandomNumberGenerator::seedCommit() {
+    return std::make_tuple([this](Core&) { return 0; },
+                           [this](Core&, Word) {
+                                _rng.seed(_seed);
+                           });
+}
+#if 0
+MemoryCellAction 
+RandomNumberGenerator::rngLowest() {
+}
+MemoryCellAction 
+RandomNumberGenerator::rngLower() {
+}
+MemoryCellAction 
+RandomNumberGenerator::rngHigher() {
+}
+MemoryCellAction 
+RandomNumberGenerator::rngHighest() {
+}
+MemoryCellAction
+RandomNumberGenerator::rngCommit() {
+    return std::make_tuple([this](Core&) { return 0; },
+                           [this](Core& c, Word cmd) {
+                                switch (cmd) {
+                                    case 0: // next
+                                        _current = _rng();
+                                        break;
+                                    case 1:
+                                        _rng.discard(c.c
+
+                                        
+                                }
+                           }
+}
+#endif
 } // end namespace iris

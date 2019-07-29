@@ -28,6 +28,7 @@
 #include <functional>
 #include <variant>
 #include <map>
+#include <random>
 #include "types.h"
 #include "exceptions.h"
 namespace iris {
@@ -73,8 +74,9 @@ struct CaptiveMMIOEntry : MMIOEntry {
 };
 class IOMemoryBank;
 using ComplexMemoryMapping = std::function<void(IOMemoryBank&, Address)>;
+using MemoryCellAction = std::tuple<MMIOReadFunction, MMIOWriteFunction>;
 using MemoryMapEntryKind = std::variant<MMIOEntry,
-      std::tuple<MMIOReadFunction, MMIOWriteFunction>,
+      MemoryCellAction,
       MMIOReadFunction,
       MMIOWriteFunction,
       ComplexMemoryMapping>;
@@ -108,6 +110,29 @@ class IOMemoryBank {
         IOMemoryBank::MMIOTable _storage;
 
 };
+
+class RandomNumberGenerator {
+    public:
+        RandomNumberGenerator();
+        constexpr size_t numberOfMemoryAddresses() const noexcept { return 10; }
+        ComplexMemoryMapping mapping();
+    private:
+        MemoryCellAction seedLowest();
+        MemoryCellAction seedLower();
+        MemoryCellAction seedHigher();
+        MemoryCellAction seedHighest();
+        MemoryCellAction seedCommit();
+        MemoryCellAction rngLowest();
+        MemoryCellAction rngLower();
+        MemoryCellAction rngHigher();
+        MemoryCellAction rngHighest();
+        MemoryCellAction rngNext();
+    private:
+        UnsignedQuadWord _seed, _current;
+        std::mt19937_64 _rng;
+};
+
+
 } // end namespace iris
 #endif // end IRIS_IODEVICES_H__
 
