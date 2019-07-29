@@ -34,4 +34,21 @@ namespace iris::instructions {
     }
 #include "InstructionFormats.def"
 #undef X
-} // end namespace instructions
+UnsignedDoubleWord
+zeroRegister(RegisterIndex t) {
+    return MemoryAssignRegisterImmediate({t, 0x0000_imm16});
+}
+UnsignedDoubleWord
+nop() {
+    return MemorySwapRegisters({0_r, 0_r});
+}
+UnsignedDoubleWord
+twoTimes(RegisterIndex dest, RegisterIndex src) {
+    return ArithmeticMultiplySignedImmediate({dest, src, 0x2 });
+}
+UnsignedDoubleWord
+twoDivide(RegisterIndex dest, RegisterIndex src) {
+    return ArithmeticDivideSignedImmediate({dest, src, 0x2 });
+}
+
+} // end namespace iris::instructions

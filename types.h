@@ -133,6 +133,8 @@ using StackMemoryBank = MemoryBank<Word>;
 
 constexpr Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<Address>(conversion); }
 constexpr UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
+constexpr RegisterIndex operator "" _r(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(conversion)); }
+constexpr UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
 
 } // end namespace iris
 

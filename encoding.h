@@ -31,5 +31,31 @@ namespace iris::instructions {
     UnsignedDoubleWord title ( const title ## Instruction &);
 #include "InstructionFormats.def"
 #undef X
+    // single instruction aliases useful for ease of use
+    UnsignedDoubleWord zeroRegister(RegisterIndex targetRegister);
+    UnsignedDoubleWord nop();
+    UnsignedDoubleWord twoTimes(RegisterIndex dest, RegisterIndex src);
+    inline auto twoTimes(RegisterIndex targetRegister) {
+        return twoTimes(targetRegister, targetRegister);
+    }
+    UnsignedDoubleWord twoDivide(RegisterIndex dest, RegisterIndex src);
+    inline auto twoDivide(RegisterIndex value) {
+        return twoDivide(value, value);
+    }
+    inline auto invert(RegisterIndex dest, RegisterIndex src) {
+        return ArithmeticBitwiseNot({dest, src});
+    }
+    inline auto invert(RegisterIndex dest) { 
+        return invert(dest, dest); 
+    }
+    inline auto square(RegisterIndex dest, RegisterIndex src) {
+        return ArithmeticMultiplySigned({dest, src, src });
+    }
+    inline auto cube(RegisterIndex dest, RegisterIndex src) {
+        return std::make_tuple(
+                   square(dest, src),
+                   ArithmeticMultiplySigned({dest, src, dest }));
+    }
+
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
