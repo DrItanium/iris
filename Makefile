@@ -6,7 +6,8 @@ CORE_OBJS := iris.o \
 	register.o \
 	logic.o \
 	IODevices.o \
-	opcodes.o
+	opcodes.o \
+	encoding.o
 	
 
 IRIS_ARCHIVE := libiris.a
