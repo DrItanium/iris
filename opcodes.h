@@ -97,7 +97,7 @@ struct Instruction {
         }
     public:
         explicit constexpr Instruction(DoubleWord bits = 0) noexcept : _bits(bits) { }
-        explicit Instruction(Opcodes opcode) noexcept;
+        Instruction(Opcodes opcode) noexcept;
         template<typename T>
         Instruction(Opcodes opcode, T arg0) noexcept : Instruction(opcode) {
             setArg0(arg0);
