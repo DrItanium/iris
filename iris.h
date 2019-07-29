@@ -384,6 +384,14 @@ class Core {
         inline T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
             return getDoubleRegister(lower).get<T>();
         }
+        template<typename T>
+        inline void setQuadRegisterValue(RegisterIndex lower, T value) noexcept {
+            getQuadRegister(lower).put<T>(value);
+        }
+        template<typename T = DoubleWord>
+        inline T getQuadRegisterValue(RegisterIndex lower) const noexcept {
+            return getQuadRegister(lower).get<T>();
+        }
     public:
         template<typename T>
         inline void setRegisterValue(RegisterIndex idx, T value) noexcept {

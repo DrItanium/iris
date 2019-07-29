@@ -540,18 +540,19 @@ Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetFormat& s) {
 void
 Core::invoke(const iris::MemoryQuadIOLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    getQuadRegister(storage).put(loadIO<QuadWord>(addr, offset));
+    setQuadRegisterValue(storage, loadIO<QuadWord>(addr, offset));
 }
 void
 Core::invoke(const iris::MemoryQuadDataLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    getQuadRegister(storage).put(loadData<QuadWord>(addr, offset));
+    setQuadRegisterValue(storage, loadData<QuadWord>(addr, offset));
 }
 
 void
 Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetFormat& s) {
     auto [ addr, storage, offset ] = s.arguments();
-    getQuadRegister(storage).put(loadCode<QuadWord>(addr, offset));
+
+    setQuadRegisterValue(storage, loadCode<QuadWord>(addr, offset));
 }
 
 void
