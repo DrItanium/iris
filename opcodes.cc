@@ -83,4 +83,5 @@ Instruction::Instruction(Opcodes opcode) noexcept {
     setOpcode(opcode);
 }
 
+
 } // end namespace iris
