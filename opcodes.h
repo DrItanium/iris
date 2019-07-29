@@ -191,6 +191,8 @@ struct Instruction {
                 setArg0(value);
             } else if constexpr (std::is_same_v<K, UnsignedByte>) {
                 setImm8(value);
+            } else if constexpr (std::is_same_v<K, SignedByte>) {
+                setImm8(static_cast<UnsignedByte>(value));
             } else if constexpr (std::is_same_v<K, UnsignedWord>) {
                 setImm16(value);
             } else {
@@ -204,6 +206,8 @@ struct Instruction {
                 setArg1(value);
             } else if constexpr (std::is_same_v<K, UnsignedByte>) {
                 setImm8(value);
+            } else if constexpr (std::is_same_v<K, SignedByte>) {
+                setImm8(static_cast<UnsignedByte>(value));
             } else if constexpr (std::is_same_v<K, UnsignedWord>) {
                 setImm16(value);
             } else {
@@ -217,6 +221,8 @@ struct Instruction {
                 setArg2(value);
             } else if constexpr (std::is_same_v<K, UnsignedByte>) {
                 setImm8(value);
+            } else if constexpr (std::is_same_v<K, SignedByte>) {
+                setImm8(static_cast<UnsignedByte>(value));
             } else if constexpr (std::is_same_v<K, UnsignedWord>) {
                 setImm16(value);
             } else {
