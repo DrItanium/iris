@@ -44,7 +44,7 @@
 #include "register.h"
 namespace iris {
 #define X(title , fmt) \
-    class title ## Format ;
+    class title ## Instruction ;
 #include "InstructionFormats.def"
 #undef X
 class Core {
@@ -340,7 +340,7 @@ class Core {
     private:
         // use tag dispatch to call the right routines
 #define X(title, fmt) \
-        void invoke(const title ## Format &);
+        void invoke(const title ## Instruction &);
 #include "InstructionFormats.def"
 #undef X
     private:
