@@ -32,49 +32,23 @@ namespace iris::instructions {
 #include "InstructionFormats.def"
 #undef X
     // single instruction aliases useful for ease of use
-    UnsignedDoubleWord zeroRegister(RegisterIndex targetRegister);
-    UnsignedDoubleWord nop();
-    UnsignedDoubleWord twoTimes(RegisterIndex dest, RegisterIndex src);
-    UnsignedDoubleWord twoDivide(RegisterIndex dest, RegisterIndex src);
-    inline auto twoTimes(RegisterIndex targetRegister) {
-        return twoTimes(targetRegister, targetRegister);
-    }
-    inline auto twoDivide(RegisterIndex value) {
-        return twoDivide(value, value);
-    }
-    inline auto invert(RegisterIndex dest, RegisterIndex src) {
-        return ArithmeticBitwiseNot({dest, src});
-    }
-    inline auto invert(RegisterIndex dest) { 
-        return invert(dest, dest); 
-    }
-    inline auto square(RegisterIndex dest, RegisterIndex src) {
-        return ArithmeticMultiplySigned({dest, src, src });
-    }
-    inline auto square(RegisterIndex dest) {
-        return square(dest, dest);
-    }
-    inline auto greaterThanZero(RegisterIndex dest, RegisterIndex src) {
-        return CompareGreaterThanSignedImmediate8({dest, src, 0});
-    }
-    inline auto lessThanZero(RegisterIndex dest, RegisterIndex src) {
-        return CompareLessThanSignedImmediate8({dest, src, 0});
-    }
-    inline auto equalsZero(RegisterIndex dest, RegisterIndex src) {
-        return CompareEqualsImmediate8Instruction({dest, src, 0});
-    }
-    inline auto notEqualsZero(RegisterIndex dest, RegisterIndex src) {
-        return CompareNotEqualsImmediate8Instruction({dest, src, 0});
-    }
-    inline auto increment(RegisterIndex target) {
-        return ArithmeticAddUnsignedImmediate({target, target, 1});
-    }
-    inline auto decrement(RegisterIndex target) {
-        return ArithmeticAddSignedImmediate({target, target, -1});
-    }
-    inline auto ret(RegisterIndex link) {
-        return iris::instructions::BranchRegister(link);
-    }
+    auto zeroRegister(RegisterIndex targetRegister);
+    auto nop();
+    auto twoTimes(RegisterIndex dest, RegisterIndex src);
+    auto twoDivide(RegisterIndex dest, RegisterIndex src);
+    auto twoTimes(RegisterIndex targetRegister) ;
+    auto twoDivide(RegisterIndex value) ;
+    auto invert(RegisterIndex dest, RegisterIndex src) ;
+    auto invert(RegisterIndex dest) ; 
+    auto square(RegisterIndex dest, RegisterIndex src) ;
+    auto square(RegisterIndex dest) ;
+    auto greaterThanZero(RegisterIndex dest, RegisterIndex src) ;
+    auto lessThanZero(RegisterIndex dest, RegisterIndex src) ;
+    auto equalsZero(RegisterIndex dest, RegisterIndex src) ;
+    auto notEqualsZero(RegisterIndex dest, RegisterIndex src) ;
+    auto increment(RegisterIndex target) ;
+    auto decrement(RegisterIndex target) ;
+    auto ret(RegisterIndex);
     auto call(RegisterIndex, RegisterIndex);
     auto call(RegisterIndex, Address);
     auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex);

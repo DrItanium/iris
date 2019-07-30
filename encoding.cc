@@ -34,21 +34,82 @@ namespace iris::instructions {
     }
 #include "InstructionFormats.def"
 #undef X
-UnsignedDoubleWord
+auto
 zeroRegister(RegisterIndex t) {
     return MemoryAssignRegisterImmediate({t, 0x0000_imm16});
 }
-UnsignedDoubleWord
+auto
 nop() {
     return MemorySwapRegisters({0_r, 0_r});
 }
-UnsignedDoubleWord
+auto
 twoTimes(RegisterIndex dest, RegisterIndex src) {
     return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
 }
-UnsignedDoubleWord
+auto
 twoDivide(RegisterIndex dest, RegisterIndex src) {
     return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
+}
+auto 
+call(RegisterIndex link, RegisterIndex reg) {
+    return BranchRegisterAndLinkInstruction({ reg, link });
+}
+auto 
+call(RegisterIndex link, Address imm16) {
+    return BranchImmediateAndLinkInstruction({link, imm16});
+}
+auto 
+ret(RegisterIndex link) {
+    return iris::instructions::BranchRegister(link);
+}
+
+auto 
+twoTimes(RegisterIndex targetRegister) {
+    return twoTimes(targetRegister, targetRegister);
+}
+auto 
+twoDivide(RegisterIndex value) {
+    return twoDivide(value, value);
+}
+auto 
+invert(RegisterIndex dest, RegisterIndex src) {
+    return ArithmeticBitwiseNot({dest, src});
+}
+auto 
+invert(RegisterIndex dest) { 
+    return invert(dest, dest); 
+}
+auto 
+square(RegisterIndex dest, RegisterIndex src) {
+    return ArithmeticMultiplySigned({dest, src, src });
+}
+auto 
+square(RegisterIndex dest) {
+    return square(dest, dest);
+}
+auto 
+greaterThanZero(RegisterIndex dest, RegisterIndex src) {
+    return CompareGreaterThanSignedImmediate8({dest, src, 0});
+}
+auto 
+lessThanZero(RegisterIndex dest, RegisterIndex src) {
+    return CompareLessThanSignedImmediate8({dest, src, 0});
+}
+auto 
+equalsZero(RegisterIndex dest, RegisterIndex src) {
+    return CompareEqualsImmediate8Instruction({dest, src, 0});
+}
+auto 
+notEqualsZero(RegisterIndex dest, RegisterIndex src) {
+    return CompareNotEqualsImmediate8Instruction({dest, src, 0});
+}
+auto 
+increment(RegisterIndex target) {
+    return ArithmeticAddUnsignedImmediate({target, target, 1});
+}
+auto 
+decrement(RegisterIndex target) {
+    return ArithmeticAddSignedImmediate({target, target, -1});
 }
 auto 
 branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) {
@@ -61,14 +122,6 @@ branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) {
     return std::make_tuple(
             equalsZero(temp, src),
             BranchConditionalImmediate({temp, loc}));
-}
-auto 
-call(RegisterIndex link, RegisterIndex reg) {
-    return BranchRegisterAndLinkInstruction({ reg, link });
-}
-auto 
-call(RegisterIndex link, Address imm16) {
-    return BranchImmediateAndLinkInstruction({link, imm16});
 }
 
 } // end namespace iris::instructions
