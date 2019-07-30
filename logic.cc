@@ -444,6 +444,13 @@ Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
     }
 }
 void
+Core::invoke(const iris::BranchRelativeImmediateAndLinkInstruction& s) {
+    auto [ link, offset ] = s.arguments();
+    setRegisterValue(link, _ip.get() + 1);
+    _ip.put(_ip.get<SignedWord>() + offset);
+    _advanceIP = false;
+}
+void
 Core::invoke(const iris::MemoryMoveToIPInstruction& s) {
     auto [ src ] = s.arguments();
     _ip.put(getRegisterValue(src));

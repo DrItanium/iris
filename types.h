@@ -65,6 +65,7 @@ using Address = UnsignedWord;
 using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
+using Offset16 = SignedWord;
 
 
 template<typename T, typename R, T mask, T shift>

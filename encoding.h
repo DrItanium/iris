@@ -57,8 +57,10 @@ namespace iris::instructions {
     template<typename T>
     Bits call(RegisterIndex link, T value) noexcept {
         using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address>) {
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediateAndLink({link, value});
+        } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
+            return BranchRelativeImmediateAndLink({link, value});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchRegisterAndLink({value, link });
         } else {
@@ -69,8 +71,10 @@ namespace iris::instructions {
     template<typename T>
     auto branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address>) {
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchConditionalImmediate({cond, addr});
+        } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
+            return BranchConditionalRelativeImmediate({cond, addr});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchConditionalRegister({addr, cond});
         } else {
@@ -80,8 +84,10 @@ namespace iris::instructions {
     template<typename T>
     auto branch(T addr) noexcept {
         using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address>) {
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediate({addr});
+        } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
+            return BranchRelativeImmediate({addr});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchRegister({addr});
         } else {
@@ -104,7 +110,7 @@ namespace iris::instructions {
     template<typename T>
     Bits move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address>) {
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return MemoryAssignRegisterImmediate({dest, value});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return MemoryCopyRegister({dest, value});
@@ -115,7 +121,7 @@ namespace iris::instructions {
     template<typename T>
     Bits push(RegisterIndex sp, T value) noexcept {
         using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address>) {
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return MemoryStackPushImmediateValue({sp, value});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return MemoryStackPush({sp, value});

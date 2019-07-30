@@ -138,6 +138,7 @@ X(Error, ZeroArgument)
     // unsigned ones.
     Branch(RelativeImmediate, S16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
+    Branch(RelativeImmediateAndLink, OneRegisterS16)
     Branch(Register, OneRegister)
     Branch(ConditionalRegister, TwoRegister)
     Branch(RegisterAndLink, TwoRegister)
