@@ -203,6 +203,8 @@ struct Instruction {
                 setImm8(static_cast<UnsignedByte>(value));
             } else if constexpr (std::is_same_v<K, UnsignedWord>) {
                 setImm16(value);
+            } else if constexpr (IsS16<T>) {
+                setImm16(value);
             } else {
                 static_assert(false_v<T>, "Illegal type!");
             }
@@ -218,6 +220,8 @@ struct Instruction {
                 setImm8(static_cast<UnsignedByte>(value));
             } else if constexpr (std::is_same_v<K, UnsignedWord>) {
                 setImm16(value);
+            } else if constexpr (IsS16<T>) {
+                setImm16(value);
             } else {
                 static_assert(false_v<T>, "Illegal type!");
             }
@@ -231,7 +235,7 @@ struct Instruction {
                 setImm8(value);
             } else if constexpr (std::is_same_v<K, SignedByte>) {
                 setImm8(static_cast<UnsignedByte>(value));
-            } else if constexpr (std::is_same_v<K, UnsignedWord>) {
+            } else if constexpr (IsImm16<T>) {
                 setImm16(value);
             } else {
                 static_assert(false_v<T>, "Illegal type!");
