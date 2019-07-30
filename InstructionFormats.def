@@ -109,6 +109,9 @@ X(Error, ZeroArgument)
     IO(LoadWithOffset, TwoRegisterU8)
     IO(StoreWithOffset, TwoRegisterU8)
     IO(StoreImmediateValue, OneRegisterU16)
+    // Inside the assembler it will actually be
+    // move ip, ?reg // to ip
+    // move ?reg, ip // from ip
     Memory(MoveFromIP, OneRegister)
     Memory(MoveToIP, OneRegister)
     Memory(DoubleDataLoadWithOffset, TwoRegisterU8)
@@ -130,8 +133,11 @@ X(Error, ZeroArgument)
 #define Branch(op, Format) Instruction(Branch, op, Format)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
-    Branch(RelativeImmediate, S8)
-    Branch(ConditionalRelativeImmediate, OneRegisterS8)
+    // @todo make immediate branches always relative to IP like what is done with PPC
+    // these instructions will always operate on signed 16-bit values instead of
+    // unsigned ones.
+    // Branch(RelativeImmediate, U16)
+    // Branch(ConditionalRelativeImmediate, OneRegisterU16)
     Branch(Register, OneRegister)
     Branch(ConditionalRegister, TwoRegister)
     Branch(RegisterAndLink, TwoRegister)
