@@ -25,6 +25,7 @@
  */
 
 #include "encoding.h"
+#include <functional>
 
 namespace iris::instructions {
 #define X(title, fmt) \
@@ -34,94 +35,132 @@ namespace iris::instructions {
     }
 #include "InstructionFormats.def"
 #undef X
-auto
+Bits
 zeroRegister(RegisterIndex t) noexcept {
     return MemoryAssignRegisterImmediate({t, 0x0000_imm16});
 }
-auto
-nop() noexcept {
-    return MemorySwapRegisters({0_r, 0_r});
+Bits
+swap(RegisterIndex a, RegisterIndex b) noexcept {
+    return MemorySwapRegisters({a, b});
 }
-auto
+Bits
+nop(RegisterIndex idx) noexcept {
+    return MemorySwapRegisters({idx, idx});
+}
+Bits
+nop() noexcept {
+    return nop(0_r);
+}
+Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
 }
-auto
+Bits
 twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
 }
-auto 
+Bits 
 call(RegisterIndex link, RegisterIndex reg) noexcept {
-    return BranchRegisterAndLinkInstruction({ reg, link });
+    return BranchRegisterAndLink({ reg, link });
 }
-auto 
+Bits 
 call(RegisterIndex link, Address imm16) noexcept {
-    return BranchImmediateAndLinkInstruction({link, imm16});
+    return BranchImmediateAndLink({link, imm16});
 }
-auto 
+Bits 
 ret(RegisterIndex link) noexcept {
     return iris::instructions::BranchRegister(link);
 }
 
-auto 
+Bits 
 twoTimes(RegisterIndex targetRegister) noexcept {
     return twoTimes(targetRegister, targetRegister);
 }
-auto 
+Bits 
 twoDivide(RegisterIndex value) noexcept {
     return twoDivide(value, value);
 }
-auto 
+Bits 
 invert(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticBitwiseNot({dest, src});
 }
-auto 
+Bits 
 invert(RegisterIndex dest) noexcept { 
     return invert(dest, dest); 
 }
-auto 
+Bits 
 square(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticMultiplySigned({dest, src, src });
 }
-auto 
+Bits 
 square(RegisterIndex dest) noexcept {
     return square(dest, dest);
 }
-auto 
+Bits 
 greaterThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareGreaterThanSignedImmediate8({dest, src, 0});
 }
-auto 
+Bits 
 lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareLessThanSignedImmediate8({dest, src, 0});
 }
-auto 
+Bits 
 equalsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareEqualsImmediate8Instruction({dest, src, 0});
+    return CompareEqualsImmediate8({dest, src, 0});
 }
-auto 
+Bits 
 notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareNotEqualsImmediate8Instruction({dest, src, 0});
+    return CompareNotEqualsImmediate8({dest, src, 0});
 }
-auto 
+Bits 
 increment(RegisterIndex target) noexcept {
     return ArithmeticAddUnsignedImmediate({target, target, 1});
 }
-auto 
+Bits 
 decrement(RegisterIndex target) noexcept {
     return ArithmeticAddSignedImmediate({target, target, -1});
 }
 auto 
+branchIfNotZero(RegisterIndex, RegisterIndex src, RegisterIndex loc) noexcept {
+    return BranchConditionalRegister({loc, src});
+}
+auto 
+branchIfNotZero(RegisterIndex, RegisterIndex src, Address loc) noexcept {
+    return BranchConditionalImmediate({src, loc});
+}
+using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
+auto
+branchIfCompareZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest, CompareOperation fn) noexcept {
+    return std::make_tuple(fn(temp, src), BranchConditionalRegister({dest, temp}));
+}
+auto
+branchIfCompareZero(RegisterIndex temp, RegisterIndex src, Address addr, CompareOperation fn) noexcept {
+    return std::make_tuple(fn(temp, src), BranchConditionalImmediate({temp, addr}));
+}
+auto 
 branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) noexcept {
-    return std::make_tuple(
-            equalsZero(temp, src),
-            BranchConditionalRegister({loc, temp}));
+    return branchIfCompareZero(temp, src, loc, equalsZero);
 }
 auto 
 branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) noexcept {
-    return std::make_tuple(
-            equalsZero(temp, src),
-            BranchConditionalImmediate({temp, loc}));
+    return branchIfCompareZero(temp, src, loc, equalsZero);
+}
+auto
+branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest) noexcept {
+    return branchIfCompareZero(temp, src, dest, greaterThanZero);
+}
+auto
+branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, Address dest) noexcept {
+    return branchIfCompareZero(temp, src, dest, greaterThanZero);
+}
+
+auto
+branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest) noexcept {
+    return branchIfCompareZero(temp, src, dest, lessThanZero);
+}
+auto
+branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, Address dest) noexcept {
+    return branchIfCompareZero(temp, src, dest, lessThanZero);
 }
 
 } // end namespace iris::instructions

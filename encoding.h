@@ -27,31 +27,42 @@
 #define IRIS_ENCODING_H__
 #include "opcodes.h"
 namespace iris::instructions {
+    using Bits = UnsignedDoubleWord;
 #define X(title, fmt) \
-    UnsignedDoubleWord title ( const title ## Instruction &) noexcept;
+    Bits title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
 #undef X
     // single instruction aliases useful for ease of use
-    auto zeroRegister(RegisterIndex targetRegister) noexcept ;
-    auto nop() noexcept ;
-    auto twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
-    auto twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
-    auto twoTimes(RegisterIndex targetRegister)  noexcept ;
-    auto twoDivide(RegisterIndex value)  noexcept ;
-    auto invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto invert(RegisterIndex dest)  noexcept ; 
-    auto square(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto square(RegisterIndex dest)  noexcept ;
-    auto greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    auto increment(RegisterIndex target)  noexcept ;
-    auto decrement(RegisterIndex target)  noexcept ;
-    auto ret(RegisterIndex) noexcept ;
-    auto call(RegisterIndex, RegisterIndex) noexcept ;
-    auto call(RegisterIndex, Address) noexcept ;
+    Bits zeroRegister(RegisterIndex targetRegister) noexcept ;
+    Bits nop() noexcept ;
+    Bits twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
+    Bits twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
+    Bits twoTimes(RegisterIndex targetRegister)  noexcept ;
+    Bits twoDivide(RegisterIndex value)  noexcept ;
+    Bits invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits invert(RegisterIndex dest)  noexcept ; 
+    Bits square(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits square(RegisterIndex dest)  noexcept ;
+    Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits increment(RegisterIndex target)  noexcept ;
+    Bits decrement(RegisterIndex target)  noexcept ;
+    Bits ret(RegisterIndex) noexcept ;
+    Bits call(RegisterIndex, RegisterIndex) noexcept ;
+    Bits call(RegisterIndex, Address) noexcept ;
+    Bits nop(RegisterIndex) noexcept;
+    Bits swap(RegisterIndex, RegisterIndex) noexcept;
     auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
     auto branchIfZero(RegisterIndex, RegisterIndex, Address) noexcept ;
+    auto branchIfNotZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
+    auto branchIfNotZero(RegisterIndex, RegisterIndex, Address) noexcept ;
+    auto branchIfNotZero(RegisterIndex, RegisterIndex) noexcept ;
+    auto branchIfNotZero(RegisterIndex, Address) noexcept ;
+    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
+    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, Address) noexcept ;
+    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
+    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, Address) noexcept ;
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
