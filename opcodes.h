@@ -279,7 +279,7 @@ class OneArgumentFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
-        explicit constexpr OneArgumentFormat(T first) : _first(first) { }
+        constexpr OneArgumentFormat(T first) : _first(first) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
         operator Instruction() const noexcept { return { this->getOpcode(), _first }; }

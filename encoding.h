@@ -35,10 +35,10 @@ namespace iris::instructions {
     UnsignedDoubleWord zeroRegister(RegisterIndex targetRegister);
     UnsignedDoubleWord nop();
     UnsignedDoubleWord twoTimes(RegisterIndex dest, RegisterIndex src);
+    UnsignedDoubleWord twoDivide(RegisterIndex dest, RegisterIndex src);
     inline auto twoTimes(RegisterIndex targetRegister) {
         return twoTimes(targetRegister, targetRegister);
     }
-    UnsignedDoubleWord twoDivide(RegisterIndex dest, RegisterIndex src);
     inline auto twoDivide(RegisterIndex value) {
         return twoDivide(value, value);
     }
@@ -51,11 +51,33 @@ namespace iris::instructions {
     inline auto square(RegisterIndex dest, RegisterIndex src) {
         return ArithmeticMultiplySigned({dest, src, src });
     }
-    inline auto cube(RegisterIndex dest, RegisterIndex src) {
-        return std::make_tuple(
-                   square(dest, src),
-                   ArithmeticMultiplySigned({dest, src, dest }));
+    inline auto square(RegisterIndex dest) {
+        return square(dest, dest);
     }
-
+    inline auto greaterThanZero(RegisterIndex dest, RegisterIndex src) {
+        return CompareGreaterThanSignedImmediate8({dest, src, 0});
+    }
+    inline auto lessThanZero(RegisterIndex dest, RegisterIndex src) {
+        return CompareLessThanSignedImmediate8({dest, src, 0});
+    }
+    inline auto equalsZero(RegisterIndex dest, RegisterIndex src) {
+        return CompareEqualsImmediate8Instruction({dest, src, 0});
+    }
+    inline auto notEqualsZero(RegisterIndex dest, RegisterIndex src) {
+        return CompareNotEqualsImmediate8Instruction({dest, src, 0});
+    }
+    inline auto increment(RegisterIndex target) {
+        return ArithmeticAddUnsignedImmediate({target, target, 1});
+    }
+    inline auto decrement(RegisterIndex target) {
+        return ArithmeticAddSignedImmediate({target, target, -1});
+    }
+    inline auto ret(RegisterIndex link) {
+        return iris::instructions::BranchRegister(link);
+    }
+    auto call(RegisterIndex, RegisterIndex);
+    auto call(RegisterIndex, Address);
+    auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex);
+    auto branchIfZero(RegisterIndex, RegisterIndex, Address);
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

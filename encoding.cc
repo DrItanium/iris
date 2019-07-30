@@ -44,11 +44,31 @@ nop() {
 }
 UnsignedDoubleWord
 twoTimes(RegisterIndex dest, RegisterIndex src) {
-    return ArithmeticMultiplySignedImmediate({dest, src, 0x2 });
+    return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
 }
 UnsignedDoubleWord
 twoDivide(RegisterIndex dest, RegisterIndex src) {
-    return ArithmeticDivideSignedImmediate({dest, src, 0x2 });
+    return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
+}
+auto 
+branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) {
+    return std::make_tuple(
+            equalsZero(temp, src),
+            BranchConditionalRegister({loc, temp}));
+}
+auto 
+branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) {
+    return std::make_tuple(
+            equalsZero(temp, src),
+            BranchConditionalImmediate({temp, loc}));
+}
+auto 
+call(RegisterIndex link, RegisterIndex reg) {
+    return BranchRegisterAndLinkInstruction({ reg, link });
+}
+auto 
+call(RegisterIndex link, Address imm16) {
+    return BranchImmediateAndLinkInstruction({link, imm16});
 }
 
 } // end namespace iris::instructions
