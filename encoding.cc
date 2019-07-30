@@ -29,96 +29,96 @@
 namespace iris::instructions {
 #define X(title, fmt) \
     UnsignedDoubleWord \
-    title ( const title ## Instruction & s) {\
+    title ( const title ## Instruction & s) noexcept {\
         return ((Instruction)s).getRawBits(); \
     }
 #include "InstructionFormats.def"
 #undef X
 auto
-zeroRegister(RegisterIndex t) {
+zeroRegister(RegisterIndex t) noexcept {
     return MemoryAssignRegisterImmediate({t, 0x0000_imm16});
 }
 auto
-nop() {
+nop() noexcept {
     return MemorySwapRegisters({0_r, 0_r});
 }
 auto
-twoTimes(RegisterIndex dest, RegisterIndex src) {
+twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
 }
 auto
-twoDivide(RegisterIndex dest, RegisterIndex src) {
+twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
 }
 auto 
-call(RegisterIndex link, RegisterIndex reg) {
+call(RegisterIndex link, RegisterIndex reg) noexcept {
     return BranchRegisterAndLinkInstruction({ reg, link });
 }
 auto 
-call(RegisterIndex link, Address imm16) {
+call(RegisterIndex link, Address imm16) noexcept {
     return BranchImmediateAndLinkInstruction({link, imm16});
 }
 auto 
-ret(RegisterIndex link) {
+ret(RegisterIndex link) noexcept {
     return iris::instructions::BranchRegister(link);
 }
 
 auto 
-twoTimes(RegisterIndex targetRegister) {
+twoTimes(RegisterIndex targetRegister) noexcept {
     return twoTimes(targetRegister, targetRegister);
 }
 auto 
-twoDivide(RegisterIndex value) {
+twoDivide(RegisterIndex value) noexcept {
     return twoDivide(value, value);
 }
 auto 
-invert(RegisterIndex dest, RegisterIndex src) {
+invert(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticBitwiseNot({dest, src});
 }
 auto 
-invert(RegisterIndex dest) { 
+invert(RegisterIndex dest) noexcept { 
     return invert(dest, dest); 
 }
 auto 
-square(RegisterIndex dest, RegisterIndex src) {
+square(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticMultiplySigned({dest, src, src });
 }
 auto 
-square(RegisterIndex dest) {
+square(RegisterIndex dest) noexcept {
     return square(dest, dest);
 }
 auto 
-greaterThanZero(RegisterIndex dest, RegisterIndex src) {
+greaterThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareGreaterThanSignedImmediate8({dest, src, 0});
 }
 auto 
-lessThanZero(RegisterIndex dest, RegisterIndex src) {
+lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareLessThanSignedImmediate8({dest, src, 0});
 }
 auto 
-equalsZero(RegisterIndex dest, RegisterIndex src) {
+equalsZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareEqualsImmediate8Instruction({dest, src, 0});
 }
 auto 
-notEqualsZero(RegisterIndex dest, RegisterIndex src) {
+notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareNotEqualsImmediate8Instruction({dest, src, 0});
 }
 auto 
-increment(RegisterIndex target) {
+increment(RegisterIndex target) noexcept {
     return ArithmeticAddUnsignedImmediate({target, target, 1});
 }
 auto 
-decrement(RegisterIndex target) {
+decrement(RegisterIndex target) noexcept {
     return ArithmeticAddSignedImmediate({target, target, -1});
 }
 auto 
-branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) {
+branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) noexcept {
     return std::make_tuple(
             equalsZero(temp, src),
             BranchConditionalRegister({loc, temp}));
 }
 auto 
-branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) {
+branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) noexcept {
     return std::make_tuple(
             equalsZero(temp, src),
             BranchConditionalImmediate({temp, loc}));

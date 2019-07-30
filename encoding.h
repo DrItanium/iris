@@ -28,30 +28,30 @@
 #include "opcodes.h"
 namespace iris::instructions {
 #define X(title, fmt) \
-    UnsignedDoubleWord title ( const title ## Instruction &);
+    UnsignedDoubleWord title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
 #undef X
     // single instruction aliases useful for ease of use
-    auto zeroRegister(RegisterIndex targetRegister);
-    auto nop();
-    auto twoTimes(RegisterIndex dest, RegisterIndex src);
-    auto twoDivide(RegisterIndex dest, RegisterIndex src);
-    auto twoTimes(RegisterIndex targetRegister) ;
-    auto twoDivide(RegisterIndex value) ;
-    auto invert(RegisterIndex dest, RegisterIndex src) ;
-    auto invert(RegisterIndex dest) ; 
-    auto square(RegisterIndex dest, RegisterIndex src) ;
-    auto square(RegisterIndex dest) ;
-    auto greaterThanZero(RegisterIndex dest, RegisterIndex src) ;
-    auto lessThanZero(RegisterIndex dest, RegisterIndex src) ;
-    auto equalsZero(RegisterIndex dest, RegisterIndex src) ;
-    auto notEqualsZero(RegisterIndex dest, RegisterIndex src) ;
-    auto increment(RegisterIndex target) ;
-    auto decrement(RegisterIndex target) ;
-    auto ret(RegisterIndex);
-    auto call(RegisterIndex, RegisterIndex);
-    auto call(RegisterIndex, Address);
-    auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex);
-    auto branchIfZero(RegisterIndex, RegisterIndex, Address);
+    auto zeroRegister(RegisterIndex targetRegister) noexcept ;
+    auto nop() noexcept ;
+    auto twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
+    auto twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
+    auto twoTimes(RegisterIndex targetRegister)  noexcept ;
+    auto twoDivide(RegisterIndex value)  noexcept ;
+    auto invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto invert(RegisterIndex dest)  noexcept ; 
+    auto square(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto square(RegisterIndex dest)  noexcept ;
+    auto greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    auto increment(RegisterIndex target)  noexcept ;
+    auto decrement(RegisterIndex target)  noexcept ;
+    auto ret(RegisterIndex) noexcept ;
+    auto call(RegisterIndex, RegisterIndex) noexcept ;
+    auto call(RegisterIndex, Address) noexcept ;
+    auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
+    auto branchIfZero(RegisterIndex, RegisterIndex, Address) noexcept ;
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
