@@ -26,15 +26,17 @@
 #ifndef IRIS_ENCODING_H__
 #define IRIS_ENCODING_H__
 #include "opcodes.h"
+#include <variant>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
 #define X(title, fmt) \
     Bits title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
 #undef X
+    using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
     Bits zeroRegister(RegisterIndex targetRegister) noexcept ;
-    Bits nop() noexcept ;
+    Bits nop(RegisterIndex target = 0_r) noexcept;
     Bits twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
     Bits twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
     Bits twoTimes(RegisterIndex targetRegister)  noexcept ;
@@ -44,25 +46,53 @@ namespace iris::instructions {
     Bits square(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits square(RegisterIndex dest)  noexcept ;
     Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits increment(RegisterIndex target)  noexcept ;
     Bits decrement(RegisterIndex target)  noexcept ;
     Bits ret(RegisterIndex) noexcept ;
-    Bits call(RegisterIndex, RegisterIndex) noexcept ;
-    Bits call(RegisterIndex, Address) noexcept ;
-    Bits nop(RegisterIndex) noexcept;
+    template<typename T>
+    Bits call(RegisterIndex link, T value) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address>) {
+            return BranchImmediateAndLink({link, value});
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return BranchRegisterAndLink({value, link });
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
     Bits swap(RegisterIndex, RegisterIndex) noexcept;
-    auto branchIfZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
-    auto branchIfZero(RegisterIndex, RegisterIndex, Address) noexcept ;
-    auto branchIfNotZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
-    auto branchIfNotZero(RegisterIndex, RegisterIndex, Address) noexcept ;
-    auto branchIfNotZero(RegisterIndex, RegisterIndex) noexcept ;
-    auto branchIfNotZero(RegisterIndex, Address) noexcept ;
-    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
-    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, Address) noexcept ;
-    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, RegisterIndex) noexcept ;
-    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, Address) noexcept ;
+    template<typename T>
+    auto branchConditional(RegisterIndex cond, T addr) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address>) {
+            return BranchConditionalImmediate({cond, addr});
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return BranchConditionalRegister({addr, cond});
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
+    template<typename T>
+    auto branch(T addr) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address>) {
+            return BranchImmediate({addr});
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return BranchRegister({addr});
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
+    auto branchIfZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept;
+    auto branchIfNotZero(RegisterIndex, AddressTypes) noexcept ;
+    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    auto branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    auto branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

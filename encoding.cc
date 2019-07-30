@@ -25,6 +25,7 @@
  */
 
 #include "encoding.h"
+#include <variant>
 #include <functional>
 
 namespace iris::instructions {
@@ -48,24 +49,12 @@ nop(RegisterIndex idx) noexcept {
     return MemorySwapRegisters({idx, idx});
 }
 Bits
-nop() noexcept {
-    return nop(0_r);
-}
-Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
 }
 Bits
 twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
-}
-Bits 
-call(RegisterIndex link, RegisterIndex reg) noexcept {
-    return BranchRegisterAndLink({ reg, link });
-}
-Bits 
-call(RegisterIndex link, Address imm16) noexcept {
-    return BranchImmediateAndLink({link, imm16});
 }
 Bits 
 ret(RegisterIndex link) noexcept {
@@ -120,47 +109,47 @@ Bits
 decrement(RegisterIndex target) noexcept {
     return ArithmeticAddSignedImmediate({target, target, -1});
 }
-auto 
-branchIfNotZero(RegisterIndex, RegisterIndex src, RegisterIndex loc) noexcept {
-    return BranchConditionalRegister({loc, src});
+Bits
+greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
+    return CompareGreaterThanOrEqualToSignedImmediate8({dest, src, 0});
+}
+Bits
+lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
+    return CompareLessThanOrEqualToSignedImmediate8({dest, src, 0});
 }
 auto 
-branchIfNotZero(RegisterIndex, RegisterIndex src, Address loc) noexcept {
-    return BranchConditionalImmediate({src, loc});
+branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {
+    return std::visit([src](auto&& addr) { return branchConditional(src, addr); }, loc);
 }
 using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
 auto
-branchIfCompareZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest, CompareOperation fn) noexcept {
-    return std::make_tuple(fn(temp, src), BranchConditionalRegister({dest, temp}));
+branchIfCompareZero(RegisterIndex temp, RegisterIndex src,
+        AddressTypes dest,
+        CompareOperation fn) noexcept {
+    return std::make_tuple(fn(temp, src),
+                           std::visit([temp](auto&& value) { return branchConditional(temp, value); }, dest));
 }
 auto
-branchIfCompareZero(RegisterIndex temp, RegisterIndex src, Address addr, CompareOperation fn) noexcept {
-    return std::make_tuple(fn(temp, src), BranchConditionalImmediate({temp, addr}));
-}
-auto 
-branchIfZero(RegisterIndex temp, RegisterIndex src, RegisterIndex loc) noexcept {
-    return branchIfCompareZero(temp, src, loc, equalsZero);
-}
-auto 
-branchIfZero(RegisterIndex temp, RegisterIndex src, Address loc) noexcept {
-    return branchIfCompareZero(temp, src, loc, equalsZero);
+branchIfZero(RegisterIndex cond, RegisterIndex src0, AddressTypes addr) noexcept {
+    return branchIfCompareZero(cond, src0, addr, equalsZero);
 }
 auto
-branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest) noexcept {
-    return branchIfCompareZero(temp, src, dest, greaterThanZero);
-}
-auto
-branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, Address dest) noexcept {
+branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, AddressTypes dest) noexcept {
     return branchIfCompareZero(temp, src, dest, greaterThanZero);
 }
 
 auto
-branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, RegisterIndex dest) noexcept {
+branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, AddressTypes dest) noexcept {
     return branchIfCompareZero(temp, src, dest, lessThanZero);
 }
+
 auto
-branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, Address dest) noexcept {
-    return branchIfCompareZero(temp, src, dest, lessThanZero);
+branchIfGreaterThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressTypes loc) noexcept {
+    return branchIfCompareZero(temp, src, loc, greaterThanOrEqualToZero);
+}
+auto
+branchIfLessThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressTypes loc) noexcept {
+    return branchIfCompareZero(temp, src, loc, lessThanOrEqualToZero);
 }
 
 } // end namespace iris::instructions
