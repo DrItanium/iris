@@ -133,12 +133,16 @@ struct Instruction {
         template<typename T>
         static constexpr auto IsImm8 = IsU8<T> || IsS8<T>;
         template<typename T>
-        static constexpr auto IsImm16 = std::is_same_v<std::decay_t<T>, Word>;
+        static constexpr auto IsImm16 = std::is_same_v<std::decay_t<T>, Address>;
+        template<typename T>
+        static constexpr auto IsS16 = std::is_same_v<std::decay_t<T>, Offset16>;
     public:
         template<typename T = RegisterIndex>
         constexpr T getArg0() const noexcept { 
             if constexpr (IsImm16<T>) {
                 return getImm16();
+            } else if constexpr (IsS16<T>) {
+                return static_cast<Offset16>(getImm16());
             } else if constexpr (IsImm8<T>) {
                 return convertByteIndex<T>(getImm8());
             } else {
@@ -149,6 +153,8 @@ struct Instruction {
         constexpr T getArg1() const noexcept {
             if constexpr (IsImm16<T>) {
                 return getImm16();
+            } else if constexpr (IsS16<T>) {
+                return static_cast<Offset16>(getImm16());
             } else if constexpr (IsImm8<T>) {
                 return convertByteIndex<T>(getImm8());
             } else {
@@ -159,6 +165,8 @@ struct Instruction {
         constexpr T getArg2() const noexcept { 
             if constexpr (IsImm16<T>) {
                 return getImm16();
+            } else if constexpr (IsS16<T>) {
+                return static_cast<Offset16>(getImm16());
             } else if constexpr (IsImm8<T>) {
                 return convertByteIndex<T>(getImm8());
             } else {
@@ -314,7 +322,7 @@ using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
 template<Opcodes op>
 using U16Format = OneArgumentFormat<UnsignedWord, op>;
 template<Opcodes op>
-using S16Format = OneArgumentFormat<SignedWord, op>:
+using S16Format = OneArgumentFormat<Offset16, op>;
 template<Opcodes op>
 using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>
