@@ -136,8 +136,8 @@ X(Error, ZeroArgument)
     // @todo make immediate branches always relative to IP like what is done with PPC
     // these instructions will always operate on signed 16-bit values instead of
     // unsigned ones.
-    // Branch(RelativeImmediate, U16)
-    // Branch(ConditionalRelativeImmediate, OneRegisterU16)
+    Branch(RelativeImmediate, S16)
+    Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(Register, OneRegister)
     Branch(ConditionalRegister, TwoRegister)
     Branch(RegisterAndLink, TwoRegister)

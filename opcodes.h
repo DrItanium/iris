@@ -302,7 +302,9 @@ using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, op>;
 template<Opcodes op>
 using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
 template<Opcodes op>
-using OneRegisterU16Format = TwoArgumentsFormat<Word, op>;
+using OneRegisterU16Format = TwoArgumentsFormat<UnsignedWord, op>;
+template<Opcodes op>
+using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
 template<Opcodes op>
 using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
 template<Opcodes op>
@@ -310,7 +312,9 @@ using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
 template<Opcodes op>
 using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
 template<Opcodes op>
-using U16Format = OneArgumentFormat<Word, op>;
+using U16Format = OneArgumentFormat<UnsignedWord, op>;
+template<Opcodes op>
+using S16Format = OneArgumentFormat<SignedWord, op>:
 template<Opcodes op>
 using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>

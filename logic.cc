@@ -423,8 +423,8 @@ Z(BitwiseNot, ~);
 #undef Z
 void
 Core::invoke(const iris::BranchRelativeImmediateInstruction& s) {
-    auto [ s8 ] = s.arguments();
-    _ip.put<SignedWord>(_ip.get<SignedWord>() + s8);
+    auto [ offset ] = s.arguments();
+    _ip.put<SignedWord>(_ip.get<SignedWord>() + offset);
     _advanceIP = false;
 }
 
