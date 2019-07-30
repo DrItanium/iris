@@ -101,5 +101,32 @@ namespace iris::instructions {
     auto selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     auto selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     auto selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    template<typename T>
+    Bits move(RegisterIndex dest, T value) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address>) {
+            return MemoryAssignRegisterImmediate({dest, value});
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return MemoryCopyRegister({dest, value});
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
+    template<typename T>
+    Bits push(RegisterIndex sp, T value) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address>) {
+            return MemoryStackPushImmediateValue({sp, value});
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return MemoryStackPush({sp, value});
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
+    Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept;
+    Bits store(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits store(RegisterIndex dest, Address value) noexcept; 
+    Bits load(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

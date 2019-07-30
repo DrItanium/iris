@@ -190,4 +190,24 @@ selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIn
     return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
 }
 
+Bits
+pop(RegisterIndex sp, RegisterIndex dest) noexcept {
+    return MemoryStackPop({sp, dest});
+}
+
+Bits
+store(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
+    return MemoryDataStoreWithOffset({addr, value, offset});
+}
+Bits
+store(RegisterIndex addr, Address value) noexcept {
+    return MemoryDataStoreImmediateValue({addr, value});
+}
+
+Bits
+load(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
+    return MemoryDataLoadWithOffset({addr, dest, offset});
+}
+
+
 } // end namespace iris::instructions
