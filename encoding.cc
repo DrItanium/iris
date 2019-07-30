@@ -152,4 +152,42 @@ branchIfLessThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressType
     return branchIfCompareZero(temp, src, loc, lessThanOrEqualToZero);
 }
 
+Bits
+select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept {
+    return BranchSelect({cond, then, _else});
+}
+
+auto
+selectCompareWithZero(RegisterIndex cond, RegisterIndex src, RegisterIndex then, RegisterIndex _else, 
+        std::function<Bits(RegisterIndex, RegisterIndex)> compareWithZero) noexcept {
+    return std::make_tuple(compareWithZero(cond, src), 
+                           select(cond, then, _else));
+}
+
+auto
+selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return selectCompareWithZero(cond, src0, then, _else, equalsZero);
+}
+auto
+selectIfNotZero(RegisterIndex, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return select(src0, then, _else);
+}
+auto
+selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return selectCompareWithZero(cond, src0, then, _else, greaterThanZero);
+}
+auto
+selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return selectCompareWithZero(cond, src0, then, _else, lessThanZero);
+}
+
+auto
+selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return selectCompareWithZero(cond, src0, then, _else, greaterThanOrEqualToZero);
+}
+auto
+selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+    return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
+}
+
 } // end namespace iris::instructions
