@@ -124,9 +124,20 @@ namespace iris::instructions {
         }
     }
     Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept;
-    Bits store(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
-    Bits store(RegisterIndex dest, Address value) noexcept; 
-    Bits load(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits storeData(RegisterIndex dest, Address value) noexcept; 
+    Bits loadData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits storeIO(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits storeIO(RegisterIndex dest, Address value) noexcept; 
+    Bits loadIO(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
+    Bits storeCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
+    Bits loadCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
+    Bits storeCodeThenIncrement(RegisterIndex dest, RegisterIndex lower, UnsignedByte amount = 1) noexcept;
+    Bits loadCodeThenIncrement(RegisterIndex dest, RegisterIndex lower, UnsignedByte amount = 1) noexcept;
+    Bits storeCodeThenDecrement(RegisterIndex dest, RegisterIndex lower, UnsignedByte amount = 1) noexcept;
+    Bits loadCodeThenDecrement(RegisterIndex dest, RegisterIndex lower, UnsignedByte amount = 1) noexcept;
+    Bits getIP(RegisterIndex) noexcept;
+    Bits setIP(RegisterIndex) noexcept;
 
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

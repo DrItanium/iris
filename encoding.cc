@@ -196,18 +196,69 @@ pop(RegisterIndex sp, RegisterIndex dest) noexcept {
 }
 
 Bits
-store(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
+storeData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
     return MemoryDataStoreWithOffset({addr, value, offset});
 }
 Bits
-store(RegisterIndex addr, Address value) noexcept {
+storeData(RegisterIndex addr, Address value) noexcept {
     return MemoryDataStoreImmediateValue({addr, value});
 }
 
 Bits
-load(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
+loadData(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
     return MemoryDataLoadWithOffset({addr, dest, offset});
 }
+Bits
+storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
+    return MemoryIOStoreWithOffset({addr, value, offset});
+}
+Bits
+storeIO(RegisterIndex addr, Address value) noexcept {
+    return MemoryIOStoreImmediateValue({addr, value});
+}
+
+Bits
+loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
+    return MemoryIOLoadWithOffset({addr, dest, offset});
+}
+
+Bits
+loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
+    return MemoryCodeLoadWithOffset({addr, lower, offset});
+}
+Bits
+storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
+    return MemoryCodeStoreWithOffset({addr, lower, offset});
+}
+Bits
+loadCodeThenIncrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
+    // always have to decrement the amount by one 
+    return MemoryCodeLoadAndIncrement({addr, lower, --amount});
+}
+Bits
+storeCodeThenIncrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
+    return MemoryCodeStoreAndIncrement({addr, lower, --amount});
+}
+Bits
+loadCodeThenDecrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
+    // always have to decrement the amount by one 
+    return MemoryCodeLoadAndDecrement({addr, lower, --amount});
+}
+Bits
+storeCodeThenDecrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
+    return MemoryCodeStoreAndDecrement({addr, lower, --amount});
+}
+
+Bits
+getIP(RegisterIndex r) noexcept {
+    return MemoryMoveFromIP({r});
+}
+Bits
+setIP(RegisterIndex r) noexcept {
+    return MemoryMoveToIP({r});
+}
+
+
 
 
 } // end namespace iris::instructions

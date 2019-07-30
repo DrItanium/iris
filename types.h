@@ -135,6 +135,8 @@ constexpr Address operator "" _addr(unsigned long long int conversion) noexcept 
 constexpr UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
 constexpr RegisterIndex operator "" _r(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(conversion)); }
 constexpr UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
+constexpr RegisterIndex operator "" _dr(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111110); }
+constexpr RegisterIndex operator "" _qr(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111100); }
 
 } // end namespace iris
 
