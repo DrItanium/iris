@@ -26,6 +26,7 @@
 #ifndef IRIS_ENCODING_H__
 #define IRIS_ENCODING_H__
 #include "opcodes.h"
+#include "exceptions.h"
 #include <variant>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
@@ -54,6 +55,11 @@ namespace iris::instructions {
                    count<index, Args...>(tup);
         }
     }
+    template<typename ... Args>
+    constexpr auto count(Args&& ... tup) noexcept {
+        // construct the types
+        return count(std::make_tuple<Args...>(std::forward<Args>(tup)...));
+    }
 #define X(title, fmt) \
     Bits title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
@@ -75,7 +81,7 @@ namespace iris::instructions {
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediateAndLink({link, value});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
-            return BranchRelativeImmediateAndLink({link, value});
+            return BranchRelativeImmediateAndLink({link, static_cast<Offset16>(value)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchRegisterAndLink({value, link });
         } else {
@@ -89,7 +95,7 @@ namespace iris::instructions {
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchConditionalImmediate({cond, addr});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
-            return BranchConditionalRelativeImmediate({cond, addr});
+            return BranchConditionalRelativeImmediate({cond, static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchConditionalRegister({addr, cond});
         } else {
@@ -102,7 +108,7 @@ namespace iris::instructions {
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediate({addr});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
-            return BranchRelativeImmediate({addr});
+            return BranchRelativeImmediate({static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchRegister({addr});
         } else {
@@ -238,6 +244,18 @@ namespace iris::instructions {
                          RegisterIndex denominator) noexcept;
     auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
     auto indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
+    template<typename ... Types>
+    auto unconditionalLoop(Types&& ... values) {
+        auto tup = std::make_tuple(values...);
+        if constexpr (constexpr auto leaves = count(tup); leaves == 0) {
+            return branch(-1);
+        } else if constexpr (leaves > 0x7FFF) {
+            /// @todo fix this at a later time
+            throw Exception("loop is too large!");
+        } else {
+            return std::make_tuple(tup, branch(-leaves));
+        }
+    }
 
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

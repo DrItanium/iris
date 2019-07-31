@@ -45,7 +45,7 @@ clean:
 
 IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
 encoding.o: encoding.cc encoding.h opcodes.h types.h \
- InstructionFormats.def
+ InstructionFormats.def exceptions.h
 exceptions.o: exceptions.cc exceptions.h types.h
 invoke.o: invoke.cc types.h iris.h exceptions.h IODevices.h register.h \
  InstructionFormats.def opcodes.h
