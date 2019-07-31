@@ -117,37 +117,38 @@ Bits
 lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareLessThanOrEqualToSignedImmediate8({dest, src, 0});
 }
-auto 
+MultiInstructionExpression
 branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {
     return std::visit([src](auto&& addr) { return branchConditional(src, addr); }, loc);
 }
 using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
-auto
+MultiInstructionExpression
 branchIfCompareZero(RegisterIndex temp, RegisterIndex src,
         AddressTypes dest,
         CompareOperation fn) noexcept {
     return std::make_tuple(fn(temp, src),
                            std::visit([temp](auto&& value) { return branchConditional(temp, value); }, dest));
 }
-auto
+MultiInstructionExpression
 branchIfZero(RegisterIndex cond, RegisterIndex src0, AddressTypes addr) noexcept {
     return branchIfCompareZero(cond, src0, addr, equalsZero);
 }
-auto
+MultiInstructionExpression
 branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, AddressTypes dest) noexcept {
     return branchIfCompareZero(temp, src, dest, greaterThanZero);
 }
 
-auto
+MultiInstructionExpression
 branchIfLessThanZero(RegisterIndex temp, RegisterIndex src, AddressTypes dest) noexcept {
     return branchIfCompareZero(temp, src, dest, lessThanZero);
 }
 
-auto
+MultiInstructionExpression
 branchIfGreaterThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressTypes loc) noexcept {
     return branchIfCompareZero(temp, src, loc, greaterThanOrEqualToZero);
 }
-auto
+
+MultiInstructionExpression
 branchIfLessThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressTypes loc) noexcept {
     return branchIfCompareZero(temp, src, loc, lessThanOrEqualToZero);
 }
@@ -157,35 +158,35 @@ select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept {
     return BranchSelect({cond, then, _else});
 }
 
-auto
+MultiInstructionExpression
 selectCompareWithZero(RegisterIndex cond, RegisterIndex src, RegisterIndex then, RegisterIndex _else, 
         std::function<Bits(RegisterIndex, RegisterIndex)> compareWithZero) noexcept {
     return std::make_tuple(compareWithZero(cond, src), 
                            select(cond, then, _else));
 }
 
-auto
+MultiInstructionExpression
 selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return selectCompareWithZero(cond, src0, then, _else, equalsZero);
 }
-auto
+MultiInstructionExpression
 selectIfNotZero(RegisterIndex, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return select(src0, then, _else);
 }
-auto
+MultiInstructionExpression
 selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return selectCompareWithZero(cond, src0, then, _else, greaterThanZero);
 }
-auto
+MultiInstructionExpression
 selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return selectCompareWithZero(cond, src0, then, _else, lessThanZero);
 }
 
-auto
+MultiInstructionExpression
 selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return selectCompareWithZero(cond, src0, then, _else, greaterThanOrEqualToZero);
 }
-auto
+MultiInstructionExpression
 selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
     return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
 }
@@ -276,42 +277,32 @@ X(Xor);
 #undef X
 
 
-auto
+MultiInstructionExpression
 halt(RegisterIndex temp, Address code) noexcept {
     return std::make_tuple(zeroRegister(temp), storeIO(temp, code));
 }
-auto
+MultiInstructionExpression
 cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept {
     return std::make_tuple(square(temporary, src), 
             opMultiplyUnsigned(dest, src, temporary));
 }
 
-auto
+MultiInstructionExpression
 getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, 
                 RegisterIndex numerator, RegisterIndex denominator) noexcept {
     return std::make_tuple(opDivideUnsigned(quotient, numerator, denominator),
                            opRemainderUnsigned(remainder, numerator, denominator));
 }
 
-auto
+MultiInstructionExpression
 indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset) noexcept {
     return std::make_tuple(loadData(dest, addr, offset), 
             loadData(dest, dest));
 }
-auto
+MultiInstructionExpression
 indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset) noexcept {
     return std::make_tuple(loadData(temporary, dest, offset),
             storeData(temporary, addr));
-}
-
-auto
-test() {
-    return unconditionalLoop(increment(0_r),
-                             decrement(0_r),
-                             unconditionalLoop(increment(1_r),
-                                               decrement(1_r)),
-                             conditionalLoop(2_r, increment(3_r),
-                                                  decrement(2_r)));
 }
 
 void
@@ -319,13 +310,35 @@ MultiInstructionExpression::addInstruction(Bits b) {
     _instructions.emplace_back(b);
 }
 void
-MultiInstructionExpression::addInstruction(std::tuple<Bits, Bits> tup) {
+MultiInstructionExpression::addInstruction(ComplexBinaryInstruction tup) {
     addInstruction(std::get<0>(tup));
     addInstruction(std::get<1>(tup));
 }
+
 void
 MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {
     _instructions.splice(_instructions.cend(), other._instructions);
+}
+
+void
+unconditionalLoop(MultiInstructionExpression& expr) {
+    if (auto count = expr.size(); count == 0) {
+        expr.addInstructions(nop(), branch(-1));
+    } else if (count < 0x7FFF) {
+        expr.addInstruction(branch(-(count + 1)));
+    } else {
+        throw Exception("Loop would be too large!");
+    }
+}
+void
+conditionalLoop(MultiInstructionExpression& expr, RegisterIndex cond) {
+    if (auto count = expr.size(); count == 0) {
+        expr.addInstructions(nop(), branchConditional(cond, -1));
+    } else if (count < 0x7FFF) {
+        expr.addInstruction(branchConditional(cond, -(count + 1)));
+    } else {
+        throw Exception("Loop would be too large!");
+    }
 }
 
 

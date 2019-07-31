@@ -32,6 +32,31 @@
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
     using List = std::list<Bits>;
+    using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
+    class MultiInstructionExpression {
+
+        public:
+            MultiInstructionExpression() = default;
+            ~MultiInstructionExpression() = default;
+            MultiInstructionExpression(Bits);
+            MultiInstructionExpression(ComplexBinaryInstruction);
+            void addInstruction(Bits);
+            void addInstruction(ComplexBinaryInstruction);
+            void addInstruction(MultiInstructionExpression&&);
+            template<typename ... Args>
+            void addInstructions(Args&& ... instructions) {
+                (addInstruction(std::forward<Args>(instructions)), ...);
+            }
+            auto size() const noexcept { return _instructions.size(); }
+            bool tooLarge() const noexcept { return size() > 0xFFFF; }
+            auto begin() { return _instructions.begin(); }
+            auto end() { return _instructions.end(); }
+            auto begin() const { return _instructions.cbegin(); }
+            auto end() const { return _instructions.cend(); }
+
+        private:
+            List _instructions;
+    };
 
     template<size_t Size, typename ... Args>
     constexpr auto count(std::tuple<Args...>) noexcept;
@@ -122,19 +147,19 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    auto branchIfZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept;
-    auto branchIfNotZero(RegisterIndex, AddressTypes) noexcept ;
-    auto branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    auto branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    auto branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    auto branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept;
+    MultiInstructionExpression branchIfNotZero(RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
     Bits select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    auto selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     template<typename T>
     Bits move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
@@ -239,70 +264,19 @@ namespace iris::instructions {
     inline auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
     Bits bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
-    auto halt(RegisterIndex, Address = 0) noexcept;
+    MultiInstructionExpression halt(RegisterIndex, Address = 0) noexcept;
 
-    auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept;
+    MultiInstructionExpression cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept;
     /**
      * Compute quotient and remainder together
      */
-    auto getDivRemainder(RegisterIndex quotient, 
+    MultiInstructionExpression getDivRemainder(RegisterIndex quotient, 
                          RegisterIndex remainder, 
                          RegisterIndex numerator,
                          RegisterIndex denominator) noexcept;
-    auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
-    auto indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
-    template<typename ... Types>
-    using LoopReturnKind = std::variant<std::tuple<Bits, Bits>,
-              std::tuple<std::tuple<Types...>, Bits>>;
-    template<typename ... Types>
-    LoopReturnKind<Types...>
-    unconditionalLoop(std::tuple<Types...> tup) {
-        if (auto leaves = count(tup); leaves == 0) {
-            return std::make_tuple(nop(), branch(-1));
-        } else if (leaves < 0x8000) {
-            return std::make_tuple(tup, branch(-leaves));
-        } else {
-            throw Exception("loop is too large!");
-        }
-    }
-    template<typename ... Args>
-    auto unconditionalLoop(Args&& ... values) {
-        return unconditionalLoop(std::make_tuple(std::forward<Args>(values)...));
-    }
-    template<typename ... Types>
-    LoopReturnKind<Types...> 
-    conditionalLoop(RegisterIndex condition, std::tuple<Types...> tup) {
-        if (auto leaves = count(tup); leaves == 0) {
-            return std::make_tuple(nop(), branchConditional(condition, -1));
-        } else if (leaves < 0x8000) {
-            return std::make_tuple(tup, branchConditional(condition, -leaves));
-        } else {
-            throw Exception("loop is too large!");
-        }
-    }
-    template<typename ... Args>
-    auto conditionalLoop(RegisterIndex cond, Args&& ... values) {
-        return conditionalLoop(cond, std::make_tuple(std::forward<Args>(values)...));
-    }
-
-    class MultiInstructionExpression {
-
-        public:
-            MultiInstructionExpression() = default;
-            ~MultiInstructionExpression() = default;
-            void addInstruction(Bits b);
-            void addInstruction(std::tuple<Bits, Bits> tup);
-            void addInstruction(MultiInstructionExpression&& other);
-            template<typename ... Args>
-            void addInstructions(Args&& ... instructions) {
-                (addInstruction(std::forward<Args>(instructions)), ...);
-            }
-            auto begin() { return _instructions.begin(); }
-            auto end() { return _instructions.end(); }
-            auto begin() const { return _instructions.cbegin(); }
-            auto end() const { return _instructions.cend(); }
-        private:
-            List _instructions;
-    };
+    MultiInstructionExpression indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
+    MultiInstructionExpression indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
+    void unconditionalLoop(MultiInstructionExpression& expr);
+    void conditionalLoop(MultiInstructionExpression& expr, RegisterIndex condition);
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
