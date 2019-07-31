@@ -28,14 +28,20 @@
 #include "opcodes.h"
 #include "exceptions.h"
 #include <variant>
+#include <list>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
+    using List = std::list<Bits>;
     template<size_t Size, typename ... Args>
     constexpr auto count(std::tuple<Args...>) noexcept;
     
     template<typename T>
-    constexpr auto count(T) noexcept {
-        return 1;
+    constexpr auto count(T value) noexcept {
+        if constexpr (std::is_same_v<std::decay_t<T>, List>) {
+            return value.size();
+        } else {
+            return 1;
+        }
     }
     template<typename ... Args>
     constexpr auto count(std::tuple<Args...> tup) noexcept {
