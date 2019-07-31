@@ -32,6 +32,7 @@
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
     using List = std::list<Bits>;
+
     template<size_t Size, typename ... Args>
     constexpr auto count(std::tuple<Args...>) noexcept;
     
@@ -283,5 +284,25 @@ namespace iris::instructions {
     auto conditionalLoop(RegisterIndex cond, Args&& ... values) {
         return conditionalLoop(cond, std::make_tuple(std::forward<Args>(values)...));
     }
+
+    class MultiInstructionExpression {
+
+        public:
+            MultiInstructionExpression() = default;
+            ~MultiInstructionExpression() = default;
+            void addInstruction(Bits b);
+            void addInstruction(std::tuple<Bits, Bits> tup);
+            void addInstruction(MultiInstructionExpression&& other);
+            template<typename ... Args>
+            void addInstructions(Args&& ... instructions) {
+                (addInstruction(std::forward<Args>(instructions)), ...);
+            }
+            auto begin() { return _instructions.begin(); }
+            auto end() { return _instructions.end(); }
+            auto begin() const { return _instructions.cbegin(); }
+            auto end() const { return _instructions.cend(); }
+        private:
+            List _instructions;
+    };
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

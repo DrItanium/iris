@@ -314,5 +314,19 @@ test() {
                                                   decrement(2_r)));
 }
 
+void
+MultiInstructionExpression::addInstruction(Bits b) {
+    _instructions.emplace_back(b);
+}
+void
+MultiInstructionExpression::addInstruction(std::tuple<Bits, Bits> tup) {
+    addInstruction(std::get<0>(tup));
+    addInstruction(std::get<1>(tup));
+}
+void
+MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {
+    _instructions.splice(_instructions.cend(), other._instructions);
+}
+
 
 } // end namespace iris::instructions
