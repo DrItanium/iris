@@ -280,7 +280,29 @@ auto
 halt(RegisterIndex temp, Address code) noexcept {
     return std::make_tuple(zeroRegister(temp), storeIO(temp, code));
 }
+auto
+cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept {
+    return std::make_tuple(square(temporary, src), 
+            opMultiplyUnsigned(dest, src, temporary));
+}
 
+auto
+getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, 
+                RegisterIndex numerator, RegisterIndex denominator) noexcept {
+    return std::make_tuple(opDivideUnsigned(quotient, numerator, denominator),
+                           opRemainderUnsigned(remainder, numerator, denominator));
+}
+
+auto
+indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset) noexcept {
+    return std::make_tuple(loadData(dest, addr, offset), 
+            loadData(dest, dest));
+}
+auto
+indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset) noexcept {
+    return std::make_tuple(loadData(temporary, dest, offset),
+            storeData(temporary, addr));
+}
 
 
 } // end namespace iris::instructions

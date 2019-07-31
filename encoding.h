@@ -161,6 +161,10 @@ namespace iris::instructions {
         } \
     } \
     template<typename T> \
+    inline auto op ## kind ## Signed (RegisterIndex dest, T src) noexcept { \
+        return op ## kind ## Signed( dest, dest, src); \
+    } \
+    template<typename T> \
     Bits op ## kind ## Unsigned (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
         using K = std::decay_t<T>; \
         if constexpr (std::is_same_v<K, UnsignedByte>) { \
@@ -170,7 +174,11 @@ namespace iris::instructions {
         } else { \
             static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
         } \
-    }
+    } \
+    template<typename T> \
+    inline auto op ## kind ## Unsigned (RegisterIndex dest, T src) noexcept { \
+        return op ## kind ## Unsigned( dest, dest, src); \
+    } 
     X(Add);
     X(Subtract);
     X(Multiply);
@@ -182,13 +190,29 @@ namespace iris::instructions {
     X(Min);
 #undef X
     Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept;
+    inline auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
     Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    inline auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
     Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    inline auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
     Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    inline auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
     Bits bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    inline auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
     Bits bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    inline auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
     auto halt(RegisterIndex, Address = 0) noexcept;
 
+    auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept;
+    /**
+     * Compute quotient and remainder together
+     */
+    auto getDivRemainder(RegisterIndex quotient, 
+                         RegisterIndex remainder, 
+                         RegisterIndex numerator,
+                         RegisterIndex denominator) noexcept;
+    auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
+    auto indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
 
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
