@@ -187,6 +187,7 @@ namespace iris::instructions {
     Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     Bits bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     Bits bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    auto halt(RegisterIndex, Address = 0) noexcept;
 
 
 } // end namespace iris::instructions

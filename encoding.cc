@@ -276,6 +276,11 @@ X(Xor);
 #undef X
 
 
+auto
+halt(RegisterIndex temp, Address code) noexcept {
+    return std::make_tuple(zeroRegister(temp), storeIO(temp, code));
+}
+
 
 
 } // end namespace iris::instructions
