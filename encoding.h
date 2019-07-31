@@ -90,7 +90,7 @@ namespace iris::instructions {
     }
     Bits swap(RegisterIndex, RegisterIndex) noexcept;
     template<typename T>
-    auto branchConditional(RegisterIndex cond, T addr) noexcept {
+    Bits branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchConditionalImmediate({cond, addr});
@@ -103,7 +103,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    auto branch(T addr) noexcept {
+    Bits branch(T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediate({addr});
@@ -245,17 +245,37 @@ namespace iris::instructions {
     auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
     auto indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
     template<typename ... Types>
-    auto unconditionalLoop(Types&& ... values) {
-        auto tup = std::make_tuple(values...);
-        if constexpr (constexpr auto leaves = count(tup); leaves == 0) {
-            return branch(-1);
-        } else if constexpr (leaves > 0x7FFF) {
-            /// @todo fix this at a later time
-            throw Exception("loop is too large!");
-        } else {
+    using LoopReturnKind = std::variant<std::tuple<Bits, Bits>,
+              std::tuple<std::tuple<Types...>, Bits>>;
+    template<typename ... Types>
+    LoopReturnKind<Types...>
+    unconditionalLoop(std::tuple<Types...> tup) {
+        if (auto leaves = count(tup); leaves == 0) {
+            return std::make_tuple(nop(), branch(-1));
+        } else if (leaves < 0x8000) {
             return std::make_tuple(tup, branch(-leaves));
+        } else {
+            throw Exception("loop is too large!");
         }
     }
-
+    template<typename ... Args>
+    auto unconditionalLoop(Args&& ... values) {
+        return unconditionalLoop(std::make_tuple(std::forward<Args>(values)...));
+    }
+    template<typename ... Types>
+    LoopReturnKind<Types...> 
+    conditionalLoop(RegisterIndex condition, std::tuple<Types...> tup) {
+        if (auto leaves = count(tup); leaves == 0) {
+            return std::make_tuple(nop, branchConditional(condition, -1));
+        } else if (leaves < 0x8000) {
+            return std::make_tuple(tup, branchConditional(condition, -leaves));
+        } else {
+            throw Exception("loop is too large!");
+        }
+    }
+    template<typename ... Args>
+    auto conditionalLoop(RegisterIndex cond, Args&& ... values) {
+        return conditionalLoop(cond, std::make_tuple(std::forward<Args>(values)...));
+    }
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

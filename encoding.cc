@@ -304,5 +304,15 @@ indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporar
             storeData(temporary, addr));
 }
 
+auto
+test() {
+    return unconditionalLoop(increment(0_r),
+                             decrement(0_r),
+                             unconditionalLoop(increment(1_r),
+                                               decrement(1_r)),
+                             conditionalLoop(2_r, increment(3_r),
+                                                  decrement(2_r)));
+}
+
 
 } // end namespace iris::instructions
