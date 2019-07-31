@@ -258,6 +258,23 @@ setIP(RegisterIndex r) noexcept {
     return MemoryMoveToIP({r});
 }
 
+Bits
+bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept {
+    return ArithmeticBitwiseNot({dest, src});
+}
+
+#define X(kind) \
+    Bits \
+    bitwise ## kind ( RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { \
+        return ArithmeticBitwise ## kind ( { dest, src0, src1 } ); \
+    }
+X(And);
+X(Or);
+X(Nor);
+X(Nand);
+X(Xor);
+#undef X
+
 
 
 

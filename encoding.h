@@ -37,22 +37,12 @@ namespace iris::instructions {
     // single instruction aliases useful for ease of use
     Bits zeroRegister(RegisterIndex targetRegister) noexcept ;
     Bits nop(RegisterIndex target = 0_r) noexcept;
-    Bits twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
-    Bits twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
-    Bits twoTimes(RegisterIndex targetRegister)  noexcept ;
-    Bits twoDivide(RegisterIndex value)  noexcept ;
-    Bits invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits invert(RegisterIndex dest)  noexcept ; 
-    Bits square(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits square(RegisterIndex dest)  noexcept ;
     Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits increment(RegisterIndex target)  noexcept ;
-    Bits decrement(RegisterIndex target)  noexcept ;
     Bits ret(RegisterIndex) noexcept ;
     template<typename T>
     Bits call(RegisterIndex link, T value) noexcept {
@@ -144,6 +134,60 @@ namespace iris::instructions {
     Bits loadCodeThenDecrement(RegisterIndex dest, RegisterIndex lower, UnsignedByte amount = 1) noexcept;
     Bits getIP(RegisterIndex) noexcept;
     Bits setIP(RegisterIndex) noexcept;
+
+    /// @todo Double and Quad memory operations
+
+    // arithmetic operations
+    Bits twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
+    Bits twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
+    Bits twoTimes(RegisterIndex targetRegister)  noexcept ;
+    Bits twoDivide(RegisterIndex value)  noexcept ;
+    Bits invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits invert(RegisterIndex dest)  noexcept ; 
+    Bits square(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    Bits square(RegisterIndex dest)  noexcept ;
+    Bits increment(RegisterIndex target)  noexcept ;
+    Bits decrement(RegisterIndex target)  noexcept ;
+#define X(kind) \
+    template<typename T> \
+    Bits op ## kind ## Signed (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
+        using K = std::decay_t<T>; \
+        if constexpr (std::is_same_v<K, SignedByte>) { \
+            return Arithmetic ## kind ## SignedImmediate({dest, src0, src1}); \
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) { \
+            return Arithmetic ## kind ## Signed({dest, src0, src1}); \
+        } else { \
+            static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
+        } \
+    } \
+    template<typename T> \
+    Bits op ## kind ## Unsigned (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
+        using K = std::decay_t<T>; \
+        if constexpr (std::is_same_v<K, UnsignedByte>) { \
+            return Arithmetic ## kind ## UnsignedImmediate({dest, src0, src1}); \
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) { \
+            return Arithmetic ## kind ## Unsigned({dest, src0, src1}); \
+        } else { \
+            static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
+        } \
+    }
+    X(Add);
+    X(Subtract);
+    X(Multiply);
+    X(Divide);
+    X(Remainder);
+    X(ShiftLeft);
+    X(ShiftRight);
+    X(Max);
+    X(Min);
+#undef X
+    Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept;
+    Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    Bits bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    Bits bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+
 
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
