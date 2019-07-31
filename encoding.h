@@ -266,7 +266,7 @@ namespace iris::instructions {
     LoopReturnKind<Types...> 
     conditionalLoop(RegisterIndex condition, std::tuple<Types...> tup) {
         if (auto leaves = count(tup); leaves == 0) {
-            return std::make_tuple(nop, branchConditional(condition, -1));
+            return std::make_tuple(nop(), branchConditional(condition, -1));
         } else if (leaves < 0x8000) {
             return std::make_tuple(tup, branchConditional(condition, -leaves));
         } else {
