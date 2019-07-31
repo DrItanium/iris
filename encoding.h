@@ -29,6 +29,31 @@
 #include <variant>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
+    template<size_t Size, typename ... Args>
+    constexpr auto count(std::tuple<Args...>) noexcept;
+    
+    template<typename T>
+    constexpr auto count(T) noexcept {
+        return 1;
+    }
+    template<typename ... Args>
+    constexpr auto count(std::tuple<Args...> tup) noexcept {
+        return count<std::tuple_size_v<decltype(tup)>, Args...>(tup);
+    }
+    template<typename A, typename B>
+    constexpr auto count(std::pair<A, B> pair) noexcept {
+        return count(std::tuple(pair));
+    }
+    
+    template<size_t Size, typename ... Args>
+    constexpr auto count(std::tuple<Args...> tup) noexcept {
+        if constexpr (constexpr auto index = Size - 1; Size == 0) {
+            return 0;
+        } else {
+            return count(std::get<index>(tup)) +
+                   count<index, Args...>(tup);
+        }
+    }
 #define X(title, fmt) \
     Bits title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
