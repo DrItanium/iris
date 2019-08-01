@@ -330,11 +330,6 @@ MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {
 }
 
 void
-MultiInstructionExpression::enterScope(DelayedBits inst) {
-    // need to install an address here
-    defer(inst);
-}
-void
 MultiInstructionExpression::resolve() {
     if (_dataStack.empty()) {
         throw Exception("Not in a scope!");
@@ -370,6 +365,21 @@ conditionalLoop(MultiInstructionExpression& expr, RegisterIndex cond) {
 
 MultiInstructionExpression::MultiInstructionExpression(Bits b) { addInstruction(b); }
 MultiInstructionExpression::MultiInstructionExpression(ComplexBinaryInstruction b) { addInstruction(b); }
-MultiInstructionExpression::MultiInstructionExpression(Instruction b) { addInstruction(b); }
+MultiInstructionExpression::MultiInstructionExpression(DelayedBits b) { addInstruction(b); }
+
+void
+MultiInstructionExpression::forwardJumpSource() {
+    enterScope([this](auto jumpPos) {
+                // jumpPos denotes where this defered instruction lives
+                // this must be done before we install the instruction to jump
+                // to as it can cause issues with the defer chain
+                return branch((size() - jumpPos)+1);
+            });
+}
+void
+MultiInstructionExpression::forwardJumpTarget() {
+   resolve(); // just perform the resolve as we see it now
+}
+
 
 } // end namespace iris::instructions

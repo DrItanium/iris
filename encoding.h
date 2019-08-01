@@ -43,7 +43,7 @@ namespace iris::instructions {
             MultiInstructionExpression() = default;
             ~MultiInstructionExpression() = default;
             MultiInstructionExpression(Bits);
-            MultiInstructionExpression(Instruction);
+            MultiInstructionExpression(DelayedBits);
             MultiInstructionExpression(ComplexBinaryInstruction);
             void addInstruction(Bits);
             void addInstruction(DelayedBits);
@@ -61,10 +61,10 @@ namespace iris::instructions {
             auto end() const { return _instructions.cend(); }
             void defer(DelayedBits);
             void resolve();
-            void enterScope(DelayedBits inst);
-            void leaveScope();
+            void enterScope(DelayedBits inst) { defer(inst); }
+            void leaveScope() { resolve(); }
             void forwardJumpSource();
-            void forwardJumpTarget();
+            void forwardJumpTarget();  // must be done before insertion!
             void unconditionalLoopScopeStart();
             void unconditionalLoopScopeEnd();
         private:
