@@ -33,8 +33,18 @@
 #include <functional>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
+    /**
+     * Encode an instruction with only its position to have access to. Most useful
+     * to functions that are a member of the MultiInstructionExpression. It makes
+     * it possible to capture this.
+     */
     using DelayedBits = std::function<Bits(size_t)>;
-    using ListContents = std::variant<Bits, DelayedBits>;
+    class MultiInstructionExpression;
+    /**
+     * Encode an instruction while having parameter access to the expression that is meant to hold onto it
+     */
+    using ExternalDelayedBits = std::function<Bits(MultiInstructionExpression&, size_t)>;
+    using ListContents = std::variant<Bits, DelayedBits, ExternalDelayedBits>;
     using List = std::vector<ListContents>;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class MultiInstructionExpression {
@@ -44,9 +54,11 @@ namespace iris::instructions {
             ~MultiInstructionExpression() = default;
             MultiInstructionExpression(Bits);
             MultiInstructionExpression(DelayedBits);
+            MultiInstructionExpression(ExternalDelayedBits);
             MultiInstructionExpression(ComplexBinaryInstruction);
             void addInstruction(Bits);
             void addInstruction(DelayedBits);
+            void addInstruction(ExternalDelayedBits);
             void addInstruction(ComplexBinaryInstruction);
             void addInstruction(MultiInstructionExpression&&);
             template<typename ... Args>
@@ -59,15 +71,75 @@ namespace iris::instructions {
             auto end() { return _instructions.end(); }
             auto begin() const { return _instructions.cbegin(); }
             auto end() const { return _instructions.cend(); }
-            void defer(DelayedBits);
+
+            /**
+             * Pop the most recent value off of the data stack
+             */
+            size_t dataPop(); 
+
+            /**
+             * Push a value onto the data stack
+             * @param value A size_t to be pushed onto the internal data stack
+             */
+            void dataPush(size_t value);
+            /**
+             * Push the current position onto the data stack
+             */
+            inline void mark() { dataPush(size()); }
+            /**
+             * Add the given delayed instruction to the expression and mark its
+             * position. Use resolve to cause the
+             * deferred function to be replaced with a final product. Failure to call
+             * resolve for each defer may lead to shenanigans and incorrect behavior.
+             * @param fn The function to install and 
+             */
+            void defer(DelayedBits fn);
+            /**
+             * Add the given delayed instruction to the expression and mark its
+             * position. Use resolve to cause the
+             * deferred function to be replaced with a final product. Failure to call
+             * resolve for each defer may lead to shenanigans and incorrect behavior.
+             * @param fn The function to install and 
+             */
+            void defer(ExternalDelayedBits fn);
+            /**
+             * Invoke the most recently deferred instruction and put the resultant 
+             * value in the place of the generator function. The position on the
+             * dataStack is also popped.
+             */
             void resolve();
-            void enterScope(DelayedBits inst) { defer(inst); }
-            void leaveScope() { resolve(); }
+            /**
+             * Register a desire to unconditionally jump forward relative to the 
+             * current position via defer; At some point forwardJumpTarget must 
+             * be called to complete the generation of the jump. 
+             */
             void forwardJump();
+            /**
+             * Register a desire to conditionally jump forward relative to the
+             * current position via defer; At some point forwardJumpTarget must
+             * be called to complete the generation of the jump.
+             * @param cond The register that is used for the conditional evaluation
+             */
             void conditionalForwardJump(RegisterIndex cond);
-            void forwardJumpTarget();  // must be done before insertion!
+            /**
+             * Mark the implied next instruction inserted as the target of the most recent
+             * forward jump request; Thus it must be done before the next instruction
+             * inserted.
+             */
+            void forwardJumpTarget();
+            /**
+             * Mark the position where a backward jump will jump to; Most likely this will
+             * be used for a loop of some kind where you jump back to the top.
+             */
             void backwardJumpTarget();
+            /**
+             * Generate an unconditional jump instruction back to the most recent backwardJumpTarget.
+             */
             void backwardJump();
+            /**
+             * Generate an conditional jump instruction back to the most recent backwardJumpTarget.
+             * @param cond The register to use for the index
+             */
             void conditionalBackwardJump(RegisterIndex cond);
         private:
             List _instructions;
@@ -292,7 +364,5 @@ namespace iris::instructions {
                          RegisterIndex denominator) noexcept;
     MultiInstructionExpression indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
     MultiInstructionExpression indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
-    void unconditionalLoop(MultiInstructionExpression& expr);
-    void conditionalLoop(MultiInstructionExpression& expr, RegisterIndex condition);
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

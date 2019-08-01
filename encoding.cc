@@ -311,12 +311,16 @@ MultiInstructionExpression::addInstruction(Bits b) {
 }
 void
 MultiInstructionExpression::addInstruction(DelayedBits b) {
-    defer(b);
+    _instructions.emplace_back(b);
+}
+void
+MultiInstructionExpression::addInstruction(ExternalDelayedBits b) {
+    _instructions.emplace_back(b);
 }
 void
 MultiInstructionExpression::defer(DelayedBits b) {
-    _instructions.emplace_back(b);
-    _dataStack.emplace_front(size());
+    addInstruction(b);
+    mark();
 }
 void
 MultiInstructionExpression::addInstruction(ComplexBinaryInstruction tup) {
@@ -338,38 +342,20 @@ MultiInstructionExpression::resolve() {
     if (auto& scopeMarker = _instructions.at(location); std::holds_alternative<DelayedBits>(scopeMarker)) {
         // shove the bits in place of the Instruction itself as we are done at this point
         _instructions.at(location).emplace<Bits>(std::get<DelayedBits>(scopeMarker)(location));
+    } else if (std::holds_alternative<ExternalDelayedBits>(scopeMarker)) {
+        _instructions.at(location).emplace<Bits>(std::get<ExternalDelayedBits>(scopeMarker)(*this, location));
     }
     _dataStack.pop_front();
-}
-
-void
-unconditionalLoop(MultiInstructionExpression& expr) {
-    if (auto count = expr.size(); count == 0) {
-        expr.addInstructions(nop(), branch(-1));
-    } else if (count < 0x7FFF) {
-        expr.addInstruction(branch(-(count + 1)));
-    } else {
-        throw Exception("Loop would be too large!");
-    }
-}
-void
-conditionalLoop(MultiInstructionExpression& expr, RegisterIndex cond) {
-    if (auto count = expr.size(); count == 0) {
-        expr.addInstructions(nop(), branchConditional(cond, -1));
-    } else if (count < 0x7FFF) {
-        expr.addInstruction(branchConditional(cond, -(count + 1)));
-    } else {
-        throw Exception("Loop would be too large!");
-    }
 }
 
 MultiInstructionExpression::MultiInstructionExpression(Bits b) { addInstruction(b); }
 MultiInstructionExpression::MultiInstructionExpression(ComplexBinaryInstruction b) { addInstruction(b); }
 MultiInstructionExpression::MultiInstructionExpression(DelayedBits b) { addInstruction(b); }
+MultiInstructionExpression::MultiInstructionExpression(ExternalDelayedBits b) { addInstruction(b); }
 
 void
 MultiInstructionExpression::forwardJump() {
-    enterScope([this](auto jumpPos) {
+    defer([this](auto jumpPos) {
                 // jumpPos denotes where this defered instruction lives
                 // this must be done before we install the instruction to jump
                 // to as it can cause issues with the defer chain
@@ -378,7 +364,7 @@ MultiInstructionExpression::forwardJump() {
 }
 void
 MultiInstructionExpression::conditionalForwardJump(RegisterIndex cond) {
-    enterScope([this, cond](auto jumpPos) {
+    defer([this, cond](auto jumpPos) {
                 return branchConditional(cond, size() - jumpPos);
             });
 }
@@ -389,7 +375,7 @@ MultiInstructionExpression::forwardJumpTarget() {
 
 void
 MultiInstructionExpression::backwardJumpTarget() {
-    _dataStack.emplace_front(size()); // just save a reference of where to jump back to
+    mark();
 }
 void
 MultiInstructionExpression::backwardJump() {
@@ -409,6 +395,21 @@ MultiInstructionExpression::conditionalBackwardJump(RegisterIndex cond) {
     addInstruction(branchConditional(cond, -(size() - location)));
     _dataStack.pop_front();
 }
+
+void
+MultiInstructionExpression::dataPush(size_t value) {
+    _dataStack.emplace_front(value);
+}
+size_t
+MultiInstructionExpression::dataPop() {
+    if (_dataStack.empty()) {
+        throw Exception("Data stack empty!");
+    }
+    size_t top = _dataStack.front();
+    _dataStack.pop_front();
+    return top;
+}
+
 
 
 } // end namespace iris::instructions
