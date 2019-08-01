@@ -335,17 +335,13 @@ MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {
 
 void
 MultiInstructionExpression::resolve() {
-    if (_dataStack.empty()) {
-        throw Exception("Not in a scope!");
-    }
-    size_t location = _dataStack.front();
+    auto location = dataPop();
     if (auto& scopeMarker = _instructions.at(location); std::holds_alternative<DelayedBits>(scopeMarker)) {
         // shove the bits in place of the Instruction itself as we are done at this point
         _instructions.at(location).emplace<Bits>(std::get<DelayedBits>(scopeMarker)(location));
     } else if (std::holds_alternative<ExternalDelayedBits>(scopeMarker)) {
         _instructions.at(location).emplace<Bits>(std::get<ExternalDelayedBits>(scopeMarker)(*this, location));
     }
-    _dataStack.pop_front();
 }
 
 MultiInstructionExpression::MultiInstructionExpression(Bits b) { addInstruction(b); }
@@ -379,21 +375,13 @@ MultiInstructionExpression::backwardJumpTarget() {
 }
 void
 MultiInstructionExpression::backwardJump() {
-    if (_dataStack.empty()) {
-        throw Exception("Not in a scope!");
-    }
-    auto location = _dataStack.front();
+    auto location = dataPop();
     addInstruction(branch(-(size() - location)));
-    _dataStack.pop_front();
 }
 void
 MultiInstructionExpression::conditionalBackwardJump(RegisterIndex cond) {
-    if (_dataStack.empty()) {
-        throw Exception("Not in a scope!");
-    }
-    auto location = _dataStack.front();
+    auto location = dataPop();
     addInstruction(branchConditional(cond, -(size() - location)));
-    _dataStack.pop_front();
 }
 
 void
