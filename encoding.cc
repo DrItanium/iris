@@ -368,17 +368,46 @@ MultiInstructionExpression::MultiInstructionExpression(ComplexBinaryInstruction 
 MultiInstructionExpression::MultiInstructionExpression(DelayedBits b) { addInstruction(b); }
 
 void
-MultiInstructionExpression::forwardJumpSource() {
+MultiInstructionExpression::forwardJump() {
     enterScope([this](auto jumpPos) {
                 // jumpPos denotes where this defered instruction lives
                 // this must be done before we install the instruction to jump
                 // to as it can cause issues with the defer chain
-                return branch((size() - jumpPos)+1);
+                return branch(size() - jumpPos);
+            });
+}
+void
+MultiInstructionExpression::conditionalForwardJump(RegisterIndex cond) {
+    enterScope([this, cond](auto jumpPos) {
+                return branchConditional(cond, size() - jumpPos);
             });
 }
 void
 MultiInstructionExpression::forwardJumpTarget() {
-   resolve(); // just perform the resolve as we see it now
+   resolve(); // just perform the resolve as we see it now as we had to embed 
+}
+
+void
+MultiInstructionExpression::backwardJumpTarget() {
+    _dataStack.emplace_front(size()); // just save a reference of where to jump back to
+}
+void
+MultiInstructionExpression::backwardJump() {
+    if (_dataStack.empty()) {
+        throw Exception("Not in a scope!");
+    }
+    auto location = _dataStack.front();
+    addInstruction(branch(-(size() - location)));
+    _dataStack.pop_front();
+}
+void
+MultiInstructionExpression::conditionalBackwardJump(RegisterIndex cond) {
+    if (_dataStack.empty()) {
+        throw Exception("Not in a scope!");
+    }
+    auto location = _dataStack.front();
+    addInstruction(branchConditional(cond, -(size() - location)));
+    _dataStack.pop_front();
 }
 
 

@@ -63,10 +63,12 @@ namespace iris::instructions {
             void resolve();
             void enterScope(DelayedBits inst) { defer(inst); }
             void leaveScope() { resolve(); }
-            void forwardJumpSource();
+            void forwardJump();
+            void conditionalForwardJump(RegisterIndex cond);
             void forwardJumpTarget();  // must be done before insertion!
-            void unconditionalLoopScopeStart();
-            void unconditionalLoopScopeEnd();
+            void backwardJumpTarget();
+            void backwardJump();
+            void conditionalBackwardJump(RegisterIndex cond);
         private:
             List _instructions;
             std::list<size_t> _dataStack;
