@@ -28,10 +28,14 @@
 #include "opcodes.h"
 #include "exceptions.h"
 #include <variant>
+#include <vector>
 #include <list>
+#include <functional>
 namespace iris::instructions {
     using Bits = UnsignedDoubleWord;
-    using List = std::list<Bits>;
+    using DelayedBits = std::function<Bits(size_t)>;
+    using ListContents = std::variant<Bits, DelayedBits>;
+    using List = std::vector<ListContents>;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class MultiInstructionExpression {
 
@@ -39,8 +43,10 @@ namespace iris::instructions {
             MultiInstructionExpression() = default;
             ~MultiInstructionExpression() = default;
             MultiInstructionExpression(Bits);
+            MultiInstructionExpression(Instruction);
             MultiInstructionExpression(ComplexBinaryInstruction);
             void addInstruction(Bits);
+            void addInstruction(DelayedBits);
             void addInstruction(ComplexBinaryInstruction);
             void addInstruction(MultiInstructionExpression&&);
             template<typename ... Args>
@@ -53,9 +59,17 @@ namespace iris::instructions {
             auto end() { return _instructions.end(); }
             auto begin() const { return _instructions.cbegin(); }
             auto end() const { return _instructions.cend(); }
-
+            void defer(DelayedBits);
+            void resolve();
+            void enterScope(DelayedBits inst);
+            void leaveScope();
+            void forwardJumpSource();
+            void forwardJumpTarget();
+            void unconditionalLoopScopeStart();
+            void unconditionalLoopScopeEnd();
         private:
             List _instructions;
+            std::list<size_t> _dataStack;
     };
 
     template<size_t Size, typename ... Args>

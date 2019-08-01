@@ -310,6 +310,15 @@ MultiInstructionExpression::addInstruction(Bits b) {
     _instructions.emplace_back(b);
 }
 void
+MultiInstructionExpression::addInstruction(DelayedBits b) {
+    defer(b);
+}
+void
+MultiInstructionExpression::defer(DelayedBits b) {
+    _instructions.emplace_back(b);
+    _dataStack.emplace_front(size());
+}
+void
 MultiInstructionExpression::addInstruction(ComplexBinaryInstruction tup) {
     addInstruction(std::get<0>(tup));
     addInstruction(std::get<1>(tup));
@@ -317,7 +326,25 @@ MultiInstructionExpression::addInstruction(ComplexBinaryInstruction tup) {
 
 void
 MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {
-    _instructions.splice(_instructions.cend(), other._instructions);
+    _instructions.insert(_instructions.cend(), other.begin(), other.end());
+}
+
+void
+MultiInstructionExpression::enterScope(DelayedBits inst) {
+    // need to install an address here
+    defer(inst);
+}
+void
+MultiInstructionExpression::resolve() {
+    if (_dataStack.empty()) {
+        throw Exception("Not in a scope!");
+    }
+    size_t location = _dataStack.front();
+    if (auto& scopeMarker = _instructions.at(location); std::holds_alternative<DelayedBits>(scopeMarker)) {
+        // shove the bits in place of the Instruction itself as we are done at this point
+        _instructions.at(location).emplace<Bits>(std::get<DelayedBits>(scopeMarker)(location));
+    }
+    _dataStack.pop_front();
 }
 
 void
@@ -341,5 +368,8 @@ conditionalLoop(MultiInstructionExpression& expr, RegisterIndex cond) {
     }
 }
 
+MultiInstructionExpression::MultiInstructionExpression(Bits b) { addInstruction(b); }
+MultiInstructionExpression::MultiInstructionExpression(ComplexBinaryInstruction b) { addInstruction(b); }
+MultiInstructionExpression::MultiInstructionExpression(Instruction b) { addInstruction(b); }
 
 } // end namespace iris::instructions
