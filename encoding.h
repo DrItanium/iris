@@ -364,5 +364,21 @@ namespace iris::instructions {
                          RegisterIndex denominator) noexcept;
     MultiInstructionExpression indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
     MultiInstructionExpression indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
+    template<typename ... Args>
+    MultiInstructionExpression unconditionalLoop(Args&& ... body) {
+        MultiInstructionExpression me;
+        me.backwardJumpTarget();
+        me.addInstructions(std::forward<Args>(body)...);
+        me.backwardJump();
+        return me;
+    }
+    template<typename ... Args>
+    MultiInstructionExpression conditionalLoop(RegisterIndex cond, Args&& ... body) {
+        MultiInstructionExpression me;
+        me.backwardJumpTarget();
+        me.addInstructions(std::forward<Args>(body)...);
+        me.conditionalBackwardJump(cond);
+        return me;
+    }
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
