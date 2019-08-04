@@ -48,7 +48,8 @@ namespace iris::instructions {
     using List = std::vector<ListContents>;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class MultiInstructionExpression {
-
+        public:
+            using Body = std::function<void(MultiInstructionExpression&)>;
         public:
             MultiInstructionExpression() = default;
             ~MultiInstructionExpression() = default;
@@ -61,6 +62,7 @@ namespace iris::instructions {
             void addInstruction(ExternalDelayedBits);
             void addInstruction(ComplexBinaryInstruction);
             void addInstruction(MultiInstructionExpression&&);
+            void addInstruction(Body b);
             template<typename ... Args>
             void addInstructions(Args&& ... instructions) {
                 (addInstruction(std::forward<Args>(instructions)), ...);
@@ -162,7 +164,6 @@ namespace iris::instructions {
              */
             void thenComponent();
 
-            using Body = std::function<void(MultiInstructionExpression&)>;
             void ifStatement(RegisterIndex cond, Body onTrue);
             void ifStatement(RegisterIndex cond, Body onTrue, Body onFalse);
         private:

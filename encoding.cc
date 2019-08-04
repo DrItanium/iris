@@ -430,16 +430,20 @@ MultiInstructionExpression::thenComponent() {
 void
 MultiInstructionExpression::ifStatement(RegisterIndex cond, Body onTrue) {
     ifComponent(cond);
-    onTrue(*this);
+    addInstruction(onTrue);
     thenComponent();
 }
 void
 MultiInstructionExpression::ifStatement(RegisterIndex cond, Body onTrue, Body onFalse) {
     ifComponent(cond);
-    onTrue(*this);
+    addInstruction(onTrue);
     elseComponent();
-    onFalse(*this);
+    addInstruction(onFalse);
     thenComponent();
+}
+void
+MultiInstructionExpression::addInstruction(Body b) {
+    b(*this);
 }
 
 
