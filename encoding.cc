@@ -410,7 +410,7 @@ MultiInstructionExpression::dataStackSwap() {
 }
 
 void
-MultiInstructionExpression::ifStatement(RegisterIndex idx) {
+MultiInstructionExpression::ifComponent(RegisterIndex idx) {
     addInstruction(equalsZero(idx, idx));
     conditionalForwardJump(idx);
 }
@@ -425,6 +425,21 @@ void
 MultiInstructionExpression::thenComponent() {
     // now do the forwardJumpTarget
     forwardJumpTarget();
+}
+
+void
+MultiInstructionExpression::ifStatement(RegisterIndex cond, Body onTrue) {
+    ifComponent(cond);
+    onTrue(*this);
+    thenComponent();
+}
+void
+MultiInstructionExpression::ifStatement(RegisterIndex cond, Body onTrue, Body onFalse) {
+    ifComponent(cond);
+    onTrue(*this);
+    elseComponent();
+    onFalse(*this);
+    thenComponent();
 }
 
 

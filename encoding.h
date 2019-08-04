@@ -151,7 +151,7 @@ namespace iris::instructions {
             /**
              * Start an if condition statement
              */
-            void ifStatement(RegisterIndex idx);
+            void ifComponent(RegisterIndex idx);
             /**
              * Complete the if statement jump after embedding an unconditional
              * jump request first
@@ -161,45 +161,15 @@ namespace iris::instructions {
              * Stop a conditional statement
              */
             void thenComponent();
+
+            using Body = std::function<void(MultiInstructionExpression&)>;
+            void ifStatement(RegisterIndex cond, Body onTrue);
+            void ifStatement(RegisterIndex cond, Body onTrue, Body onFalse);
         private:
             List _instructions;
             std::list<size_t> _dataStack;
     };
 
-    template<size_t Size, typename ... Args>
-    constexpr auto count(std::tuple<Args...>) noexcept;
-    
-    template<typename T>
-    constexpr auto count(T value) noexcept {
-        if constexpr (std::is_same_v<std::decay_t<T>, List>) {
-            return value.size();
-        } else {
-            return 1;
-        }
-    }
-    template<typename ... Args>
-    constexpr auto count(std::tuple<Args...> tup) noexcept {
-        return count<std::tuple_size_v<decltype(tup)>, Args...>(tup);
-    }
-    template<typename A, typename B>
-    constexpr auto count(std::pair<A, B> pair) noexcept {
-        return count(std::tuple(pair));
-    }
-    
-    template<size_t Size, typename ... Args>
-    constexpr auto count(std::tuple<Args...> tup) noexcept {
-        if constexpr (constexpr auto index = Size - 1; Size == 0) {
-            return 0;
-        } else {
-            return count(std::get<index>(tup)) +
-                   count<index, Args...>(tup);
-        }
-    }
-    template<typename ... Args>
-    constexpr auto count(Args&& ... tup) noexcept {
-        // construct the types
-        return count(std::make_tuple<Args...>(std::forward<Args>(tup)...));
-    }
 #define X(title, fmt) \
     Bits title ( const title ## Instruction &) noexcept;
 #include "InstructionFormats.def"
