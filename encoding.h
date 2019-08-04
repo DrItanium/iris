@@ -141,6 +141,26 @@ namespace iris::instructions {
              * @param cond The register to use for the index
              */
             void conditionalBackwardJump(RegisterIndex cond);
+
+            /**
+             * Swap the top two elements of the data stack.
+             * @throw Exception Too few elements to perform the swap with
+             */
+            void dataStackSwap();
+
+            /**
+             * Start an if condition statement
+             */
+            void ifStatement(RegisterIndex idx);
+            /**
+             * Complete the if statement jump after embedding an unconditional
+             * jump request first
+             */
+            void elseComponent();
+            /**
+             * Stop a conditional statement
+             */
+            void thenComponent();
         private:
             List _instructions;
             std::list<size_t> _dataStack;
@@ -213,7 +233,7 @@ namespace iris::instructions {
     Bits branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return BranchConditionalImmediate({cond, addr});
+            return BranchConditionalImmediate({cond, static_cast<Address>(addr)});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
             return BranchConditionalRelativeImmediate({cond, static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
@@ -226,7 +246,7 @@ namespace iris::instructions {
     Bits branch(T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return BranchImmediate({addr});
+            return BranchImmediate({static_cast<Address>(addr)});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
             return BranchRelativeImmediate({static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {

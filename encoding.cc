@@ -398,6 +398,34 @@ MultiInstructionExpression::dataPop() {
     return top;
 }
 
+void
+MultiInstructionExpression::dataStackSwap() {
+    if (_dataStack.size() < 2) {
+        throw Exception("Too few elements to perform dataStackSwap");
+    }
+    auto top = dataPop();
+    auto lower = dataPop();
+    dataPush(top);
+    dataPush(lower);
+}
+
+void
+MultiInstructionExpression::ifStatement(RegisterIndex idx) {
+    addInstruction(equalsZero(idx, idx));
+    conditionalForwardJump(idx);
+}
+
+void
+MultiInstructionExpression::elseComponent() {
+    forwardJump(); // embed the new forward jump
+    dataStackSwap(); // now swap so that we resolve it after the fact
+    forwardJumpTarget();
+}
+void
+MultiInstructionExpression::thenComponent() {
+    // now do the forwardJumpTarget
+    forwardJumpTarget();
+}
 
 
 } // end namespace iris::instructions
