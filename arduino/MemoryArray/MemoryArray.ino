@@ -20,13 +20,33 @@ enum class SRAMOpcodes : uint8_t {
   EQIO = 0x38,
   RSTIO = 0xFF,
 };
-uint16_t registers[256];
+using Word = uint16_t;
+using RawAddress = uint32_t;
+using IrisAddress = uint16_t;
+using Register = uint16_t;
+Register registers[256];
 //SRAM opcodes
-constexpr auto PinCS0 = 5;
-constexpr auto PinCS1 = 9;
-constexpr auto PinCS2 = 8;
-constexpr auto PinCS3 = 7;
-constexpr auto PinCS4 = 6;
+// pins associated with the different spi memory chips
+// two spi chips are necessary to hold code space so we have to do some 
+// math to figure out which chip to select
+constexpr auto CodeSectionLowerHalf = 5;
+constexpr auto CodeSectionUpperHalf = 6;
+constexpr auto DataSection = 7;
+constexpr auto StackSection = 8;
+constexpr RawAddress computeWordAddress(IrisAddress addr) noexcept {
+    return static_cast<RawAddress>(addr) << 1;
+}
+constexpr RawAddress computeDoubleWordAddress(IrisAddress addr) noexcept {
+    return static_cast<RawAddress>(addr) << 2;
+}
+constexpr int getCodePin(IrisAddress addr) noexcept {
+  return (addr & 0x8000) ? CodeSectionUpperHalf : CodeSectionLowerHalf;  
+}
+
+constexpr RawAddress localCodeAddress(IrisAddress addr) noexcept {
+  // strip the most significant digit of the address out and then shift by two
+  return computeDoubleWordAddress(addr & 0x7FFF);  
+}
 template<int pin>
 using CableSelectHolder = bonuspin::DigitalPinHolder<pin, LOW, HIGH>;
 void sendOpcode(SRAMOpcodes opcode) {
@@ -79,6 +99,8 @@ void writeUint32(uint32_t address, uint32_t value) {
   writeUint16<pin>(actualAddress, uint16_t(value));
   writeUint16<pin>(actualAddress+1, uint16_t(value >> 16));
 }
+
+
 template<int pin>
 void performTests() {
   Serial.print("Testing pin: ");
@@ -134,21 +156,20 @@ void wakeDevice(int pin) {
 }
 void setup(void) { 
   Serial.begin(115200);
-  pinMode(PinCS0, OUTPUT);
-  //pinMode(PinCS1, OUTPUT);
-  pinMode(PinCS2, OUTPUT);
-  pinMode(PinCS3, OUTPUT);
-  pinMode(PinCS4, OUTPUT);
+  pinMode(CodeSectionLowerHalf, OUTPUT);
+  pinMode(CodeSectionUpperHalf, OUTPUT);
+  pinMode(DataSection, OUTPUT);
+  pinMode(StackSection, OUTPUT);
   SPI.begin();
   for (int i = 0; i < 256; ++i) {
     registers[i] = i;
   }
-  performTests<PinCS0>();
+  performTests<CodeSectionLowerHalf>();
  // performTests<PinCS1>();
 
-  performTests<PinCS2>();
-  performTests<PinCS3>();
-  performTests<PinCS4>();  
+  performTests<CodeSectionUpperHalf>();
+  performTests<DataSection>();
+  performTests<StackSection>();  
 }
  
 void loop() {
