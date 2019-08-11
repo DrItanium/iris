@@ -2,9 +2,9 @@
 
 /*
    Used the following components and wire routing:
-   (1) Arduino Uno
-   (2) Microchip 23LC1024
-   (3) 10K Resistor
+   (1) Arduino Uno (adafruit metro mini)
+   (2) Microchip 23LC1024 * 4
+   (3) 10K Resistor * 5
  */
 #include <SPI.h>
 
