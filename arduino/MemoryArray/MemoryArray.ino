@@ -21,6 +21,7 @@ enum class SRAMOpcodes : uint8_t {
   RSTIO = 0xFF,
 };
 using Word = uint16_t;
+using DoubleWord = uint32_t;
 using RawAddress = uint32_t;
 using IrisAddress = uint16_t;
 using Register = uint16_t;
@@ -33,6 +34,8 @@ constexpr auto CodeSectionLowerHalf = 5;
 constexpr auto CodeSectionUpperHalf = 6;
 constexpr auto DataSection = 7;
 constexpr auto StackSection = 8;
+
+
 constexpr RawAddress computeWordAddress(IrisAddress addr) noexcept {
     return static_cast<RawAddress>(addr) << 1;
 }
@@ -47,6 +50,7 @@ constexpr RawAddress localCodeAddress(IrisAddress addr) noexcept {
   // strip the most significant digit of the address out and then shift by two
   return computeDoubleWordAddress(addr & 0x7FFF);  
 }
+
 template<int pin>
 using CableSelectHolder = bonuspin::DigitalPinHolder<pin, LOW, HIGH>;
 void sendOpcode(SRAMOpcodes opcode) {
@@ -101,55 +105,66 @@ void writeUint32(uint32_t address, uint32_t value) {
 }
 
 
-template<int pin>
-void performTests() {
-  Serial.print("Testing pin: ");
-  Serial.println(pin);
-  Serial.println("Performing 16-bit writes, errors will be displayed!");
-  for (uint32_t i=0; i< 0x10000; ++i) {    
-    auto value = uint16_t(i);
-    uint32_t address = i;
-    writeUint16<pin>(address, value);
-    auto readValue = readUint16<pin>(address);
-    if (readValue != value) {
-      Serial.print("Going to write '0x");
-      Serial.print(value,HEX);
-      Serial.print("' to addresses '0x");
-      Serial.print(address << 1, HEX);
-      Serial.print("' and '0x");
-      Serial.print((address << 1) + 1, HEX);
-      Serial.print("' - Read back: '0x");
-      Serial.print(readValue, HEX);
-      Serial.println("' - MISMATCH!"); 
-      return;
+void writeToCodeSection(IrisAddress address, DoubleWord value) {
+    auto localAddress = localCodeAddress(address);
+    if (getCodePin(address) == CodeSectionLowerHalf) {
+      writeUint32<CodeSectionLowerHalf>(localAddress, value);
+    } else {
+      writeUint32<CodeSectionUpperHalf>(localAddress, value);
     }
-  }
-  Serial.println("Performing 32-bit writes, errors will be displayed!");
-  for (uint32_t i=0; i< (0x10000 >> 1); ++i) {    
-    auto value = uint32_t(i);
-    uint32_t address = i;
-    writeUint32<pin>(address, value);
-    auto readValue = readUint32<pin>(address);
-    if (readValue != value) {
-      Serial.print("Going to write '0x");
-      Serial.print(value,HEX);
-      Serial.print("' to addresses '0x");
-      Serial.print(address << 2, HEX);
-      Serial.print("', '0x");
-      Serial.print((address << 2) + 1, HEX);
-      Serial.print("', '0x");
-      Serial.print((address << 2) + 2, HEX);
-      Serial.print("', and '0x");
-      Serial.print((address << 2) + 3, HEX);      
-      Serial.print("' - Read back: '0x");
-      Serial.print(readValue, HEX);
-      Serial.println("' - MISMATCH!"); 
-      return;
-    }
-  }
-  Serial.print("Done testing pin ");
-  Serial.println(pin);
 }
+DoubleWord readFromCodeSection(IrisAddress address) {
+  auto localAddress = localCodeAddress(address);
+  if (getCodePin(address) == CodeSectionLowerHalf) {
+    return readUint32<CodeSectionLowerHalf>(localAddress);
+  } else {
+    return readUint32<CodeSectionUpperHalf>(localAddress);
+  }
+}
+
+void writeToDataSection(IrisAddress address, Word value) {
+  writeUint16<DataSection>(address, value);
+}
+Word readFromDataSection(IrisAddress address) {
+  return readUint16<DataSection>(address);
+}
+void writeToStackSection(IrisAddress address, Word value) {
+  writeUint16<StackSection>(address, value);
+}
+Word readFromStackSection(IrisAddress address) {
+  return readUint16<StackSection>(address);
+}
+
+void pushValue(Register& sp, Word value) {
+  ++sp;
+  writeToStackSection(sp, value);
+}
+Word popValue(Register& sp) {
+  auto value = readFromStackSection(sp);
+  --sp;
+  return value;
+}
+
+void performCodeStorageTests() {
+  Serial.println("Performing code storage tests, this will be noisy!");
+  for (RawAddress addr = 0; addr < 0x10000; ++addr) {
+      IrisAddress localAddress = addr;
+      DoubleWord value = DoubleWord(addr) | 0x12345678;
+      writeToCodeSection(localAddress, value);
+      auto readback = readFromCodeSection(localAddress);
+      if (value != readback) {
+        Serial.print("FAIL: Wrote '0x");
+        Serial.print(value, HEX);
+        Serial.print("' to '0x");
+        Serial.print(localAddress, HEX);
+        Serial.print("' and read back '0x");
+        Serial.println(readback, HEX);        
+      }    
+  }
+  Serial.println("Done with code write test!");
+}
+
+
 
 void wakeDevice(int pin) {
   digitalWrite(pin, LOW);
@@ -164,12 +179,8 @@ void setup(void) {
   for (int i = 0; i < 256; ++i) {
     registers[i] = i;
   }
-  performTests<CodeSectionLowerHalf>();
- // performTests<PinCS1>();
+  performCodeStorageTests();
 
-  performTests<CodeSectionUpperHalf>();
-  performTests<DataSection>();
-  performTests<StackSection>();  
 }
  
 void loop() {
