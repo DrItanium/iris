@@ -147,6 +147,7 @@ Word popValue(Register& sp) {
 
 // arduino preprocessing cocks this signature up if it is not on a single line...
 template<typename R, typename W, typename T> void performStorageTests(R rf, W wf, T mask) {
+  Serial.println("\tWrite to the entire contents of memory!");
    for (RawAddress addr = 0; addr < 0x10000; ++addr) {
       IrisAddress localAddress = addr;
       T value = T(addr) | mask;
@@ -161,6 +162,7 @@ template<typename R, typename W, typename T> void performStorageTests(R rf, W wf
         Serial.println(readback, HEX);        
       }    
   }
+  Serial.println("\tDone");
 }
 
 void performCodeStorageTests() {
@@ -177,11 +179,28 @@ void performDataStorageTests() {
 
 
 void performStackStorageTests() {
-  Serial.println("Performing data storage tests, this could be noisy!");
+  Serial.println("Performing stack storage tests, this could be noisy!");
   performStorageTests(readFromStackSection, writeToStackSection, Word(0x1234));  
-  Serial.println("Done with data storage tests");
+  Register& sp = registers[255];
+  pushValue(sp, 0xFDED);
+  if (popValue(sp) != 0xFDED) {
+    Serial.println("\tPush and pop stack test fail!");
+  } else {
+    Serial.println("\tPush and pop stack test success!");
+  }
+  Serial.println("Done with stack storage tests");
 }
 
+void setupCodeMemory() {
+  pinMode(CodeSectionLowerHalf, OUTPUT);
+  pinMode(CodeSectionUpperHalf, OUTPUT);
+}
+void setupStackMemory() {
+  pinMode(StackSection, OUTPUT);
+}
+void setupDataMemory() {
+  pinMode(DataSection, OUTPUT);
+}
 
 
 void wakeDevice(int pin) {
@@ -189,23 +208,18 @@ void wakeDevice(int pin) {
 }
 void setup(void) { 
   Serial.begin(115200);
-  pinMode(CodeSectionLowerHalf, OUTPUT);
-  pinMode(CodeSectionUpperHalf, OUTPUT);
-  pinMode(DataSection, OUTPUT);
-  pinMode(StackSection, OUTPUT);
+  setupCodeMemory();
+  setupDataMemory();
+  setupStackMemory();
   SPI.begin();
   for (int i = 0; i < 256; ++i) {
     registers[i] = i;
   }
   performCodeStorageTests();
+  performDataStorageTests();
+  performStackStorageTests();
 }
  
 void loop() {
-  for (int i =0 ;i < 256; ++i) {
-    for (int j = 0; j < 256; ++j) {
-      for (int k = 0; k < 256; ++k) {
-          registers[i] = registers[j] + registers[k];
-      }
-    }
-  }
+
 }
