@@ -145,13 +145,13 @@ Word popValue(Register& sp) {
   return value;
 }
 
-void performCodeStorageTests() {
-  Serial.println("Performing code storage tests, this will be noisy!");
-  for (RawAddress addr = 0; addr < 0x10000; ++addr) {
+// arduino preprocessing cocks this signature up if it is not on a single line...
+template<typename R, typename W, typename T> void performStorageTests(R rf, W wf, T mask) {
+   for (RawAddress addr = 0; addr < 0x10000; ++addr) {
       IrisAddress localAddress = addr;
-      DoubleWord value = DoubleWord(addr) | 0x12345678;
-      writeToCodeSection(localAddress, value);
-      auto readback = readFromCodeSection(localAddress);
+      T value = T(addr) | mask;
+      wf(localAddress, value);
+      auto readback = rf(localAddress);
       if (value != readback) {
         Serial.print("FAIL: Wrote '0x");
         Serial.print(value, HEX);
@@ -161,7 +161,25 @@ void performCodeStorageTests() {
         Serial.println(readback, HEX);        
       }    
   }
+}
+
+void performCodeStorageTests() {
+  Serial.println("Performing code storage tests, this will be noisy!");
+  performStorageTests(readFromCodeSection, writeToCodeSection, DoubleWord(0x12345678));  
   Serial.println("Done with code write test!");
+}
+
+void performDataStorageTests() {
+  Serial.println("Performing data storage tests, this could be noisy!");
+  performStorageTests(readFromDataSection, writeToDataSection, Word(0x1234));  
+  Serial.println("Done with data storage tests");
+}
+
+
+void performStackStorageTests() {
+  Serial.println("Performing data storage tests, this could be noisy!");
+  performStorageTests(readFromStackSection, writeToStackSection, Word(0x1234));  
+  Serial.println("Done with data storage tests");
 }
 
 
@@ -180,7 +198,6 @@ void setup(void) {
     registers[i] = i;
   }
   performCodeStorageTests();
-
 }
  
 void loop() {
