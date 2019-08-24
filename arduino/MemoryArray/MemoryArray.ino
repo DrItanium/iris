@@ -1,12 +1,9 @@
+ #include <SPI.h>
+#include <libbitmanip.h>
 #include <libbonuspin.h>
-
-/*
-   Used the following components and wire routing:
-   (1) Arduino Uno (adafruit metro mini)
-   (2) Microchip 23LC1024 * 4
-   (3) 10K Resistor * 5
- */
-#include <SPI.h>
+// use the mega 2560
+using ShiftRegisterLEDArray = bonuspin::SN74HC595<10, 9, A0>;
+ShiftRegisterLEDArray ledArray;
 
 
 enum class SRAMOpcodes : uint8_t {
@@ -34,8 +31,10 @@ constexpr auto CodeSectionLowerHalf = 5;
 constexpr auto CodeSectionUpperHalf = 6;
 constexpr auto DataSection = 7;
 constexpr auto StackSection = 8;
+constexpr auto delayAmount = 30;
 
 
+bool serialActive = false;
 constexpr RawAddress computeWordAddress(IrisAddress addr) noexcept {
     return static_cast<RawAddress>(addr) << 1;
 }
@@ -147,40 +146,54 @@ Word popValue(Register& sp) {
 
 // arduino preprocessing cocks this signature up if it is not on a single line...
 template<typename R, typename W, typename T> void performStorageTests(R rf, W wf, T mask) {
-  Serial.println("\tWrite to the entire contents of memory!");
+  if (serialActive) {
+   Serial.println("\tWrite to the entire contents of memory!");
+  }
    for (RawAddress addr = 0; addr < 0x10000; ++addr) {
       IrisAddress localAddress = addr;
       T value = T(addr) | mask;
       wf(localAddress, value);
       auto readback = rf(localAddress);
+      ledArray << readback;
       if (value != readback) {
-        Serial.print("FAIL: Wrote '0x");
-        Serial.print(value, HEX);
-        Serial.print("' to '0x");
-        Serial.print(localAddress, HEX);
-        Serial.print("' and read back '0x");
-        Serial.println(readback, HEX);        
+        if (serialActive) {
+          Serial.print("FAIL: Wrote '0x");
+          Serial.print(value, HEX);
+          Serial.print("' to '0x");
+          Serial.print(localAddress, HEX);
+          Serial.print("' and read back '0x");
+          Serial.println(readback, HEX);     
+        }   
       }    
   }
-  Serial.println("\tDone");
+  if (serialActive) {
+    Serial.println("\tDone");
+  }
 }
 
 void performCodeStorageTests() {
+  if (serialActive)
   Serial.println("Performing code storage tests, this will be noisy!");
-  performStorageTests(readFromCodeSection, writeToCodeSection, DoubleWord(0x12345678));  
+  performStorageTests(readFromCodeSection, writeToCodeSection, DoubleWord(random(0x99, 0x12345678)));  
+  if (serialActive)
   Serial.println("Done with code write test!");
 }
 
 void performDataStorageTests() {
+  if (serialActive) {
   Serial.println("Performing data storage tests, this could be noisy!");
-  performStorageTests(readFromDataSection, writeToDataSection, Word(0x1234));  
+  }
+  performStorageTests(readFromDataSection, writeToDataSection, Word(random(0x99, 0x1234)));  
+  if (serialActive)
   Serial.println("Done with data storage tests");
 }
 
 
 void performStackStorageTests() {
+  if (serialActive) 
   Serial.println("Performing stack storage tests, this could be noisy!");
-  performStorageTests(readFromStackSection, writeToStackSection, Word(0x1234));  
+  performStorageTests(readFromStackSection, writeToStackSection, Word(random(0x99, 0x1234)));  
+  if (serialActive) {
   Register& sp = registers[255];
   pushValue(sp, 0xFDED);
   if (popValue(sp) != 0xFDED) {
@@ -189,6 +202,7 @@ void performStackStorageTests() {
     Serial.println("\tPush and pop stack test success!");
   }
   Serial.println("Done with stack storage tests");
+  }
 }
 
 void setupCodeMemory() {
@@ -208,6 +222,21 @@ void wakeDevice(int pin) {
 }
 void setup(void) { 
   Serial.begin(115200);
+  serialActive = true;
+  ledArray << uint16_t(0);
+  
+   for (uint16_t numberToDisplay = 1; numberToDisplay < 0x4000; numberToDisplay <<= 1) {
+    // take the latchPin low so 
+    // the LEDs don't change while you're sending in bits:    
+    ledArray << numberToDisplay;    
+    delay(delayAmount);    
+  }
+  for (uint32_t numberToDisplay = 0x4000; numberToDisplay != 0; numberToDisplay >>= 1) {
+    // take the latchPin low so 
+    // the LEDs don't change while you're sending in bits:    
+    ledArray << numberToDisplay;    
+    delay(delayAmount);    
+  }
   setupCodeMemory();
   setupDataMemory();
   setupStackMemory();
