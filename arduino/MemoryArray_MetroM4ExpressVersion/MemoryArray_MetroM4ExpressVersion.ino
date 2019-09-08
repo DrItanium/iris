@@ -1,7 +1,11 @@
- #include <SPI.h>
+// adding a Adafruit Sharp Display
+#include <SPI.h>
 #include <libbitmanip.h>
 #include <libbonuspin.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SharpMem.h>
 
+Adafruit_SharpMem display(13, 11, 10, 144, 168);
 template<int pin>
 using CableSelectHolder = bonuspin::DigitalPinHolder<pin, LOW, HIGH>;
 
@@ -252,60 +256,116 @@ Word popValue(Register& sp) {
 }
 
 // arduino preprocessing cocks this signature up if it is not on a single line...
-template<typename R, typename W, typename T> void performStorageTests(R rf, W wf, T mask) {
-   Serial.println("\tWrite to the entire contents of memory!");
+template<typename R, typename W, typename T> bool performStorageTests(R rf, W wf, T mask) {
    for (RawAddress addr = 0; addr < 0x10000; ++addr) {
       IrisAddress localAddress = addr;
       T value = T(addr) | mask;
       wf(localAddress, value);
       auto readback = rf(localAddress);
       if (value != readback) {
-          Serial.print("FAIL: Wrote '0x");
-          Serial.print(value, HEX);
-          Serial.print("' to '0x");
-          Serial.print(localAddress, HEX);
-          Serial.print("' and read back '0x");
-          Serial.println(readback, HEX);              
+          display.print("FAIL: Wrote '0x");
+          display.print(value, HEX);
+          display.print("' to '0x");
+          display.print(localAddress, HEX);
+          display.print("' and read back '0x");
+          display.println(readback, HEX);              
+          display.refresh();
+          delay(500);
+          return false;
       }    
   }
-  Serial.println("\tDone");
+  return true;
 }
 
-void performCodeStorageTests() {
-  Serial.println("Performing code storage tests, this will be noisy!");
-  performStorageTests(readFromCodeSection, writeToCodeSection, DoubleWord(random(0x99, 0x12345678)));  
-  Serial.println("Done with code write test!");
+void startTest(const char* what) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("TESTING: ");
+  display.println(what);
+  display.refresh();
+  delay(500);  
+}
+bool processTestResult(const char* msg, bool result) {
+  display.print(msg);
+  display.print(" Test Outcome: ");
+  if (result) {
+    display.println("SUCCESS!");
+  } else {
+    display.println("FAILURE!");
+  }
+  display.refresh();
+  delay(500);
+  return result;
 }
 
-void performDataStorageTests() {
-  Serial.println("Performing data storage tests, this could be noisy!");
-  performStorageTests(readFromDataSection, writeToDataSection, Word(random(0x99, 0x1234)));  
-  Serial.println("Done with data storage tests");
+bool performCodeStorageTests() {
+  startTest("CODE");
+  return processTestResult("Code Storage", performStorageTests(readFromCodeSection, writeToCodeSection, DoubleWord(random(0x99, 0x12345678))));  
+}
+
+bool performDataStorageTests() {
+  startTest("DATA");
+  return processTestResult("Data Storage", performStorageTests(readFromDataSection, writeToDataSection, Word(random(0x99, 0x1234))));
 }
 
 
-void performStackStorageTests() {
-  Serial.println("Performing stack storage tests, this could be noisy!");
-  performStorageTests(readFromStackSection, writeToStackSection, Word(random(0x99, 0x1234)));  
+bool performStackStorageTests() {
+  startTest("STACK");
+  auto result = performStorageTests(readFromStackSection, writeToStackSection, Word(random(0x99, 0x1234)));
+  if (!result) {
+    display.println("STORAGE TEST: FAILURE!");
+    display.refresh();
+    delay(500);
+    return false;
+  }
+  
   Register& sp = registers[255];
   pushValue(sp, 0xFDED);
   if (popValue(sp) != 0xFDED) {
-    Serial.println("\tPush and pop stack test fail!");
-  } else {
-    Serial.println("\tPush and pop stack test success!");
-  }
-  Serial.println("Done with stack storage tests");
+    display.println("\t Register Test: FAILURE");
+    display.refresh();
+    delay(500);
+    return false;
+  
+  } 
+  display.println("SUCCESS!");
+  display.refresh();
+  delay(500);
+  return true;  
 }
-
+int minorHalfSize;
+constexpr auto BLACK = 0;
+constexpr auto WHITE = 1;
 void setup(void) { 
-  Serial.begin(115200);
+  //Serial.begin(115200);
   
   HC138::setup();
   SPI.begin();
+  display.begin();
+  minorHalfSize = min(display.width(), display.height()) / 2;
+    display.clearDisplay();
+  for (int i=0; i<minorHalfSize; i+=2) {
+    display.drawRect(i, i, display.width()-2*i, display.height()-2*i, BLACK);
+    display.refresh();
+  }
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.setCursor(0,0);
   setupRegisters();
-  performCodeStorageTests();
-  performDataStorageTests();
-  performStackStorageTests();
+  auto result = performCodeStorageTests() && performDataStorageTests() && performStackStorageTests();
+  display.clearDisplay();
+
+  display.setCursor(0,0);
+  display.print("TESTS ");
+  if (result) {
+    display.print("PASSED");
+  } else {
+    display.print("FAILED");
+  }
+  display.println("!!!");
+  display.refresh();
+  delay(500);
 }
  
 void loop() {
