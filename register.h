@@ -176,13 +176,13 @@ class QuadRegister final {
         explicit constexpr operator UnsignedQuadWord() const noexcept { return get<UnsignedQuadWord>(); }
         explicit constexpr operator SignedQuadWord() const noexcept { return get<SignedQuadWord>(); }
         constexpr operator bool() const noexcept { return get<bool>(); }
-        constexpr auto& operator++() noexcept {
+        auto& operator++() noexcept {
             auto value = get();
             ++value;
             put(value);
             return *this;
         }
-        constexpr auto& operator--() noexcept {
+        auto& operator--() noexcept {
             auto value = get();
             --value;
             put(value);
@@ -267,13 +267,13 @@ class DoubleRegister final {
         explicit constexpr operator UnsignedDoubleWord() const noexcept { return get<UnsignedDoubleWord>(); }
         explicit constexpr operator SignedDoubleWord() const noexcept { return get<SignedDoubleWord>(); }
         constexpr operator bool() const noexcept { return get<bool>(); }
-        constexpr auto& operator++() noexcept {
+        auto& operator++() noexcept {
             auto value = get();
             ++value;
             put(value);
             return *this;
         }
-        constexpr auto& operator--() noexcept {
+        auto& operator--() noexcept {
             auto value = get();
             --value;
             put(value);
