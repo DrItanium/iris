@@ -132,12 +132,21 @@ using DataMemoryBank = MemoryBank<Word>;
  */
 using StackMemoryBank = MemoryBank<Word>;
 
+constexpr RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(conversion)); }
+RegisterIndex operator "" _reg(const char* str, std::size_t size);
+constexpr RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111110); }
+constexpr RegisterIndex operator "" _qreg(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111100); }
+constexpr SignedWord operator "" _sw(unsigned long long int conv) noexcept { return static_cast<SignedWord>(conv); }
+constexpr SignedWord operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<SignedWord>(conv); }
 constexpr Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<Address>(conversion); }
 constexpr UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
-constexpr RegisterIndex operator "" _r(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(static_cast<std::underlying_type_t<RegisterIndex>>(conversion)); }
 constexpr UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<UnsignedWord>(conversion); }
-constexpr RegisterIndex operator "" _dr(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111110); }
-constexpr RegisterIndex operator "" _qr(unsigned long long int conversion) noexcept { return static_cast<RegisterIndex>(conversion) & static_cast<RegisterIndex>(0b1111100); }
+constexpr UnsignedDoubleWord operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<UnsignedDoubleWord>(conversion); }
+constexpr SignedDoubleWord operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<SignedDoubleWord>(conversion); }
+constexpr UnsignedQuadWord operator "" _uqw(unsigned long long int conversion) noexcept { return static_cast<UnsignedQuadWord>(conversion); }
+constexpr SignedQuadWord operator "" _sqw(unsigned long long int conversion) noexcept { return static_cast<SignedQuadWord>(conversion); }
+
+
 
 } // end namespace iris
 
