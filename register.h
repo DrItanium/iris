@@ -192,19 +192,19 @@ class QuadRegister final {
         constexpr bool operator==(SignedQuadWord other) const noexcept      { return get<SignedQuadWord>() == other; }
         constexpr bool operator==(UnsignedQuadWord other) const noexcept            { return get<UnsignedQuadWord>() == other; }
         constexpr bool operator==(bool other) const noexcept            { return get<bool>() == other; }
-        constexpr bool operator!=(const Register& other) const noexcept { return other.get<UnsignedQuadWord>() != get<UnsignedQuadWord>(); }
+        constexpr bool operator!=(const QuadRegister& other) const noexcept { return other.get<UnsignedQuadWord>() != get<UnsignedQuadWord>(); }
         constexpr bool operator!=(SignedQuadWord other) const noexcept      { return other != get<SignedQuadWord>(); }
         constexpr bool operator!=(UnsignedQuadWord other) const noexcept            { return other != get<UnsignedQuadWord>(); }
         constexpr bool operator!=(bool other) const noexcept            { return other != get<bool>(); }
-        constexpr bool operator<(const Register& other) const noexcept  { return get<UnsignedQuadWord>() < other.get<UnsignedQuadWord>(); }
+        constexpr bool operator<(const QuadRegister& other) const noexcept  { return get<UnsignedQuadWord>() < other.get<UnsignedQuadWord>(); }
         constexpr bool operator<(SignedQuadWord other) const noexcept       { return get<SignedQuadWord>() < other; }
         constexpr bool operator<(UnsignedQuadWord other) const noexcept             { return get<UnsignedQuadWord>() < other; }
-        constexpr bool operator<=(const Register& other) const noexcept { return get<UnsignedQuadWord>() <= other.get<UnsignedQuadWord>(); }
+        constexpr bool operator<=(const QuadRegister& other) const noexcept { return get<UnsignedQuadWord>() <= other.get<UnsignedQuadWord>(); }
         constexpr bool operator<=(SignedQuadWord other) const noexcept      { return get<SignedQuadWord>() <= other; }
         constexpr bool operator<=(UnsignedQuadWord other) const noexcept            { return get<UnsignedQuadWord>() <= other; }
         constexpr bool operator>(SignedQuadWord other) const noexcept       { return get<SignedQuadWord>() > other; }
         constexpr bool operator>(UnsignedQuadWord other) const noexcept             { return get<UnsignedQuadWord>() > other; }
-        constexpr bool operator>(const Register& other) const noexcept  { return get<UnsignedQuadWord>() > other.get<UnsignedQuadWord>(); }
+        constexpr bool operator>(const QuadRegister& other) const noexcept  { return get<UnsignedQuadWord>() > other.get<UnsignedQuadWord>(); }
         constexpr bool operator>=(SignedQuadWord other) const noexcept      { return get<SignedQuadWord>() >= other; }
         constexpr bool operator>=(UnsignedQuadWord other) const noexcept            { return get<UnsignedQuadWord>() >= other; }
         constexpr bool operator>=(const QuadRegister& other) const noexcept { return get<UnsignedQuadWord>() >= other.get<UnsignedQuadWord>(); }
@@ -283,19 +283,19 @@ class DoubleRegister final {
         constexpr bool operator==(SignedDoubleWord other) const noexcept      { return get<SignedDoubleWord>() == other; }
         constexpr bool operator==(UnsignedDoubleWord other) const noexcept            { return get<UnsignedDoubleWord>() == other; }
         constexpr bool operator==(bool other) const noexcept            { return get<bool>() == other; }
-        constexpr bool operator!=(const Register& other) const noexcept { return other.get<UnsignedDoubleWord>() != get<UnsignedDoubleWord>(); }
+        constexpr bool operator!=(const DoubleRegister& other) const noexcept { return other.get<UnsignedDoubleWord>() != get<UnsignedDoubleWord>(); }
         constexpr bool operator!=(SignedDoubleWord other) const noexcept      { return other != get<SignedDoubleWord>(); }
         constexpr bool operator!=(UnsignedDoubleWord other) const noexcept            { return other != get<UnsignedDoubleWord>(); }
         constexpr bool operator!=(bool other) const noexcept            { return other != get<bool>(); }
-        constexpr bool operator<(const Register& other) const noexcept  { return get<UnsignedDoubleWord>() < other.get<UnsignedDoubleWord>(); }
+        constexpr bool operator<(const DoubleRegister& other) const noexcept  { return get<UnsignedDoubleWord>() < other.get<UnsignedDoubleWord>(); }
         constexpr bool operator<(SignedDoubleWord other) const noexcept       { return get<SignedDoubleWord>() < other; }
         constexpr bool operator<(UnsignedDoubleWord other) const noexcept             { return get<UnsignedDoubleWord>() < other; }
-        constexpr bool operator<=(const Register& other) const noexcept { return get<UnsignedDoubleWord>() <= other.get<UnsignedDoubleWord>(); }
+        constexpr bool operator<=(const DoubleRegister& other) const noexcept { return get<UnsignedDoubleWord>() <= other.get<UnsignedDoubleWord>(); }
         constexpr bool operator<=(SignedDoubleWord other) const noexcept      { return get<SignedDoubleWord>() <= other; }
         constexpr bool operator<=(UnsignedDoubleWord other) const noexcept            { return get<UnsignedDoubleWord>() <= other; }
         constexpr bool operator>(SignedDoubleWord other) const noexcept       { return get<SignedDoubleWord>() > other; }
         constexpr bool operator>(UnsignedDoubleWord other) const noexcept             { return get<UnsignedDoubleWord>() > other; }
-        constexpr bool operator>(const Register& other) const noexcept  { return get<UnsignedDoubleWord>() > other.get<UnsignedDoubleWord>(); }
+        constexpr bool operator>(const DoubleRegister& other) const noexcept  { return get<UnsignedDoubleWord>() > other.get<UnsignedDoubleWord>(); }
         constexpr bool operator>=(SignedDoubleWord other) const noexcept      { return get<SignedDoubleWord>() >= other; }
         constexpr bool operator>=(UnsignedDoubleWord other) const noexcept            { return get<UnsignedDoubleWord>() >= other; }
         constexpr bool operator>=(const DoubleRegister& other) const noexcept { return get<UnsignedDoubleWord>() >= other.get<UnsignedDoubleWord>(); }

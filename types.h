@@ -66,6 +66,9 @@ using UnsignedQuadWord = uint64_t;
 using SignedQuadWord = int64_t;
 using QuadWord = UnsignedQuadWord;
 using Offset16 = SignedWord;
+using UnsignedTripleWord = UnsignedQuadWord;
+using SignedTripleWord = SignedQuadWord;
+using TripleWord = UnsignedTripleWord;
 
 
 template<typename T, typename R, T mask, T shift>
