@@ -84,65 +84,12 @@ constexpr auto DataSection = 2;
 constexpr auto StackSection = 3;
 constexpr auto delayAmount = 30;
 
-namespace HC138 {
-constexpr auto EnablePin = 8;
-constexpr auto SelA = 7;
-constexpr auto SelB = 6;
-constexpr auto SelC = 5;
-using Enabler = CableSelectHolder<EnablePin>;
-void setup() {
-  pinMode(SelA, OUTPUT);
-  pinMode(SelB, OUTPUT);
-  pinMode(SelC, OUTPUT);
-  pinMode(EnablePin, OUTPUT);
-  
-  digitalWrite(SelA, HIGH);
-  digitalWrite(SelB, HIGH);
-  digitalWrite(SelC, HIGH);
-  digitalWrite(EnablePin, HIGH);
-}
-void generateSignal(int a, int b, int c) {    
-    Enabler e;
-    digitalWrite(SelA, a);
-    digitalWrite(SelB, b);
-    digitalWrite(SelC, c);
-}
+constexpr auto HC138_Enable = 8;
+constexpr auto HC138_SelA = 7;
+constexpr auto HC138_SelB = 6;
+constexpr auto HC138_SelC = 5;
 
-template<int i>
-void writeSignal() {
-
-  switch (i) {
-    case 0: 
-      generateSignal(LOW, LOW, LOW);
-      break;
-    case 1: 
-      generateSignal(HIGH, LOW, LOW);
-      break;
-    case 2: 
-      generateSignal(LOW, HIGH, LOW);
-      break;
-    case 3: 
-      generateSignal(HIGH, HIGH, LOW);
-      break;
-    case 4: 
-      generateSignal(LOW, LOW, HIGH);
-      break;
-    case 5: 
-      generateSignal(HIGH, LOW, HIGH);
-      break;
-    case 6: 
-      generateSignal(LOW, HIGH, HIGH);
-      break;
-    case 7: 
-      generateSignal(HIGH, HIGH, HIGH);
-      break;
-    default:
-      writeSignal<i & 0x7>();
-      break;
-  }
-}
-
-}
+bonuspin::HC138<HC138_SelA, HC138_SelB, HC138_SelC, HC138_Enable> demux;
 
 
 constexpr RawAddress computeWordAddress(IrisAddress addr) noexcept {
@@ -173,14 +120,14 @@ void transferAddress(uint32_t address) {
 
 template<int memoryCell>
 uint8_t read8(uint32_t address) {
-  HC138::writeSignal<memoryCell>();
+  demux.enableLine(memoryCell);
   sendOpcode(SRAMOpcodes::READ);
   transferAddress(address);
   return SPI.transfer(0x00);
 }
 template<int memoryCell>
 void write8(uint32_t address, uint8_t value) {
-  HC138::writeSignal<memoryCell>();
+  demux.enableLine(memoryCell);  
   sendOpcode(SRAMOpcodes::WRITE);
   transferAddress(address);
   SPI.transfer(value);
@@ -338,8 +285,7 @@ constexpr auto BLACK = 0;
 constexpr auto WHITE = 1;
 void setup(void) { 
   //Serial.begin(115200);
-  
-  HC138::setup();
+  demux.setupPins();  
   SPI.begin();
   display.begin();
   minorHalfSize = min(display.width(), display.height()) / 2;
