@@ -124,6 +124,19 @@ X(Error, ZeroArgument)
     Memory(QuadDataLoadWithOffset, TwoRegisterU8)
     Memory(QuadIOStoreWithOffset, TwoRegisterU8)
     Memory(QuadIOLoadWithOffset, TwoRegisterU8)
+    IO(LoadMasked, ThreeRegister)
+    IO(LoadMaskedImmediate, TwoRegisterU8)
+    IO(StoreMasked, ThreeRegister)
+    IO(StoreMaskedImmediate, TwoRegisterU8)
+    Data(LoadMasked, ThreeRegister)
+    Data(LoadMaskedImmediate, TwoRegisterU8)
+    Data(StoreMasked, ThreeRegister)
+    Data(StoreMaskedImmediate, TwoRegisterU8)
+    Code(LoadMasked, ThreeRegister)
+    Code(LoadMaskedImmediate, TwoRegisterU8)
+    Code(StoreMasked, ThreeRegister)
+    Code(StoreMaskedImmediate, TwoRegisterU8)
+
 #undef Stack
 #undef Data
 #undef Code
