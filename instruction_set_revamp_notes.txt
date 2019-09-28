@@ -112,13 +112,40 @@ arithmetic action bits:
 All arithmetic operations follow the same basic format for the mode bits
 
 0b000000 -> registers[dest] = registers[src0] op registers[src1] // 3 register ordinal
-0b000001 -> registers[dest] = registers[src0] op src1 // 2 register ordinal with Ordinal immediate
-0b010000 -> registers[dest] = registers[src0] op registers[src1] // 3 register integer
-0b010001 -> registers[dest] = registers[src0] op src1 // 2 register integer with Integer immediate
-0b100000 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide ordinal 
-0b100001 -> wide(registers[dest]) = wide(registers[src0]) op src1 // 2 register wide ordinal with immediate
-0b110000 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide integer
-0b110001 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 2 register wide integer with immediate
+0b000001 -> registers[dest] = registers[src0] op registers[src1] // 3 register integer
+0b000010 -> registers[dest] = registers[src0] op src1 // 2 register ordinal with Ordinal immediate
+0b000011 -> registers[dest] = registers[src0] op src1 // 2 register integer with Integer immediate
+0b000100 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide ordinal 
+0b000101 -> wide(registers[dest]) = wide(registers[src0]) op src1 // 2 register wide ordinal with immediate
+0b000110 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide integer
+0b000111 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 2 register wide integer with immediate
+0b001xxx -> simd version, operates on register pairs and performs the operation to two sets of instructions
+0b001000 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // ordinal version
+            registers[dest][1] = registers[src0][1] op registers[src1][1]
+0b001001 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // integer version
+            registers[dest][1] = registers[src0][1] op registers[src1][1]
+0b001010 -> registers[dest][0] = registers[src0][0] op src1 // ordinal version with immediate 
+            registers[dest][1] = registers[src0][1] op src1
+0b001011 -> registers[dest][0] = registers[src0][0] op src1 // integer version with immediate 
+            registers[dest][1] = registers[src0][1] op src1
+// quad register version
+0b001100 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // ordinal version
+            registers[dest][1] = registers[src0][1] op registers[src1][1]
+            registers[dest][2] = registers[src0][2] op registers[src1][2]
+            registers[dest][3] = registers[src0][3] op registers[src1][3]
+0b001101 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // integer version
+            registers[dest][1] = registers[src0][1] op registers[src1][1]
+            registers[dest][2] = registers[src0][2] op registers[src1][2]
+            registers[dest][3] = registers[src0][3] op registers[src1][3]
+0b001110 -> registers[dest][0] = registers[src0][0] op src1 // ordinal version with immediate 
+            registers[dest][1] = registers[src0][1] op src1
+            registers[dest][2] = registers[src0][2] op src1
+            registers[dest][3] = registers[src0][3] op src1
+0b001111 -> registers[dest][0] = registers[src0][0] op src1 // integer version with immediate 
+            registers[dest][1] = registers[src0][1] op src1
+            registers[dest][2] = registers[src0][2] op src1
+            registers[dest][3] = registers[src0][3] op src1
+
 Any other encodings in the mode bits are not accepted
 
 The memory group has the following opcodes:
@@ -155,11 +182,21 @@ mode bits (combined, undeclared bits are unused error states)
 0b001100 -> address (dest) + immediate offset (src2), value is register pair src1
 0b001110 -> address (dest) + register offset (src2), value is register pair src1
 0b010000 -> address (dest), value is register (src1), mask is register (src2), value & mask is performed
-0b10xxxx -> address (dest), value is imm16
+0b11xxxx -> address (dest), value is imm16
 
 
 The code space has the following mode bits
 
+0b000000 -> address (dest), lower half (src1), upper half (src2)
+0b000010 -> address (dest), lower half (src1), upper half (src2) then incr dest
+0b000011 -> address (dest), lower half (src1), upper half (src2) then decr dest
+0b000100 -> address (dest), pair lower half (src1), offset immediate (src2) 
+0b000110 -> address (dest), pair lower half (src1), offset immediate (src2) then incr dest
+0b000111 -> address (dest), pair lower half (src1), offset immediate (src2) then decr dest
+0b001000 -> address (dest), pair lower half (src1), offset register (src2) 
+0b001010 -> address (dest), pair lower half (src1), offset register (src2) then incr dest
+0b001011 -> address (dest), pair lower half (src1), offset register (src2) then decr dest
+0b11xxxx -> address (imm16), pair lower half (dest)
 
 Compare operations are very simple too
 
@@ -197,116 +234,6 @@ src1 ctrl:
 0b10 -> Src1 is Double Register
 0b11 -> unused
 
-Table
-|------------|----------|------|------|------|----------------------------------------------------------------
-| Operation  | opcode   | dest | src0 | src1 | description via psuedo code
-|            | bits     | ctrl | ctrl | ctrl |
-|            | [31,24]  |      |      |      |
-|------------|----------|------|------|------|----------------------------------------------------------------
-| Error      | 0000xxxx | 0bxx | 0bxx | 0bxx | Throw Exception / Raise Fault not allowed
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b00 | 0b00 | 0b00 | unpackWide(code[registers[src1]], registers[dest], registers[src0])
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b00 | 0b00 | 0b01 | unpackWide(code[registers[src1]], registers[dest], registers[src0])
-| AndIncr    |          |      |      |      | ++registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b00 | 0b00 | 0b10 | unpackWide(code[registers[src1]], registers[dest], registers[src0])
-| AndDecr    |          |      |      |      | --registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b00 | 0b00 | addr = registers[src1] + Ordinal(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| OrdOffset  |          |      |      |      | Note: use an offset of zero for normal code load
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b01 | 0b00 | addr = registers[src1] + Integer(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| IntOffset  |          |      |      |      | Note: use an offset of zero for normal code load
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b10 | 0b00 | addr = registers[src1] + Ordinal(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegOrdOff  |          |      |      |      | Note: use an offset of zero for normal code load
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b11 | 0b00 | addr = registers[src1] + Integer(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegIntOff  |          |      |      |      | Note: use an offset of zero for normal code load
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b00 | 0b01 | addr = registers[src1] + Ordinal(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| OrdOffset  |          |      |      |      | 
-| IncrAddr   |          |      |      |      | ++registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b01 | 0b01 | addr = registers[src1] + Integer(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| IntOffset  |          |      |      |      | 
-| IncrAddr   |          |      |      |      | ++registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b10 | 0b01 | addr = registers[src1] + Ordinal(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegOrdOff  |          |      |      |      | Note: use an offset of zero for normal code load
-| IncrAddr   |          |      |      |      | ++registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b11 | 0b01 | addr = registers[src1] + Integer(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegIntOff  |          |      |      |      | Note: use an offset of zero for normal code load
-| IncrAddr   |          |      |      |      | ++registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b00 | 0b10 | addr = registers[src1] + Ordinal(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| OrdOffset  |          |      |      |      | 
-| DecrAddr   |          |      |      |      | --registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b01 | 0b10 | addr = registers[src1] + Integer(src0)
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| IntOffset  |          |      |      |      | 
-| DecrAddr   |          |      |      |      | --registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b10 | 0b10 | addr = registers[src1] + Ordinal(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegOrdOff  |          |      |      |      | Note: use an offset of zero for normal code load
-| DecrAddr   |          |      |      |      | --registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b01 | 0b11 | 0b10 | addr = registers[src1] + Integer(registers[src0])
-| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
-| RegIntOff  |          |      |      |      | Note: use an offset of zero for normal code load
-| DecrAddr   |          |      |      |      | --registers[src1]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeLoad   | 01111000 | 0b11 | 0bxx | 0bxx | unpackWide(code[imm16], registers[dest], registers[dest+1])
-| Imm16Addr  |          |      |      |      | NOTE: src0ctrl and src1ctrl are part of the imm16 value
-| DestPair   |          |      |      |      | 
-|------------|----------|------|------|------|----------------------------------------------------------------
-| DataLoad   | 01111010 | 0b00 | 0b00 | 0b00 | addr = registers[src0] + Ordinal(src1)
-| OrdOffset  |          |      |      |      | registers[dest] = data[addr]
-|            |          |      |      |      | Note: use an offset of zero for normal code load
-|------------|----------|------|------|------|----------------------------------------------------------------
-| DataLoad   | 01111010 | 0b00 | 0b00 | 0b01 | addr = registers[src0] + Integer(src1)
-| IntOffset  |          |      |      |      | registers[dest] = data[addr]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| DataLoad   | 01111010 | 0b00 | 0b00 | 0b10 | addr = registers[src0] + Ordinal(registers[src1])
-| RegOrdOff  |          |      |      |      | registers[dest] = data[addr]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| DataLoad   | 01111010 | 0b00 | 0b00 | 0b11 | addr = registers[src0] + Integer(registers[src1])
-| RegImmOff  |          |      |      |      | registers[dest] = data[addr]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeStore  | 01111001 | 0b00 | 0b00 | 0b00 | code[registers[dest]] = mkwide(registers[src0], registers[src1])
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeStore  | 01111001 | 0b00 | 0b01 | 0b00 | addr = registers[dest] + registers[src1]
-| SrcPair    |          |      |      |      | code[addr] = mkwide(registers[src0], registers[src0+1])
-| ImmOffset  |          |      |      |      | Note: use an offset of zero for normal code store
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeStore  | 01111001 | 0b00 | 0b01 | 0b01 | addr = registers[dest] + registers[src1]
-| SrcPair    |          |      |      |      | code[addr] = mkwide(registers[src0], registers[src0+1])
-| RegOffset  |          |      |      |      | 
-|------------|----------|------|------|------|----------------------------------------------------------------
-| CodeStore  | 01111001 | 0b11 | 0bxx | 0bxx | code[imm16] = mkwide(registers[src0], registers[src0+1])
-| Imm16Addr  |          |      |      |      | NOTE: src0ctrl and src1ctrl are part of the imm16 value
-| SrcPair    |          |      |      |      | 
-|------------|----------|------|------|------|----------------------------------------------------------------
-| DataStore  | 01111011 | 0b00 | 0b00 | 0b00 | data[registers[dest]] = registers[src0]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| StackStore | 01111101 | 0b00 | 0b00 | 0b00 | registers[dest] = registers[dest] + 1
-| (Push)     |          |      |      |      | stack[registers[dest]] = registers[src0]
-|------------|----------|------|------|------|----------------------------------------------------------------
-| IOStore    | 01111111 | 0b00 | 0b00 | 0b00 | io[registers[dest]] = registers[src0]
-|------------|----------|------|------|------|----------------------------------------------------------------
 
 
 
