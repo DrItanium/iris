@@ -338,6 +338,7 @@ class Core {
         }
 
     private:
+        void invoke(const std::monostate&);
         // use tag dispatch to call the right routines
 #define X(title, fmt) \
         void invoke(const title ## Instruction &);
