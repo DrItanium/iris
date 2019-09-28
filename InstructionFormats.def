@@ -179,14 +179,12 @@ X(Error, ZeroArgument)
     NormalSignedUnsignedCompare(GreaterThan)
     NormalSignedUnsignedCompare(LessThanOrEqualTo)
     NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
-    //NormalSignedUnsignedCompare(Spaceship)
     Imm8Compare(Equals)
     Imm8Compare(NotEquals)
     Imm8SignedUnsignedCompare(LessThan)
     Imm8SignedUnsignedCompare(GreaterThan)
     Imm8SignedUnsignedCompare(LessThanOrEqualTo)
     Imm8SignedUnsignedCompare(GreaterThanOrEqualTo)
-    //Imm8SignedUnsignedCompare(Spaceship)
 
 #undef NormalSignedCompare
 #undef NormalUnsignedCompare 

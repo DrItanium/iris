@@ -1,0 +1,133 @@
+So I want to be able to stash a version of this simulator on an AVR processor
+for real hardware. I already have the memory array designed via SPI but now I
+need to make sure that the decoder logic is a simple as possible. So here are
+my ideas.
+
+=== Separate instructions into logical groups ===
+
+This is done with the Intel i960 which has been a huge influence on this revamp
+as I really like the design. The separation makes it possible to perform logic
+dispatch using the bits of the design to describe what to perform. It removes
+the redundant decode problem and also makes it easier to reason about an
+instruction for me as a human. Holes in the instruction encoding are also a
+part of this as well.
+
+=== Compare operators should have their action encoded into the opcode bits ===
+
+This is one that I noticed recently with the i960 simulator I'm also writing.
+The lowest three bits of the major opcode are consistently tied to a given
+comparison operation. The instructions are also encoded to make this pattern
+usable. For instance:
+
+- 0b000 -> Unordered 
+- 0b001 -> Greater
+- 0b010 -> Equal
+- 0b011 -> Greater or Equal
+- 0b100 -> Less
+- 0b101 -> Not Equal
+- 0b110 -> Less or Equal
+- 0b111 -> Ordered
+
+
+So the first and last bit pattern is meant for numerical operations on real
+numbers so we'll ignore them for now. However, the other patterns are
+important. We can have a single compare operation and use a table to hold onto
+the operation to perform in a constant time lookup. However, the compare
+operation itself would still be multiple different compare operations. But that
+can be easily solved by the next aspect
+
+=== Reduce the register count to either 128 or 64 ===
+
+256 registers is really nice to have but I think it is really over kill since
+we have separate memories. Having fewer registers means that we can have more
+control bits to play with. 
+
+Having 128 registers will yield a single bit from each register field which
+gives us back a total of three bits to play with. This could be easily used to
+denote a literal or register in the instruction. This would cut the number of
+instructions which describe variations on a theme significantly. This is an
+exact port of the mode bits found in i960. 
+
+Having 64 registers will yield two bits from each register field which gives us
+back six bits to play with. In addition to denoting literals or registers for
+fields, it also allows us more space to describe more actions and even extend
+the number of instructions if needed. This is a pretty decent compromise but I
+think that it is pretty nice to have. 
+
+The encoding will remain the same due to the fact that it is cheaper to mask
+out in this fashion.
+
+Going with 32 registers is also an idea as well. It would give us nine bits to
+work with and be even closer to i960 in design. I believe that having that few
+of registers in this design would be a detriment to the design. The large
+number of registers is meant to keep as much on the chip as possible. Even 64
+registers is pushing it to be honest.
+
+
+=== Move opcode from the lowest eight bits of the encoding to the highest eight bits of the encoding===
+
+This makes reasoning about what instruction is being viewed even easier as we
+only have to look at the most significant two hex numbers to get an idea of
+what the instruction is.
+
+=== Use mode bits freed from register count reduction to eliminate variations on instructions ===
+
+For instance, the load and store instructions are really the same in all cases,
+with the difference being which memory space to write to. For example, if we
+encode the space into the instruction then we only need single copies of load
+and store. The extra mode bits tell the simulator what to do.
+
+0b00 -> code
+0b01 -> data
+0b10 -> stack
+0b11 -> io
+
+This also leads into even encoding the immediate style into the instructions as
+well. Loading into an immediate doesn't actually make any sense what so ever so
+that will be ignored but other than that we have the following encoding (using
+64 register count):
+
+
+|------------|----------|------|------|------|----------------------------------------------------------------
+| Operation  | opcode   | dest | src0 | src1 | description via psuedo code
+|            | bits     | ctrl | ctrl | ctrl |
+|            | [31,24]  |      |      |      |
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeLoad   | 01111000 | 0b00 | 0b00 | 0b00 | unpackWide(code[registers[src1]], registers[dest], registers[src0])
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeLoad   | 01111000 | 0b00 | 0b01 | 0b00 | addr = registers[src1] + src0
+| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
+| ImmOffset  |          |      |      |      | Note: use an offset of zero for normal code load
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeLoad   | 01111000 | 0b00 | 0b01 | 0b01 | addr = registers[src1] + registers[src0]
+| DestPair   |          |      |      |      | unpackWide(addr, registers[dest], registers[dest+1])
+| RegOffset  |          |      |      |      | Note: use an offset of zero for normal code load
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeStore  | 01111100 | 0b01 | 0bxx | 0bxx | code[imm16(dest)] = mkwide(registers[src0], registers[src0+1])
+| Imm16Addr  |          |      |      |      | NOTE: src0ctrl and src1ctrl are part of the imm16 value
+| DestPair   |          |      |      |      | 
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeStore  | 01111100 | 0b00 | 0b00 | 0b00 | code[registers[dest]] = mkwide(registers[src0], registers[src1])
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeStore  | 01111100 | 0b00 | 0b01 | 0b00 | addr = registers[dest] + registers[src1]
+| SrcPair    |          |      |      |      | code[addr] = mkwide(registers[src0], registers[src0+1])
+| ImmOffset  |          |      |      |      | Note: use an offset of zero for normal code store
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeStore  | 01111100 | 0b00 | 0b01 | 0b01 | addr = registers[dest] + registers[src1]
+| SrcPair    |          |      |      |      | code[addr] = mkwide(registers[src0], registers[src0+1])
+| RegOffset  |          |      |      |      | 
+|------------|----------|------|------|------|----------------------------------------------------------------
+| CodeStore  | 01111100 | 0b01 | 0bxx | 0bxx | code[imm16(dest)] = mkwide(registers[src0], registers[src0+1])
+| Imm16Addr  |          |      |      |      | NOTE: src0ctrl and src1ctrl are part of the imm16 value
+| SrcPair    |          |      |      |      | 
+|------------|----------|------|------|------|----------------------------------------------------------------
+| DataStore  | 01111101 | 0b00 | 0b00 | 0b00 | data[registers[dest]] = registers[src0]
+|------------|----------|------|------|------|----------------------------------------------------------------
+| StackStore | 01111110 | 0b00 | 0b00 | 0b00 | registers[dest] = registers[dest] + 1
+| (Push)     |          |      |      |      | stack[registers[dest]] = registers[src0]
+|------------|----------|------|------|------|----------------------------------------------------------------
+| IOStore    | 01111111 | 0b00 | 0b00 | 0b00 | io[registers[dest]] = registers[src0]
+|------------|----------|------|------|------|----------------------------------------------------------------
+
+
+
