@@ -128,7 +128,7 @@ All arithmetic operations follow the same basic format for the mode bits
             registers[dest][1] = registers[src0][1] op src1
 0b001011 -> registers[dest][0] = registers[src0][0] op src1 // integer version with immediate 
             registers[dest][1] = registers[src0][1] op src1
-// quad register version
+// 4 simd version
 0b001100 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // ordinal version
             registers[dest][1] = registers[src0][1] op registers[src1][1]
             registers[dest][2] = registers[src0][2] op registers[src1][2]
@@ -154,6 +154,47 @@ The memory group has the following opcodes:
 0b0001 - move
 0b0010 - swap
 0b1xxx - load/store (see below)
+
+
+Set has very few mode bits due to it being an immediate interfacing instruction
+The mode bits provide ways to manipulate multiple registers simultaneously
+0b00xxxx -> registers[dest] = imm16
+0b01xxxx -> registers[dest+0] = imm16
+            registers[dest+1] = imm16
+0b10xxxx -> registers[dest+0] = imm16
+            registers[dest+1] = imm16
+            registers[dest+2] = imm16
+0b11xxxx -> registers[dest+0] = imm16
+            registers[dest+1] = imm16
+            registers[dest+2] = imm16
+            registers[dest+4] = imm16
+
+move is a two register instruction, thus we actually have a lot more mode bits
+than would usually be available, however that really isn't that useful. Src1
+must always be all zeros. 
+
+0b000000 -> registers[dest] = registers[src0]
+0b000100 -> registers[dest] = registers[src0]
+          registers[dest+1] = registers[src0+1]
+0b001000 -> registers[dest] = registers[src0]
+          registers[dest+1] = registers[src0+1]
+          registers[dest+2] = registers[src0+2]
+0b001100 -> registers[dest] = registers[src0]
+          registers[dest+1] = registers[src0+1]
+          registers[dest+2] = registers[src0+2]
+          registers[dest+3] = registers[src0+3]
+
+IP and LR are hidden registers which are not directly accessible. Instead you
+must use move with the mode bit for dest set to 0b01. This acts as another
+register "file". Conceptually the internal registers are defined as this:
+
+register 64 -> IP
+register 65 -> LR
+0b01'000000'00'xxxxxx -> ip = registers[src0] // move to ip
+0b01'xxxxxx'01'000000 -> registers[dest] = ip // move from ip
+0b01'000001'00'xxxxxx -> lr = registers[src0] // move to lr
+0b01'xxxxxx'01'000001 -> registers[dest] = lr // move from lr
+
 The actual memory load/store parent code is actually 0b01111yyx
 
 With x:
@@ -169,33 +210,33 @@ While code is special due it being double wide, the other memory spaces have
 the following control bits:
 
 mode bits (combined, undeclared bits are unused error states)
-0b000000 -> address (dest) + immediate offset (src2), value is register src1
-0b000010 -> address (dest) + register offset (src2), value is register src1
-0b000100 -> address (dest) + immediate offset (src2), value is register src1, then increment dest
-0b000101 -> address (dest) + immediate offset (src2), value is register src1, first increment dest
-0b000110 -> address (dest) + register offset (src2), value is register src1,  then increment dest
-0b000111 -> address (dest) + register offset (src2), value is register src1,  first increment dest
-0b001000 -> address (dest) + immediate offset (src2), value is register src1, then decrement dest
-0b001001 -> address (dest) + immediate offset (src2), value is register src1, first decrement dest
-0b001010 -> address (dest) + register offset (src2), value is register src1,  then decrement dest
-0b001011 -> address (dest) + register offset (src2), value is register src1,  first decrement dest
-0b001100 -> address (dest) + immediate offset (src2), value is register pair src1
-0b001110 -> address (dest) + register offset (src2), value is register pair src1
-0b010000 -> address (dest), value is register (src1), mask is register (src2), value & mask is performed
+0b000000 -> address (dest) + immediate offset (src1), value is register src0
+0b000010 -> address (dest) + register offset (src1), value is register src0
+0b000100 -> address (dest) + immediate offset (src1), value is register src0, then increment dest
+0b000101 -> address (dest) + immediate offset (src1), value is register src0, first increment dest
+0b000110 -> address (dest) + register offset (src1), value is register src0,  then increment dest
+0b000111 -> address (dest) + register offset (src1), value is register src0,  first increment dest
+0b001000 -> address (dest) + immediate offset (src1), value is register src0, then decrement dest
+0b001001 -> address (dest) + immediate offset (src1), value is register src0, first decrement dest
+0b001010 -> address (dest) + register offset (src1), value is register src0,  then decrement dest
+0b001011 -> address (dest) + register offset (src1), value is register src0,  first decrement dest
+0b001100 -> address (dest) + immediate offset (src1), value is register pair src0
+0b001110 -> address (dest) + register offset (src1), value is register pair src0
+0b010000 -> address (dest), value is register (src0), mask is register (src1), value & mask is performed
 0b11xxxx -> address (dest), value is imm16
 
 
 The code space has the following mode bits
 
-0b000000 -> address (dest), lower half (src1), upper half (src2)
-0b000010 -> address (dest), lower half (src1), upper half (src2) then incr dest
-0b000011 -> address (dest), lower half (src1), upper half (src2) then decr dest
-0b000100 -> address (dest), pair lower half (src1), offset immediate (src2) 
-0b000110 -> address (dest), pair lower half (src1), offset immediate (src2) then incr dest
-0b000111 -> address (dest), pair lower half (src1), offset immediate (src2) then decr dest
-0b001000 -> address (dest), pair lower half (src1), offset register (src2) 
-0b001010 -> address (dest), pair lower half (src1), offset register (src2) then incr dest
-0b001011 -> address (dest), pair lower half (src1), offset register (src2) then decr dest
+0b000000 -> address (dest), lower half (src0), upper half (src1)
+0b000010 -> address (dest), lower half (src0), upper half (src1) then incr dest
+0b000011 -> address (dest), lower half (src0), upper half (src1) then decr dest
+0b000100 -> address (dest), pair lower half (src0), offset immediate (src1) 
+0b000110 -> address (dest), pair lower half (src0), offset immediate (src1) then incr dest
+0b000111 -> address (dest), pair lower half (src0), offset immediate (src1) then decr dest
+0b001000 -> address (dest), pair lower half (src0), offset register (src1) 
+0b001010 -> address (dest), pair lower half (src0), offset register (src1) then incr dest
+0b001011 -> address (dest), pair lower half (src0), offset register (src1) then decr dest
 0b11xxxx -> address (imm16), pair lower half (dest)
 
 Compare operations are very simple too
