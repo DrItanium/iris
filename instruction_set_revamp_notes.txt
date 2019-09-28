@@ -189,11 +189,58 @@ must use move with the mode bit for dest set to 0b01. This acts as another
 register "file". Conceptually the internal registers are defined as this:
 
 register 64 -> IP
-register 65 -> LR
+register 65 -> status 
 0b01'000000'00'xxxxxx -> ip = registers[src0] // move to ip
 0b01'xxxxxx'01'000000 -> registers[dest] = ip // move from ip
-0b01'000001'00'xxxxxx -> lr = registers[src0] // move to lr
-0b01'xxxxxx'01'000001 -> registers[dest] = lr // move from lr
+0b01'000001'00'xxxxxx -> status = registers[src0] // move to status
+0b01'xxxxxx'01'000001 -> registers[dest] = status // move from status
+
+
+The swap instruction only uses two registers and thus src1 must be always
+assigned to zero plus its mode bits.
+
+swap operations of different widths
+0b00'00'00 -> temp = registers[dest]
+              registers[dest] = registers[src0]
+              registers[src0] = temp
+0b00'01'00 -> temp = registers[dest]
+              temp2 = registers[dest+1]
+              registers[dest] = registers[src0]
+              registers[dest+1] = registers[src0+1]
+              registers[src0] = temp
+              registers[src0+1] = temp2
+0b00'10'00 -> temp = registers[dest]
+              temp2 = registers[dest+1]
+              temp3 = registers[dest+2]
+              registers[dest] = registers[src0]
+              registers[dest+1] = registers[src0+1]
+              registers[dest+2] = registers[src0+2]
+              registers[src0] = temp
+              registers[src0+1] = temp2
+              registers[src0+2] = temp3
+0b00'11'00 -> temp = registers[dest]
+              temp2 = registers[dest+1]
+              temp3 = registers[dest+2]
+              temp4 = registers[dest+3]
+              registers[dest] = registers[src0]
+              registers[dest+1] = registers[src0+1]
+              registers[dest+2] = registers[src0+2]
+              registers[dest+3] = registers[src0+3]
+              registers[src0] = temp
+              registers[src0+1] = temp2
+              registers[src0+2] = temp3
+              registers[src0+3] = temp4
+
+swap can also operate on the hidden registers to save on number of instructions
+
+register 64 -> IP
+register 65 -> status
+0b01'000000'00'xxxxxx -> temp = registers[src0]
+                         registers[src0] = ip
+                         ip = temp
+0b01'000001'00'xxxxxx -> temp = registers[src0]
+                         registers[src0] = status 
+                         status = temp
 
 The actual memory load/store parent code is actually 0b01111yyx
 
