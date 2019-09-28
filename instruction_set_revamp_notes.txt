@@ -121,6 +121,12 @@ All arithmetic operations follow the same basic format for the mode bits
 0b110001 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 2 register wide integer with immediate
 Any other encodings in the mode bits are not accepted
 
+The memory group has the following opcodes:
+
+0b0000 - set
+0b0001 - move
+0b0010 - swap
+0b1xxx - load/store (see below)
 The actual memory load/store parent code is actually 0b01111yyx
 
 With x:
@@ -135,11 +141,9 @@ with Y:
 While code is special due it being double wide, the other memory spaces have
 the following control bits:
 
-mode bits (combined)
+mode bits (combined, undeclared bits are unused error states)
 0b000000 -> address (dest) + immediate offset (src2), value is register src1
-0b000001 -> unused
 0b000010 -> address (dest) + register offset (src2), value is register src1
-0b000011 -> unused
 0b000100 -> address (dest) + immediate offset (src2), value is register src1, then increment dest
 0b000101 -> address (dest) + immediate offset (src2), value is register src1, first increment dest
 0b000110 -> address (dest) + register offset (src2), value is register src1,  then increment dest
@@ -149,12 +153,12 @@ mode bits (combined)
 0b001010 -> address (dest) + register offset (src2), value is register src1,  then decrement dest
 0b001011 -> address (dest) + register offset (src2), value is register src1,  first decrement dest
 0b001100 -> address (dest) + immediate offset (src2), value is register pair src1
-0b001101 -> unused
 0b001110 -> address (dest) + register offset (src2), value is register pair src1
-0b001111 -> unused
-0b01xxxx -> unused
+0b010000 -> address (dest), value is register (src1), mask is register (src2), value & mask is performed
 0b10xxxx -> address (dest), value is imm16
-0b11xxxx -> address (imm16), value (dest)
+
+
+The code space has the following mode bits
 
 
 Compare operations are very simple too
