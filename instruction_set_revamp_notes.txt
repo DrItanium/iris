@@ -136,22 +136,25 @@ While code is special due it being double wide, the other memory spaces have
 the following control bits:
 
 mode bits (combined)
-0b000000 -> address (dest) + ordinal immediate offset (src2), value is register src1
-0b000001 -> address (dest) + integer immediate offset (src2), value is register src1
-0b000010 -> address (dest) + ordinal  register offset (src2), value is register src1
-0b000011 -> address (dest) + integer  register offset (src2), value is register src1
-0b000100 -> address (dest) + ordinal immediate offset (src2), value is register pair src1
-0b000101 -> address (dest) + integer immediate offset (src2), value is register pair src1
-0b000110 -> address (dest) + ordinal  register offset (src2), value is register pair src1
-0b000111 -> address (dest) + integer  register offset (src2), value is register pair src1
-0b001000 -> address (dest) + ordinal immediate offset (src2), value is register triple src1
-0b001001 -> address (dest) + integer immediate offset (src2), value is register triple src1
-0b001010 -> address (dest) + ordinal  register offset (src2), value is register triple src1
-0b001011 -> address (dest) + integer  register offset (src2), value is register triple src1
-0b001100 -> address (dest) + ordinal immediate offset (src2), value is register quad src1
-0b001101 -> address (dest) + integer immediate offset (src2), value is register quad src1
-0b001110 -> address (dest) + ordinal  register offset (src2), value is register quad src1
-0b001111 -> address (dest) + integer  register offset (src2), value is register quad src1
+0b000000 -> address (dest) + immediate offset (src2), value is register src1
+0b000001 -> unused
+0b000010 -> address (dest) + register offset (src2), value is register src1
+0b000011 -> unused
+0b000100 -> address (dest) + immediate offset (src2), value is register src1, then increment dest
+0b000101 -> address (dest) + immediate offset (src2), value is register src1, first increment dest
+0b000110 -> address (dest) + register offset (src2), value is register src1,  then increment dest
+0b000111 -> address (dest) + register offset (src2), value is register src1,  first increment dest
+0b001000 -> address (dest) + immediate offset (src2), value is register src1, then decrement dest
+0b001001 -> address (dest) + immediate offset (src2), value is register src1, first decrement dest
+0b001010 -> address (dest) + register offset (src2), value is register src1,  then decrement dest
+0b001011 -> address (dest) + register offset (src2), value is register src1,  first decrement dest
+0b001100 -> address (dest) + immediate offset (src2), value is register pair src1
+0b001101 -> unused
+0b001110 -> address (dest) + register offset (src2), value is register pair src1
+0b001111 -> unused
+0b01xxxx -> unused
+0b10xxxx -> address (dest), value is imm16
+0b11xxxx -> address (imm16), value (dest)
 
 
 Compare operations are very simple too
