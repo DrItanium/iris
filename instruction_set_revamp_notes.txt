@@ -91,6 +91,7 @@ Any groups not specified here are undefined
 
 The lower four bits are the action
 
+=== Arithmetic Group Operations ===
 arithmetic action bits:
 
 0b0000 -> add
@@ -148,6 +149,7 @@ All arithmetic operations follow the same basic format for the mode bits
 
 Any other encodings in the mode bits are not accepted
 
+=== Memory Group Operations ===
 The memory group has the following opcodes:
 
 0b0000 - set
@@ -190,10 +192,13 @@ register "file". Conceptually the internal registers are defined as this:
 
 register 64 -> IP
 register 65 -> status 
+register 66 -> link register 
 0b01'000000'00'xxxxxx -> ip = registers[src0] // move to ip
 0b01'xxxxxx'01'000000 -> registers[dest] = ip // move from ip
 0b01'000001'00'xxxxxx -> status = registers[src0] // move to status
 0b01'xxxxxx'01'000001 -> registers[dest] = status // move from status
+0b01'000010'00'xxxxxx -> link register = registers[src0] // move to link register
+0b01'xxxxxx'01'000010 -> registers[dest] = link register // move from link register
 
 
 The swap instruction only uses two registers and thus src1 must be always
@@ -235,12 +240,16 @@ swap can also operate on the hidden registers to save on number of instructions
 
 register 64 -> IP
 register 65 -> status
+register 66 -> link register 
 0b01'000000'00'xxxxxx -> temp = registers[src0]
                          registers[src0] = ip
                          ip = temp
 0b01'000001'00'xxxxxx -> temp = registers[src0]
                          registers[src0] = status 
                          status = temp
+0b01'000010'00'xxxxxx -> temp = registers[src0]
+                         registers[src0] = link register 
+                         link register = temp
 
 The actual memory load/store parent code is actually 0b01111yyx
 
@@ -286,6 +295,7 @@ The code space has the following mode bits
 0b001011 -> address (dest), pair lower half (src0), offset register (src1) then decr dest
 0b11xxxx -> address (imm16), pair lower half (dest)
 
+=== Compare Group Operations ===
 Compare operations are very simple too
 
 The major group is 0b0011 with the actual action set being 0b0011yyyx
@@ -323,5 +333,35 @@ src1 ctrl:
 0b11 -> unused
 
 
+=== Branch Group Operations ===
+The set of branch instructions is meant to make control logic easy to write
+without it being a web of mental pain. 
 
+There are the following actions in this group:
 
+0b0000xxxxxx -> Branch Immediate
+0b000000xxxx -> Branch Immediate Absolute Unconditional (dest must be zero) -> ip = imm16
+0b000001xxxx -> Branch Immediate Absolute Conditional -> if (registers[dest]) { ip = imm16 }
+0b000010xxxx -> Branch Immediate Relative Unconditional (dest must be zero) ->  ip += imm16
+0b000011xxxx -> Branch Immediate Relative Conditional -> if (registers[dest]) { ip += imm16 }
+0b0001xxxxxx -> Call Immediate
+0b000100xxxx -> Call Immediate Absolute Unconditional (dest must be zero) -> lr = ip + 1; ip = imm16
+0b000101xxxx -> Call Immediate Absolute Conditional -> if (registers[dest]) { lr = ip + 1; ip = imm16 }
+0b000110xxxx -> Call Immediate Relative Unconditional (dest must be zero) ->  lr = ip + 1 ; ip += imm16
+0b000111xxxx -> Call Immediate Relative Conditional -> if (registers[dest]) { lr = ip + 1; ip += imm16 }
+0b0010xxxxxx -> Branch Register
+0b0010000000 -> Branch Register Absolute Unconditional (src1 and src2 must be zero) -> ip = registers[dest]
+0b0010010000 -> Branch Register Absolute Conditional (src2 must be zero) -> if (registers[src1]) { ip = registers[dest] }
+0b0010100000 -> Branch Register Relative Unconditional (src1 and src2 must be zero) -> ip += registers[dest]
+0b0010110000 -> Branch Register Relative Conditional (src2 must be zero) -> if (registers[src1]) { ip += registers[dest] }
+0b0011xxxxxx -> Call Register
+0b0011000000 -> Call Register Absolute Unconditional (src1 and src2 must be zero) -> lr = ip + 1; ip = registers[dest]
+0b0011010000 -> Call Register Absolute Conditional (src2 must be zero) -> if (registers[src1]) { lr = ip + 1; ip = registers[dest] }
+0b0011100000 -> Call Register Relative Unconditional (src1 and src2 must be zero) -> lr = ip + 1; ip += registers[dest]
+0b0011110000 -> Call Register Relative Conditional (src2 must be zero) -> if (registers[src1]) { lr = ip + 1; ip += registers[dest] }
+0b0100xxxxxx -> Return 
+0b010000xxxx -> Return Unconditional -> return() (src1 and src2 must be zero, as well as its mode bits)
+0b010001xxxx -> Return Conditional -> if (registers[dest]) { return() } (src1 and src2 must be zero, as well as its mode bits)
+0b0101xxxxxx -> Select
+0b010100xxxx -> Select Branch -> if (registers[dest]) { branch(src0); } else { branch(src1); }
+0b010110xxxx -> Select Call -> if (registers[dest]) { call(src0); } else { call(src1); }
