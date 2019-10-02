@@ -29,6 +29,11 @@
 namespace iris {
 
 void
+Core::invoke(const std::monostate&) {
+    throw UnimplementedOperationException();
+}
+
+void
 Core::invoke(const iris::ErrorInstruction&) {
     throw ErrorInstructionException();
 }

@@ -32,14 +32,7 @@ void
 Core::invoke(DoubleWord ibits) {
     Instruction inst(ibits);
     if (auto operation = inst.decode(); operation) {
-        std::visit([this](auto&& op) { 
-                    using K = std::decay_t<decltype(op)>;
-                    if constexpr (std::is_same_v<std::monostate, K>) {
-                        throw UnimplementedOperationException();
-                    } else {
-                        invoke(op);
-                    }
-                }, *operation);
+        std::visit([this](auto&& op) { invoke(op); }, *operation);
     } else {
         throw BadOperationException();
     }
