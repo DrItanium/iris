@@ -178,7 +178,7 @@ namespace iris::instructions {
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
     Bits zeroRegister(RegisterIndex targetRegister) noexcept ;
-    Bits nop(RegisterIndex target = 0_r) noexcept;
+    Bits nop(RegisterIndex target = 0_reg) noexcept;
     Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;

@@ -28,7 +28,10 @@
 #include <array>
 namespace iris {
 
-using RawMicroInstruction = uint32_t;
+using RawMicroInstruction = int32_t;
+constexpr bool shouldBypassMicrocodeDispatch(RawMicroInstruction inst) noexcept {
+    return inst < 0;
+}
 constexpr RawMicroInstruction BypassMicrocode = 0x8000'0000;
 constexpr RawMicroInstruction Unimplemented = 0;
 constexpr RawMicroInstruction ErrorState = 0;
@@ -290,6 +293,7 @@ constexpr std::array<RawMicroInstruction, 256> eeprom {
     Unimplemented, // 254
     Unimplemented, // 255
 };
+
 
 } // end namespace iris
 
