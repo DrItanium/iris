@@ -25,6 +25,7 @@
  */
 #include "iris.h"
 #include "opcodes.h"
+#include "execution_code.h"
 
 namespace iris {
 
