@@ -32,47 +32,60 @@ using RawMicroInstruction = int32_t;
 constexpr bool shouldBypassMicrocodeDispatch(RawMicroInstruction inst) noexcept {
     return inst < 0;
 }
+enum class MicroGroup : uint8_t {
+    Error = 0,
+    Memory,
+    Branch,
+    Compare,
+    Count,
+};
+    // increment is adding one to register
+    // decrement is subtracting one from the register
+    // double is multiply by two or shift left by two
+    // halve is divide by two or shift right by two imm
+    // double and triple can be defined in terms of this operation
+static_assert(static_cast<uint8_t>(MicroGroup::Count) <= 8, "Too many micro groups defined!");
 constexpr RawMicroInstruction BypassMicrocode = 0x8000'0000;
 constexpr RawMicroInstruction Unimplemented = 0;
 constexpr RawMicroInstruction ErrorState = 0;
-constexpr std::array<RawMicroInstruction, 256> eeprom {
+constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     ErrorState, // 0
-    Unimplemented, // 1
-    Unimplemented, // 2
-    Unimplemented, // 3
-    Unimplemented, // 4
-    Unimplemented, // 5
-    Unimplemented, // 6
-    Unimplemented, // 7
-    Unimplemented, // 8
-    Unimplemented, // 9
-    Unimplemented, // 10
-    Unimplemented, // 11
-    Unimplemented, // 12
-    Unimplemented, // 13
-    Unimplemented, // 14
-    Unimplemented, // 15
-    Unimplemented, // 16
-    Unimplemented, // 17
-    Unimplemented, // 18
-    Unimplemented, // 19
-    Unimplemented, // 20
-    Unimplemented, // 21
-    Unimplemented, // 22
-    Unimplemented, // 23
-    Unimplemented, // 24
-    Unimplemented, // 25
-    Unimplemented, // 26
-    Unimplemented, // 27
-    Unimplemented, // 28
-    Unimplemented, // 29
-    Unimplemented, // 30
-    Unimplemented, // 31
-    Unimplemented, // 32
-    Unimplemented, // 33
-    Unimplemented, // 34
-    Unimplemented, // 35
-    Unimplemented, // 36
+    BypassMicrocode, // 1 addi
+    BypassMicrocode, // 2 addo
+    BypassMicrocode, // 3 subi
+    BypassMicrocode, // 4 subo
+    BypassMicrocode, // 5 muli
+    BypassMicrocode, // 6 mulo
+    BypassMicrocode, // 7 divi
+    BypassMicrocode, // 8 divo
+    BypassMicrocode, // 9 remi
+    BypassMicrocode, // 10 remo
+    BypassMicrocode, // 11 shli
+    BypassMicrocode, // 12 shlo
+    BypassMicrocode, // 13 shri
+    BypassMicrocode, // 14 shro
+    BypassMicrocode, // 15 maxi
+    BypassMicrocode, // 16 maxo
+    BypassMicrocode, // 17 not
+    BypassMicrocode, // 18 and
+    BypassMicrocode, // 19 or
+    BypassMicrocode, // 20 xor
+    BypassMicrocode, // 21 nor
+    BypassMicrocode, // 22 nand
+    BypassMicrocode, // 23 addim
+    BypassMicrocode, // 24 addom
+    BypassMicrocode, // 25 subim
+    BypassMicrocode, // 26 subom
+    BypassMicrocode, // 27 mulim
+    BypassMicrocode, // 28 mulom
+    BypassMicrocode, // 29 divim
+    BypassMicrocode, // 30 divom
+    BypassMicrocode, // 31 remim
+    BypassMicrocode, // 32 remom
+    BypassMicrocode, // 33 shlim
+    BypassMicrocode, // 34 shlom
+    BypassMicrocode, // 35 shrim
+    BypassMicrocode, // 36 shrom
     Unimplemented, // 37
     Unimplemented, // 38
     Unimplemented, // 39
