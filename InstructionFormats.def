@@ -69,8 +69,8 @@ X(Error, ZeroArgument)
     Memory(AssignRegisterImmediate, OneRegisterU16)
     // signed version is very easy to emulate in an assembler
     Stack(Push, TwoRegister)
-    Stack(Pop, TwoRegister)
     Stack(PushImmediateValue, OneRegisterU16)
+    Stack(Pop, TwoRegister)
     // So when dealing with data operations we have some interesting stuff to think about
     // - There is always an offset that can either be a register or immediate
     // - Because it can be register or immediate offset, there will need to be 
@@ -97,8 +97,6 @@ X(Error, ZeroArgument)
     // Inside the assembler it will actually be
     // move ip, ?reg // to ip
     // move ?reg, ip // from ip
-    Memory(MoveFromIP, OneRegister)
-    Memory(MoveToIP, OneRegister)
     IO(LoadMasked, ThreeRegister)
     IO(LoadMaskedImmediate, TwoRegisterU8)
     IO(StoreMasked, ThreeRegister)
@@ -111,6 +109,7 @@ X(Error, ZeroArgument)
     Code(LoadMaskedImmediate, TwoRegisterU8)
     Code(StoreMasked, ThreeRegister)
     Code(StoreMaskedImmediate, TwoRegisterU8)
+    // branch instructions
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(RelativeImmediate, S16)
@@ -162,6 +161,8 @@ X(Error, ZeroArgument)
     Memory(QuadDataLoadWithOffset, TwoRegisterU8)
     Memory(QuadIOStoreWithOffset, TwoRegisterU8)
     Memory(QuadIOLoadWithOffset, TwoRegisterU8)
+    Memory(MoveFromIP, OneRegister)
+    Memory(MoveToIP, OneRegister)
 
 #undef DoubleRegisterSignedUnsigned
 #undef DoubleRegister

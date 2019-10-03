@@ -410,6 +410,49 @@ class Core {
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
     private:
         RegisterBank _regs;
+        // layout is actually 64kword * 4 but actually it is a tad more involved than that
+        // in reality we are looking at 512kbyte of space but it is easiest if we just do
+        // a 24-bit memory space. There are 256 64kbyte memory spaces that iris can see 
+        // at any given time. Thus we have the following mapping (using only the upper 8 bits as
+        // an address)
+        // 0x00 -> Code0
+        // 0x01 -> Code1
+        // 0x02 -> Code2
+        // 0x03 -> Code3
+        // 0x04 -> Data0
+        // 0x05 -> Data1
+        // 0x06 -> Stack0
+        // 0x07 -> Stack1
+        // 0x08 -> IO0
+        // 0x09 -> IO1
+        // [0x0A, 0xFF] Unused
+        //
+        // To the programmer, the memory spaces are 16-bits in size but on word and double word boundaries
+        // Thus a code address looks like this:
+        // 0xFFFF -> 0x3FFFC (shift the incoming code address by two and add the upper 8 bits of the lowest
+        // four code spaces starting address. Which is zero in this case)
+        // 
+        // A data address looks like this:
+        // 0xFFFF -> 0x5FFFE (shift the incoming code address by one and add the upper 8 bits of the lowest
+        // two data spaces starting address. Which is 0x040000 in this case)
+        //
+        // A stack address looks like this:
+        // 0xFFFF -> 0x7FFFE (shift by one and add low stack space offset starting address, which is 0x060000)
+        //
+        // The io space follows the same design:
+        // 0xFFFF -> 0x9FFFE (shift by one and add low io space offset starting address, which is 0x080000)
+        //
+        // However! Since iris operates on 16-bit words by default, there is absolutely no point in having this
+        // synthetic design actually broken up into 8-bit byte sections. It should be 16-bit word groups. Thus
+        // instead we would have the following 16-bit spaces:
+        // 0x00 -> Code0
+        // 0x01 -> Code1
+        // 0x02 -> Data
+        // 0x03 -> Stack
+        // 0x04 -> IO
+        //
+        // Thus I have just laid out a potential design
+        
         CodeMemoryBank _code;
         DataMemoryBank _data;
         StackMemoryBank _stack;
