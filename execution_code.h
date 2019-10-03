@@ -61,6 +61,19 @@ enum class MemorySpace : RawMicroInstruction {
     IO = 0x00C0'0000,
 };
 
+/// The set of actions to apply to arg0 before and after invoking load or store
+/// Format is 0b0000'0000'00xx'x000...
+/// 
+enum class Arg0BeforeAfterActions : RawMicroInstruction {
+    DoNothingExtra = 0x0000'0000,
+    IncrementArg0Before = 0x0008'0000,
+    IncrementArg0After = 0x0010'0000,
+    DecrementArg0Before = 0x0028'0000,
+    DecrementArg0After = 0x0030'0000,
+    // there are unused bits strewn throughout
+};
+
+
 
 constexpr RawMicroInstruction Unimplemented() noexcept { return 0; }
 constexpr RawMicroInstruction BypassMicrocode() noexcept { return 0x8000'0000; }
@@ -77,6 +90,15 @@ constexpr auto CodeMemory() noexcept { return unpack(MemorySpace::Code); }
 constexpr auto DataMemory() noexcept { return unpack(MemorySpace::Data); }
 constexpr auto StackMemory() noexcept { return unpack(MemorySpace::Stack); }
 constexpr auto IOMemory() noexcept { return unpack(MemorySpace::IO); }
+constexpr auto LoadOp() noexcept { return unpack(MemoryOpcodes::Load); }
+constexpr auto StoreOp() noexcept { return unpack(MemoryOpcodes::Store); }
+constexpr auto IncrementArg0Before() { return unpack(Arg0BeforeAfterActions::IncrementArg0Before); }
+constexpr auto IncrementArg0After() { return unpack(Arg0AfterAfterActions::IncrementArg0After); }
+constexpr auto DecrementArg0Before() { return unpack(Arg0BeforeAfterActions::DecrementArg0Before); }
+constexpr auto DecrementArg0After() { return unpack(Arg0AfterAfterActions::DecrementArg0After); }
+constexpr auto TreatArg1AsImm16() { return 0x0000'0001; } // when this is not set then arg1 is a register
+constexpr auto TreatArg2AsImm8() { return 0x0000'0002; }
+
 /// @todo figure out how to make incorrect flag usage a compile time error
 #if 0
 enum class MemoryFlags : RawMicroInstruction { 
@@ -154,9 +176,10 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     BypassMicrocode(), // 39 set
     Unimplemented(), // 40
     Unimplemented(), // 41
-    Unimplemented(), // 42 stack.push
-    Unimplemented(), // 43 stack.push.imm
-    Unimplemented(), // 44 stack.pop
+    MemoryGroup() | StoreOp() | StackMemory() | DecrementArg0Before(), // 42 stack.push
+    MemoryGroup() | StoreOp() | StackMemory() | DecrementArg0Before() | TreatArg1AsImm16() , // 43 stack.push.imm
+    MemoryGroup() | LoadOp() | StackMemory() | IncrementArg0After(), // 44 stack.pop
+
     Unimplemented(), // 45 load.data (with offset)
     Unimplemented(), // 46 store.data (with offset)
     Unimplemented(), // 47 store.data.imm16
