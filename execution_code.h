@@ -109,10 +109,9 @@ constexpr RawMicroInstruction makeInstruction(Args&& ... flags) {
     // double is multiply by two or shift left by two
     // halve is divide by two or shift right by two imm
     // double and triple can be defined in terms of this operation
-static_assert(static_cast<uint8_t>(MicroGroup::Count) <= 8, "Too many micro groups defined!");
 
 constexpr inline std::array<RawMicroInstruction, 256> eeprom {
-    ErrorState(), // 0
+    ErrorGroup(), // 0
     BypassMicrocode(), // 1 addi
     BypassMicrocode(), // 2 addo
     BypassMicrocode(), // 3 subi
