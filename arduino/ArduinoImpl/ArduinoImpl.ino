@@ -1,3 +1,5 @@
+#include <libbitmanip.h>
+
 /**
 iris
 Copyright (c) 2013-2018, Joshua Scoggins and Contributors
@@ -24,9 +26,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
 
+using Integer = int16_t;
+using Ordinal = uint16_t;
+using LongOrdinal = uint32_t;
+using LongInteger = int32_t;
+using Word = Ordinal;
+using DoubleWord = LongOrdinal;
+using RawInstruction = DoubleWord;
+using Address = Word;
+constexpr auto RegisterCount = 64;
+class Register {
+  public:
+    explicit constexpr Register(Ordinal value = 0) : _ordinal(value) { }
+    explicit constexpr Register(Integer value) : _integer(value) { }
+    constexpr Ordinal getOrdinal() const noexcept { return _ordinal; }
+    constexpr Integer getInteger() const noexcept { return _integer; }
+    void setValue(Ordinal v) noexcept {
+      _ordinal = v;
+    }
+    void setValue(Integer v) noexcept {
+      _integer = v;
+    }
+  private:    
+
+union {
+  Ordinal _ordinal;
+  Integer _integer;
+};
+};
+
+constexpr byte getMajorOpcode(RawInstruction inst) noexcept {
+  return bitmanip::decode<byte, RawInstruction, LongOrdinal(0xFF000000), 24>(inst);
+}
+
+Register _registers[RegisterCount];
+Word _instructionPointer;
+
+
 void setup() {
   // put your setup code here, to run once:
-
+  for (auto &a : _registers) {
+    a.setValue(0u);
+  }
 }
 
 void loop() {
