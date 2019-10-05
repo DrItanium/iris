@@ -134,6 +134,7 @@ constexpr RawMicroInstruction makeInstruction(Args&& ... flags) {
 
 constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     ErrorGroup(), // 0
+    // arithmetic instructions
     BypassMicrocode(), // 1 addi
     BypassMicrocode(), // 2 addo
     BypassMicrocode(), // 3 subi
@@ -174,8 +175,8 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     BypassMicrocode(), // 37 move
     BypassMicrocode(), // 38 swap
     BypassMicrocode(), // 39 set
-    Unimplemented(), // 40
-    Unimplemented(), // 41
+    Unimplemented(), // 40 move.from.ip
+    Unimplemented(), // 41 move.to.ip
     MemoryGroup() 
         | StoreOp() 
         | StackMemory() 
@@ -197,42 +198,45 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     Unimplemented(), // 50 load.io (with offset)
     Unimplemented(), // 51 store.io (with offset)
     Unimplemented(), // 52 store.io.imm16 
-    Unimplemented(), // 53 
-    Unimplemented(), // 54 
-    Unimplemented(), // 55 
-    Unimplemented(), // 56 
-    Unimplemented(), // 57 
-    Unimplemented(), // 58
-    Unimplemented(), // 59
-    Unimplemented(), // 60
-    Unimplemented(), // 61
-    Unimplemented(), // 62
-    Unimplemented(), // 63
-    Unimplemented(), // 64
-    Unimplemented(), // 65
-    Unimplemented(), // 66
-    Unimplemented(), // 67
-    Unimplemented(), // 68
-    Unimplemented(), // 69
-    Unimplemented(), // 70
-    Unimplemented(), // 71
-    Unimplemented(), // 72
-    Unimplemented(), // 73
-    Unimplemented(), // 74
-    Unimplemented(), // 75
-    Unimplemented(), // 76
-    Unimplemented(), // 77
-    Unimplemented(), // 78
-    Unimplemented(), // 79
-    Unimplemented(), // 80
-    Unimplemented(), // 81
-    Unimplemented(), // 82
-    Unimplemented(), // 83
-    Unimplemented(), // 84
-    Unimplemented(), // 85
-    Unimplemented(), // 86
-    Unimplemented(), // 87
-    Unimplemented(), // 88
+    // branch instructions
+    Unimplemented(), // 53 branch.absolute.imm16
+    Unimplemented(), // 54 branch.absolute.cond.imm16
+    Unimplemented(), // 55 branch.relative.imm16
+    Unimplemented(), // 56 branch.relative.cond.imm16
+    Unimplemented(), // 57 branch.absolute.register
+    Unimplemented(), // 58 branch.absolute.cond.register
+    Unimplemented(), // 59 branch.relative.register
+    Unimplemented(), // 60 branch.relative.cond.register
+    Unimplemented(), // 61 branch.absolute.register.link
+    Unimplemented(), // 62 branch.absolute.cond.register.link
+    Unimplemented(), // 63 branch.absolute.imm16.link
+    Unimplemented(), // 64 branch.relative.imm16.link
+    Unimplemented(), // 65 branch.relative.register.link
+    Unimplemented(), // 66 branch.relative.cond.register.link
+    Unimplemented(), // 67 branch.select
+    Unimplemented(), // 68 branch.select.invert
+    // compare instructions
+    Unimplemented(), // 69 cmp.equals
+    Unimplemented(), // 70 cmp.not-equals
+    Unimplemented(), // 71 cmp.less-than.integer 
+    Unimplemented(), // 72 cmp.less-than.ordinal
+    Unimplemented(), // 73 cmp.greater-than.integer
+    Unimplemented(), // 74 cmp.greater-than.ordinal
+    Unimplemented(), // 75 cmp.less-than-or-equal-to.integer
+    Unimplemented(), // 76 cmp.less-than-or-equal-to.ordinal
+    Unimplemented(), // 77 cmp.greater-than-or-equal-to.integer
+    Unimplemented(), // 78 cmp.greater-than-or-equal-to.ordinal
+    Unimplemented(), // 79 cmp.equals.imm8
+    Unimplemented(), // 80 cmp.not-equals.imm8
+    Unimplemented(), // 81 cmp.less-than.integer.imm8
+    Unimplemented(), // 82 cmp.less-than.ordinal.imm8
+    Unimplemented(), // 83 cmp.greater-than.integer.imm8
+    Unimplemented(), // 84 cmp.greater-than.ordinal.imm8
+    Unimplemented(), // 85 cmp.less-than-or-equal-to.integer.imm8
+    Unimplemented(), // 86 cmp.less-than-or-equal-to.ordinal.imm8
+    Unimplemented(), // 87 cmp.greater-than-or-equal-to.integer.imm8
+    Unimplemented(), // 88 cmp.greater-than-or-equal-to.ordinal.imm8
+    // extended instruction set begins here, currently disabled due to insanity
     Unimplemented(), // 89
     Unimplemented(), // 90
     Unimplemented(), // 91

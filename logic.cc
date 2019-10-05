@@ -65,6 +65,7 @@ Core::invoke(const iris::MemoryCodeLoadWithOffsetInstruction& s) {
     auto [addr, lower, offset] = s.arguments();
     setDoubleRegisterValue(lower, loadCode(addr, offset));
 }
+#if 0
 void
 Core::invoke(const iris::MemoryCodeLoadAndDecrementInstruction& s) {
     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
@@ -79,13 +80,14 @@ Core::invoke(const iris::MemoryCodeLoadAndIncrementInstruction& s) {
     setDoubleRegisterValue(lower, loadCode(addr));
     incrementRegister(addr, factor);
 }
+#endif
 void
 Core::invoke(const iris::MemoryCodeStoreWithOffsetInstruction& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
     auto [addr, lower, offset ] = s.arguments();
     storeCode(addr, lower, offset);
 }
-
+#if 0
 void
 Core::invoke(const iris::MemoryCodeStoreAndDecrementInstruction& s) {
     // CodeStore AddressRegister <= LowerRegister Offset ( An add of one is implied so the range is [0,257])
@@ -100,6 +102,7 @@ Core::invoke(const iris::MemoryCodeStoreAndIncrementInstruction& s) {
     storeCode(addr, lower);
     incrementRegister(addr, factor);
 }
+#endif
 
 void
 Core::invoke(const iris::MemoryStackPopInstruction& s) {
@@ -389,6 +392,25 @@ Core::invoke(const iris::BranchRegisterInstruction& s) {
     Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
+    }
+#define X(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, (getRegisterValue(src0) op getRegisterValue(src1))); \
+    } 
+#define Z(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
+        auto [ dest, src ] = s.arguments(); \
+        setRegisterValue(dest, op(getRegisterValue(src))); \
+    } 
+#if 0
+#define Y(name, op) \
+    void \
+    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
+        auto [ dest, src0, src1 ] = s.arguments(); \
+        setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
     } \
     void \
     Core::invoke(const iris::ArithmeticDouble ## name ## Instruction & s) { \
@@ -417,6 +439,7 @@ Core::invoke(const iris::BranchRegisterInstruction& s) {
         auto [ dest, src ] = s.arguments(); \
         setDoubleRegisterValue(dest, op(getDoubleRegisterValue(src))); \
     }
+#endif
 
 Y(BitwiseNor, |);
 Y(BitwiseNand, &);
@@ -483,6 +506,7 @@ Core::invoke(const iris::MemoryIOStoreWithOffsetInstruction& s) {
     auto [ dest, value, offset ] = s.arguments();
     storeIO(dest, value, offset);
 }
+#if 0
 #define Y(name, op, kind) \
     void \
     Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Instruction & s) { \
@@ -550,6 +574,7 @@ Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetInstruction& s) {
     auto [ addr, storage, offset ] = s.arguments();
     storeData(addr, getDoubleRegister(storage), offset);
 }
+
 void
 Core::invoke(const iris::MemoryQuadIOLoadWithOffsetInstruction& s) {
     auto [ addr, storage, offset ] = s.arguments();
@@ -584,4 +609,5 @@ Core::invoke(const iris::MemoryQuadIOStoreWithOffsetInstruction& s) {
     auto [ addr, storage, offset ] = s.arguments();
     storeIO(addr, getQuadRegister(storage), offset);
 }
+#endif
 } // end namespace iris
