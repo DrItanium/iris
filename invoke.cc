@@ -46,7 +46,8 @@ Core::invoke(DoubleWord ibits) {
         // a giant state machine
         if (microcode::isMemoryGroup(uinst)) {
             // the address in question is always in arg0
-           auto address = getRegisterValue<Address>(inst.getArg0<RegisterIndex>());
+           auto arg0 = inst.getArg0<RegisterIndex>();
+           auto address = getRegisterValue<Address>(arg0);
            bool updateArg0 = false;
            if (microcode::manipulateArg0Before(uinst)) {
                updateArg0 = true;
@@ -58,65 +59,62 @@ Core::invoke(DoubleWord ibits) {
                    // raise error
                }
            }
+           auto arg1 = inst.getArg1<RegisterIndex>();
            if (microcode::isStoreOp(uinst)) {
                // the value to write to some memory space is always in arg1
-               Word lower = getRegisterValue<Word>(inst.getArg1<RegisterIndex>());
-               
+               Word lower = getRegisterValue<Word>(arg1);
+               auto temporaryAddress = address;
+               if (microcode::shouldTreatArg1AsImm16(uinst)) {
+                   // overwrite what we did previously
+                   lower = inst.getArg1<Address>();
+               } else if (microcode::shouldTreatArg2AsImm8(uinst)) {
+                   // we have to compute an offset here but make sure we
+                   // don't corrupt the address to potentially be
+                   // reinstalled into arg0 
+                   auto offset = inst.getArg2<Byte>();
+                   temporaryAddress += offset;
+               }
                if (microcode::targetsCodeMemory(uinst)) {
+                    auto arg2 = RegisterIndex{std::to_integer<Byte>(inst.getArg2<RegisterIndex>()) + 1};
                    // need to make a double word using the third register as
                    // the upper 16-bits
-                   auto upperHalf = static_cast<DoubleWord>(getRegisterValue<Word>(inst.getArg2<RegisterIndex>())) << 16;
-                   _code[address] = upperHalf | static_cast<DoubleWord>(lower);
-
+                   auto upperHalf = static_cast<DoubleWord>(getRegisterValue<Word>(arg2)) << 16;
+                   _code[temporaryAddress] = upperHalf | static_cast<DoubleWord>(lower);
+               } else if (microcode::targetsStackMemory(uinst)) {
+                   _stack[temporaryAddress] = lower;
+               } else if (microcode::targetsDataMemory(uinst)) {
+                   _data[temporaryAddress] = lower;
+               } else if (microcode::targetsIOMemory(uinst)) {
+                   // IO Space is special
+                   /// @todo implement IO space dispatch
                } else {
-                   auto temporaryAddress = address;
-                   if (microcode::shouldTreatArg1AsImm16(uinst)) {
-                       // overwrite what we did previously
-                       lower = inst.getArg1<Address>();
-                   } else if (microcode::shouldTreatArg2AsImm8(uinst)) {
-                        // we have to compute an offset here but make sure we
-                        // don't corrupt the address to potentially be
-                        // reinstalled into arg0 
-                        auto offset = inst.getArg2<Byte>();
-                        temporaryAddress += offset;
-                   }
-                   if (microcode::targetsStackMemory(uinst)) {
-                       _stack[temporaryAddress] = lower;
-                   } else if (microcode::targetsDataMemory(uinst)) {
-                       _data[temporaryAddress] = lower;
-                   } else if (microcode::targetsIOMemory(uinst)) {
-                       // IO Space is special
-                       /// @todo implement IO space dispatch
-                   } else {
-                       // raise error
-                   }
-               } 
+                   // raise error
+               }
            } else if (microcode::isLoadOp(uinst)) {
                // it is always going to be a load to arg1
                Word lowerHalf = 0;
+               auto temporaryAddress = address;
+               if (microcode::shouldTreatArg2AsImm8(uinst)) {
+                   auto offset = inst.getArg2<Byte>();
+                   temporaryAddress += offset;
+               }
                if (microcode::targetsCodeMemory(uinst)) {
+                    auto arg2 = RegisterIndex{std::to_integer<Byte>(inst.getArg2<RegisterIndex>()) + 1};
                     auto intermediate = _code[address];
                     lowerHalf = static_cast<Word>(intermediate);
-                    setRegisterValue<Word>(inst.getArg2<RegisterIndex>(), static_cast<Word>(intermediate >> 16));
+                    setRegisterValue<Word>(arg2, static_cast<Word>(intermediate >> 16));
                     // special case where we have to use the third register
 
+               } else if (microcode::targetsStackMemory(uinst)) {
+                   lowerHalf = _stack[address];
+               } else if (microcode::targetsDataMemory(uinst)) {
+                   lowerHalf = _data[address];
+               } else if (microcode::targetsIOMemory(uinst)) {
+                   /// @todo implement IO space dispatch
                } else {
-                   auto temporaryAddress = address;
-                   if (microcode::shouldTreatArg2AsImm8(uinst)) {
-                       auto offset = inst.getArg2<Byte>();
-                       temporaryAddress += offset;
-                   }
-                   if (microcode::targetsStackMemory(uinst)) {
-                       lowerHalf = _stack[address];
-                   } else if (microcode::targetsDataMemory(uinst)) {
-                       lowerHalf = _data[address];
-                   } else if (microcode::targetsIOMemory(uinst)) {
-                       /// @todo implement IO space dispatch
-                   } else {
-                       // raise error
-                   }
+                   // raise error
                }
-               setRegisterValue<Word>(inst.getArg1<RegisterIndex>(), lowerHalf);
+               setRegisterValue<Word>(arg1, lowerHalf);
            } else {
                // raise error
            }

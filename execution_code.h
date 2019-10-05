@@ -214,14 +214,38 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
         | LoadOp() 
         | StackMemory() 
         | IncrementArg0After(), // 44 stack.pop
-    Unimplemented(), // 45 load.data (with offset)
-    Unimplemented(), // 46 store.data (with offset)
-    Unimplemented(), // 47 store.data.imm16
-    Unimplemented(), // 48 load.code (with offset)
-    Unimplemented(), // 49 store.code (with offset)
-    Unimplemented(), // 50 load.io (with offset)
-    Unimplemented(), // 51 store.io (with offset)
-    Unimplemented(), // 52 store.io.imm16 
+    MemoryGroup()
+        | LoadOp()
+        | DataMemory()
+        | TreatArg2AsImm8(), // 45 load.data (with offset)
+    MemoryGroup()
+        | StoreOp()
+        | DataMemory()
+        | TreatArg2AsImm8(), // 46 store.data (with offset)
+    MemoryGroup()
+        | StoreOp()
+        | DataMemory()
+        | TreatArg1AsImm16(), // 47 store.data.imm16
+    MemoryGroup() 
+        | LoadOp()
+        | CodeMemory()
+        | TreatArg2AsImm8(), // 48 load.code (with offset)
+    MemoryGroup() 
+        | StoreOp()
+        | CodeMemory()
+        | TreatArg2AsImm8(), // 49 store.code (with offset)
+    MemoryGroup()
+        | LoadOp()
+        | IOMemory() 
+        | TreatArg2AsImm8(), // 50 load.io (with offset)
+    MemoryGroup()
+        | StoreOp()
+        | IOMemory()
+        | TreatArg2AsImm8(), // 51 store.io (with offset)
+    MemoryGroup()
+        | StoreOp()
+        | IOMemory()
+        | TreatArg1AsImm16(), // 52 store.io.imm16 
     // branch instructions
     Unimplemented(), // 53 branch.absolute.imm16
     Unimplemented(), // 54 branch.absolute.cond.imm16
