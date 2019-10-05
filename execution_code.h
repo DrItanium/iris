@@ -30,12 +30,67 @@
 namespace iris::microcode {
 
 using RawMicroInstruction = int32_t;
+template<typename T>
+constexpr std::underlying_type_t<std::enable_if_t<std::is_enum_v<T>, T>> unpack(T value) noexcept {
+    using K = std::underlying_type_t<T>;
+    return static_cast<K>(value);
+}
+template<typename T>
+constexpr bool instructionMarkedAs(RawMicroInstruction inst,  T value) noexcept {
+    return inst & unpack(value);
+}
 enum class MicroGroup : RawMicroInstruction {
     Error = 0x0000'0000,
     Memory = 0x1000'0000,
     Branch = 0x2000'0000,
     Compare = 0x3000'0000,
+    Arithmetic = 0x4000'0000,
 };
+
+/// 0b0000'xxxx'....
+enum class ArithmeticOpcodes : RawMicroInstruction {
+    Add = 0x0000'0000,
+    Subtract = 0x0100'0000, 
+    Multiply = 0x0200'0000,
+    Divide = 0x0300'0000,
+    Remainder = 0x0400'0000,
+    ShiftLeft = 0x0500'0000,
+    ShiftRight = 0x0600'0000,
+    Or = 0x0700'0000,
+    Max = 0x0800'0000,
+    Min = 0x0900'0000,
+};
+/// 0b0000'0000'xxxx'....
+enum class ArithmeticFlags : RawMicroInstruction {
+    ArgTypeIsInteger = 0x0010'0000, // if false then ordinal
+};
+
+constexpr auto AddOp() noexcept { return unpack(ArithmeticOpcodes::Add); }
+constexpr bool isAddOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Add); }
+constexpr auto SubtractOp() noexcept { return unpack(ArithmeticOpcodes::Subtract); }
+constexpr bool isSubtractOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Subtract); }
+constexpr auto MultiplyOp() noexcept { return unpack(ArithmeticOpcodes::Multiply); }
+constexpr bool isMultiplyOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Multiply); }
+constexpr auto DivideOp() noexcept { return unpack(ArithmeticOpcodes::Divide); }
+constexpr bool isDivideOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Divide); }
+constexpr auto RemainderOp() noexcept { return unpack(ArithmeticOpcodes::Remainder); }
+constexpr bool isRemainderOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Remainder); }
+constexpr auto ShiftLeftOp() noexcept { return unpack(ArithmeticOpcodes::ShiftLeft); }
+constexpr bool isShiftLeftOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::ShiftLeft); }
+constexpr auto ShiftRightOp() noexcept { return unpack(ArithmeticOpcodes::ShiftRight); }
+constexpr bool isShiftRightOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::ShiftRight); }
+constexpr auto OrOp() noexcept { return unpack(ArithmeticOpcodes::Or); }
+constexpr bool isOrOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Or); }
+constexpr auto MaxOp() noexcept { return unpack(ArithmeticOpcodes::Max); }
+constexpr bool isMaxOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Max); }
+constexpr auto MinOp() noexcept { return unpack(ArithmeticOpcodes::Min); }
+constexpr bool isMinOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticOpcodes::Min); }
+constexpr auto ArithmeticOpUsesIntegerValues() noexcept { return unpack(ArithmeticFlags::ArgTypeIsInteger); }
+constexpr bool arithmeticOpUsesIntegerValues(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, ArithmeticFlags::ArgTypeIsInteger); }
+constexpr bool arithmeticOpUsesOrdinalValues(RawMicroInstruction value) noexcept { return !arithmeticOpUsesIntegerValues(value); }
+
+
+
 
 // in a memory instruction, the microinstruction kind is four bits after the group
 // 0b0001'xxxx'....
@@ -72,19 +127,11 @@ enum class Arg0BeforeAfterActions : RawMicroInstruction {
 
 
 
+
 constexpr RawMicroInstruction Unimplemented() noexcept { return 0; }
 constexpr bool isUnimplemented(RawMicroInstruction value) noexcept { return value == 0; }
 constexpr RawMicroInstruction BypassMicrocode() noexcept { return 0x8000'0000; }
 constexpr bool bypassesMicrocode(RawMicroInstruction value) noexcept { return value < 0; }
-template<typename T>
-constexpr std::underlying_type_t<std::enable_if_t<std::is_enum_v<T>, T>> unpack(T value) noexcept {
-    using K = std::underlying_type_t<T>;
-    return static_cast<K>(value);
-}
-template<typename T>
-constexpr bool instructionMarkedAs(RawMicroInstruction inst,  T value) noexcept {
-    return inst & unpack(value);
-}
 
 constexpr auto ErrorGroup() noexcept { return unpack(MicroGroup::Error); }
 constexpr bool isErrorGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Error); }
@@ -94,6 +141,8 @@ constexpr auto BranchGroup() noexcept { return unpack(MicroGroup::Branch); }
 constexpr bool isBranchGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Branch); }
 constexpr auto CompareGroup() noexcept { return unpack(MicroGroup::Compare); }
 constexpr bool isCompareGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Compare); }
+constexpr auto ArithmeticGroup() noexcept { return unpack(MicroGroup::Arithmetic); }
+constexpr bool isArithmeticGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Arithmetic); }
 constexpr auto CodeMemory() noexcept { return unpack(MemorySpace::Code); }
 constexpr bool targetsCodeMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::Code); }
 constexpr auto DataMemory() noexcept { return unpack(MemorySpace::Data); }
@@ -122,6 +171,8 @@ constexpr auto TreatArg1AsImm16() noexcept { return 0x0000'0001; } // when this 
 constexpr bool shouldTreatArg1AsImm16(RawMicroInstruction value) noexcept { return value & TreatArg1AsImm16(); }
 constexpr auto TreatArg2AsImm8() noexcept { return 0x0000'0002; }
 constexpr bool shouldTreatArg2AsImm8(RawMicroInstruction value) noexcept { return value & TreatArg2AsImm8(); }
+constexpr auto Arg2CannotBeZero() noexcept { return 0x0000'0004; }
+constexpr bool arg2CannotBeZero(RawMicroInstruction value) noexcept { return value & Arg2CannotBeZero(); }
 
 /// @todo figure out how to make incorrect flag usage a compile time error
 #if 0
@@ -159,25 +210,35 @@ constexpr RawMicroInstruction makeInstruction(Args&& ... flags) {
 constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     ErrorGroup(), // 0
     // arithmetic instructions
-    BypassMicrocode(), // 1 addi
-    BypassMicrocode(), // 2 addo
-    BypassMicrocode(), // 3 subi
-    BypassMicrocode(), // 4 subo
-    BypassMicrocode(), // 5 muli
-    BypassMicrocode(), // 6 mulo
-    BypassMicrocode(), // 7 divi
-    BypassMicrocode(), // 8 divo
-    BypassMicrocode(), // 9 remi
-    BypassMicrocode(), // 10 remo
-    BypassMicrocode(), // 11 shli
-    BypassMicrocode(), // 12 shlo
-    BypassMicrocode(), // 13 shri
-    BypassMicrocode(), // 14 shro
-    BypassMicrocode(), // 15 maxi
-    BypassMicrocode(), // 16 maxo
+#define X(action) \
+        ArithmeticGroup() \
+            | action ## Op () \
+            | ArithmeticOpUsesIntegerValues(), \
+        ArithmeticGroup() \
+            | action ## Op ()
+        
+#define Y(action) \
+        ArithmeticGroup() \
+            | action ## Op () \
+            | Arg2CannotBeZero() \
+            | ArithmeticOpUsesIntegerValues(), \
+        ArithmeticGroup() \
+            | Arg2CannotBeZero() \
+            | action ## Op ()
+    X(Add), // 1 addi, 2 addo
+    X(Subtract), // 3 subi, 4 subo
+    X(Multiply), // 5 muli, 6 mulo
+    Y(Divide), // 7 divi, 8 divo
+    Y(Remainder), // 9 remi, 10 remo
+    X(ShiftLeft), // 11 shli, 12 shlo
+    X(ShiftRight), // 13 shri, 14 shro
+    X(Max), // 15 maxi, 16 maxo
+#undef Y
+#undef X
     BypassMicrocode(), // 17 not
     BypassMicrocode(), // 18 and
-    BypassMicrocode(), // 19 or
+    ArithmeticGroup() 
+        | OrOp(), // 19 or
     BypassMicrocode(), // 20 xor
     BypassMicrocode(), // 21 nor
     BypassMicrocode(), // 22 nand
@@ -196,7 +257,9 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     BypassMicrocode(), // 35 shri.imm8
     BypassMicrocode(), // 36 shro.imm8
     // memory style operations begin
-    BypassMicrocode(), // 37 move
+    ArithmeticGroup()
+        | OrOp()
+        | TreatArg2AsImm8(), // 37 move ( or with constant zero to perform a transfer)
     BypassMicrocode(), // 38 swap
     BypassMicrocode(), // 39 set
     BypassMicrocode(), // 40 move.from.ip
@@ -284,9 +347,13 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     Unimplemented(), // 86 cmp.less-than-or-equal-to.ordinal.imm8
     Unimplemented(), // 87 cmp.greater-than-or-equal-to.integer.imm8
     Unimplemented(), // 88 cmp.greater-than-or-equal-to.ordinal.imm8
+    // whoops bad encoding scheme screwups
+    ArithmeticGroup() 
+        | MinOp()
+        | ArithmeticOpUsesIntegerValues(), // 89 mini
+    ArithmeticGroup() 
+        | MinOp(), // 90 mino
     // extended instruction set begins here, currently disabled due to insanity
-    Unimplemented(), // 89
-    Unimplemented(), // 90
     Unimplemented(), // 91
     Unimplemented(), // 92
     Unimplemented(), // 93

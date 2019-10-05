@@ -48,7 +48,6 @@ X(Error, ZeroArgument)
     ArithmeticSignedUnsigned(ShiftLeft, ThreeRegister)
     ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
     ArithmeticSignedUnsigned(Max, ThreeRegister)
-    ArithmeticSignedUnsigned(Min, ThreeRegister)
     Arithmetic(BitwiseNot, TwoRegister)
     Arithmetic(BitwiseAnd, ThreeRegister)
     Arithmetic(BitwiseOr, ThreeRegister)
@@ -124,6 +123,7 @@ X(Error, ZeroArgument)
     Imm8SignedUnsignedCompare(GreaterThan)
     Imm8SignedUnsignedCompare(LessThanOrEqualTo)
     Imm8SignedUnsignedCompare(GreaterThanOrEqualTo)
+    ArithmeticSignedUnsigned(Min, ThreeRegister)
 #if 0
     // extended instructions begin
     // destructive direct operations can be simulated with multiple 
