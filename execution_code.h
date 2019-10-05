@@ -93,9 +93,9 @@ constexpr auto IOMemory() noexcept { return unpack(MemorySpace::IO); }
 constexpr auto LoadOp() noexcept { return unpack(MemoryOpcodes::Load); }
 constexpr auto StoreOp() noexcept { return unpack(MemoryOpcodes::Store); }
 constexpr auto IncrementArg0Before() { return unpack(Arg0BeforeAfterActions::IncrementArg0Before); }
-constexpr auto IncrementArg0After() { return unpack(Arg0AfterAfterActions::IncrementArg0After); }
+constexpr auto IncrementArg0After() { return unpack(Arg0BeforeAfterActions::IncrementArg0After); }
 constexpr auto DecrementArg0Before() { return unpack(Arg0BeforeAfterActions::DecrementArg0Before); }
-constexpr auto DecrementArg0After() { return unpack(Arg0AfterAfterActions::DecrementArg0After); }
+constexpr auto DecrementArg0After() { return unpack(Arg0BeforeAfterActions::DecrementArg0After); }
 constexpr auto TreatArg1AsImm16() { return 0x0000'0001; } // when this is not set then arg1 is a register
 constexpr auto TreatArg2AsImm8() { return 0x0000'0002; }
 
