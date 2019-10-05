@@ -111,41 +111,65 @@ arithmetic action bits:
 0b1111 -> nand
 
 All arithmetic operations follow the same basic format for the mode bits
-
+-------------------------------------------------------------------------------
 0b000000 -> registers[dest] = registers[src0] op registers[src1] // 3 register ordinal
+-------------------------------------------------------------------------------
 0b000001 -> registers[dest] = registers[src0] op registers[src1] // 3 register integer
-0b000010 -> registers[dest] = registers[src0] op src1 // 2 register ordinal with Ordinal immediate
-0b000011 -> registers[dest] = registers[src0] op src1 // 2 register integer with Integer immediate
-0b000100 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide ordinal 
-0b000101 -> wide(registers[dest]) = wide(registers[src0]) op src1 // 2 register wide ordinal with immediate
-0b000110 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 3 register wide integer
-0b000111 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) // 2 register wide integer with immediate
-0b001xxx -> simd version, operates on register pairs and performs the operation to two sets of instructions
+-------------------------------------------------------------------------------
+0b000010 -> registers[dest] = registers[src0] op src1 
+         // 2 register ordinal with Ordinal immediate
+-------------------------------------------------------------------------------
+0b000011 -> registers[dest] = registers[src0] op src1 
+         // 2 register integer with Integer immediate
+-------------------------------------------------------------------------------
+0b000100 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) 
+         // 3 register wide ordinal 
+-------------------------------------------------------------------------------
+0b000101 -> wide(registers[dest]) = wide(registers[src0]) op src1 
+         // 2 register wide ordinal with immediate
+-------------------------------------------------------------------------------
+0b000110 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) 
+         // 3 register wide integer
+-------------------------------------------------------------------------------
+0b000111 -> wide(registers[dest]) = wide(registers[src0]) op wide(registers[src1]) 
+         // 2 register wide integer with immediate
+-------------------------------------------------------------------------------
+0b001xxx -> simd version, operates on register pairs and performs the operation to 
+            two sets of instructions
+-------------------------------------------------------------------------------
 0b001000 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // ordinal version
             registers[dest][1] = registers[src0][1] op registers[src1][1]
+-------------------------------------------------------------------------------
 0b001001 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // integer version
             registers[dest][1] = registers[src0][1] op registers[src1][1]
+-------------------------------------------------------------------------------
 0b001010 -> registers[dest][0] = registers[src0][0] op src1 // ordinal version with immediate 
             registers[dest][1] = registers[src0][1] op src1
+-------------------------------------------------------------------------------
 0b001011 -> registers[dest][0] = registers[src0][0] op src1 // integer version with immediate 
             registers[dest][1] = registers[src0][1] op src1
+-------------------------------------------------------------------------------
 // 4 simd version
 0b001100 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // ordinal version
             registers[dest][1] = registers[src0][1] op registers[src1][1]
             registers[dest][2] = registers[src0][2] op registers[src1][2]
             registers[dest][3] = registers[src0][3] op registers[src1][3]
+-------------------------------------------------------------------------------
 0b001101 -> registers[dest][0] = registers[src0][0] op registers[src1][0] // integer version
             registers[dest][1] = registers[src0][1] op registers[src1][1]
             registers[dest][2] = registers[src0][2] op registers[src1][2]
             registers[dest][3] = registers[src0][3] op registers[src1][3]
+-------------------------------------------------------------------------------
 0b001110 -> registers[dest][0] = registers[src0][0] op src1 // ordinal version with immediate 
             registers[dest][1] = registers[src0][1] op src1
             registers[dest][2] = registers[src0][2] op src1
             registers[dest][3] = registers[src0][3] op src1
+-------------------------------------------------------------------------------
 0b001111 -> registers[dest][0] = registers[src0][0] op src1 // integer version with immediate 
             registers[dest][1] = registers[src0][1] op src1
             registers[dest][2] = registers[src0][2] op src1
             registers[dest][3] = registers[src0][3] op src1
+-------------------------------------------------------------------------------
 
 Any other encodings in the mode bits are not accepted
 
@@ -160,31 +184,41 @@ The memory group has the following opcodes:
 
 Set has very few mode bits due to it being an immediate interfacing instruction
 The mode bits provide ways to manipulate multiple registers simultaneously
+-------------------------------------------------------------------------------
 0b00xxxx -> registers[dest] = imm16
+-------------------------------------------------------------------------------
 0b01xxxx -> registers[dest+0] = imm16
             registers[dest+1] = imm16
+-------------------------------------------------------------------------------
 0b10xxxx -> registers[dest+0] = imm16
             registers[dest+1] = imm16
             registers[dest+2] = imm16
+-------------------------------------------------------------------------------
 0b11xxxx -> registers[dest+0] = imm16
             registers[dest+1] = imm16
             registers[dest+2] = imm16
             registers[dest+4] = imm16
+-------------------------------------------------------------------------------
 
 move is a two register instruction, thus we actually have a lot more mode bits
 than would usually be available, however that really isn't that useful. Src1
 must always be all zeros. 
 
+-------------------------------------------------------------------------------
 0b000000 -> registers[dest] = registers[src0]
+-------------------------------------------------------------------------------
 0b000100 -> registers[dest] = registers[src0]
           registers[dest+1] = registers[src0+1]
+-------------------------------------------------------------------------------
 0b001000 -> registers[dest] = registers[src0]
           registers[dest+1] = registers[src0+1]
           registers[dest+2] = registers[src0+2]
+-------------------------------------------------------------------------------
 0b001100 -> registers[dest] = registers[src0]
           registers[dest+1] = registers[src0+1]
           registers[dest+2] = registers[src0+2]
           registers[dest+3] = registers[src0+3]
+-------------------------------------------------------------------------------
 
 IP and LR are hidden registers which are not directly accessible. Instead you
 must use move with the mode bit for dest set to 0b01. This acts as another
@@ -193,27 +227,37 @@ register "file". Conceptually the internal registers are defined as this:
 register 64 -> IP
 register 65 -> status 
 register 66 -> link register 
+-------------------------------------------------------------------------------
 0b01'000000'00'xxxxxx -> ip = registers[src0] // move to ip
+-------------------------------------------------------------------------------
 0b01'xxxxxx'01'000000 -> registers[dest] = ip // move from ip
+-------------------------------------------------------------------------------
 0b01'000001'00'xxxxxx -> status = registers[src0] // move to status
+-------------------------------------------------------------------------------
 0b01'xxxxxx'01'000001 -> registers[dest] = status // move from status
+-------------------------------------------------------------------------------
 0b01'000010'00'xxxxxx -> link register = registers[src0] // move to link register
+-------------------------------------------------------------------------------
 0b01'xxxxxx'01'000010 -> registers[dest] = link register // move from link register
+-------------------------------------------------------------------------------
 
 
 The swap instruction only uses two registers and thus src1 must be always
 assigned to zero plus its mode bits.
 
 swap operations of different widths
+-------------------------------------------------------------------------------
 0b00'00'00 -> temp = registers[dest]
               registers[dest] = registers[src0]
               registers[src0] = temp
+-------------------------------------------------------------------------------
 0b00'01'00 -> temp = registers[dest]
               temp2 = registers[dest+1]
               registers[dest] = registers[src0]
               registers[dest+1] = registers[src0+1]
               registers[src0] = temp
               registers[src0+1] = temp2
+-------------------------------------------------------------------------------
 0b00'10'00 -> temp = registers[dest]
               temp2 = registers[dest+1]
               temp3 = registers[dest+2]
@@ -223,6 +267,7 @@ swap operations of different widths
               registers[src0] = temp
               registers[src0+1] = temp2
               registers[src0+2] = temp3
+-------------------------------------------------------------------------------
 0b00'11'00 -> temp = registers[dest]
               temp2 = registers[dest+1]
               temp3 = registers[dest+2]
@@ -235,6 +280,7 @@ swap operations of different widths
               registers[src0+1] = temp2
               registers[src0+2] = temp3
               registers[src0+3] = temp4
+-------------------------------------------------------------------------------
 
 swap can also operate on the hidden registers to save on number of instructions
 
@@ -266,34 +312,59 @@ While code is special due it being double wide, the other memory spaces have
 the following control bits:
 
 mode bits (combined, undeclared bits are unused error states)
+-------------------------------------------------------------------------------
 0b000000 -> address (dest) + immediate offset (src1), value is register src0
+-------------------------------------------------------------------------------
 0b000010 -> address (dest) + register offset (src1), value is register src0
+-------------------------------------------------------------------------------
 0b000100 -> address (dest) + immediate offset (src1), value is register src0, then increment dest
+-------------------------------------------------------------------------------
 0b000101 -> address (dest) + immediate offset (src1), value is register src0, first increment dest
+-------------------------------------------------------------------------------
 0b000110 -> address (dest) + register offset (src1), value is register src0,  then increment dest
+-------------------------------------------------------------------------------
 0b000111 -> address (dest) + register offset (src1), value is register src0,  first increment dest
+-------------------------------------------------------------------------------
 0b001000 -> address (dest) + immediate offset (src1), value is register src0, then decrement dest
+-------------------------------------------------------------------------------
 0b001001 -> address (dest) + immediate offset (src1), value is register src0, first decrement dest
+-------------------------------------------------------------------------------
 0b001010 -> address (dest) + register offset (src1), value is register src0,  then decrement dest
+-------------------------------------------------------------------------------
 0b001011 -> address (dest) + register offset (src1), value is register src0,  first decrement dest
+-------------------------------------------------------------------------------
 0b001100 -> address (dest) + immediate offset (src1), value is register pair src0
+-------------------------------------------------------------------------------
 0b001110 -> address (dest) + register offset (src1), value is register pair src0
+-------------------------------------------------------------------------------
 0b010000 -> address (dest), value is register (src0), mask is register (src1), value & mask is performed
+-------------------------------------------------------------------------------
 0b11xxxx -> address (dest), value is imm16
+-------------------------------------------------------------------------------
 
 
 The code space has the following mode bits
-
+-------------------------------------------------------------------------------
 0b000000 -> address (dest), lower half (src0), upper half (src1)
+-------------------------------------------------------------------------------
 0b000010 -> address (dest), lower half (src0), upper half (src1) then incr dest
+-------------------------------------------------------------------------------
 0b000011 -> address (dest), lower half (src0), upper half (src1) then decr dest
+-------------------------------------------------------------------------------
 0b000100 -> address (dest), pair lower half (src0), offset immediate (src1) 
+-------------------------------------------------------------------------------
 0b000110 -> address (dest), pair lower half (src0), offset immediate (src1) then incr dest
+-------------------------------------------------------------------------------
 0b000111 -> address (dest), pair lower half (src0), offset immediate (src1) then decr dest
+-------------------------------------------------------------------------------
 0b001000 -> address (dest), pair lower half (src0), offset register (src1) 
+-------------------------------------------------------------------------------
 0b001010 -> address (dest), pair lower half (src0), offset register (src1) then incr dest
+-------------------------------------------------------------------------------
 0b001011 -> address (dest), pair lower half (src0), offset register (src1) then decr dest
+-------------------------------------------------------------------------------
 0b11xxxx -> address (imm16), pair lower half (dest)
+-------------------------------------------------------------------------------
 
 === Compare Group Operations ===
 Compare operations are very simple too
@@ -339,29 +410,76 @@ without it being a web of mental pain.
 
 There are the following actions in this group:
 
+-------------------------------------------------------------------------------
 0b0000xxxxxx -> Branch Immediate
-0b000000xxxx -> Branch Immediate Absolute Unconditional (dest must be zero) -> ip = imm16
-0b000001xxxx -> Branch Immediate Absolute Conditional -> if (registers[dest]) { ip = imm16 }
-0b000010xxxx -> Branch Immediate Relative Unconditional (dest must be zero) ->  ip += imm16
-0b000011xxxx -> Branch Immediate Relative Conditional -> if (registers[dest]) { ip += imm16 }
+-------------------------------------------------------------------------------
+0b000000xxxx -> Branch Immediate Absolute Unconditional (dest must be zero) 
+             -> ip = imm16
+-------------------------------------------------------------------------------
+0b000001xxxx -> Branch Immediate Absolute Conditional 
+             -> if (registers[dest]) { ip = imm16 }
+-------------------------------------------------------------------------------
+0b000010xxxx -> Branch Immediate Relative Unconditional (dest must be zero) 
+             -> ip += imm16
+-------------------------------------------------------------------------------
+0b000011xxxx -> Branch Immediate Relative Conditional 
+             -> if (registers[dest]) { ip += imm16 }
+-------------------------------------------------------------------------------
 0b0001xxxxxx -> Call Immediate
-0b000100xxxx -> Call Immediate Absolute Unconditional (dest must be zero) -> lr = ip + 1; ip = imm16
-0b000101xxxx -> Call Immediate Absolute Conditional -> if (registers[dest]) { lr = ip + 1; ip = imm16 }
-0b000110xxxx -> Call Immediate Relative Unconditional (dest must be zero) ->  lr = ip + 1 ; ip += imm16
-0b000111xxxx -> Call Immediate Relative Conditional -> if (registers[dest]) { lr = ip + 1; ip += imm16 }
+-------------------------------------------------------------------------------
+0b000100xxxx -> Call Immediate Absolute Unconditional (dest must be zero) 
+             -> lr = ip + 1; ip = imm16
+-------------------------------------------------------------------------------
+0b000101xxxx -> Call Immediate Absolute Conditional 
+             -> if (registers[dest]) { lr = ip + 1; ip = imm16 }
+-------------------------------------------------------------------------------
+0b000110xxxx -> Call Immediate Relative Unconditional (dest must be zero) 
+             -> lr = ip + 1 ; ip += imm16
+-------------------------------------------------------------------------------
+0b000111xxxx -> Call Immediate Relative Conditional 
+             -> if (registers[dest]) { lr = ip + 1; ip += imm16 }
+-------------------------------------------------------------------------------
 0b0010xxxxxx -> Branch Register
-0b0010000000 -> Branch Register Absolute Unconditional (src1 and src2 must be zero) -> ip = registers[dest]
-0b0010010000 -> Branch Register Absolute Conditional (src2 must be zero) -> if (registers[src1]) { ip = registers[dest] }
-0b0010100000 -> Branch Register Relative Unconditional (src1 and src2 must be zero) -> ip += registers[dest]
-0b0010110000 -> Branch Register Relative Conditional (src2 must be zero) -> if (registers[src1]) { ip += registers[dest] }
+-------------------------------------------------------------------------------
+0b0010000000 -> Branch Register Absolute Unconditional (src1 and src2 must be zero) 
+             -> ip = registers[dest]
+-------------------------------------------------------------------------------
+0b0010010000 -> Branch Register Absolute Conditional (src2 must be zero) 
+             -> if (registers[src1]) { ip = registers[dest] }
+-------------------------------------------------------------------------------
+0b0010100000 -> Branch Register Relative Unconditional (src1 and src2 must be zero) 
+             -> ip += registers[dest]
+-------------------------------------------------------------------------------
+0b0010110000 -> Branch Register Relative Conditional (src2 must be zero) 
+             -> if (registers[src1]) { ip += registers[dest] }
+-------------------------------------------------------------------------------
 0b0011xxxxxx -> Call Register
-0b0011000000 -> Call Register Absolute Unconditional (src1 and src2 must be zero) -> lr = ip + 1; ip = registers[dest]
-0b0011010000 -> Call Register Absolute Conditional (src2 must be zero) -> if (registers[src1]) { lr = ip + 1; ip = registers[dest] }
-0b0011100000 -> Call Register Relative Unconditional (src1 and src2 must be zero) -> lr = ip + 1; ip += registers[dest]
-0b0011110000 -> Call Register Relative Conditional (src2 must be zero) -> if (registers[src1]) { lr = ip + 1; ip += registers[dest] }
+-------------------------------------------------------------------------------
+0b0011000000 -> Call Register Absolute Unconditional (src1 and src2 must be zero) 
+             -> lr = ip + 1; ip = registers[dest]
+-------------------------------------------------------------------------------
+0b0011010000 -> Call Register Absolute Conditional (src2 must be zero) 
+             -> if (registers[src1]) { lr = ip + 1; ip = registers[dest] }
+-------------------------------------------------------------------------------
+0b0011100000 -> Call Register Relative Unconditional (src1 and src2 must be zero) 
+             -> lr = ip + 1; ip += registers[dest]
+-------------------------------------------------------------------------------
+0b0011110000 -> Call Register Relative Conditional (src2 must be zero) 
+             -> if (registers[src1]) { lr = ip + 1; ip += registers[dest] }
+-------------------------------------------------------------------------------
 0b0100xxxxxx -> Return 
-0b010000xxxx -> Return Unconditional -> return() (src1 and src2 must be zero, as well as its mode bits)
-0b010001xxxx -> Return Conditional -> if (registers[dest]) { return() } (src1 and src2 must be zero, as well as its mode bits)
+-------------------------------------------------------------------------------
+0b010000xxxx -> Return Unconditional 
+             -> return() (src1 and src2 must be zero, as well as its mode bits)
+-------------------------------------------------------------------------------
+0b010001xxxx -> Return Conditional 
+             -> if (registers[dest]) { return() } (src1 and src2 must be zero, as well as its mode bits)
+-------------------------------------------------------------------------------
 0b0101xxxxxx -> Select
-0b010100xxxx -> Select Branch -> if (registers[dest]) { branch(src0); } else { branch(src1); }
-0b010110xxxx -> Select Call -> if (registers[dest]) { call(src0); } else { call(src1); }
+-------------------------------------------------------------------------------
+0b010100xxxx -> Select Branch 
+             -> if (registers[dest]) { branch(src0); } else { branch(src1); }
+-------------------------------------------------------------------------------
+0b010110xxxx -> Select Call 
+             -> if (registers[dest]) { call(src0); } else { call(src1); }
+-------------------------------------------------------------------------------
