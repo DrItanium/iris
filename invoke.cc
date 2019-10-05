@@ -75,7 +75,7 @@ Core::invoke(DoubleWord ibits) {
                    temporaryAddress += offset;
                }
                if (microcode::targetsCodeMemory(uinst)) {
-                    auto arg2 = RegisterIndex{static_cast<Byte>(1) + std::to_integer<Byte>(inst.getArg2<RegisterIndex>())};
+                    auto arg2 = RegisterIndex{static_cast<uint8_t>(1 + static_cast<uint8_t>(arg1)) };
                    // need to make a double word using the third register as
                    // the upper 16-bits
                    auto upperHalf = static_cast<DoubleWord>(getRegisterValue<Word>(arg2)) << 16;
@@ -99,7 +99,7 @@ Core::invoke(DoubleWord ibits) {
                    temporaryAddress += offset;
                }
                if (microcode::targetsCodeMemory(uinst)) {
-                    auto arg2 = RegisterIndex{static_cast<Byte>(1) + std::to_integer<Byte>(inst.getArg2<RegisterIndex>())};
+                    auto arg2 = RegisterIndex{static_cast<uint8_t>(1 + static_cast<uint8_t>(arg1)) };
                     auto intermediate = _code[address];
                     lowerHalf = static_cast<Word>(intermediate);
                     setRegisterValue<Word>(arg2, static_cast<Word>(intermediate >> 16));
