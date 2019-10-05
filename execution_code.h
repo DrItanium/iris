@@ -103,13 +103,25 @@ constexpr bool targetsStackMemory(RawMicroInstruction value) noexcept { return i
 constexpr auto IOMemory() noexcept { return unpack(MemorySpace::IO); }
 constexpr bool targetsIOMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::IO); }
 constexpr auto LoadOp() noexcept { return unpack(MemoryOpcodes::Load); }
+constexpr bool isLoadOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemoryOpcodes::Load); }
 constexpr auto StoreOp() noexcept { return unpack(MemoryOpcodes::Store); }
-constexpr auto IncrementArg0Before() { return unpack(Arg0BeforeAfterActions::IncrementArg0Before); }
-constexpr auto IncrementArg0After() { return unpack(Arg0BeforeAfterActions::IncrementArg0After); }
-constexpr auto DecrementArg0Before() { return unpack(Arg0BeforeAfterActions::DecrementArg0Before); }
-constexpr auto DecrementArg0After() { return unpack(Arg0BeforeAfterActions::DecrementArg0After); }
-constexpr auto TreatArg1AsImm16() { return 0x0000'0001; } // when this is not set then arg1 is a register
-constexpr auto TreatArg2AsImm8() { return 0x0000'0002; }
+constexpr bool isStoreOp(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemoryOpcodes::Store); }
+constexpr auto IncrementArg0Before() noexcept { return unpack(Arg0BeforeAfterActions::IncrementArg0Before); }
+constexpr auto IncrementArg0After() noexcept { return unpack(Arg0BeforeAfterActions::IncrementArg0After); }
+constexpr auto DecrementArg0Before() noexcept { return unpack(Arg0BeforeAfterActions::DecrementArg0Before); }
+constexpr auto DecrementArg0After() noexcept { return unpack(Arg0BeforeAfterActions::DecrementArg0After); }
+constexpr bool incrArg0Action(RawMicroInstruction value) noexcept { return ((value & IncrementArg0Before()) || (value & IncrementArg0After())); }
+constexpr bool decrArg0Action(RawMicroInstruction value) noexcept { return ((value & DecrementArg0Before()) || (value & DecrementArg0After())); }
+constexpr bool manipulateArg0Before(RawMicroInstruction value) noexcept { 
+    return ((value & IncrementArg0Before()) || (value & DecrementArg0Before())); 
+}
+constexpr bool manipulateArg0After(RawMicroInstruction value) noexcept { 
+    return ((value & IncrementArg0After()) || (value & DecrementArg0After())); 
+}
+constexpr auto TreatArg1AsImm16() noexcept { return 0x0000'0001; } // when this is not set then arg1 is a register
+constexpr bool shouldTreatArg1AsImm16(RawMicroInstruction value) noexcept { return value & TreatArg1AsImm16(); }
+constexpr auto TreatArg2AsImm8() noexcept { return 0x0000'0002; }
+constexpr bool shouldTreatArg2AsImm8(RawMicroInstruction value) noexcept { return value & TreatArg2AsImm8(); }
 
 /// @todo figure out how to make incorrect flag usage a compile time error
 #if 0
@@ -187,8 +199,8 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     BypassMicrocode(), // 37 move
     BypassMicrocode(), // 38 swap
     BypassMicrocode(), // 39 set
-    Unimplemented(), // 40 move.from.ip
-    Unimplemented(), // 41 move.to.ip
+    BypassMicrocode(), // 40 move.from.ip
+    BypassMicrocode(), // 41 move.to.ip
     MemoryGroup() 
         | StoreOp() 
         | StackMemory() 
