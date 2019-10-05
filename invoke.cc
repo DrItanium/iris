@@ -26,15 +26,24 @@
 #include "types.h"
 #include "iris.h"
 #include "opcodes.h"
+#include "execution_code.h"
 
 namespace iris {
 void 
 Core::invoke(DoubleWord ibits) {
     Instruction inst(ibits);
-    if (auto operation = inst.decode(); operation) {
-        std::visit([this](auto&& op) { invoke(op); }, *operation);
+    if (auto microinstruction = microcode::eeprom[inst.getOpcodeIndex()]; microcode::bypassesMicrocode(microinstruction)) {
+        if (auto operation = inst.decode(); operation) {
+            std::visit([this](auto&& op) { invoke(op); }, *operation);
+        } else {
+            throw BadOperationException();
+        }
+    } else if (microcode::isErrorGroup(microinstruction)) {
+        // throw error
+    } else if (microcode::isUnimplemented(microinstruction)) {
+        // throw error
     } else {
-        throw BadOperationException();
+        // perform separate decoding
     }
 }
 } // end namespace iris

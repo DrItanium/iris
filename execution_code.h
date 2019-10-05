@@ -30,9 +30,6 @@
 namespace iris::microcode {
 
 using RawMicroInstruction = int32_t;
-constexpr bool shouldBypassMicrocodeDispatch(RawMicroInstruction inst) noexcept {
-    return inst < 0;
-}
 enum class MicroGroup : RawMicroInstruction {
     Error = 0x0000'0000,
     Memory = 0x1000'0000,
@@ -76,20 +73,35 @@ enum class Arg0BeforeAfterActions : RawMicroInstruction {
 
 
 constexpr RawMicroInstruction Unimplemented() noexcept { return 0; }
+constexpr bool isUnimplemented(RawMicroInstruction value) noexcept { return value == 0; }
 constexpr RawMicroInstruction BypassMicrocode() noexcept { return 0x8000'0000; }
+constexpr bool bypassesMicrocode(RawMicroInstruction value) noexcept { return value < 0; }
 template<typename T>
 constexpr std::underlying_type_t<std::enable_if_t<std::is_enum_v<T>, T>> unpack(T value) noexcept {
     using K = std::underlying_type_t<T>;
     return static_cast<K>(value);
 }
+template<typename T>
+constexpr bool instructionMarkedAs(RawMicroInstruction inst,  T value) noexcept {
+    return inst & unpack(value);
+}
+
 constexpr auto ErrorGroup() noexcept { return unpack(MicroGroup::Error); }
+constexpr bool isErrorGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Error); }
 constexpr auto MemoryGroup() noexcept { return unpack(MicroGroup::Memory); }
+constexpr bool isMemoryGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Memory); }
 constexpr auto BranchGroup() noexcept { return unpack(MicroGroup::Branch); }
+constexpr bool isBranchGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Branch); }
 constexpr auto CompareGroup() noexcept { return unpack(MicroGroup::Compare); }
+constexpr bool isCompareGroup(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MicroGroup::Compare); }
 constexpr auto CodeMemory() noexcept { return unpack(MemorySpace::Code); }
+constexpr bool targetsCodeMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::Code); }
 constexpr auto DataMemory() noexcept { return unpack(MemorySpace::Data); }
+constexpr bool targetsDataMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::Data); }
 constexpr auto StackMemory() noexcept { return unpack(MemorySpace::Stack); }
+constexpr bool targetsStackMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::Stack); }
 constexpr auto IOMemory() noexcept { return unpack(MemorySpace::IO); }
+constexpr bool targetsIOMemory(RawMicroInstruction value) noexcept { return instructionMarkedAs(value, MemorySpace::IO); }
 constexpr auto LoadOp() noexcept { return unpack(MemoryOpcodes::Load); }
 constexpr auto StoreOp() noexcept { return unpack(MemoryOpcodes::Store); }
 constexpr auto IncrementArg0Before() { return unpack(Arg0BeforeAfterActions::IncrementArg0Before); }
