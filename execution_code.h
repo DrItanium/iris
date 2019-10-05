@@ -176,23 +176,32 @@ constexpr inline std::array<RawMicroInstruction, 256> eeprom {
     BypassMicrocode(), // 39 set
     Unimplemented(), // 40
     Unimplemented(), // 41
-    MemoryGroup() | StoreOp() | StackMemory() | DecrementArg0Before(), // 42 stack.push
-    MemoryGroup() | StoreOp() | StackMemory() | DecrementArg0Before() | TreatArg1AsImm16() , // 43 stack.push.imm
-    MemoryGroup() | LoadOp() | StackMemory() | IncrementArg0After(), // 44 stack.pop
-
+    MemoryGroup() 
+        | StoreOp() 
+        | StackMemory() 
+        | DecrementArg0Before(), // 42 stack.push
+    MemoryGroup() 
+        | StoreOp() 
+        | StackMemory() 
+        | DecrementArg0Before() 
+        | TreatArg1AsImm16() , // 43 stack.push.imm
+    MemoryGroup() 
+        | LoadOp() 
+        | StackMemory() 
+        | IncrementArg0After(), // 44 stack.pop
     Unimplemented(), // 45 load.data (with offset)
     Unimplemented(), // 46 store.data (with offset)
     Unimplemented(), // 47 store.data.imm16
     Unimplemented(), // 48 load.code (with offset)
     Unimplemented(), // 49 store.code (with offset)
-    Unimplemented(), // 50 
-    Unimplemented(), // 51
-    Unimplemented(), // 52
-    Unimplemented(), // 53
-    Unimplemented(), // 54
-    Unimplemented(), // 55
-    Unimplemented(), // 56
-    Unimplemented(), // 57
+    Unimplemented(), // 50 load.io (with offset)
+    Unimplemented(), // 51 store.io (with offset)
+    Unimplemented(), // 52 store.io.imm16 
+    Unimplemented(), // 53 
+    Unimplemented(), // 54 
+    Unimplemented(), // 55 
+    Unimplemented(), // 56 
+    Unimplemented(), // 57 
     Unimplemented(), // 58
     Unimplemented(), // 59
     Unimplemented(), // 60
