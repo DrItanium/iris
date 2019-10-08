@@ -105,12 +105,6 @@ Core::invoke(const iris::BranchSelectInstruction& s) {
     _advanceIP = false;
 }
 void
-Core::invoke(const iris::BranchImmediateInstruction& s) {
-    // BranchImmediate imm16
-    _ip.put(s.getFirst());
-    _advanceIP = false;
-}
-void
 Core::invoke(const iris::CompareEqualsInstruction& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, getSourceRegister(src0) == getSourceRegister(src1));
@@ -387,34 +381,45 @@ X(BitwiseAnd, &);
 X(BitwiseOr, |);
 X(BitwiseXor, ^);
 #undef X
-void
-Core::invoke(const iris::BranchRelativeImmediateInstruction& s) {
-    auto [ offset ] = s.arguments();
-    _ip.put<SignedWord>(_ip.get<SignedWord>() + offset);
-    _advanceIP = false;
-}
+template<typename T> constexpr auto UsesRelativeOffset = false;
+template<typename T> constexpr auto UsesLinkRegister = false;
+template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
+template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
+#define X(operation) \
+    void \
+    Core::invoke(const iris::Branch ## operation ## Instruction & s) { \
+        using K = std::decay_t<decltype(s)>; \
+        auto [ link, offset] = s.arguments(); \
+        if constexpr (UsesLinkRegister<K>) { \
+            setRegisterValue(link, _ip.get() + 1); \
+        } \
+        if constexpr (UsesRelativeOffset<K>) { \
+            _ip.put(_ip.get<SignedWord>() + offset); \
+        } else { \
+            _ip.put(offset); \
+        } \
+        _advanceIP = false; \
+    }
+X(RelativeImmediate)
+X(Immediate)
+X(RelativeImmediateAndLink)
+#undef X
 
 void
 Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
     if (auto [ dest, cond ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        _ip.put(getRegisterValue(dest));
+        _ip.put(getRegisterValue<Word>(dest));
         _advanceIP = false;
     }
 }
 void
 Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
-    auto [ cond, offset ] = s.arguments();
-    if (getRegisterValue<bool>(cond)) {
+    if (auto [ cond, offset ] = s.arguments(); getRegisterValue<bool>(cond)) {
         _ip.put(_ip.get<SignedWord>() + offset);
         _advanceIP = false;
     }
-}
-void
-Core::invoke(const iris::BranchRelativeImmediateAndLinkInstruction& s) {
-    auto [ link, offset ] = s.arguments();
-    setRegisterValue(link, _ip.get() + 1);
-    _ip.put(_ip.get<SignedWord>() + offset);
-    _advanceIP = false;
 }
 void
 Core::invoke(const iris::MemoryMoveToIPInstruction& s) {

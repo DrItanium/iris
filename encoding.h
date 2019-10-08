@@ -217,9 +217,9 @@ namespace iris::instructions {
     Bits branch(T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return BranchImmediate({static_cast<Address>(addr)});
+            return BranchImmediate({0_reg, static_cast<Address>(addr)});
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
-            return BranchRelativeImmediate({static_cast<Offset16>(addr)});
+            return BranchRelativeImmediate({0_reg, static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return BranchRegister({addr});
         } else {
