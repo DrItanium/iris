@@ -441,6 +441,22 @@ class Core {
                 static_assert(false_v<K>, "Unimplemented stack operation!");
             }
         }
+        template<typename T, std::enable_if_t<IsIOOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, MemoryIOLoadWithOffsetInstruction>) {
+                auto [ dest, loc, offset ] = s.arguments();
+                setRegisterValue(dest, loadIO(loc, offset));
+            } else if constexpr (std::is_same_v<K, MemoryIOStoreWithOffsetInstruction>) {
+                auto [ dest, value, offset ] = s.arguments();
+                storeIO(dest, value, offset);
+            } else if constexpr (std::is_same_v<K, MemoryIOStoreImmediateValueInstruction>) {
+                auto [ addr, imm16 ] = s.arguments();
+                storeIO(addr, imm16);
+            } else {
+                static_assert(false_v<K>, "Unimplemented stack operation!");
+            }
+        }
         template<typename T, std::enable_if_t<IsCodeOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;

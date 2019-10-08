@@ -253,20 +253,4 @@ Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
     }
 }
 
-void
-Core::invoke(const iris::MemoryIOStoreImmediateValueInstruction& s) {
-    auto [ dest, imm16 ] = s.arguments();
-    storeIO(dest, imm16);
-}
-
-void
-Core::invoke(const iris::MemoryIOLoadWithOffsetInstruction& s) {
-    auto [ dest, addr, offset ] = s.arguments();
-    setRegisterValue(dest, loadIO(addr, offset));
-}
-void
-Core::invoke(const iris::MemoryIOStoreWithOffsetInstruction& s) {
-    auto [ dest, value, offset ] = s.arguments();
-    storeIO(dest, value, offset);
-}
 } // end namespace iris
