@@ -58,18 +58,6 @@ Core::invoke(const iris::MemoryAssignRegisterImmediateInstruction& s) {
     auto [dest, imm16] = s.arguments();
     setRegisterValue(dest, imm16);
 }
-void
-Core::invoke(const iris::MemoryCodeLoadWithOffsetInstruction& s) {
-    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower, offset] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(addr, offset));
-}
-void
-Core::invoke(const iris::MemoryCodeStoreWithOffsetInstruction& s) {
-    // CodeStore AddressRegister <= LowerRegister (upper register implied)
-    auto [addr, lower, offset ] = s.arguments();
-    storeCode(addr, lower, offset);
-}
 
 void
 Core::invoke(const iris::BranchSelectInstruction& s) {

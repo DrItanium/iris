@@ -356,8 +356,8 @@ constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is
 template<typename T>
 constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>>);
 
-template<typename T>
-constexpr auto IsStackOperation = false;
+template<typename T> constexpr auto IsStackOperation = false;
+template<typename T> constexpr auto IsCodeOperation = false;
 
 
 
@@ -374,6 +374,8 @@ constexpr auto IsStackOperation = false;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPopInstruction> = true;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPushInstruction> = true;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPushImmediateValueInstruction> = true;
+template<> constexpr auto IsCodeOperation<iris::MemoryCodeLoadWithOffsetInstruction> = true;
+template<> constexpr auto IsCodeOperation<iris::MemoryCodeStoreWithOffsetInstruction> = true;
 
 constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 

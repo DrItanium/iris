@@ -417,11 +417,26 @@ class Core {
             } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
                                  std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
                 // stack grows downward
-                // StackPush StackPointerRegister SourceRegister
+                // StackPush StackPointerRegister SourceRegister|Imm16
                 decrementRegister(sp);
                 storeStack(sp, other);
             } else {
                 static_assert(false_v<K>, "Unimplemented stack operation!");
+            }
+        }
+        template<typename T, std::enable_if_t<IsCodeOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, MemoryCodeLoadWithOffsetInstruction>) {
+                // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
+                auto [addr, lower, offset] = s.arguments();
+                setDoubleRegisterValue(lower, loadCode(addr, offset));
+            } else if constexpr (std::is_same_v<K, MemoryCodeStoreWithOffsetInstruction>) {
+                // CodeStore AddressRegister <= LowerRegister (upper register implied)
+                auto [addr, lower, offset ] = s.arguments();
+                storeCode(addr, lower, offset);
+            } else {
+                static_assert(false_v<K>, "Unimplemented code operation!");
             }
         }
 
