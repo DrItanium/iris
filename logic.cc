@@ -185,38 +185,6 @@ X(ShiftLeft, <<);
 X(ShiftRight, >>);
 #undef X
 
-void
-Core::invoke(const iris::ArithmeticDivideSignedImmediateInstruction& s) {
-    if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) / static_cast<SignedWord>(s8));
-    }
-}
-void
-Core::invoke(const iris::ArithmeticDivideUnsignedImmediateInstruction& s) {
-    if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue(dest, getRegisterValue<Word>(src0) / static_cast<Word>(u8));
-    }
-}
-void
-Core::invoke(const iris::ArithmeticRemainderSignedImmediateInstruction& s) {
-    if (auto [ dest, src0, s8 ] = s.arguments(); s8 == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) % static_cast<SignedWord>(s8));
-    }
-}
-void
-Core::invoke(const iris::ArithmeticRemainderUnsignedImmediateInstruction& s) {
-    if (auto [ dest, src0, u8 ] = s.arguments(); u8 == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue(dest, getRegisterValue<Word>(src0) % static_cast<Word>(u8));
-    }
-}
 
 void
 Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {
@@ -275,44 +243,6 @@ X(Min, std::min);
 X(Max, std::max);
 #undef X
 #undef Y
-
-void 
-Core::invoke(const iris::ArithmeticDivideSignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) / denominator);
-    }
-}
-void 
-Core::invoke(const iris::ArithmeticDivideUnsignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) / denominator);
-    }
-}
-
-void 
-Core::invoke(const iris::ArithmeticRemainderSignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    if (auto denominator = getRegisterValue<SignedWord>(src1); denominator == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue<SignedWord>(dest, getRegisterValue<SignedWord>(src0) % denominator);
-    }
-}
-void 
-Core::invoke(const iris::ArithmeticRemainderUnsignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    if (auto denominator = getRegisterValue<UnsignedWord>(src1); denominator == 0) {
-        throw DivideByZeroException();
-    } else {
-        setRegisterValue<UnsignedWord>(dest, getRegisterValue<UnsignedWord>(src0) % denominator);
-    }
-}
 
 void
 Core::invoke(const iris::BranchRegisterInstruction& s) {

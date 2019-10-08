@@ -332,9 +332,17 @@ using U8Format = OneArgumentFormat<Byte, op>;
 template<Opcodes op>
 using S8Format = OneArgumentFormat<SignedByte, op>;
 
+template<typename T>
+constexpr auto TreatArg2AsImmediate = 
+std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T> || 
+std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>;
+
+
+
 // define the actual instruction kinds
 #define X(t, f) \
     struct t ## Instruction final : public f ## Format < Opcodes :: t > { \
+        static constexpr auto Opcode = Opcodes:: t ; \
         using Parent = f ## Format < Opcodes:: t > ; \
         using Parent::Parent; \
     };

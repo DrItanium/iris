@@ -42,15 +42,17 @@
 #include "exceptions.h"
 #include "IODevices.h"
 #include "register.h"
+#include "opcodes.h"
 namespace iris {
-#define X(title , fmt) \
-    class title ## Instruction ;
-#include "InstructionFormats.def"
-#undef X
     template<typename T> constexpr auto IsBranchImmediateInstruction = false;
     template<typename T> constexpr auto UsesRelativeOffset = false;
     template<typename T> constexpr auto UsesLinkRegister = false;
     template<typename T> constexpr auto ManipulatesIP = false;
+    template<typename T> constexpr auto DisallowsDivideByZero = false;
+    template<typename T> constexpr auto IsIntegerOperation = false;
+    template<typename T> constexpr auto IsOrdinalOperation = false;
+    template<typename T> constexpr auto IsDivideOperation = false;
+    template<typename T> constexpr auto IsRemainderOperation = false;
     template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
     template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
     template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
@@ -61,6 +63,18 @@ namespace iris {
     template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
     template<> constexpr auto ManipulatesIP<iris::MemoryMoveToIPInstruction> = true;
     template<> constexpr auto ManipulatesIP<iris::MemoryMoveFromIPInstruction> = true;
+    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderSignedInstruction> = true;
+    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderUnsignedInstruction> = true;
+    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideSignedInstruction> = true;
+    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideUnsignedInstruction> = true;
+    template<> constexpr auto IsIntegerOperation<iris::ArithmeticRemainderSignedInstruction> = true;
+    template<> constexpr auto IsIntegerOperation<iris::ArithmeticDivideSignedInstruction> = true;
+    template<> constexpr auto IsOrdinalOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
+    template<> constexpr auto IsOrdinalOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
+    template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderSignedInstruction> = true;
+    template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
+    template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideSignedInstruction> = true;
+    template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
 
 class Core {
     public:
@@ -360,6 +374,30 @@ class Core {
                 setRegisterValue(reg, _ip.get());
             } else {
                 static_assert(false_v<I>, "Type not accepted!");
+            }
+        }
+        template<typename T, std::enable_if_t<DisallowsDivideByZero<std::decay_t<T>>, int> = 0> 
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
+            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
+            auto [ dest, num, denom ] = s.arguments(); 
+            D denominator = static_cast<D>(0);
+            if constexpr (TreatArg2AsImmediate<K>) {
+                denominator = static_cast<D>(denom);
+            } else {
+                denominator = getRegisterValue(denom);
+            }
+            if (denominator == 0) {
+                throw DivideByZeroException();
+            } else {
+                if constexpr (auto numerator = getRegisterValue<D>(num); IsRemainderOperation<K>) {
+                    setRegisterValue<D>(dest, numerator % denominator);
+                } else if constexpr (IsDivideOperation<K>) {
+                    setRegisterValue<D>(dest, numerator / denominator);
+                } else {
+                    static_assert(false_v<T>, "Unimplemented operation which disallows division by zero!");
+                }
             }
         }
     private:
