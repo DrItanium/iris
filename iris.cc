@@ -94,14 +94,5 @@ Core::readTerminateCell(Core& c) {
 }
 
 
-QuadRegister
-Core::getQuadRegister(RegisterIndex start) noexcept {
-    return QuadRegister::make(_regs, start);
-}
-
-const QuadRegister
-Core::getQuadRegister(RegisterIndex start) const noexcept {
-    return QuadRegister::make(_regs, start);
-}
 
 } // end namespace iris

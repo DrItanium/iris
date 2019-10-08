@@ -130,11 +130,6 @@ class Core {
                 } else if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[address] = value;
                     _data[address+1] = value >> 16;
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _data[address] = value;
-                    _data[address+1] = value >> 16;
-                    _data[address+2] = value >> 32;
-                    _data[address+3] = value >> 48;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[address] = getRegisterValue(value);
                 } else {
@@ -147,11 +142,6 @@ class Core {
                 } else if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[addr] = value;
                     _data[addr+1] = value >> 16;
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _data[addr] = value;
-                    _data[addr+1] = value >> 16;
-                    _data[addr+2] = value >> 32;
-                    _data[addr+3] = value >> 48;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     if (address == value) {
                         _data[addr] = addr;
@@ -201,9 +191,6 @@ class Core {
             if constexpr (std::is_same_v<A, Address>) {
                 if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[address] = value;
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _data[address] = value;
-                    _data[address + 1] = value >> 32;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[address] = getDoubleRegisterValue(value);
                 } else {
@@ -213,9 +200,6 @@ class Core {
                 auto addr = getRegisterValue(address);
                 if constexpr (std::is_same_v<V, DoubleWord>) {
                     _data[addr] = value;
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _data[addr] = value;
-                    _data[addr + 1] = value >> 32;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _data[addr] = getDoubleRegisterValue(value);
                 } else {
@@ -237,11 +221,6 @@ class Core {
                 } else if constexpr (std::is_same_v<V, DoubleWord>) {
                     _io.store(address, value);
                     _io.store(address + 1, value >> 16);
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _io.store(address, value);
-                    _io.store(address + 1, value >> 16);
-                    _io.store(address + 2, value >> 32);
-                    _io.store(address + 3, value >> 48);
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     _io.store(address, getRegisterValue(value));
                 } else {
@@ -254,11 +233,6 @@ class Core {
                 } else if constexpr (std::is_same_v<V, DoubleWord>) {
                     _io.store(address, value);
                     _io.store(address + 1, value >> 16);
-                } else if constexpr (std::is_same_v<V, QuadWord>) {
-                    _io.store(address, value);
-                    _io.store(address + 1, value >> 16);
-                    _io.store(address + 2, value >> 32);
-                    _io.store(address + 3, value >> 48);
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                     if (address == value) {
                         _io.store(addr, addr);
@@ -277,24 +251,15 @@ class Core {
             storeIO(getRegisterValue<Address>(addr, offset), value);
         }
         inline void storeIO(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeIO(addr, reg.get(), offset); }
-        inline void storeIO(RegisterIndex addr, const QuadRegister& reg, Address offset) { storeIO(addr, reg.get(), offset); }
         inline void storeIO(RegisterIndex addr, const Register& reg, Address offset) { storeIO(addr, reg.get(), offset); }
         inline void storeData(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeData(addr, reg.get(), offset); }
-        inline void storeData(RegisterIndex addr, const QuadRegister& reg, Address offset) { storeData(addr, reg.get(), offset); }
         inline void storeData(RegisterIndex addr, const Register& reg, Address offset) { storeData(addr, reg.get(), offset); }
         inline void storeStack(RegisterIndex addr, const Register& reg) { storeStack(addr, reg.get()); }
         inline void storeCode(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeCode(addr, reg.get(), offset); }
-        inline void storeCode(RegisterIndex addr, const QuadRegister& reg, Address offset) { storeCode(addr, reg.get(), offset); }
         template<typename R = Word>
         inline R loadData(RegisterIndex addr, Address offset) {
             auto loc = getRegisterValue<Address>(addr, offset); 
-            if constexpr (std::is_same_v<R, QuadWord>) {
-                auto lowest = static_cast<QuadWord>(loadData<Address>(loc));
-                auto lower = static_cast<QuadWord>(loadData<Address>(loc+1)) << 16;
-                auto higher = static_cast<QuadWord>(loadData<Address>(loc+2)) << 32;
-                auto highest = static_cast<QuadWord>(loadData<Address>(loc+3)) << 48;
-                return lowest | lower | higher | highest;
-            } else if constexpr (std::is_same_v<R, DoubleWord>) {
+            if constexpr (std::is_same_v<R, DoubleWord>) {
                 auto low = static_cast<DoubleWord>(loadData<Address>(loc));
                 auto high = static_cast<DoubleWord>(loadData<Address>(loc+1)) << 16;
                 return low | high;
@@ -307,11 +272,7 @@ class Core {
         template<typename R = DoubleWord>
         inline R loadCode(RegisterIndex addr, Address offset) {
             auto loc = getRegisterValue<Address>(addr, offset); 
-            if constexpr (std::is_same_v<R, QuadWord>) {
-                auto lower = static_cast<QuadWord>(loadCode<Address>(loc));
-                auto upper = static_cast<QuadWord>(loadCode<Address>(loc+1)) << 32; 
-                return lower | upper;
-            } else if constexpr (std::is_same_v<R, DoubleWord>) {
+            if constexpr (std::is_same_v<R, DoubleWord>) {
                 return loadCode(loc);
             } else {
                 static_assert(false_v<R>, "Bad return kind!");
@@ -320,13 +281,7 @@ class Core {
         template<typename R = Word>
         inline R loadIO(RegisterIndex addr, Address offset) {
             auto loc = getRegisterValue<Address>(addr, offset); 
-            if constexpr (std::is_same_v<R, QuadWord>) {
-                auto lowest = static_cast<QuadWord>(loadIO<Address>(loc));
-                auto lower = static_cast<QuadWord>(loadIO<Address>(loc+1)) << 16;
-                auto higher = static_cast<QuadWord>(loadIO<Address>(loc+2)) << 32;
-                auto highest = static_cast<QuadWord>(loadIO<Address>(loc+3)) << 48;
-                return lowest | lower | higher | highest;
-            } else if constexpr (std::is_same_v<R, DoubleWord>) {
+            if constexpr (std::is_same_v<R, DoubleWord>) {
                 auto low = static_cast<DoubleWord>(loadIO<Address>(loc));
                 auto high = static_cast<DoubleWord>(loadIO<Address>(loc+1)) << 16;
                 return low | high;
@@ -352,8 +307,6 @@ class Core {
         DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
         const DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
         void invoke(DoubleWord bits);
-        QuadRegister getQuadRegister(RegisterIndex start) noexcept;
-        const QuadRegister getQuadRegister(RegisterIndex start) const noexcept;
     private:
         inline const DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
             return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
@@ -384,14 +337,6 @@ class Core {
         template<typename T = DoubleWord>
         inline T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
             return getDoubleRegister(lower).get<T>();
-        }
-        template<typename T>
-        inline void setQuadRegisterValue(RegisterIndex lower, T value) noexcept {
-            getQuadRegister(lower).put<T>(value);
-        }
-        template<typename T = DoubleWord>
-        inline T getQuadRegisterValue(RegisterIndex lower) const noexcept {
-            return getQuadRegister(lower).get<T>();
         }
     public:
         template<typename T>
