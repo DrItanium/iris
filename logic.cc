@@ -354,34 +354,39 @@ Core::invoke(const iris::BranchRegisterInstruction& s) {
     _ip.put(getRegisterValue(dest));
     _advanceIP = false;
 }
-#define Y(name, op) \
-    void \
-    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
-    }
+
+void
+Core::invoke(const iris::ArithmeticBitwiseNotInstruction& s) {
+    auto [ dest, src0 ] = s.arguments();
+    setRegisterValue(dest, ~getRegisterValue(src0));
+}
+
+template<typename T>
+constexpr auto NotTheResult = false;
+
+template<>
+constexpr auto NotTheResult<ArithmeticBitwiseNorInstruction> = true;
+template<>
+constexpr auto NotTheResult<ArithmeticBitwiseNandInstruction> = true;
+
 #define X(name, op) \
     void \
     Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
+        using K = std::decay_t<decltype(s)>; \
         auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue(dest, (getRegisterValue(src0) op getRegisterValue(src1))); \
+        auto result = (getRegisterValue(src0) op getRegisterValue(src1)); \
+        if constexpr (NotTheResult<K>) { \
+            result = ~result; \
+        } \
+        setRegisterValue(dest, result); \
     }
-#define Z(name, op) \
-    void \
-    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
-        auto [ dest, src ] = s.arguments(); \
-        setRegisterValue(dest, op(getRegisterValue(src))); \
-    } 
 
-Y(BitwiseNor, |);
-Y(BitwiseNand, &);
+X(BitwiseNor, |);
+X(BitwiseNand, &);
 X(BitwiseAnd, &);
 X(BitwiseOr, |);
 X(BitwiseXor, ^);
-Z(BitwiseNot, ~);
-#undef Y
 #undef X
-#undef Z
 void
 Core::invoke(const iris::BranchRelativeImmediateInstruction& s) {
     auto [ offset ] = s.arguments();

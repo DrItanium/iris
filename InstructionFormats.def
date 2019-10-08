@@ -16,10 +16,26 @@ X(Error, ZeroArgument)
 #define ArithmeticSignedUnsignedImmediate(op) \
         ArithmeticSignedImmediate(op) \
         ArithmeticUnsignedImmediate(op)
-#define DoubleRegister(op, Format) Instruction(Arithmetic, Double ## op, Format)
-#define DoubleRegisterSignedUnsigned(op, Format) \
-        DoubleRegister(op ## Signed, Format) \
-        DoubleRegister(op ## Unsigned, Format)
+#define Memory(op, Format) Instruction(Memory, op, Format)
+#define Stack(op, Format) Memory(Stack ## op, Format)
+#define Data(op, Format) Memory(Data ## op, Format)
+#define Code(op, Format) Memory(Code ## op, Format)
+#define IO(op, Format) Memory(IO ## op, Format)
+#define Compare(op, Format) Instruction(Compare, op, Format)
+#define NormalCompare(op) Compare(op, ThreeRegister)
+#define NormalSignedCompare(op) NormalCompare(op ## Signed)
+#define NormalUnsignedCompare(op) NormalCompare(op ## Unsigned)
+#define NormalSignedUnsignedCompare(op) \
+        NormalSignedCompare(op) \
+        NormalUnsignedCompare(op)
+#define RawImm8Compare(op, Format) Compare(op ## Immediate8, Format)
+#define Imm8Compare(op) RawImm8Compare(op, TwoRegisterU8)
+#define Imm8SignedCompare(op) RawImm8Compare(op ## Signed , TwoRegisterS8)
+#define Imm8UnsignedCompare(op) Imm8Compare(op ## Unsigned)
+#define Imm8SignedUnsignedCompare(op) \
+        Imm8SignedCompare(op) \
+        Imm8UnsignedCompare(op)
+#define Branch(op, Format) Instruction(Branch, op, Format)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
     ArithmeticSignedUnsigned(Multiply, ThreeRegister)
@@ -35,32 +51,13 @@ X(Error, ZeroArgument)
     Arithmetic(BitwiseXor, ThreeRegister)
     Arithmetic(BitwiseNor, ThreeRegister)
     Arithmetic(BitwiseNand, ThreeRegister)
-    // increment is adding one to register
-    // decrement is subtracting one from the register
     ArithmeticSignedUnsignedImmediate(Add)
     ArithmeticSignedUnsignedImmediate(Subtract)
-    // double is multiply by two or shift left by two
     ArithmeticSignedUnsignedImmediate(Multiply)
-    // halve is divide by two or shift right by two imm
     ArithmeticSignedUnsignedImmediate(Divide)
     ArithmeticSignedUnsignedImmediate(Remainder)
-    // double and triple can be defined in terms of this operation
     ArithmeticUnsignedImmediate(ShiftLeft)
     ArithmeticUnsignedImmediate(ShiftRight)
-#undef DoubleRegisterSignedUnsigned
-#undef DoubleRegister
-#undef ArithmeticSignedImmediate
-#undef ArithmeticUnsignedImmediate
-#undef Arithmetic
-#undef ArithmeticSigned
-#undef ArithmeticUnsigned
-#undef ArithmeticSignedUnsigned
-
-#define Memory(op, Format) Instruction(Memory, op, Format)
-#define Stack(op, Format) Memory(Stack ## op, Format)
-#define Data(op, Format) Memory(Data ## op, Format)
-#define Code(op, Format) Memory(Code ## op, Format)
-#define IO(op, Format) Memory(IO ## op, Format)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
@@ -77,19 +74,8 @@ X(Error, ZeroArgument)
     IO(StoreImmediateValue, OneRegisterU16)
     Memory(MoveFromIP, OneRegister)
     Memory(MoveToIP, OneRegister)
-
-#undef Stack
-#undef Data
-#undef Code
-#undef IO
-#undef Memory
-
-#define Branch(op, Format) Instruction(Branch, op, Format)
     Branch(Immediate, U16)
     Branch(ConditionalImmediate, OneRegisterU16)
-    // @todo make immediate branches always relative to IP like what is done with PPC
-    // these instructions will always operate on signed 16-bit values instead of
-    // unsigned ones.
     Branch(RelativeImmediate, S16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(RelativeImmediateAndLink, OneRegisterS16)
@@ -99,21 +85,6 @@ X(Error, ZeroArgument)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
-#undef Branch
-#define Compare(op, Format) Instruction(Compare, op, Format)
-#define NormalCompare(op) Compare(op, ThreeRegister)
-#define NormalSignedCompare(op) NormalCompare(op ## Signed)
-#define NormalUnsignedCompare(op) NormalCompare(op ## Unsigned)
-#define NormalSignedUnsignedCompare(op) \
-        NormalSignedCompare(op) \
-        NormalUnsignedCompare(op)
-#define RawImm8Compare(op, Format) Compare(op ## Immediate8, Format)
-#define Imm8Compare(op) RawImm8Compare(op, TwoRegisterU8)
-#define Imm8SignedCompare(op) RawImm8Compare(op ## Signed , TwoRegisterS8)
-#define Imm8UnsignedCompare(op) Imm8Compare(op ## Unsigned)
-#define Imm8SignedUnsignedCompare(op) \
-        Imm8SignedCompare(op) \
-        Imm8UnsignedCompare(op)
     NormalCompare(Equals)
     NormalCompare(NotEquals)
     NormalSignedUnsignedCompare(LessThan)
@@ -140,3 +111,15 @@ X(Error, ZeroArgument)
 #undef Compare
 #undef Instruction
 
+#undef ArithmeticSignedImmediate
+#undef ArithmeticUnsignedImmediate
+#undef Arithmetic
+#undef ArithmeticSigned
+#undef ArithmeticUnsigned
+#undef ArithmeticSignedUnsigned
+#undef Branch
+#undef Stack
+#undef Data
+#undef Code
+#undef IO
+#undef Memory
