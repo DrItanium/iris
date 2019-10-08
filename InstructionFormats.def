@@ -47,23 +47,6 @@ X(Error, ZeroArgument)
     // double and triple can be defined in terms of this operation
     ArithmeticUnsignedImmediate(ShiftLeft)
     ArithmeticUnsignedImmediate(ShiftRight)
-    // destructive direct operations can be simulated with multiple 
-    // separate instructions
-    DoubleRegister(BitwiseAnd, ThreeRegister)
-    DoubleRegister(BitwiseOr, ThreeRegister)
-    DoubleRegister(BitwiseNot, TwoRegister)
-    DoubleRegister(BitwiseXor, ThreeRegister)
-    DoubleRegister(BitwiseNor, ThreeRegister)
-    DoubleRegister(BitwiseNand, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Add, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Subtract, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Multiply, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Divide, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Remainder, ThreeRegister)
-    DoubleRegisterSignedUnsigned(ShiftLeft, ThreeRegister)
-    DoubleRegisterSignedUnsigned(ShiftRight, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Min, ThreeRegister)
-    DoubleRegisterSignedUnsigned(Max, ThreeRegister)
 #undef DoubleRegisterSignedUnsigned
 #undef DoubleRegister
 #undef ArithmeticSignedImmediate
@@ -81,61 +64,21 @@ X(Error, ZeroArgument)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
-    // signed version is very easy to emulate in an assembler
     Stack(Push, TwoRegister)
     Stack(Pop, TwoRegister)
     Stack(PushImmediateValue, OneRegisterU16)
-    // So when dealing with data operations we have some interesting stuff to think about
-    // - There is always an offset that can either be a register or immediate
-    // - Because it can be register or immediate offset, there will need to be 
-    //   multiple forms of each instruction
-    // - Code modifications do not take offsets into account, however an increment
-    //   can happen automatically as part of the load store operation as well
-    // - Offsets can either be signed or unsigned
-    // 
-    // Other notes:
-    // DataStoreImmediateValue stores an imm16 at the given target address in data space
-    // IOStoreImmediateValue stores an imm16 at the given target address in IO space
     Data(LoadWithOffset, TwoRegisterU8)
     Data(StoreWithOffset, TwoRegisterU8)
     Data(StoreImmediateValue, OneRegisterU16)
     Code(LoadWithOffset, TwoRegisterU8)
     Code(StoreWithOffset, TwoRegisterU8)
-    Code(LoadAndIncrement, TwoRegisterU8)
-    Code(StoreAndIncrement, TwoRegisterU8)
-    Code(LoadAndDecrement, TwoRegisterU8)
-    Code(StoreAndDecrement, TwoRegisterU8)
-
+    Code(LoadMixedPair, ThreeRegister)
+    Code(StoreMixedPair, ThreeRegister)
     IO(LoadWithOffset, TwoRegisterU8)
     IO(StoreWithOffset, TwoRegisterU8)
     IO(StoreImmediateValue, OneRegisterU16)
-    // Inside the assembler it will actually be
-    // move ip, ?reg // to ip
-    // move ?reg, ip // from ip
     Memory(MoveFromIP, OneRegister)
     Memory(MoveToIP, OneRegister)
-    Memory(DoubleDataLoadWithOffset, TwoRegisterU8)
-    Memory(DoubleDataStoreWithOffset, TwoRegisterU8)
-    Memory(DoubleIOLoadWithOffset, TwoRegisterU8)
-    Memory(DoubleIOStoreWithOffset, TwoRegisterU8)
-    Memory(QuadCodeStoreWithOffset, TwoRegisterU8)
-    Memory(QuadCodeLoadWithOffset, TwoRegisterU8)
-    Memory(QuadDataStoreWithOffset, TwoRegisterU8)
-    Memory(QuadDataLoadWithOffset, TwoRegisterU8)
-    Memory(QuadIOStoreWithOffset, TwoRegisterU8)
-    Memory(QuadIOLoadWithOffset, TwoRegisterU8)
-    IO(LoadMasked, ThreeRegister)
-    IO(LoadMaskedImmediate, TwoRegisterU8)
-    IO(StoreMasked, ThreeRegister)
-    IO(StoreMaskedImmediate, TwoRegisterU8)
-    Data(LoadMasked, ThreeRegister)
-    Data(LoadMaskedImmediate, TwoRegisterU8)
-    Data(StoreMasked, ThreeRegister)
-    Data(StoreMaskedImmediate, TwoRegisterU8)
-    Code(LoadMasked, ThreeRegister)
-    Code(LoadMaskedImmediate, TwoRegisterU8)
-    Code(StoreMasked, ThreeRegister)
-    Code(StoreMaskedImmediate, TwoRegisterU8)
 
 #undef Stack
 #undef Data
