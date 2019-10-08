@@ -167,21 +167,6 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
     }
 }
 
-void
-Core::invoke(const iris::MemoryDataLoadWithOffsetInstruction& s) {
-    auto [ dest, loc, offset ] = s.arguments();
-    setRegisterValue(dest, loadData(loc, offset));
-}
-void
-Core::invoke(const iris::MemoryDataStoreImmediateValueInstruction& s) {
-    auto [ addr, imm16 ] = s.arguments();
-    storeData(addr, imm16);
-}
-void
-Core::invoke(const iris::MemoryDataStoreWithOffsetInstruction& s) {
-    auto [ dest, value, offset ] = s.arguments();
-    storeData(dest, value, offset);
-}
 template<typename T> constexpr auto add(T a, T b) noexcept { return a + b; }
 template<typename T> constexpr auto sub(T a, T b) noexcept { return a - b; }
 template<typename T> constexpr auto mul(T a, T b) noexcept { return a * b; }

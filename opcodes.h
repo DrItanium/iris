@@ -358,6 +358,7 @@ constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::
 
 template<typename T> constexpr auto IsStackOperation = false;
 template<typename T> constexpr auto IsCodeOperation = false;
+template<typename T> constexpr auto IsDataOperation = false;
 
 
 
@@ -374,6 +375,9 @@ template<typename T> constexpr auto IsCodeOperation = false;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPopInstruction> = true;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPushInstruction> = true;
 template<> constexpr auto IsStackOperation<iris::MemoryStackPushImmediateValueInstruction> = true;
+template<> constexpr auto IsDataOperation<iris::MemoryDataLoadWithOffsetInstruction> = true;
+template<> constexpr auto IsDataOperation<iris::MemoryDataStoreWithOffsetInstruction> = true;
+template<> constexpr auto IsDataOperation<iris::MemoryDataStoreImmediateValueInstruction> = true;
 template<> constexpr auto IsCodeOperation<iris::MemoryCodeLoadWithOffsetInstruction> = true;
 template<> constexpr auto IsCodeOperation<iris::MemoryCodeStoreWithOffsetInstruction> = true;
 
