@@ -354,6 +354,19 @@ class Core {
     public:
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
     private:
+        template<typename I>
+        void manipulateIP(const I& input) noexcept {
+            using K = std::decay_t<I>;
+            auto [ reg ] = input.arguments();
+            if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
+                _ip.put(getRegisterValue(reg));
+            } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
+                setRegisterValue(reg, _ip.get());
+            } else {
+                static_assert(false_v<I>, "Type not accepted!");
+            }
+        }
+    private:
         RegisterBank _regs;
         CodeMemoryBank _code;
         DataMemoryBank _data;

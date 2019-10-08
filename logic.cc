@@ -415,15 +415,14 @@ Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
         _advanceIP = false;
     }
 }
+
 void
 Core::invoke(const iris::MemoryMoveToIPInstruction& s) {
-    auto [ src ] = s.arguments();
-    _ip.put(getRegisterValue(src));
+    manipulateIP(s);
 }
 void
 Core::invoke(const iris::MemoryMoveFromIPInstruction& s) {
-    auto [ dest ] = s.arguments();
-    setRegisterValue(dest, _ip.get());
+    manipulateIP(s);
 }
 
 void
