@@ -72,32 +72,6 @@ Core::invoke(const iris::MemoryCodeStoreWithOffsetInstruction& s) {
 }
 
 void
-Core::invoke(const iris::MemoryStackPopInstruction& s) {
-    // so stack grows downward
-    // pops grow towards 0xFFFF
-    // StackPop StackPointerRegister DestinationRegister
-    auto [stackPointer, destination] = s.arguments();
-    setRegisterValue(destination, loadStack(stackPointer));
-    incrementRegister(stackPointer);
-}
-void
-Core::invoke(const iris::MemoryStackPushInstruction& s) {
-    // stack grows downward
-    // StackPush StackPointerRegister SourceRegister
-    auto [stackPointer, src] = s.arguments();
-    decrementRegister(stackPointer);
-    storeStack(stackPointer, src);
-}
-
-void
-Core::invoke(const iris::MemoryStackPushImmediateValueInstruction& s) {
-    auto [stackPointer, imm16] = s.arguments();
-    decrementRegister(stackPointer);
-    storeStack(stackPointer, imm16);
-}
-
-
-void
 Core::invoke(const iris::BranchSelectInstruction& s) {
     // BranchSelect ConditionalRegister TrueAddress FalseAddress
     auto [ cond, onTrue, onFalse] = s.arguments();

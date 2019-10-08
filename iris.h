@@ -404,6 +404,27 @@ class Core {
                 }
             }
         }
+        template<typename T, std::enable_if_t<IsStackOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            auto [ sp, other ] = s.arguments();
+            if constexpr (std::is_same_v<K, MemoryStackPopInstruction>) {
+                // so stack grows downward
+                // pops grow towards 0xFFFF
+                // StackPop StackPointerRegister DestinationRegister
+                setRegisterValue(other, loadStack(sp));
+                incrementRegister(sp);
+            } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
+                                 std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
+                // stack grows downward
+                // StackPush StackPointerRegister SourceRegister
+                decrementRegister(sp);
+                storeStack(sp, other);
+            } else {
+                static_assert(false_v<K>, "Unimplemented stack operation!");
+            }
+        }
+
     private:
         void cycle();
     private:
