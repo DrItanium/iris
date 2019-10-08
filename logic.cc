@@ -219,27 +219,6 @@ Core::invoke(const iris::ArithmeticRemainderUnsignedImmediateInstruction& s) {
 }
 
 void
-Core::invoke(const iris::ArithmeticMaxSignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::max(getRegisterValue<SignedWord>(src0), getRegisterValue<SignedWord>(src1)));
-}
-void
-Core::invoke(const iris::ArithmeticMaxUnsignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::max(getRegisterValue<Word>(src0), getRegisterValue<Word>(src1)));
-}
-void
-Core::invoke(const iris::ArithmeticMinSignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::min(getRegisterValue<SignedWord>(src0), getRegisterValue<SignedWord>(src1)));
-}
-void
-Core::invoke(const iris::ArithmeticMinUnsignedInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, std::min(getRegisterValue<Word>(src0), getRegisterValue<Word>(src1)));
-}
-
-void
 Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {
     auto [ cond, to ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {
@@ -273,20 +252,27 @@ Core::invoke(const iris::MemoryDataStoreWithOffsetInstruction& s) {
     auto [ dest, value, offset ] = s.arguments();
     storeData(dest, value, offset);
 }
+template<typename T> constexpr auto add(T a, T b) noexcept { return a + b; }
+template<typename T> constexpr auto sub(T a, T b) noexcept { return a - b; }
+template<typename T> constexpr auto mul(T a, T b) noexcept { return a * b; }
+template<typename T> constexpr auto shl(T a, T b) noexcept { return a << b; }
+template<typename T> constexpr auto shr(T a, T b) noexcept { return a >> b; }
 #define Y(name, op, suffix, types) \
     void \
     Core::invoke( const iris:: Arithmetic ## name ## suffix & s ) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue<types>(dest, getRegisterValue<types>(src0) op getRegisterValue<types>(src1)); \
+        setRegisterValue<types>(dest, op(getRegisterValue<types>(src0), getRegisterValue<types>(src1))); \
     }
 #define X(name, op) \
     Y(name, op, SignedInstruction, SignedWord); \
     Y(name, op, UnsignedInstruction, Word)
-X(Add, +);
-X(Subtract, -);
-X(Multiply, *);
-X(ShiftRight, >>);
-X(ShiftLeft, <<);
+X(Add, add);
+X(Subtract, sub);
+X(Multiply, mul);
+X(ShiftRight, shr);
+X(ShiftLeft, shl);
+X(Min, std::min);
+X(Max, std::max);
 #undef X
 #undef Y
 
