@@ -47,6 +47,21 @@ namespace iris {
     class title ## Instruction ;
 #include "InstructionFormats.def"
 #undef X
+    template<typename T> constexpr auto IsBranchImmediateInstruction = false;
+    template<typename T> constexpr auto UsesRelativeOffset = false;
+    template<typename T> constexpr auto UsesLinkRegister = false;
+    template<typename T> constexpr auto ManipulatesIP = false;
+    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
+    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
+    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateInstruction> = true;
+    template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
+    template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+    template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+    template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
+    template<> constexpr auto ManipulatesIP<iris::MemoryMoveToIPInstruction> = true;
+    template<> constexpr auto ManipulatesIP<iris::MemoryMoveFromIPInstruction> = true;
+
 class Core {
     public:
         static void terminateCore(Core&, Word);
@@ -294,11 +309,59 @@ class Core {
 
     private:
         void invoke(const std::monostate&);
-        // use tag dispatch to call the right routines
-#define X(title, fmt) \
-        void invoke(const title ## Instruction &);
-#include "InstructionFormats.def"
-#undef X
+        void invoke(const iris::CompareGreaterThanOrEqualToUnsignedImmediate8Instruction&);
+        void invoke(const iris::CompareGreaterThanOrEqualToSignedImmediate8Instruction&);
+        void invoke(const iris::CompareLessThanOrEqualToUnsignedImmediate8Instruction&);
+        void invoke(const iris::CompareLessThanOrEqualToSignedImmediate8Instruction&);
+        void invoke(const iris::CompareLessThanUnsignedImmediate8Instruction&);
+        void invoke(const iris::CompareLessThanSignedImmediate8Instruction&);
+        void invoke(const iris::CompareGreaterThanUnsignedImmediate8Instruction&);
+        void invoke(const iris::CompareGreaterThanSignedImmediate8Instruction&);
+        void invoke(const iris::CompareNotEqualsImmediate8Instruction&);
+        void invoke(const iris::CompareEqualsImmediate8Instruction&);
+        void invoke(const iris::CompareGreaterThanOrEqualToUnsignedInstruction&);
+        void invoke(const iris::CompareGreaterThanOrEqualToSignedInstruction&);
+        void invoke(const iris::CompareLessThanOrEqualToUnsignedInstruction&);
+        void invoke(const iris::CompareLessThanOrEqualToSignedInstruction&);
+        void invoke(const iris::CompareLessThanUnsignedInstruction&);
+        void invoke(const iris::CompareLessThanSignedInstruction&);
+        void invoke(const iris::CompareGreaterThanUnsignedInstruction&);
+        void invoke(const iris::CompareGreaterThanSignedInstruction&);
+        void invoke(const iris::CompareNotEqualsInstruction&);
+        void invoke(const iris::CompareEqualsInstruction&);
+        void invoke(const iris::BranchSelectInstruction&);
+        void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
+        void invoke(const iris::BranchRegisterAndLinkInstruction&);
+        void invoke(const iris::BranchConditionalRegisterInstruction&);
+        void invoke(const iris::BranchRegisterInstruction&);
+        void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
+        void invoke(const iris::BranchConditionalImmediateInstruction&);
+        template<typename T, std::enable_if_t<IsBranchImmediateInstruction<std::decay_t<T>>, int> = 0>
+        void invoke(const T & s) { 
+            using K = std::decay_t<decltype(s)>; 
+            auto [ link, offset] = s.arguments(); 
+            if constexpr (UsesLinkRegister<K>) { 
+                setRegisterValue(link, _ip.get() + 1); 
+            } 
+            if constexpr (UsesRelativeOffset<K>) { 
+                _ip.put(_ip.get<SignedWord>() + offset); 
+            } else { 
+                _ip.put(offset); 
+            } 
+            _advanceIP = false; 
+        }
+        template<typename I, std::enable_if_t<ManipulatesIP<std::decay_t<I>>, int> = 0>
+        void invoke(const I& input) noexcept {
+            using K = std::decay_t<I>;
+            auto [ reg ] = input.arguments();
+            if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
+                _ip.put(getRegisterValue(reg));
+            } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
+                setRegisterValue(reg, _ip.get());
+            } else {
+                static_assert(false_v<I>, "Type not accepted!");
+            }
+        }
     private:
         void cycle();
     private:
@@ -354,18 +417,6 @@ class Core {
     public:
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
     private:
-        template<typename I>
-        void manipulateIP(const I& input) noexcept {
-            using K = std::decay_t<I>;
-            auto [ reg ] = input.arguments();
-            if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
-                _ip.put(getRegisterValue(reg));
-            } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
-                setRegisterValue(reg, _ip.get());
-            } else {
-                static_assert(false_v<I>, "Type not accepted!");
-            }
-        }
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;

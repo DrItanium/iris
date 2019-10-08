@@ -92,7 +92,7 @@ Core::invoke(const iris::MemoryStackPushInstruction& s) {
 void
 Core::invoke(const iris::MemoryStackPushImmediateValueInstruction& s) {
     auto [stackPointer, imm16] = s.arguments();
-    incrementRegister(stackPointer);
+    decrementRegister(stackPointer);
     storeStack(stackPointer, imm16);
 }
 
@@ -353,32 +353,6 @@ X(BitwiseAnd, &);
 X(BitwiseOr, |);
 X(BitwiseXor, ^);
 #undef X
-template<typename T> constexpr auto UsesRelativeOffset = false;
-template<typename T> constexpr auto UsesLinkRegister = false;
-template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
-template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
-#define X(operation) \
-    void \
-    Core::invoke(const iris::Branch ## operation ## Instruction & s) { \
-        using K = std::decay_t<decltype(s)>; \
-        auto [ link, offset] = s.arguments(); \
-        if constexpr (UsesLinkRegister<K>) { \
-            setRegisterValue(link, _ip.get() + 1); \
-        } \
-        if constexpr (UsesRelativeOffset<K>) { \
-            _ip.put(_ip.get<SignedWord>() + offset); \
-        } else { \
-            _ip.put(offset); \
-        } \
-        _advanceIP = false; \
-    }
-X(RelativeImmediate)
-X(Immediate)
-X(RelativeImmediateAndLink)
-X(ImmediateAndLink)
-#undef X
 void
 Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
     auto [ address, link ] = s.arguments();
@@ -400,15 +374,6 @@ Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
         _ip.put(_ip.get<SignedWord>() + offset);
         _advanceIP = false;
     }
-}
-
-void
-Core::invoke(const iris::MemoryMoveToIPInstruction& s) {
-    manipulateIP(s);
-}
-void
-Core::invoke(const iris::MemoryMoveFromIPInstruction& s) {
-    manipulateIP(s);
 }
 
 void
