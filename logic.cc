@@ -249,20 +249,6 @@ Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {
 }
 
 void
-Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
-    auto [ address, link ] = s.arguments();
-    setRegisterValue(link, _ip.get() + 1);
-    _ip.put(getRegisterValue(address));
-    _advanceIP = false;
-}
-void
-Core::invoke(const iris::BranchImmediateAndLinkInstruction& s) {
-    auto [ link, imm16 ] = s.arguments();
-    setRegisterValue(link, _ip.get() + 1);
-    _ip.put(imm16);
-    _advanceIP = false;
-}
-void
 Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
     auto [ dest, cond, link ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {
@@ -405,7 +391,15 @@ template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstructi
 X(RelativeImmediate)
 X(Immediate)
 X(RelativeImmediateAndLink)
+X(ImmediateAndLink)
 #undef X
+void
+Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
+    auto [ address, link ] = s.arguments();
+    setRegisterValue(link, _ip.get() + 1);
+    _ip.put(getRegisterValue(address));
+    _advanceIP = false;
+}
 
 void
 Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
