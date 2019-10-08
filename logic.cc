@@ -65,39 +65,10 @@ Core::invoke(const iris::MemoryCodeLoadWithOffsetInstruction& s) {
     setDoubleRegisterValue(lower, loadCode(addr, offset));
 }
 void
-Core::invoke(const iris::MemoryCodeLoadAndDecrementInstruction& s) {
-    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower, factor] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(addr));
-    decrementRegister(addr, factor);
-}
-void
-Core::invoke(const iris::MemoryCodeLoadAndIncrementInstruction& s) {
-    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-    auto [addr, lower, factor] = s.arguments();
-    setDoubleRegisterValue(lower, loadCode(addr));
-    incrementRegister(addr, factor);
-}
-void
 Core::invoke(const iris::MemoryCodeStoreWithOffsetInstruction& s) {
     // CodeStore AddressRegister <= LowerRegister (upper register implied)
     auto [addr, lower, offset ] = s.arguments();
     storeCode(addr, lower, offset);
-}
-
-void
-Core::invoke(const iris::MemoryCodeStoreAndDecrementInstruction& s) {
-    // CodeStore AddressRegister <= LowerRegister Offset ( An add of one is implied so the range is [0,257])
-    auto [addr, lower, factor ] = s.arguments();
-    storeCode(addr, lower);
-    decrementRegister(addr, factor);
-}
-void
-Core::invoke(const iris::MemoryCodeStoreAndIncrementInstruction& s) {
-    // CodeStore AddressRegister <= LowerRegister (implied UpperRegister)
-    auto [addr, lower, factor ] = s.arguments();
-    storeCode(addr, lower);
-    incrementRegister(addr, factor);
 }
 
 void
@@ -388,34 +359,19 @@ Core::invoke(const iris::BranchRegisterInstruction& s) {
     Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setRegisterValue(dest, ~(getRegisterValue(src0) op getRegisterValue(src1))); \
-    } \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## Instruction & s) { \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setDoubleRegisterValue(dest, ~(getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
     }
 #define X(name, op) \
     void \
     Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
         auto [ dest, src0, src1 ] = s.arguments(); \
         setRegisterValue(dest, (getRegisterValue(src0) op getRegisterValue(src1))); \
-    } \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## Instruction & s) { \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setDoubleRegisterValue(dest, (getDoubleRegisterValue(src0) op getDoubleRegisterValue(src1))); \
     }
 #define Z(name, op) \
     void \
     Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
         auto [ dest, src ] = s.arguments(); \
         setRegisterValue(dest, op(getRegisterValue(src))); \
-    } \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## Instruction & s) { \
-        auto [ dest, src ] = s.arguments(); \
-        setDoubleRegisterValue(dest, op(getDoubleRegisterValue(src))); \
-    }
+    } 
 
 Y(BitwiseNor, |);
 Y(BitwiseNand, &);
@@ -481,106 +437,5 @@ void
 Core::invoke(const iris::MemoryIOStoreWithOffsetInstruction& s) {
     auto [ dest, value, offset ] = s.arguments();
     storeIO(dest, value, offset);
-}
-#define Y(name, op, kind) \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Instruction & s) { \
-        using T = kind ## DoubleWord ; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setDoubleRegisterValue<T>(dest, \
-                getDoubleRegisterValue<T>(src0) op \
-                getDoubleRegisterValue<T>(src1)); \
-    }
-#define X(name, op) \
-    Y(name, op, Signed) \
-    Y(name, op, Unsigned)
-X(Add, +); 
-X(Subtract, -);
-X(Multiply, *);
-X(ShiftLeft, <<);
-X(ShiftRight, >>);
-#undef Y
-#define Y(name, op, kind) \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Instruction & s) { \
-        using T = kind ## DoubleWord ; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setDoubleRegisterValue<T>(dest, op ( \
-                getDoubleRegisterValue<T>(src0) , \
-                getDoubleRegisterValue<T>(src1))); \
-    }
-X(Min, std::min);
-X(Max, std::max);
-#undef Y
-#define Y(name, op, kind) \
-    void \
-    Core::invoke(const iris::ArithmeticDouble ## name ## kind ## Instruction & s) { \
-        using T = kind ## DoubleWord ; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        if (auto denominator = getDoubleRegisterValue < T > (src1); denominator != 0) { \
-        setDoubleRegisterValue<T>(dest, \
-                getDoubleRegisterValue<T>(src0) op \
-                getDoubleRegisterValue<T>(src1)); \
-        } else { \
-            throw DivideByZeroException(); \
-        } \
-    }
-X(Divide, /);
-X(Remainder, %);
-#undef X
-void
-Core::invoke(const iris::MemoryDoubleIOLoadWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    getDoubleRegister(storage).put(loadIO<DoubleWord>(addr, offset));
-}
-void
-Core::invoke(const iris::MemoryDoubleDataLoadWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    getDoubleRegister(storage).put(loadData<DoubleWord>(addr, offset));
-}
-
-void
-Core::invoke(const iris::MemoryDoubleIOStoreWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    storeIO(addr, getDoubleRegister(storage), offset);
-}
-void
-Core::invoke(const iris::MemoryDoubleDataStoreWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    storeData(addr, getDoubleRegister(storage), offset);
-}
-void
-Core::invoke(const iris::MemoryQuadIOLoadWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    setQuadRegisterValue(storage, loadIO<QuadWord>(addr, offset));
-}
-void
-Core::invoke(const iris::MemoryQuadDataLoadWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    setQuadRegisterValue(storage, loadData<QuadWord>(addr, offset));
-}
-
-void
-Core::invoke(const iris::MemoryQuadCodeLoadWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-
-    setQuadRegisterValue(storage, loadCode<QuadWord>(addr, offset));
-}
-
-void
-Core::invoke(const iris::MemoryQuadCodeStoreWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    storeCode(addr, getQuadRegister(storage), offset);
-}
-
-void
-Core::invoke(const iris::MemoryQuadDataStoreWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    storeData(addr, getQuadRegister(storage), offset);
-}
-void
-Core::invoke(const iris::MemoryQuadIOStoreWithOffsetInstruction& s) {
-    auto [ addr, storage, offset ] = s.arguments();
-    storeIO(addr, getQuadRegister(storage), offset);
 }
 } // end namespace iris

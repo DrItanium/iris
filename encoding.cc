@@ -231,24 +231,6 @@ Bits
 storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
     return MemoryCodeStoreWithOffset({addr, lower, offset});
 }
-Bits
-loadCodeThenIncrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
-    // always have to decrement the amount by one 
-    return MemoryCodeLoadAndIncrement({addr, lower, --amount});
-}
-Bits
-storeCodeThenIncrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
-    return MemoryCodeStoreAndIncrement({addr, lower, --amount});
-}
-Bits
-loadCodeThenDecrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
-    // always have to decrement the amount by one 
-    return MemoryCodeLoadAndDecrement({addr, lower, --amount});
-}
-Bits
-storeCodeThenDecrement(RegisterIndex addr, RegisterIndex lower, UnsignedByte amount) noexcept {
-    return MemoryCodeStoreAndDecrement({addr, lower, --amount});
-}
 
 Bits
 getIP(RegisterIndex r) noexcept {
