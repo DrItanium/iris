@@ -333,11 +333,28 @@ template<Opcodes op>
 using S8Format = OneArgumentFormat<SignedByte, op>;
 
 template<typename T>
-constexpr auto TreatArg2AsImmediate = 
-std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T> || 
-std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>;
+constexpr auto IsThreeArgumentFormat = std::is_base_of_v<ThreeRegisterFormat<T::Opcode>, T> ||
+std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T> ||
+std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>;
+template<typename T>
+constexpr auto TreatArg2AsImmediate =  (IsThreeArgumentFormat<T> && 
+(std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T> || 
+ std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>)) ||
+(std::is_base_of_v<U8Format<T::Opcode>, T> ||
+ std::is_base_of_v<S8Format<T::Opcode>, T>);
 
 
+template<typename T>
+constexpr auto UsesRelativeImmediateOffset = std::is_base_of_v<OneRegisterS16Format<T::Opcode>, T> || std::is_base_of_v<S16Format, T>;
+
+template<typename T>
+constexpr auto UsesAbsoluteImmediatePosition = std::is_base_of_v<OneRegisterU16Format<T::Opcode>, T> || std::is_base_of_v<U16Format, T>;
+
+template<typename T>
+constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>>);
+
+template<typename T>
+constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>>);
 
 // define the actual instruction kinds
 #define X(t, f) \

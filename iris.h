@@ -323,6 +323,10 @@ class Core {
 
     private:
         void invoke(const std::monostate&);
+        void invoke(const iris::ErrorInstruction&);
+        void invoke(const iris::MemoryCopyRegisterInstruction&);
+        void invoke(const iris::MemoryAssignRegisterImmediateInstruction&);
+        void invoke(const iris::MemorySwapRegistersInstruction&);
         void invoke(const iris::CompareGreaterThanOrEqualToUnsignedImmediate8Instruction&);
         void invoke(const iris::CompareGreaterThanOrEqualToSignedImmediate8Instruction&);
         void invoke(const iris::CompareLessThanOrEqualToUnsignedImmediate8Instruction&);
