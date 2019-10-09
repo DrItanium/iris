@@ -32,6 +32,7 @@
 
 namespace iris {
     enum class Opcodes : UnsignedWord {
+        Error = 0,
 #define X(t, _) t ,
 #include "InstructionFormats.def"
 #undef X
@@ -41,12 +42,14 @@ namespace iris {
     using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
     static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
     // forward declare the formats
+    struct ErrorInstruction;
 #define X(t, f) struct t ## Instruction ; 
 #include "InstructionFormats.def"
 #undef X
 
 using DecodedInstruction = std::variant<
-            std::monostate
+            std::monostate, 
+            ErrorInstruction
 #define X(t, f) , t ## Instruction
 #include "InstructionFormats.def"
 #undef X
@@ -372,9 +375,14 @@ template<typename T> constexpr auto IsIntegerOperation = false;
 template<typename T> constexpr auto IsOrdinalOperation = false;
 template<typename T> constexpr auto IsDivideOperation = false;
 template<typename T> constexpr auto IsRemainderOperation = false;
+template<typename T> constexpr auto IsMemoryOperation = false;
 
 
-
+struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
+    static constexpr auto Opcode = Opcodes::Error; 
+    using Parent = ZeroArgumentFormat<Opcodes::Error>;
+    using Parent::Parent;
+};
 // define the actual instruction kinds
 #define X(t, f) \
     struct t ## Instruction final : public f ## Format < Opcodes :: t > { \
@@ -384,18 +392,10 @@ template<typename T> constexpr auto IsRemainderOperation = false;
     };
 #include "InstructionFormats.def"
 #undef X
-
-template<> constexpr auto IsStackOperation<iris::MemoryStackPopInstruction> = true;
-template<> constexpr auto IsStackOperation<iris::MemoryStackPushInstruction> = true;
-template<> constexpr auto IsStackOperation<iris::MemoryStackPushImmediateValueInstruction> = true;
-template<> constexpr auto IsDataOperation<iris::MemoryDataLoadWithOffsetInstruction> = true;
-template<> constexpr auto IsDataOperation<iris::MemoryDataStoreWithOffsetInstruction> = true;
-template<> constexpr auto IsDataOperation<iris::MemoryDataStoreImmediateValueInstruction> = true;
-template<> constexpr auto IsCodeOperation<iris::MemoryCodeLoadWithOffsetInstruction> = true;
-template<> constexpr auto IsCodeOperation<iris::MemoryCodeStoreWithOffsetInstruction> = true;
-template<> constexpr auto IsIOOperation<iris::MemoryIOLoadWithOffsetInstruction> = true;
-template<> constexpr auto IsIOOperation<iris::MemoryIOStoreWithOffsetInstruction> = true;
-template<> constexpr auto IsIOOperation<iris::MemoryIOStoreImmediateValueInstruction> = true;
+#define DeclareProperty(op, prop) \
+    template<> constexpr auto prop < iris :: op ## Instruction > = true; 
+#include "InstructionProperties.def"
+#undef X
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
@@ -404,8 +404,6 @@ template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstru
 template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
 template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
 template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
-template<> constexpr auto ManipulatesIP<iris::MemoryMoveToIPInstruction> = true;
-template<> constexpr auto ManipulatesIP<iris::MemoryMoveFromIPInstruction> = true;
 template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderSignedInstruction> = true;
 template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderUnsignedInstruction> = true;
 template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideSignedInstruction> = true;

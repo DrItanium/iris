@@ -1,0 +1,37 @@
+/**
+ * Contains all of the defined properties for different instructions, defining it implies
+ * that it is true
+ */
+
+// DeclareProperty(InstructionName, PropertyName) 
+#define BasicMemory(op) DeclareProperty(Memory ## op, IsMemoryOperation)
+#define Memory(op, prop) \
+    DeclareProperty(Memory ## op, prop) \
+    BasicMemory(Memory ## op)
+#define Stack(op) Memory(Stack ## op, IsStackOperation)
+#define Code(op) Memory(Code ## op, IsCodeOperation)
+#define Data(op) Memory(Data ## op, IsDataOperation)
+#define IO(op) Memory(IO ## op, IsIOOperation)
+#define IP(op) Memory(op, ManipulatesIP)
+Stack(Push)
+Stack(PushImmediateValue)
+Stack(Pop)
+Code(LoadWithOffset)
+Code(StoreWithOffset)
+Data(LoadWithOffset)
+Data(StoreWithOffset)
+Data(StoreImmediateValue)
+IO(LoadWithOffset)
+IO(StoreWithOffset)
+IO(StoreImmediateValue)
+IP(MoveToIP)
+IP(MoveFromIP)
+BasicMemory(CopyRegister)
+BasicMemory(SwapRegisters)
+BasicMemory(AssignRegisterImmediate)
+#undef IP
+#undef IO
+#undef Data
+#undef Code
+#undef Stack
+#undef Memory

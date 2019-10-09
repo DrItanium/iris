@@ -3,7 +3,6 @@
  * format. Update this file when adding new type information
  */
 // error is just zero and is not part of a group
-X(Error, ZeroArgument)
 #define Instruction(group, op, Format) X(group ## op, Format)
 #define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
