@@ -399,26 +399,6 @@ struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     template<> constexpr auto prop < op ## Instruction > = true; 
 #include "InstructionProperties.def"
 #undef DeclareProperty
-template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
-template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
-template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateInstruction> = true;
-template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
-template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
-template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderSignedInstruction> = true;
-template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderUnsignedInstruction> = true;
-template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideSignedInstruction> = true;
-template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideUnsignedInstruction> = true;
-template<> constexpr auto IsIntegerOperation<iris::ArithmeticRemainderSignedInstruction> = true;
-template<> constexpr auto IsIntegerOperation<iris::ArithmeticDivideSignedInstruction> = true;
-template<> constexpr auto IsOrdinalOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
-template<> constexpr auto IsOrdinalOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
-template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderSignedInstruction> = true;
-template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
-template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideSignedInstruction> = true;
-template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
 
 constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 
