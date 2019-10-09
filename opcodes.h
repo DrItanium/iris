@@ -356,10 +356,22 @@ constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is
 template<typename T>
 constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>>);
 
+template<typename T>
+constexpr auto IsSignedOperation = IsSignedImmediate8Operation<T>;
+
 template<typename T> constexpr auto IsStackOperation = false;
 template<typename T> constexpr auto IsCodeOperation = false;
 template<typename T> constexpr auto IsDataOperation = false;
 template<typename T> constexpr auto IsIOOperation = false;
+template<typename T> constexpr auto IsBranchImmediateInstruction = false;
+template<typename T> constexpr auto UsesRelativeOffset = false;
+template<typename T> constexpr auto UsesLinkRegister = false;
+template<typename T> constexpr auto ManipulatesIP = false;
+template<typename T> constexpr auto DisallowsDivideByZero = false;
+template<typename T> constexpr auto IsIntegerOperation = false;
+template<typename T> constexpr auto IsOrdinalOperation = false;
+template<typename T> constexpr auto IsDivideOperation = false;
+template<typename T> constexpr auto IsRemainderOperation = false;
 
 
 
@@ -384,6 +396,28 @@ template<> constexpr auto IsCodeOperation<iris::MemoryCodeStoreWithOffsetInstruc
 template<> constexpr auto IsIOOperation<iris::MemoryIOLoadWithOffsetInstruction> = true;
 template<> constexpr auto IsIOOperation<iris::MemoryIOStoreWithOffsetInstruction> = true;
 template<> constexpr auto IsIOOperation<iris::MemoryIOStoreImmediateValueInstruction> = true;
+template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
+template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
+template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateInstruction> = true;
+template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
+template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
+template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
+template<> constexpr auto ManipulatesIP<iris::MemoryMoveToIPInstruction> = true;
+template<> constexpr auto ManipulatesIP<iris::MemoryMoveFromIPInstruction> = true;
+template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderSignedInstruction> = true;
+template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderUnsignedInstruction> = true;
+template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideSignedInstruction> = true;
+template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideUnsignedInstruction> = true;
+template<> constexpr auto IsIntegerOperation<iris::ArithmeticRemainderSignedInstruction> = true;
+template<> constexpr auto IsIntegerOperation<iris::ArithmeticDivideSignedInstruction> = true;
+template<> constexpr auto IsOrdinalOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
+template<> constexpr auto IsOrdinalOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
+template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderSignedInstruction> = true;
+template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
+template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideSignedInstruction> = true;
+template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
 
 constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept {
     // Since the opcode is stashed in the first byte we should switch on the 

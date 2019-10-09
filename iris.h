@@ -44,37 +44,6 @@
 #include "register.h"
 #include "opcodes.h"
 namespace iris {
-    template<typename T> constexpr auto IsBranchImmediateInstruction = false;
-    template<typename T> constexpr auto UsesRelativeOffset = false;
-    template<typename T> constexpr auto UsesLinkRegister = false;
-    template<typename T> constexpr auto ManipulatesIP = false;
-    template<typename T> constexpr auto DisallowsDivideByZero = false;
-    template<typename T> constexpr auto IsIntegerOperation = false;
-    template<typename T> constexpr auto IsOrdinalOperation = false;
-    template<typename T> constexpr auto IsDivideOperation = false;
-    template<typename T> constexpr auto IsRemainderOperation = false;
-    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
-    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;
-    template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateInstruction> = true;
-    template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateInstruction> = true;
-    template<> constexpr auto UsesRelativeOffset<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-    template<> constexpr auto UsesLinkRegister<iris::BranchRelativeImmediateAndLinkInstruction> = true;
-    template<> constexpr auto UsesLinkRegister<iris::BranchImmediateAndLinkInstruction> = true;
-    template<> constexpr auto ManipulatesIP<iris::MemoryMoveToIPInstruction> = true;
-    template<> constexpr auto ManipulatesIP<iris::MemoryMoveFromIPInstruction> = true;
-    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderSignedInstruction> = true;
-    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticRemainderUnsignedInstruction> = true;
-    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideSignedInstruction> = true;
-    template<> constexpr auto DisallowsDivideByZero<iris::ArithmeticDivideUnsignedInstruction> = true;
-    template<> constexpr auto IsIntegerOperation<iris::ArithmeticRemainderSignedInstruction> = true;
-    template<> constexpr auto IsIntegerOperation<iris::ArithmeticDivideSignedInstruction> = true;
-    template<> constexpr auto IsOrdinalOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
-    template<> constexpr auto IsOrdinalOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
-    template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderSignedInstruction> = true;
-    template<> constexpr auto IsRemainderOperation<iris::ArithmeticRemainderUnsignedInstruction> = true;
-    template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideSignedInstruction> = true;
-    template<> constexpr auto IsDivideOperation<iris::ArithmeticDivideUnsignedInstruction> = true;
 
 class Core {
     public:
