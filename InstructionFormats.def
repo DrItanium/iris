@@ -10,8 +10,8 @@
 #define ArithmeticSignedUnsigned(op, Format) \
     ArithmeticSigned(op, Format) \
     ArithmeticUnsigned(op, Format)
-#define ArithmeticSignedImmediate(op) Arithmetic(op ## SignedImmediate, TwoRegisterS8)
-#define ArithmeticUnsignedImmediate(op) Arithmetic(op ## UnsignedImmediate, TwoRegisterU8)
+#define ArithmeticSignedImmediate(op) Arithmetic(op ## ImmediateSigned, TwoRegisterS8)
+#define ArithmeticUnsignedImmediate(op) Arithmetic(op ## ImmediateUnsigned, TwoRegisterU8)
 #define ArithmeticSignedUnsignedImmediate(op) \
         ArithmeticSignedImmediate(op) \
         ArithmeticUnsignedImmediate(op)
