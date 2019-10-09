@@ -379,7 +379,17 @@ template<typename T> constexpr auto IsMemoryOperation = false;
 template<typename T> constexpr auto IsBranchOperation = false;
 template<typename T> constexpr auto IsArithmeticOperation = false;
 template<typename T> constexpr auto IsCompareOperation = false;
-
+template<typename T> constexpr auto IsAddOperation = false;
+template<typename T> constexpr auto IsSubtractOperation = false;
+template<typename T> constexpr auto IsMultiplyOperation = false;
+template<typename T> constexpr auto IsShiftLeftOperation = false;
+template<typename T> constexpr auto IsShiftRightOperation = false;
+template<typename T> constexpr auto IsAddImmediateOperation = false;
+template<typename T> constexpr auto IsSubtractImmediateOperation = false;
+template<typename T> constexpr auto IsMultiplyImmediateOperation = false;
+template<typename T> constexpr auto IsShiftLeftImmediateOperation = false;
+template<typename T> constexpr auto IsShiftRightImmediateOperation = false;
+template<typename T> constexpr auto IsLogicalOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

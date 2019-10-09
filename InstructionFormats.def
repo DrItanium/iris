@@ -4,6 +4,7 @@
  */
 // error is just zero and is not part of a group
 #define Instruction(group, op, Format) X(group ## op, Format)
+#define Logical(op, Format) Instruction(Logical, op, Format)
 #define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
 #define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
 #define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
@@ -44,12 +45,12 @@
     ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
     ArithmeticSignedUnsigned(Max, ThreeRegister)
     ArithmeticSignedUnsigned(Min, ThreeRegister)
-    Arithmetic(BitwiseNot, TwoRegister)
-    Arithmetic(BitwiseAnd, ThreeRegister)
-    Arithmetic(BitwiseOr, ThreeRegister)
-    Arithmetic(BitwiseXor, ThreeRegister)
-    Arithmetic(BitwiseNor, ThreeRegister)
-    Arithmetic(BitwiseNand, ThreeRegister)
+    Logical(BitwiseNot, TwoRegister)
+    Logical(BitwiseAnd, ThreeRegister)
+    Logical(BitwiseOr, ThreeRegister)
+    Logical(BitwiseXor, ThreeRegister)
+    Logical(BitwiseNor, ThreeRegister)
+    Logical(BitwiseNand, ThreeRegister)
     ArithmeticSignedUnsignedImmediate(Add)
     ArithmeticSignedUnsignedImmediate(Subtract)
     ArithmeticSignedUnsignedImmediate(Multiply)
@@ -122,3 +123,5 @@
 #undef Code
 #undef IO
 #undef Memory
+#undef ArithmeticSignedUnsignedImmediate
+#undef Logical

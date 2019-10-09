@@ -441,6 +441,19 @@ class Core {
                 static_assert(false_v<K>, "Unimplemented code operation!");
             }
         }
+        template<typename T, std::enable_if_t<IsArithmeticOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
+            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
+            auto [ dest, rsrc1, rsrc2 ] = s.arguments();
+            D src2 = static_cast<D>(0);
+            if constexpr (TreatArg2AsImmediate<K>) {
+                src2 = static_cast<D>(rsrc2);
+            } else {
+                src2 = getRegisterValue(rsrc2);
+            }
+        }
 
     private:
         void cycle();

@@ -4,11 +4,13 @@
  */
 
 // DeclareProperty(InstructionName, PropertyName) 
+
 #define OfGroup(group, op) DeclareProperty(group ## op, Is ## group ## Operation)
 #define GroupArithmetic(op) OfGroup(Arithmetic, op)
 #define GroupCompare(op) OfGroup(Compare, op)
 #define GroupBranch(op) OfGroup(Branch, op)
 #define GroupMemory(op) OfGroup(Memory, op)
+#define GroupLogical(op) OfGroup(Logical, op)
 #define Memory(op, prop) \
     DeclareProperty(Memory ## op, prop) \
     GroupMemory(op)
@@ -49,11 +51,30 @@ DeclareProperty(ArithmeticRemainderSigned, IsRemainderOperation)
 DeclareProperty(ArithmeticRemainderUnsigned, IsRemainderOperation)
 DeclareProperty(ArithmeticDivideSigned, IsDivideOperation)
 DeclareProperty(ArithmeticDivideUnsigned, IsDivideOperation)
-#define ArithmeticSignedUnsigned(op) \
+#define PartOfClass(op, class) DeclareProperty(op, Is ## class ## Operation)
+#define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
-        DeclareProperty(Arithmetic ## op ## Unsigned, IsOrdinalOperation) \
-        GroupArithmetic(op ## Signed ) \
-        DeclareProperty(Arithmetic ## op ## Signed, IsIntegerOperation)
+        PartOfClass(Arithmetic ## op ## Unsigned, Ordinal)
+
+#define ArithmeticSigned(op) \
+        GroupArithmetic(op ## Signed) \
+        PartOfClass(Arithmetic ## op ## Signed, Integer)
+
+#define ArithmeticSignedImmediate(op) \
+        ArithmeticSigned(op ## Immediate) \
+        PartOfClass(Arithmetic ## op ## ImmediateSigned, op)
+
+#define ArithmeticUnsignedImmediate(op) \
+        ArithmeticUnsigned(op ## Immediate) \
+        PartOfClass(Arithmetic ## op ## ImmediateUnsigned, op)
+
+#define ArithmeticSignedUnsigned(op) \
+        ArithmeticUnsigned(op) \
+        ArithmeticSigned(op)
+
+#define ArithmeticSignedUnsignedImmediate(op) \
+        ArithmeticUnsignedImmediate(op) \
+        ArithmeticSignedImmediate(op)
 ArithmeticSignedUnsigned(Add)
 ArithmeticSignedUnsigned(Subtract)
 ArithmeticSignedUnsigned(Multiply)
@@ -63,13 +84,32 @@ ArithmeticSignedUnsigned(Max)
 ArithmeticSignedUnsigned(Min)
 ArithmeticSignedUnsigned(ShiftLeft)
 ArithmeticSignedUnsigned(ShiftRight)
-ArithmeticSignedUnsigned(AddImmediate)
-ArithmeticSignedUnsigned(SubtractImmediate)
-ArithmeticSignedUnsigned(MultiplyImmediate)
-ArithmeticSignedUnsigned(DivideImmediate)
-ArithmeticSignedUnsigned(RemainderImmediate)
-GroupArithmetic(ShiftLeftImmediateUnsigned)
-GroupArithmetic(ShiftRightImmediateUnsigned)
+ArithmeticSignedUnsignedImmediate(Add)
+ArithmeticSignedUnsignedImmediate(Subtract)
+ArithmeticSignedUnsignedImmediate(Multiply)
+ArithmeticSignedUnsignedImmediate(Divide)
+ArithmeticSignedUnsignedImmediate(Remainder)
+ArithmeticUnsignedImmediate(ShiftLeft)
+ArithmeticUnsignedImmediate(ShiftRight)
+#define Logical(op) \
+        GroupLogical(op)
+Logical(BitwiseOr)
+Logical(BitwiseAnd)
+Logical(BitwiseNot)
+Logical(BitwiseNor)
+Logical(BitwiseNand)
+Logical(BitwiseXor)
+DeclareProperty(LogicalBitwiseNand, NotTheResult)
+DeclareProperty(LogicalBitwiseNor,  NotTheResult)
+PartOfClass(LogicalBitwiseNand, BitwiseAnd)
+PartOfClass(LogicalBitwiseNor,  BitwiseOr)
+#undef Logical
+
+#undef ArithmeticSignedImmediate
+#undef ArithmeticUnsignedImmediate
+#undef ArithmeticSignedUnsignedImmediate
+#undef ArithmeticSigned
+#undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
 #undef IP
 #undef IO
@@ -81,3 +121,5 @@ GroupArithmetic(ShiftRightImmediateUnsigned)
 #undef GroupBranch 
 #undef GroupArithmetic
 #undef GroupCompare
+#undef PartOfClass
+#undef GroupLogical
