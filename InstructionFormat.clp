@@ -129,3 +129,7 @@
                                    (value ?assign))))
 
 
+(definstances inst-decls
+              ([MemoryCopyRegisterInstruction] of instruction-declaration)
+              ([Error] of instruction-declaration))
+
