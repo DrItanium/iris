@@ -45,17 +45,15 @@ DeclareProperty(ArithmeticRemainderSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticRemainderUnsigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
-DeclareProperty(ArithmeticRemainderSigned, IsIntegerOperation)
-DeclareProperty(ArithmeticDivideSigned, IsIntegerOperation)
-DeclareProperty(ArithmeticRemainderUnsigned, IsOrdinalOperation)
-DeclareProperty(ArithmeticDivideUnsigned, IsOrdinalOperation)
 DeclareProperty(ArithmeticRemainderSigned, IsRemainderOperation)
 DeclareProperty(ArithmeticRemainderUnsigned, IsRemainderOperation)
 DeclareProperty(ArithmeticDivideSigned, IsDivideOperation)
 DeclareProperty(ArithmeticDivideUnsigned, IsDivideOperation)
 #define ArithmeticSignedUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
-        GroupArithmetic(op ## Signed )
+        DeclareProperty(Arithmetic ## op ## Unsigned, IsOrdinalOperation) \
+        GroupArithmetic(op ## Signed ) \
+        DeclareProperty(Arithmetic ## op ## Signed, IsIntegerOperation)
 ArithmeticSignedUnsigned(Add)
 ArithmeticSignedUnsigned(Subtract)
 ArithmeticSignedUnsigned(Multiply)
