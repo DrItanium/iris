@@ -376,6 +376,9 @@ template<typename T> constexpr auto IsOrdinalOperation = false;
 template<typename T> constexpr auto IsDivideOperation = false;
 template<typename T> constexpr auto IsRemainderOperation = false;
 template<typename T> constexpr auto IsMemoryOperation = false;
+template<typename T> constexpr auto IsBranchOperation = false;
+template<typename T> constexpr auto IsArithmeticOperation = false;
+template<typename T> constexpr auto IsCompareOperation = false;
 
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
@@ -393,9 +396,9 @@ struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
 #include "InstructionFormats.def"
 #undef X
 #define DeclareProperty(op, prop) \
-    template<> constexpr auto prop < iris :: op ## Instruction > = true; 
+    template<> constexpr auto prop < op ## Instruction > = true; 
 #include "InstructionProperties.def"
-#undef X
+#undef DeclareProperty
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateAndLinkInstruction> = true;
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchRelativeImmediateInstruction> = true;
 template<> constexpr auto IsBranchImmediateInstruction<iris::BranchImmediateAndLinkInstruction> = true;

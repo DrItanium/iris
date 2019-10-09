@@ -4,10 +4,14 @@
  */
 
 // DeclareProperty(InstructionName, PropertyName) 
-#define BasicMemory(op) DeclareProperty(Memory ## op, IsMemoryOperation)
+#define OfGroup(group, op) DeclareProperty(group ## op, Is ## group ## Operation)
+#define GroupArithmetic(op) OfGroup(Arithmetic, op)
+#define GroupCompare(op) OfGroup(Compare, op)
+#define GroupBranch(op) OfGroup(Branch, op)
+#define GroupMemory(op) OfGroup(Memory, op)
 #define Memory(op, prop) \
     DeclareProperty(Memory ## op, prop) \
-    BasicMemory(Memory ## op)
+    GroupMemory(op)
 #define Stack(op) Memory(Stack ## op, IsStackOperation)
 #define Code(op) Memory(Code ## op, IsCodeOperation)
 #define Data(op) Memory(Data ## op, IsDataOperation)
@@ -26,12 +30,16 @@ IO(StoreWithOffset)
 IO(StoreImmediateValue)
 IP(MoveToIP)
 IP(MoveFromIP)
-BasicMemory(CopyRegister)
-BasicMemory(SwapRegisters)
-BasicMemory(AssignRegisterImmediate)
+GroupMemory(CopyRegister)
+GroupMemory(SwapRegisters)
+GroupMemory(AssignRegisterImmediate)
 #undef IP
 #undef IO
 #undef Data
 #undef Code
 #undef Stack
 #undef Memory
+#undef GroupMemory 
+#undef GroupBranch 
+#undef GroupArithmetic
+#undef GroupCompare
