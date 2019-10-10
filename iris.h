@@ -293,9 +293,6 @@ class Core {
     private:
         void invoke(const std::monostate&);
         void invoke(const iris::ErrorInstruction&);
-        void invoke(const iris::MemoryCopyRegisterInstruction&);
-        void invoke(const iris::MemoryAssignRegisterImmediateInstruction&);
-        void invoke(const iris::MemorySwapRegistersInstruction&);
         void invoke(const iris::BranchSelectInstruction&);
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
@@ -360,6 +357,23 @@ class Core {
                     setRegisterValue(reg, _ip.get());
                 } else {
                     static_assert(false_v<K>, "Unimplemented ip manipulation operation!");
+                }
+            } else if constexpr (IsGPRManipulatorOperation<K>) {
+                if constexpr (std::is_same_v<K, iris::MemoryCopyRegisterInstruction>) {
+                    if (auto [dest, src] = input.arguments(); dest != src) {
+                        setRegisterValue(dest, getRegisterValue(src));
+                    }
+                } else if constexpr (std::is_same_v<K, iris::MemorySwapRegistersInstruction>) {
+                    if (auto [ar, br] = input.arguments(); ar != br) {
+                        auto aValue = getRegisterValue<Word>(ar);
+                        setRegisterValue(ar, getRegisterValue(br));
+                        setRegisterValue(br, aValue);
+                    } 
+                } else if constexpr (std::is_same_v<K, iris::MemoryAssignRegisterImmediateInstruction>) {
+                    auto [dest, imm16] = input.arguments();
+                    setRegisterValue(dest, imm16);
+                } else {
+                    static_assert(false_v<K>, "Unimplemented gpr manipulator");
                 }
             } else if constexpr (IsStackOperation<K>) {
                 auto [ sp, other ] = input.arguments();

@@ -405,6 +405,7 @@ template<typename T> constexpr auto IsLessThanOrEqualToOperation = false;
 template<typename T> constexpr auto IsLessThanOperation = false;
 template<typename T> constexpr auto IsEqualsOperation = false;
 template<typename T> constexpr auto IsNotEqualsOperation = false;
+template<typename T> constexpr auto IsGPRManipulatorOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

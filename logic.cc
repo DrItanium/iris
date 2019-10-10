@@ -39,27 +39,6 @@ Core::invoke(const iris::ErrorInstruction&) {
 }
 
 void
-Core::invoke(const iris::MemoryCopyRegisterInstruction& s) {
-    if (auto [dest, src] = s.arguments(); dest != src) {
-        setRegisterValue(dest, getRegisterValue(src));
-    }
-}
-void
-Core::invoke(const iris::MemorySwapRegistersInstruction& s) {
-    if (auto [ar, br] = s.arguments(); ar != br) {
-        auto aValue = getRegisterValue<Word>(ar);
-        setRegisterValue(ar, getRegisterValue(br));
-        setRegisterValue(br, aValue);
-    } 
-}
-
-void
-Core::invoke(const iris::MemoryAssignRegisterImmediateInstruction& s) {
-    auto [dest, imm16] = s.arguments();
-    setRegisterValue(dest, imm16);
-}
-
-void
 Core::invoke(const iris::BranchSelectInstruction& s) {
     // BranchSelect ConditionalRegister TrueAddress FalseAddress
     auto [ cond, onTrue, onFalse] = s.arguments();
