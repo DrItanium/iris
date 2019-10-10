@@ -47,10 +47,6 @@ DeclareProperty(ArithmeticRemainderSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticRemainderUnsigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
-DeclareProperty(ArithmeticRemainderSigned, IsRemainderOperation)
-DeclareProperty(ArithmeticRemainderUnsigned, IsRemainderOperation)
-DeclareProperty(ArithmeticDivideSigned, IsDivideOperation)
-DeclareProperty(ArithmeticDivideUnsigned, IsDivideOperation)
 #define PartOfClass(op, class) DeclareProperty(op, Is ## class ## Operation)
 #define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
@@ -59,6 +55,7 @@ DeclareProperty(ArithmeticDivideUnsigned, IsDivideOperation)
 #define ArithmeticSigned(op) \
         GroupArithmetic(op ## Signed) \
         PartOfClass(Arithmetic ## op ## Signed, Integer)
+    
 
 #define ArithmeticSignedImmediate(op) \
         ArithmeticSigned(op ## Immediate) \
@@ -70,7 +67,10 @@ DeclareProperty(ArithmeticDivideUnsigned, IsDivideOperation)
 
 #define ArithmeticSignedUnsigned(op) \
         ArithmeticUnsigned(op) \
-        ArithmeticSigned(op)
+        ArithmeticSigned(op) \
+        PartOfClass(Arithmetic ## op ## Signed, op) \
+        PartOfClass(Arithmetic ## op ## Unsigned, op)
+        
 
 #define ArithmeticSignedUnsignedImmediate(op) \
         ArithmeticUnsignedImmediate(op) \
