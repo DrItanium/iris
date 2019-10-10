@@ -5,6 +5,7 @@
 
 // DeclareProperty(InstructionName, PropertyName) 
 
+#define PartOfClass(op, class) DeclareProperty(op, Is ## class ## Operation)
 #define OfGroup(group, op) DeclareProperty(group ## op, Is ## group ## Operation)
 #define GroupArithmetic(op) OfGroup(Arithmetic, op)
 #define GroupCompare(op) OfGroup(Compare, op)
@@ -47,7 +48,6 @@ DeclareProperty(ArithmeticRemainderSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticRemainderUnsigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideSigned, DisallowsDivideByZero)
 DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
-#define PartOfClass(op, class) DeclareProperty(op, Is ## class ## Operation)
 #define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
         PartOfClass(Arithmetic ## op ## Unsigned, Ordinal)

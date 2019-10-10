@@ -349,86 +349,78 @@ class Core {
             } 
             _advanceIP = false; 
         }
-        template<typename I, std::enable_if_t<ManipulatesIP<std::decay_t<I>>, int> = 0>
-        void invoke(const I& input) noexcept {
-            using K = std::decay_t<I>;
-            auto [ reg ] = input.arguments();
-            if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
-                _ip.put(getRegisterValue(reg));
-            } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
-                setRegisterValue(reg, _ip.get());
-            } else {
-                static_assert(false_v<I>, "Type not accepted!");
-            }
-        }
-        template<typename T, std::enable_if_t<IsStackOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
+        template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& input) noexcept {
             using K = std::decay_t<T>;
-            auto [ sp, other ] = s.arguments();
-            if constexpr (std::is_same_v<K, MemoryStackPopInstruction>) {
-                // so stack grows downward
-                // pops grow towards 0xFFFF
-                // StackPop StackPointerRegister DestinationRegister
-                setRegisterValue(other, loadStack(sp));
-                incrementRegister(sp);
-            } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
-                                 std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
-                // stack grows downward
-                // StackPush StackPointerRegister SourceRegister|Imm16
-                decrementRegister(sp);
-                storeStack(sp, other);
+            if constexpr (ManipulatesIP<K>) {
+                auto [ reg ] = input.arguments();
+                if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
+                    _ip.put(getRegisterValue(reg));
+                } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
+                    setRegisterValue(reg, _ip.get());
+                } else {
+                    static_assert(false_v<K>, "Unimplemented ip manipulation operation!");
+                }
+            } else if constexpr (IsStackOperation<K>) {
+                auto [ sp, other ] = input.arguments();
+                if constexpr (std::is_same_v<K, MemoryStackPopInstruction>) {
+                    // so stack grows downward
+                    // pops grow towards 0xFFFF
+                    // StackPop StackPointerRegister DestinationRegister
+                    setRegisterValue(other, loadStack(sp));
+                    incrementRegister(sp);
+                } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
+                        std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
+                    // stack grows downward
+                    // StackPush StackPointerRegister SourceRegister|Imm16
+                    decrementRegister(sp);
+                    storeStack(sp, other);
+                } else {
+                    static_assert(false_v<K>, "Unimplemented stack operation!");
+                }
+            } else if constexpr (IsDataOperation<K>) {
+                if constexpr (std::is_same_v<K, MemoryDataLoadWithOffsetInstruction>) {
+                    auto [ dest, loc, offset ] = input.arguments();
+                    setRegisterValue(dest, loadData(loc, offset));
+                } else if constexpr (std::is_same_v<K, MemoryDataStoreWithOffsetInstruction>) {
+                    auto [ dest, value, offset ] = input.arguments();
+                    storeData(dest, value, offset);
+                } else if constexpr (std::is_same_v<K, MemoryDataStoreImmediateValueInstruction>) {
+                    auto [ addr, imm16 ] = input.arguments();
+                    storeData(addr, imm16);
+                } else {
+                    static_assert(false_v<K>, "Unimplemented stack operation!");
+                }
+            } else if constexpr (IsIOOperation<K>) {
+                if constexpr (std::is_same_v<K, MemoryIOLoadWithOffsetInstruction>) {
+                    auto [ dest, loc, offset ] = input.arguments();
+                    setRegisterValue(dest, loadIO(loc, offset));
+                } else if constexpr (std::is_same_v<K, MemoryIOStoreWithOffsetInstruction>) {
+                    auto [ dest, value, offset ] = input.arguments();
+                    storeIO(dest, value, offset);
+                } else if constexpr (std::is_same_v<K, MemoryIOStoreImmediateValueInstruction>) {
+                    auto [ addr, imm16 ] = input.arguments();
+                    storeIO(addr, imm16);
+                } else {
+                    static_assert(false_v<K>, "Unimplemented stack operation!");
+                }
+            } else if constexpr (IsCodeOperation<K>) {
+                if constexpr (std::is_same_v<K, MemoryCodeLoadWithOffsetInstruction>) {
+                    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
+                    auto [addr, lower, offset] = input.arguments();
+                    setDoubleRegisterValue(lower, loadCode(addr, offset));
+                } else if constexpr (std::is_same_v<K, MemoryCodeStoreWithOffsetInstruction>) {
+                    // CodeStore AddressRegister <= LowerRegister (upper register implied)
+                    auto [addr, lower, offset ] = input.arguments();
+                    storeCode(addr, lower, offset);
+                } else {
+                    static_assert(false_v<K>, "Unimplemented code operation!");
+                }
             } else {
-                static_assert(false_v<K>, "Unimplemented stack operation!");
+                static_assert(false_v<K>, "Unimplemented memory operation!");
             }
         }
 
-        template<typename T, std::enable_if_t<IsDataOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, MemoryDataLoadWithOffsetInstruction>) {
-                auto [ dest, loc, offset ] = s.arguments();
-                setRegisterValue(dest, loadData(loc, offset));
-            } else if constexpr (std::is_same_v<K, MemoryDataStoreWithOffsetInstruction>) {
-                auto [ dest, value, offset ] = s.arguments();
-                storeData(dest, value, offset);
-            } else if constexpr (std::is_same_v<K, MemoryDataStoreImmediateValueInstruction>) {
-                auto [ addr, imm16 ] = s.arguments();
-                storeData(addr, imm16);
-            } else {
-                static_assert(false_v<K>, "Unimplemented stack operation!");
-            }
-        }
-        template<typename T, std::enable_if_t<IsIOOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, MemoryIOLoadWithOffsetInstruction>) {
-                auto [ dest, loc, offset ] = s.arguments();
-                setRegisterValue(dest, loadIO(loc, offset));
-            } else if constexpr (std::is_same_v<K, MemoryIOStoreWithOffsetInstruction>) {
-                auto [ dest, value, offset ] = s.arguments();
-                storeIO(dest, value, offset);
-            } else if constexpr (std::is_same_v<K, MemoryIOStoreImmediateValueInstruction>) {
-                auto [ addr, imm16 ] = s.arguments();
-                storeIO(addr, imm16);
-            } else {
-                static_assert(false_v<K>, "Unimplemented stack operation!");
-            }
-        }
-        template<typename T, std::enable_if_t<IsCodeOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, MemoryCodeLoadWithOffsetInstruction>) {
-                // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-                auto [addr, lower, offset] = s.arguments();
-                setDoubleRegisterValue(lower, loadCode(addr, offset));
-            } else if constexpr (std::is_same_v<K, MemoryCodeStoreWithOffsetInstruction>) {
-                // CodeStore AddressRegister <= LowerRegister (upper register implied)
-                auto [addr, lower, offset ] = s.arguments();
-                storeCode(addr, lower, offset);
-            } else {
-                static_assert(false_v<K>, "Unimplemented code operation!");
-            }
-        }
         template<typename T, std::enable_if_t<IsArithmeticOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
