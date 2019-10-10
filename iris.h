@@ -555,11 +555,10 @@ class Core {
         }
         template<typename T = Word>
         inline T getRegisterValue(RegisterIndex idx, T offset) const noexcept {
-            return getSourceRegister(idx).get<T>() + offset;
+            return getRegisterValue<T>(idx) + offset;
         }
     public:
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
-    private:
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;

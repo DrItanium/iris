@@ -36,11 +36,11 @@ class Register final {
     public:
         explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
         explicit constexpr Register(bool value) noexcept : _storage(value ? 0xFFFF : 0) { }
-        constexpr Register(const Register& other) noexcept = default;
-        constexpr Register(Register&& other) noexcept = default;
+        constexpr Register(const Register& other) noexcept = delete;
+        constexpr Register(Register&& other) noexcept = delete;
         ~Register() = default;
-        Register& operator=(const Register& other) noexcept = default;
-        Register& operator=(Register&& other) noexcept = default;
+        Register& operator=(const Register& other) noexcept = delete;
+        Register& operator=(Register&& other) noexcept = delete;
         constexpr Register& operator++() noexcept {
             ++_storage._value;
             return *this;
@@ -69,6 +69,16 @@ class Register final {
         constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
         constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
         constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
+        constexpr bool IsHardwired() const noexcept { return _hardwired; }
+        void hardwireTo(Word value) noexcept {
+            _hardwired = true;
+            _storage._value = value;
+        }
+        void hardwireTo(SignedWord value) noexcept {
+            _hardwired = true;
+            _storage._signedValue = value;
+        }
+
         template<typename T = Word>
         constexpr T get() const noexcept {
             using K = std::decay_t<T>;
@@ -85,20 +95,23 @@ class Register final {
         template<typename T>
         constexpr void put(T value) noexcept {
             using K = std::decay_t<T>;
-            if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
-                _storage._value = value;
-            } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
-                _storage._signedValue = value;
-            } else if constexpr (std::is_same_v<K, bool> || std::is_convertible_v<K, bool>) {
-                _storage._value = boolToWord(value);
-            } else {
-                static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
+            if (!_hardwired) {
+                if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
+                    _storage._value = value;
+                } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
+                    _storage._signedValue = value;
+                } else if constexpr (std::is_same_v<K, bool> || std::is_convertible_v<K, bool>) {
+                    _storage._value = boolToWord(value);
+                } else {
+                    static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
+                }
             }
         }
         explicit constexpr operator Word() const noexcept { return get<Word>(); }
         explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
         constexpr operator bool() const noexcept { return get<bool>(); }
     private:
+        bool _hardwired = false;
         union BackingStore {
             constexpr BackingStore(Word v) : _value(v) { }
             Word _value;
