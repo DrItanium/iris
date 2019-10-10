@@ -459,6 +459,13 @@ class Core {
             }
             setRegisterValue<D>(dest, result);
         }
+        template<typename T, std::enable_if_t<IsLogicalOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T&) {
+        }
+        template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T&) {
+        }
+
 
     private:
         void cycle();
