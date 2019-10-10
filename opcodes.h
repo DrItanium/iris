@@ -354,13 +354,15 @@ template<typename T>
 constexpr auto UsesAbsoluteImmediatePosition = std::is_base_of_v<OneRegisterU16Format<T::Opcode>, T> || std::is_base_of_v<U16Format, T>;
 
 template<typename T>
-constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>>);
+constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>);
 
 template<typename T>
-constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>>);
+constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>);
 
 template<typename T>
-constexpr auto IsSignedOperation = IsSignedImmediate8Operation<T>;
+constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
+template<typename T>
+constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
 
 template<typename T> constexpr auto IsStackOperation = false;
 template<typename T> constexpr auto IsCodeOperation = false;
@@ -371,8 +373,6 @@ template<typename T> constexpr auto UsesRelativeOffset = false;
 template<typename T> constexpr auto UsesLinkRegister = false;
 template<typename T> constexpr auto ManipulatesIP = false;
 template<typename T> constexpr auto DisallowsDivideByZero = false;
-template<typename T> constexpr auto IsIntegerOperation = false;
-template<typename T> constexpr auto IsOrdinalOperation = false;
 template<typename T> constexpr auto IsDivideOperation = false;
 template<typename T> constexpr auto IsRemainderOperation = false;
 template<typename T> constexpr auto IsMemoryOperation = false;
@@ -399,6 +399,12 @@ template<typename T> constexpr auto IsBitwiseXorOperation = false;
 template<typename T> constexpr auto NotTheResult = false;
 template<typename T> constexpr auto IsMaxOperation = false;
 template<typename T> constexpr auto IsMinOperation = false;
+template<typename T> constexpr auto IsGreaterThanOrEqualToOperation = false;
+template<typename T> constexpr auto IsGreaterThanOperation = false;
+template<typename T> constexpr auto IsLessThanOrEqualToOperation = false;
+template<typename T> constexpr auto IsLessThanOperation = false;
+template<typename T> constexpr auto IsEqualsOperation = false;
+template<typename T> constexpr auto IsNotEqualsOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

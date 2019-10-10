@@ -91,12 +91,6 @@
     NormalSignedUnsignedCompare(GreaterThan)
     NormalSignedUnsignedCompare(LessThanOrEqualTo)
     NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
-    Imm8Compare(Equals)
-    Imm8Compare(NotEquals)
-    Imm8SignedUnsignedCompare(LessThan)
-    Imm8SignedUnsignedCompare(GreaterThan)
-    Imm8SignedUnsignedCompare(LessThanOrEqualTo)
-    Imm8SignedUnsignedCompare(GreaterThanOrEqualTo)
 
 #undef NormalSignedCompare
 #undef NormalUnsignedCompare 

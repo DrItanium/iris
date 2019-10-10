@@ -296,26 +296,38 @@ class Core {
         void invoke(const iris::MemoryCopyRegisterInstruction&);
         void invoke(const iris::MemoryAssignRegisterImmediateInstruction&);
         void invoke(const iris::MemorySwapRegistersInstruction&);
-        void invoke(const iris::CompareGreaterThanOrEqualToUnsignedImmediate8Instruction&);
-        void invoke(const iris::CompareGreaterThanOrEqualToSignedImmediate8Instruction&);
-        void invoke(const iris::CompareLessThanOrEqualToUnsignedImmediate8Instruction&);
-        void invoke(const iris::CompareLessThanOrEqualToSignedImmediate8Instruction&);
-        void invoke(const iris::CompareLessThanUnsignedImmediate8Instruction&);
-        void invoke(const iris::CompareLessThanSignedImmediate8Instruction&);
-        void invoke(const iris::CompareGreaterThanUnsignedImmediate8Instruction&);
-        void invoke(const iris::CompareGreaterThanSignedImmediate8Instruction&);
-        void invoke(const iris::CompareNotEqualsImmediate8Instruction&);
-        void invoke(const iris::CompareEqualsImmediate8Instruction&);
-        void invoke(const iris::CompareGreaterThanOrEqualToUnsignedInstruction&);
-        void invoke(const iris::CompareGreaterThanOrEqualToSignedInstruction&);
-        void invoke(const iris::CompareLessThanOrEqualToUnsignedInstruction&);
-        void invoke(const iris::CompareLessThanOrEqualToSignedInstruction&);
-        void invoke(const iris::CompareLessThanUnsignedInstruction&);
-        void invoke(const iris::CompareLessThanSignedInstruction&);
-        void invoke(const iris::CompareGreaterThanUnsignedInstruction&);
-        void invoke(const iris::CompareGreaterThanSignedInstruction&);
-        void invoke(const iris::CompareNotEqualsInstruction&);
-        void invoke(const iris::CompareEqualsInstruction&);
+
+        template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
+            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
+            auto [ dest, rsrc1, rsrc2 ] = s.arguments();
+            D src2 = static_cast<D>(0);
+            bool result = false;
+            if constexpr (TreatArg2AsImmediate<K>) {
+                src2 = static_cast<D>(rsrc2);
+            } else {
+                src2 = getRegisterValue(rsrc2);
+            }
+            auto src1 = getRegisterValue<D>(rsrc1);
+            if constexpr (IsEqualsOperation<K>) {
+                result = src1 == src2;
+            } else if constexpr (IsNotEqualsOperation<K>) {
+                result = src1 != src2;
+            } else if constexpr (IsLessThanOrEqualToOperation<K>) {
+                result = src1 <= src2;
+            } else if constexpr (IsGreaterThanOrEqualToOperation<K>) {
+                result = src1 >= src2;
+            } else if constexpr (IsLessThanOperation<K>) {
+                result = src1 < src2;
+            } else if constexpr (IsGreaterThanOperation<K>) {
+                result = src1 > src2;
+            } else {
+                static_assert(false_v<K>, "Bad compare operation!");
+            }
+            setRegisterValue(dest, result);
+        }
         void invoke(const iris::BranchSelectInstruction&);
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
@@ -485,11 +497,6 @@ class Core {
                 setRegisterValue(dest, result);
             }
         }
-#if 0
-        template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T&) {
-        }
-#endif
 
 
     private:

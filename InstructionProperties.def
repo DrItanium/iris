@@ -104,6 +104,29 @@ DeclareProperty(LogicalBitwiseNand, NotTheResult)
 DeclareProperty(LogicalBitwiseNor,  NotTheResult)
 PartOfClass(LogicalBitwiseNand, BitwiseAnd)
 PartOfClass(LogicalBitwiseNor,  BitwiseOr)
+#define CompareUnsigned(op) \
+        GroupCompare(op ## Unsigned) \
+        PartOfClass(Compare ## op ## Unsigned, Ordinal)
+
+#define CompareSigned(op) \
+        GroupCompare(op ## Signed) \
+        PartOfClass(Compare ## op ## Signed, Integer)
+#define CompareSignedUnsigned(op) \
+        CompareUnsigned(op) \
+        CompareSigned(op) \
+        PartOfClass(Compare ## op ## Signed, op) \
+        PartOfClass(Compare ## op ## Unsigned, op)
+GroupCompare(Equals)
+PartOfClass(CompareEquals, Ordinal)
+GroupCompare(NotEquals)
+PartOfClass(CompareNotEquals, Ordinal)
+CompareSignedUnsigned(LessThan)
+CompareSignedUnsigned(GreaterThan)
+CompareSignedUnsigned(LessThanOrEqualTo)
+CompareSignedUnsigned(GreaterThanOrEqualTo)
+#undef CompareSigned
+#undef CompareUnsigned
+#undef CompareSignedUnsigned
 #undef Logical
 
 #undef ArithmeticSignedImmediate
