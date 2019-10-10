@@ -485,9 +485,11 @@ class Core {
                 setRegisterValue(dest, result);
             }
         }
+#if 0
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T&) {
         }
+#endif
 
 
     private:

@@ -50,11 +50,11 @@ nop(RegisterIndex idx) noexcept {
 }
 Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftLeftUnsignedImmediate({dest, src, 1});
+    return ArithmeticShiftLeftImmediateUnsigned({dest, src, 1});
 }
 Bits
 twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftRightUnsignedImmediate({dest, src, 1});
+    return ArithmeticShiftRightImmediateUnsigned({dest, src, 1});
 }
 Bits 
 ret(RegisterIndex link) noexcept {
@@ -71,7 +71,7 @@ twoDivide(RegisterIndex value) noexcept {
 }
 Bits 
 invert(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticBitwiseNot({dest, src});
+    return LogicalBitwiseNot({dest, src});
 }
 Bits 
 invert(RegisterIndex dest) noexcept { 
@@ -103,11 +103,11 @@ notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
 }
 Bits 
 increment(RegisterIndex target) noexcept {
-    return ArithmeticAddUnsignedImmediate({target, target, 1});
+    return ArithmeticAddImmediateUnsigned({target, target, 1});
 }
 Bits 
 decrement(RegisterIndex target) noexcept {
-    return ArithmeticAddSignedImmediate({target, target, -1});
+    return ArithmeticAddImmediateSigned({target, target, -1});
 }
 Bits
 greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
@@ -243,13 +243,13 @@ setIP(RegisterIndex r) noexcept {
 
 Bits
 bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticBitwiseNot({dest, src});
+    return LogicalBitwiseNot({dest, src});
 }
 
 #define X(kind) \
     Bits \
     bitwise ## kind ( RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { \
-        return ArithmeticBitwise ## kind ( { dest, src0, src1 } ); \
+        return LogicalBitwise ## kind ( { dest, src0, src1 } ); \
     }
 X(And);
 X(Or);

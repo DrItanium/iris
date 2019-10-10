@@ -120,32 +120,6 @@ Core::invoke(const iris::CompareNotEqualsImmediate8Instruction& s) {
     auto [ dest, src0, src1 ] = s.arguments();
     setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
 }
-#define X(op, act) \
-    void \
-    Core::invoke ( const iris:: Arithmetic ## op ## SignedImmediateInstruction & s) { \
-        using T = SignedWord; \
-        auto [ dest, src0, s8 ] = s.arguments(); \
-        setRegisterValue(dest, getRegisterValue<SignedWord>(src0) act static_cast<T>(s8)); \
-    } \
-    void \
-    Core::invoke ( const iris:: Arithmetic ## op ## UnsignedImmediateInstruction & s) { \
-        using T = UnsignedWord; \
-        auto [ dest, src0, u8 ] = s.arguments(); \
-        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<T>(u8)); \
-    }
-X(Multiply, *);
-X(Add, +);
-X(Subtract, -);
-#undef X
-#define X(op, act) \
-    void \
-    Core::invoke ( const iris:: Arithmetic ## op ## UnsignedImmediateInstruction & s) { \
-        auto [ dest, src0, u8 ] = s.arguments(); \
-        setRegisterValue(dest, getRegisterValue<Word>(src0) act static_cast<Word>(u8)); \
-    }
-X(ShiftLeft, <<);
-X(ShiftRight, >>);
-#undef X
 
 
 void
@@ -167,30 +141,6 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
     }
 }
 
-template<typename T> constexpr auto add(T a, T b) noexcept { return a + b; }
-template<typename T> constexpr auto sub(T a, T b) noexcept { return a - b; }
-template<typename T> constexpr auto mul(T a, T b) noexcept { return a * b; }
-template<typename T> constexpr auto shl(T a, T b) noexcept { return a << b; }
-template<typename T> constexpr auto shr(T a, T b) noexcept { return a >> b; }
-#define Y(name, op, suffix, types) \
-    void \
-    Core::invoke( const iris:: Arithmetic ## name ## suffix & s ) { \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue<types>(dest, op(getRegisterValue<types>(src0), getRegisterValue<types>(src1))); \
-    }
-#define X(name, op) \
-    Y(name, op, SignedInstruction, SignedWord); \
-    Y(name, op, UnsignedInstruction, Word)
-X(Add, add);
-X(Subtract, sub);
-X(Multiply, mul);
-X(ShiftRight, shr);
-X(ShiftLeft, shl);
-X(Min, std::min);
-X(Max, std::max);
-#undef X
-#undef Y
-
 void
 Core::invoke(const iris::BranchRegisterInstruction& s) {
     auto [ dest ] = s.arguments();
@@ -198,38 +148,6 @@ Core::invoke(const iris::BranchRegisterInstruction& s) {
     _advanceIP = false;
 }
 
-void
-Core::invoke(const iris::ArithmeticBitwiseNotInstruction& s) {
-    auto [ dest, src0 ] = s.arguments();
-    setRegisterValue(dest, ~getRegisterValue(src0));
-}
-
-template<typename T>
-constexpr auto NotTheResult = false;
-
-template<>
-constexpr auto NotTheResult<ArithmeticBitwiseNorInstruction> = true;
-template<>
-constexpr auto NotTheResult<ArithmeticBitwiseNandInstruction> = true;
-
-#define X(name, op) \
-    void \
-    Core::invoke(const iris::Arithmetic ## name ## Instruction & s) { \
-        using K = std::decay_t<decltype(s)>; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        auto result = (getRegisterValue(src0) op getRegisterValue(src1)); \
-        if constexpr (NotTheResult<K>) { \
-            result = ~result; \
-        } \
-        setRegisterValue(dest, result); \
-    }
-
-X(BitwiseNor, |);
-X(BitwiseNand, &);
-X(BitwiseAnd, &);
-X(BitwiseOr, |);
-X(BitwiseXor, ^);
-#undef X
 void
 Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
     auto [ address, link ] = s.arguments();
