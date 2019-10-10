@@ -390,6 +390,15 @@ template<typename T> constexpr auto IsMultiplyImmediateOperation = false;
 template<typename T> constexpr auto IsShiftLeftImmediateOperation = false;
 template<typename T> constexpr auto IsShiftRightImmediateOperation = false;
 template<typename T> constexpr auto IsLogicalOperation = false;
+template<typename T> constexpr auto IsBitwiseOrOperation = false;
+template<typename T> constexpr auto IsBitwiseNorOperation = false;
+template<typename T> constexpr auto IsBitwiseAndOperation = false;
+template<typename T> constexpr auto IsBitwiseNandOperation = false;
+template<typename T> constexpr auto IsBitwiseNotOperation = false;
+template<typename T> constexpr auto IsBitwiseXorOperation = false;
+template<typename T> constexpr auto NotTheResult = false;
+template<typename T> constexpr auto IsMaxOperation = false;
+template<typename T> constexpr auto IsMinOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

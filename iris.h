@@ -349,30 +349,6 @@ class Core {
                 static_assert(false_v<I>, "Type not accepted!");
             }
         }
-        template<typename T, std::enable_if_t<DisallowsDivideByZero<std::decay_t<T>>, int> = 0> 
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
-            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
-            auto [ dest, num, denom ] = s.arguments(); 
-            D denominator = static_cast<D>(0);
-            if constexpr (TreatArg2AsImmediate<K>) {
-                denominator = static_cast<D>(denom);
-            } else {
-                denominator = getRegisterValue(denom);
-            }
-            if (denominator == 0) {
-                throw DivideByZeroException();
-            } else {
-                if constexpr (auto numerator = getRegisterValue<D>(num); IsRemainderOperation<K>) {
-                    setRegisterValue<D>(dest, numerator % denominator);
-                } else if constexpr (IsDivideOperation<K>) {
-                    setRegisterValue<D>(dest, numerator / denominator);
-                } else {
-                    static_assert(false_v<T>, "Unimplemented operation which disallows division by zero!");
-                }
-            }
-        }
         template<typename T, std::enable_if_t<IsStackOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
@@ -448,11 +424,40 @@ class Core {
             using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
             auto [ dest, rsrc1, rsrc2 ] = s.arguments();
             D src2 = static_cast<D>(0);
+            D result = static_cast<D>(0);
             if constexpr (TreatArg2AsImmediate<K>) {
                 src2 = static_cast<D>(rsrc2);
             } else {
                 src2 = getRegisterValue(rsrc2);
             }
+            auto src1 = getRegisterValue<D>(rsrc1);
+            if constexpr (DisallowsDivideByZero<K>) {
+                if (src2 == 0) {
+                    throw DivideByZeroException();
+                }
+            }
+            if constexpr (IsAddOperation<K>) {
+                result = src1 + src2;
+            } else if constexpr (IsSubtractOperation<K>) {
+                result = src1 - src2;
+            } else if constexpr (IsMultiplyOperation<K>) {
+                result = src1 * src2;
+            } else if constexpr (IsRemainderOperation<K>) {
+                result = src1 / src2;
+            } else if constexpr (IsDivideOperation<K>) {
+                result = src1 % src2;
+            } else if constexpr (IsShiftLeftOperation<K>) {
+                result = src1 << src2;
+            } else if constexpr (IsShiftRightOperation<K>) {
+                result = src1 >> src2;
+            } else if constexpr (IsMinOperation<K>) {
+                result = std::min(src1, src2);
+            } else if constexpr (IsMaxOperation<K>) {
+                result = std::max(src1, src2);
+            } else {
+                static_assert(false_v<K>, "Unimplemented arithmetic operation");
+            }
+            setRegisterValue<D>(dest, result);
         }
 
     private:

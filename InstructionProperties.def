@@ -92,7 +92,8 @@ ArithmeticSignedUnsignedImmediate(Remainder)
 ArithmeticUnsignedImmediate(ShiftLeft)
 ArithmeticUnsignedImmediate(ShiftRight)
 #define Logical(op) \
-        GroupLogical(op)
+        GroupLogical(op) \
+        PartOfClass(Logical ## op , op)
 Logical(BitwiseOr)
 Logical(BitwiseAnd)
 Logical(BitwiseNot)
