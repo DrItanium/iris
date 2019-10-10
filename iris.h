@@ -460,7 +460,30 @@ class Core {
             setRegisterValue<D>(dest, result);
         }
         template<typename T, std::enable_if_t<IsLogicalOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T&) {
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            if constexpr (IsBitwiseNotOperation<K>) {
+                auto [ dest, src ] = s.arguments();
+                setRegisterValue(dest, ~getRegisterValue(src));
+            } else {
+                auto [ dest, src1, src2 ] = s.arguments();
+                auto first = getRegisterValue(src1);
+                auto second = getRegisterValue(src2);
+                Word result = 0;
+                if constexpr (IsBitwiseAndOperation<K>) {
+                    result = first & second;
+                } else if constexpr (IsBitwiseOrOperation<K>) {
+                    result = first | second;
+                } else if constexpr (IsBitwiseXorOperation<K>) {
+                    result = first ^ second;
+                } else {
+                    static_assert(false_v<K>, "Bad logical kind");
+                }
+                if constexpr (NotTheResult<K>) {
+                    result = ~result;
+                }
+                setRegisterValue(dest, result);
+            }
         }
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T&) {
