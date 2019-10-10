@@ -66,61 +66,6 @@ Core::invoke(const iris::BranchSelectInstruction& s) {
     _ip.put(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
     _advanceIP = false;
 }
-void
-Core::invoke(const iris::CompareEqualsInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getSourceRegister(src0) == getSourceRegister(src1));
-}
-void
-Core::invoke(const iris::CompareNotEqualsInstruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getSourceRegister(src0) != getSourceRegister(src1));
-}
-#define Y(name, op, kind) \
-    void \
-    Core::invoke(const iris:: Compare ## name ## kind ## Instruction & s) { \
-        using T = kind ## Word ; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue(dest, \
-                getRegisterValue<T>(src0) op \
-                getRegisterValue<T>(src1)); \
-    }
-#define X(name, op) \
-    Y(name, op, Signed); \
-    Y(name, op, Unsigned);
-X(LessThanOrEqualTo, <=);
-X(LessThan, <);
-X(GreaterThanOrEqualTo, >=);
-X(GreaterThan, >);
-#undef Y
-#define Y(name, op, kind) \
-    void \
-    Core::invoke(const iris:: Compare ## name ## kind ## Immediate8Instruction & s) { \
-        using T = kind ## Word ; \
-        auto [ dest, src0, src1 ] = s.arguments(); \
-        setRegisterValue(dest, \
-                getRegisterValue<T>(src0) op \
-                static_cast<T>(src1)); \
-    }
-X(LessThanOrEqualTo, <=);
-X(LessThan, <);
-X(GreaterThanOrEqualTo, >=);
-X(GreaterThan, >);
-#undef Y
-#undef X
-
-
-void
-Core::invoke(const iris::CompareEqualsImmediate8Instruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src0) == static_cast<Word>(src1));
-}
-void
-Core::invoke(const iris::CompareNotEqualsImmediate8Instruction& s) {
-    auto [ dest, src0, src1 ] = s.arguments();
-    setRegisterValue(dest, getRegisterValue(src0) != static_cast<Word>(src1));
-}
-
 
 void
 Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {

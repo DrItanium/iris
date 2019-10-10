@@ -296,6 +296,13 @@ class Core {
         void invoke(const iris::MemoryCopyRegisterInstruction&);
         void invoke(const iris::MemoryAssignRegisterImmediateInstruction&);
         void invoke(const iris::MemorySwapRegistersInstruction&);
+        void invoke(const iris::BranchSelectInstruction&);
+        void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
+        void invoke(const iris::BranchRegisterAndLinkInstruction&);
+        void invoke(const iris::BranchConditionalRegisterInstruction&);
+        void invoke(const iris::BranchRegisterInstruction&);
+        void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
+        void invoke(const iris::BranchConditionalImmediateInstruction&);
 
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
@@ -328,13 +335,6 @@ class Core {
             }
             setRegisterValue(dest, result);
         }
-        void invoke(const iris::BranchSelectInstruction&);
-        void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
-        void invoke(const iris::BranchRegisterAndLinkInstruction&);
-        void invoke(const iris::BranchConditionalRegisterInstruction&);
-        void invoke(const iris::BranchRegisterInstruction&);
-        void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
-        void invoke(const iris::BranchConditionalImmediateInstruction&);
         template<typename T, std::enable_if_t<IsBranchImmediateInstruction<std::decay_t<T>>, int> = 0>
         void invoke(const T & s) { 
             using K = std::decay_t<decltype(s)>; 

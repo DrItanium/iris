@@ -87,19 +87,19 @@ square(RegisterIndex dest) noexcept {
 }
 Bits 
 greaterThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareGreaterThanSignedImmediate8({dest, src, 0});
+    return CompareGreaterThanSigned({dest, src, 0_reg});
 }
 Bits 
 lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareLessThanSignedImmediate8({dest, src, 0});
+    return CompareLessThanSigned({dest, src, 0_reg});
 }
 Bits 
 equalsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareEqualsImmediate8({dest, src, 0});
+    return CompareEquals({dest, src, 0_reg});
 }
 Bits 
 notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareNotEqualsImmediate8({dest, src, 0});
+    return CompareNotEquals({dest, src, 0_reg});
 }
 Bits 
 increment(RegisterIndex target) noexcept {
@@ -111,11 +111,11 @@ decrement(RegisterIndex target) noexcept {
 }
 Bits
 greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareGreaterThanOrEqualToSignedImmediate8({dest, src, 0});
+    return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg});
 }
 Bits
 lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareLessThanOrEqualToSignedImmediate8({dest, src, 0});
+    return CompareLessThanOrEqualToSigned({dest, src, 0_reg});
 }
 MultiInstructionExpression
 branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {
