@@ -42,11 +42,15 @@ class Register final {
         Register& operator=(const Register& other) noexcept = delete;
         Register& operator=(Register&& other) noexcept = delete;
         constexpr Register& operator++() noexcept {
-            ++_storage._value;
+            if (!_hardwired) {
+                ++_storage._value;
+            }
             return *this;
         }
         constexpr Register& operator--() noexcept {
-            --_storage._value;
+            if (!_hardwired) {
+                --_storage._value;
+            }
             return *this;
         }
         constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
@@ -73,10 +77,6 @@ class Register final {
         void hardwireTo(Word value) noexcept {
             _hardwired = true;
             _storage._value = value;
-        }
-        void hardwireTo(SignedWord value) noexcept {
-            _hardwired = true;
-            _storage._signedValue = value;
         }
 
         template<typename T = Word>

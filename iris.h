@@ -50,7 +50,10 @@ class Core {
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
     public:
-        Core() : _io(*this) { }
+        Core() : _io(*this) { 
+            _regs[0].hardwireTo(0);
+            _regs[1].hardwireTo(1);
+        }
         ~Core() = default;
         void run();
         void installIOMemoryMap(const IOMemoryMap& map);
