@@ -30,11 +30,14 @@
 namespace iris {
 void 
 Core::invoke(DoubleWord ibits) {
-    Instruction inst(ibits);
-    if (auto operation = inst.decode(); operation) {
-        std::visit([this](auto&& op) { invoke(op); }, *operation);
-    } else {
-        throw BadOperationException();
+    switch (Instruction inst(ibits); inst.getOpcodeIndex()) {
+#define X(t, f) case t ## Instruction :: RawValue : \
+        invoke(t ## Instruction(inst)); \
+        break;
+#include "InstructionFormats.def"
+#undef X
+        default:
+            throw BadOperationException();
     }
 }
 } // end namespace iris
