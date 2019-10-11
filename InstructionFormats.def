@@ -11,11 +11,6 @@
 #define ArithmeticSignedUnsigned(op, Format) \
     ArithmeticSigned(op, Format) \
     ArithmeticUnsigned(op, Format)
-#define ArithmeticSignedImmediate(op) Arithmetic(op ## ImmediateSigned, TwoRegisterS8)
-#define ArithmeticUnsignedImmediate(op) Arithmetic(op ## ImmediateUnsigned, TwoRegisterU8)
-#define ArithmeticSignedUnsignedImmediate(op) \
-        ArithmeticSignedImmediate(op) \
-        ArithmeticUnsignedImmediate(op)
 #define Memory(op, Format) Instruction(Memory, op, Format)
 #define Stack(op, Format) Memory(Stack ## op, Format)
 #define Data(op, Format) Memory(Data ## op, Format)
@@ -28,13 +23,6 @@
 #define NormalSignedUnsignedCompare(op) \
         NormalSignedCompare(op) \
         NormalUnsignedCompare(op)
-#define RawImm8Compare(op, Format) Compare(op ## Immediate8, Format)
-#define Imm8Compare(op) RawImm8Compare(op, TwoRegisterU8)
-#define Imm8SignedCompare(op) RawImm8Compare(op ## Signed , TwoRegisterS8)
-#define Imm8UnsignedCompare(op) Imm8Compare(op ## Unsigned)
-#define Imm8SignedUnsignedCompare(op) \
-        Imm8SignedCompare(op) \
-        Imm8UnsignedCompare(op)
 #define Branch(op, Format) Instruction(Branch, op, Format)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
@@ -51,13 +39,6 @@
     Logical(BitwiseXor, ThreeRegister)
     Logical(BitwiseNor, ThreeRegister)
     Logical(BitwiseNand, ThreeRegister)
-    ArithmeticSignedUnsignedImmediate(Add)
-    ArithmeticSignedUnsignedImmediate(Subtract)
-    ArithmeticSignedUnsignedImmediate(Multiply)
-    ArithmeticSignedUnsignedImmediate(Divide)
-    ArithmeticSignedUnsignedImmediate(Remainder)
-    ArithmeticUnsignedImmediate(ShiftLeft)
-    ArithmeticUnsignedImmediate(ShiftRight)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
@@ -96,11 +77,6 @@
 #undef NormalUnsignedCompare 
 #undef NormalCompare
 #undef NormalSignedUnsignedCompare
-#undef Imm8SignedUnsignedCompare
-#undef RawImm8Compare
-#undef Imm8Compare
-#undef Imm8SignedCompare
-#undef Imm8UnsignedCompare
 
 #undef Compare
 #undef Instruction

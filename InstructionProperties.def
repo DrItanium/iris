@@ -70,15 +70,6 @@ DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
         GroupArithmetic(op ## Signed) \
         PartOfClass(Arithmetic ## op ## Signed, Integer)
     
-
-#define ArithmeticSignedImmediate(op) \
-        ArithmeticSigned(op ## Immediate) \
-        PartOfClass(Arithmetic ## op ## ImmediateSigned, op)
-
-#define ArithmeticUnsignedImmediate(op) \
-        ArithmeticUnsigned(op ## Immediate) \
-        PartOfClass(Arithmetic ## op ## ImmediateUnsigned, op)
-
 #define ArithmeticSignedUnsigned(op) \
         ArithmeticUnsigned(op) \
         ArithmeticSigned(op) \
@@ -86,9 +77,6 @@ DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
         PartOfClass(Arithmetic ## op ## Unsigned, op)
         
 
-#define ArithmeticSignedUnsignedImmediate(op) \
-        ArithmeticUnsignedImmediate(op) \
-        ArithmeticSignedImmediate(op)
 ArithmeticSignedUnsigned(Add)
 ArithmeticSignedUnsigned(Subtract)
 ArithmeticSignedUnsigned(Multiply)
@@ -98,13 +86,6 @@ ArithmeticSignedUnsigned(Max)
 ArithmeticSignedUnsigned(Min)
 ArithmeticSignedUnsigned(ShiftLeft)
 ArithmeticSignedUnsigned(ShiftRight)
-ArithmeticSignedUnsignedImmediate(Add)
-ArithmeticSignedUnsignedImmediate(Subtract)
-ArithmeticSignedUnsignedImmediate(Multiply)
-ArithmeticSignedUnsignedImmediate(Divide)
-ArithmeticSignedUnsignedImmediate(Remainder)
-ArithmeticUnsignedImmediate(ShiftLeft)
-ArithmeticUnsignedImmediate(ShiftRight)
 #define Logical(op) \
         GroupLogical(op) \
         PartOfClass(Logical ## op , op)
@@ -145,9 +126,6 @@ CompareSignedUnsigned(GreaterThanOrEqualTo)
 #undef CompareSignedUnsigned
 #undef Logical
 
-#undef ArithmeticSignedImmediate
-#undef ArithmeticUnsignedImmediate
-#undef ArithmeticSignedUnsignedImmediate
 #undef ArithmeticSigned
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned

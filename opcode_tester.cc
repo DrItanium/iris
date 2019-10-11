@@ -84,6 +84,7 @@ bool stackTests(iris::Core& c) {
 }
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
+
     return false;
 }
 int main(int, char* []) {
