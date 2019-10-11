@@ -12,8 +12,14 @@ CORE_OBJS := iris.o \
 
 IRIS_ARCHIVE := libiris.a
 
-OBJS := $(CORE_OBJS) 
-PROGS := $(IRIS_ARCHIVE) 
+IRIS_TESTER_OBJS := opcode_tester.o
+
+IRIS_TESTER := iris_test
+
+OBJS := $(CORE_OBJS) \
+		$(IRIS_TESTER_OBJS)
+PROGS := $(IRIS_ARCHIVE) \
+	     $(IRIS_TESTER)
 
 
 all: options $(PROGS)
@@ -28,6 +34,10 @@ options:
 $(IRIS_ARCHIVE): $(CORE_OBJS)
 	@echo AR ${IRIS_ARCHIVE}
 	@${AR} rcs ${IRIS_ARCHIVE} ${CORE_OBJS}
+
+$(IRIS_TESTER): $(IRIS_ARCHIVE) $(IRIS_TESTER_OBJS)
+	@echo LD $@
+	@${CXX} -o ${IRIS_TESTER} ${LDFLAGS} ${IRIS_TESTER_OBJS} ${IRIS_ARCHIVE}
 
 .cc.o :
 	@echo CXX $<

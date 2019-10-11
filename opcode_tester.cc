@@ -25,9 +25,34 @@
  */
 
 #include "iris.h"
+#include "opcodes.h"
+#include <iostream>
 
-int main(int argc, char* argv[]) {
+int main(int, char* []) {
     iris::Core c;
-    /// @todo add support for actually checking if the resultant logic is working correctly
+    // test 
+    std::cout << "Code writing tests" << std::endl;
+    for (iris::Address i = 0; i < static_cast<iris::Address>(iris::Opcodes::Count); ++i) {
+        c.storeCode<iris::Address, iris::DoubleWord>(i, static_cast<iris::DoubleWord>(i));
+        if (auto result = c.loadCode(i, 0); result != static_cast<iris::DoubleWord>(i)) {
+            std::cout << "Write to code memory failed" << std::endl;
+            std::cout << "\tGot: " << std::hex << result << std::endl;
+            std::cout << "\tExpected: " << std::hex << static_cast<iris::DoubleWord>(i) << std::endl;
+            return 1;
+        }
+    }
+    std::cout << "Data writing tests" << std::endl;
+    for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
+        // data write
+        c.storeData<iris::Address, iris::Word>(i, ~i);
+        if (auto result = c.loadData<iris::Address, iris::Word>(i); result != (~i)) {
+            std::cout << "Write to data memory failed" << std::endl;
+            std::cout << "\tGot: " << std::hex << result << std::endl;
+            std::cout << "\tExpected: " << std::hex << ~i << std::endl;
+            return 1;
+        }
+    }
+
+    std::cout << "All tests passed!" << std::endl;
     return 0;
 }

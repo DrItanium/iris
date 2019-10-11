@@ -50,10 +50,7 @@ class Core {
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
     public:
-        Core() : _io(*this) { 
-            _regs[0].hardwireTo(0);
-            _regs[1].hardwireTo(1);
-        }
+        Core() noexcept;
         ~Core() = default;
         void run();
         void installIOMemoryMap(const IOMemoryMap& map);
@@ -191,18 +188,18 @@ class Core {
         void storeCode(A address, V value) {
             if constexpr (std::is_same_v<A, Address>) {
                 if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _data[address] = value;
+                    _code[address] = value;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _data[address] = getDoubleRegisterValue(value);
+                    _code[address] = getDoubleRegisterValue(value);
                 } else {
                     static_assert(false_v<V>, "Bad value kind!");
                 }
             } else if constexpr (std::is_same_v<A, RegisterIndex>) {
                 auto addr = getRegisterValue(address);
                 if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _data[addr] = value;
+                    _code[addr] = value;
                 } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _data[addr] = getDoubleRegisterValue(value);
+                    _code[addr] = getDoubleRegisterValue(value);
                 } else {
                     static_assert(false_v<V>, "Bad value kind!");
                 }
@@ -292,7 +289,6 @@ class Core {
                 static_assert(false_v<R>, "Bad return kind!");
             }
         }
-
     private:
         void invoke(const std::monostate&);
         void invoke(const iris::ErrorInstruction&);

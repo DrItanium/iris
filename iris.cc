@@ -27,7 +27,11 @@
 
 namespace iris {
 
-
+Core::Core() noexcept : _io(*this) {
+    for (int i = 0; i < 2; ++i) {
+        _regs[i].hardwireTo(i);
+    }
+}
 
 DestinationRegister
 Core::getDestinationRegister(RegisterIndex idx) noexcept {
