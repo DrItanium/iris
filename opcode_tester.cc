@@ -28,9 +28,7 @@
 #include "opcodes.h"
 #include <iostream>
 
-int main(int, char* []) {
-    iris::Core c;
-    // test 
+bool codeTests(iris::Core& c) {
     std::cout << "Code writing tests" << std::endl;
     for (iris::Address i = 0; i < static_cast<iris::Address>(iris::Opcodes::Count); ++i) {
         c.storeCode<iris::Address, iris::DoubleWord>(i, static_cast<iris::DoubleWord>(i));
@@ -38,10 +36,15 @@ int main(int, char* []) {
             std::cout << "Write to code memory failed" << std::endl;
             std::cout << "\tGot: " << std::hex << result << std::endl;
             std::cout << "\tExpected: " << std::hex << static_cast<iris::DoubleWord>(i) << std::endl;
-            return 1;
+            return true;
         }
     }
+    return false;
+
+}
+bool dataTests(iris::Core& c) {
     std::cout << "Data writing tests" << std::endl;
+    std::cout << "\t1. Write and readback from data memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         iris::Word valueToWrite(~i);
         // data write
@@ -50,12 +53,14 @@ int main(int, char* []) {
             std::cout << "Write to data memory failed" << std::endl;
             std::cout << "\tGot: " << std::hex << result << std::endl;
             std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
-            return 1;
+            return true;
         }
     }
-
+    return false;
+}
+bool stackTests(iris::Core& c) {
     std::cout << "Stack memory tests" << std::endl;
-    std::cout << "\tWrite and readback from stack memory" << std::endl;
+    std::cout << "\t1. Write and readback from stack memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         iris::Word valueToWrite(~(i + 12));
         // data write
@@ -64,9 +69,23 @@ int main(int, char* []) {
             std::cout << "Write to data memory failed" << std::endl;
             std::cout << "\tGot: " << std::hex << result << std::endl;
             std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
-            return 1;
+            return true;
         }
     }
+    return false;
+}
+int main(int, char* []) {
+    iris::Core c;
+    if (codeTests(c)) {
+        return 1;
+    } 
+    if (dataTests(c)) {
+        return 1;
+    }
+    if (stackTests(c)) {
+        return 1;
+    }
+
 
     std::cout << "All tests passed!" << std::endl;
     return 0;
