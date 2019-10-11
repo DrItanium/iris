@@ -46,7 +46,21 @@ int main(int, char* []) {
         iris::Word valueToWrite(~i);
         // data write
         c.storeData<iris::Address, iris::Word>(i, valueToWrite);
-        if (auto result = c.loadData<iris::Address, iris::Word>(i); result != valueToWrite) {
+        if (auto result = c.loadData<iris::Address>(i); result != valueToWrite) {
+            std::cout << "Write to data memory failed" << std::endl;
+            std::cout << "\tGot: " << std::hex << result << std::endl;
+            std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
+            return 1;
+        }
+    }
+
+    std::cout << "Stack memory tests" << std::endl;
+    std::cout << "\tWrite and readback from stack memory" << std::endl;
+    for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
+        iris::Word valueToWrite(~(i + 12));
+        // data write
+        c.storeStack<iris::Address, iris::Word>(i, valueToWrite);
+        if (auto result = c.loadStack<iris::Address>(i); result != valueToWrite) {
             std::cout << "Write to data memory failed" << std::endl;
             std::cout << "\tGot: " << std::hex << result << std::endl;
             std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;

@@ -103,7 +103,7 @@ class Core {
                 static_assert(false_v<K>, "Illegal type!");
             }
         }
-        template<typename T, typename R = Word>
+        template<typename T>
         Word loadData(T addr) {
             using K = std::decay_t<T>;
             if constexpr (std::is_same_v<K, RegisterIndex>) {
