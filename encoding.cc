@@ -50,11 +50,11 @@ nop(RegisterIndex idx) noexcept {
 }
 Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftLeftImmediateUnsigned({dest, src, 1});
+    return ArithmeticShiftLeftUnsigned({dest, src, 1_reg});
 }
 Bits
 twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftRightImmediateUnsigned({dest, src, 1});
+    return ArithmeticShiftRightUnsigned({dest, src, 1_reg});
 }
 Bits 
 ret(RegisterIndex link) noexcept {
@@ -103,11 +103,11 @@ notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
 }
 Bits 
 increment(RegisterIndex target) noexcept {
-    return ArithmeticAddImmediateUnsigned({target, target, 1});
+    return ArithmeticAddUnsigned({target, target, 1_reg});
 }
 Bits 
 decrement(RegisterIndex target) noexcept {
-    return ArithmeticAddImmediateSigned({target, target, -1});
+    return ArithmeticAddUnsigned({target, target, 1_reg});
 }
 Bits
 greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
