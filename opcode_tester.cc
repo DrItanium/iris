@@ -43,12 +43,13 @@ int main(int, char* []) {
     }
     std::cout << "Data writing tests" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
+        iris::Word valueToWrite(~i);
         // data write
-        c.storeData<iris::Address, iris::Word>(i, ~i);
-        if (auto result = c.loadData<iris::Address, iris::Word>(i); result != (~i)) {
+        c.storeData<iris::Address, iris::Word>(i, valueToWrite);
+        if (auto result = c.loadData<iris::Address, iris::Word>(i); result != valueToWrite) {
             std::cout << "Write to data memory failed" << std::endl;
             std::cout << "\tGot: " << std::hex << result << std::endl;
-            std::cout << "\tExpected: " << std::hex << ~i << std::endl;
+            std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
             return 1;
         }
     }
