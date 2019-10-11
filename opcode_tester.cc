@@ -26,6 +26,7 @@
 
 #include "iris.h"
 #include "opcodes.h"
+#include "encoding.h"
 #include <iostream>
 #include <string>
 
@@ -82,9 +83,18 @@ bool stackTests(iris::Core& c) {
     }
     return false;
 }
+bool testAddUnsignedOperation(iris::Core& c) noexcept {
+    c.setRegisterValue(17_reg, 0); // destination
+    c.setRegisterValue(18_reg, 0xFDED); // src1
+    c.setRegisterValue(19_reg, 2); // src2
+    c.invoke(iris::instructions::opAddUnsigned(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::Word>(17_reg), (0xFDED + 2));
+}
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
-
+    if (!testAddUnsignedOperation(c)) {
+        return true;
+    }
     return false;
 }
 int main(int, char* []) {
@@ -96,6 +106,9 @@ int main(int, char* []) {
         return 1;
     }
     if (stackTests(c)) {
+        return 1;
+    }
+    if (instructionTests(c)) {
         return 1;
     }
 
