@@ -83,18 +83,28 @@ bool stackTests(iris::Core& c) {
     }
     return false;
 }
-bool testAddUnsignedOperation(iris::Core& c) noexcept {
+bool testAddUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
     c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, 0xFDED); // src1
-    c.setRegisterValue(19_reg, 2); // src2
+    c.setRegisterValue(18_reg, src1); // src1
+    c.setRegisterValue(19_reg, src2); // src2
+    auto check = src1 + src2;
     c.invoke(iris::instructions::opAddUnsigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::Word>(17_reg), (0xFDED + 2));
+    return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
+
+bool testAddSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
+    c.setRegisterValue(17_reg, 0); // destination
+    c.setRegisterValue(18_reg, src1); // src1
+    c.setRegisterValue(19_reg, src2); // src2
+    auto check = src1 + src2;
+    c.invoke(iris::instructions::opAddSigned(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
+}
+
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
-    if (!testAddUnsignedOperation(c)) {
-        return true;
-    }
+    if (!testAddUnsignedOperation(c, 0xFDED, 2)) { return true; }
+    if (!testAddSignedOperation(c, -1, 2)) { return true; }
     return false;
 }
 int main(int, char* []) {
