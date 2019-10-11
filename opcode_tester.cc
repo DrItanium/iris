@@ -27,15 +27,27 @@
 #include "iris.h"
 #include "opcodes.h"
 #include <iostream>
+#include <string>
 
+template<typename T>
+bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
+    if (got != expected) {
+        std::cout << failMsg << std::endl;
+        std::cout << "\tGot: " << std::hex << got << std::endl;
+        std::cout << "\tExpected: " << std::hex << expected << std::endl;
+        return false;
+    } else {
+        return true;
+    }
+}
 bool codeTests(iris::Core& c) {
     std::cout << "Code writing tests" << std::endl;
-    for (iris::Address i = 0; i < static_cast<iris::Address>(iris::Opcodes::Count); ++i) {
-        c.storeCode<iris::Address, iris::DoubleWord>(i, static_cast<iris::DoubleWord>(i));
-        if (auto result = c.loadCode(i, 0); result != static_cast<iris::DoubleWord>(i)) {
-            std::cout << "Write to code memory failed" << std::endl;
-            std::cout << "\tGot: " << std::hex << result << std::endl;
-            std::cout << "\tExpected: " << std::hex << static_cast<iris::DoubleWord>(i) << std::endl;
+    std::cout << "\t1. Write and readback from code memory" << std::endl;
+    for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
+        auto valueToWrite = ~i;
+        auto address = static_cast<iris::Address>(i);
+        c.storeCode(address, valueToWrite);
+        if (!verifyResult("Write to code memory failed", c.loadCode(address), valueToWrite)) {
             return true;
         }
     }
@@ -47,12 +59,10 @@ bool dataTests(iris::Core& c) {
     std::cout << "\t1. Write and readback from data memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         iris::Word valueToWrite(~i);
+        iris::Word address(i);
         // data write
-        c.storeData<iris::Address, iris::Word>(i, valueToWrite);
-        if (auto result = c.loadData<iris::Address>(i); result != valueToWrite) {
-            std::cout << "Write to data memory failed" << std::endl;
-            std::cout << "\tGot: " << std::hex << result << std::endl;
-            std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
+        c.storeData<iris::Address, iris::Word>(address, valueToWrite);
+        if (!verifyResult("Write to data memory failed", c.loadData(address), valueToWrite)) {
             return true;
         }
     }
@@ -62,16 +72,18 @@ bool stackTests(iris::Core& c) {
     std::cout << "Stack memory tests" << std::endl;
     std::cout << "\t1. Write and readback from stack memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
+        iris::Address address(i);
         iris::Word valueToWrite(~(i + 12));
         // data write
-        c.storeStack<iris::Address, iris::Word>(i, valueToWrite);
-        if (auto result = c.loadStack<iris::Address>(i); result != valueToWrite) {
-            std::cout << "Write to data memory failed" << std::endl;
-            std::cout << "\tGot: " << std::hex << result << std::endl;
-            std::cout << "\tExpected: " << std::hex << valueToWrite<< std::endl;
+        c.storeStack(address, valueToWrite);
+        if (!verifyResult("Write to stack memory failed", c.loadStack(address), valueToWrite)) {
             return true;
         }
     }
+    return false;
+}
+bool instructionTests(iris::Core& c) {
+    std::cout << "Instruction related tests" << std::endl;
     return false;
 }
 int main(int, char* []) {

@@ -28,7 +28,8 @@
 namespace iris {
 
 Core::Core() noexcept : _io(*this) {
-    for (int i = 0; i < 2; ++i) {
+    // 0-16 are hardwired in r0-r16 (first 17 registers)
+    for (int i = 0; i < 17; ++i) {
         _regs[i].hardwireTo(i);
     }
 }
