@@ -275,6 +275,13 @@ bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     return verifyResult<iris::Word>("copy register operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
+bool testSwapRegisters(iris::Core& c, iris::Word dest, iris::Word src1) noexcept {
+    setRegisters<decltype(src1)>(c, dest, src1, 0);
+    c.invoke(iris::instructions::swap(17_reg, 18_reg));
+    return verifyResult<iris::Word>("swap register operation failed!", c.getRegisterValue<iris::Word>(17_reg), src1) &&
+           verifyResult<iris::Word>("swap register operation failed!", c.getRegisterValue<iris::Word>(18_reg), dest);
+}
+
 
 
 bool instructionTests(iris::Core& c) {
@@ -315,6 +322,7 @@ bool instructionTests(iris::Core& c) {
     X(Nand)
 #undef X
     if (!testCopyRegister(c, 32)) { return true; }
+    if (!testSwapRegisters(c, 32, 64)) { return true; }
     return false;
 }
 int main(int, char* []) {
