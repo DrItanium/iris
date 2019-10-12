@@ -226,6 +226,13 @@ bool testMinSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWo
     return verifyResult<iris::SignedWord>("min signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
 
+bool testBitwiseNot(iris::Core& c, iris::UnsignedWord value) noexcept {
+    setRegisters<decltype(value)>(c, 0, value, 0);
+    auto check = ~value;
+    c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
+    return verifyResult<iris::Word>("bitwise not operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
 
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
@@ -242,6 +249,9 @@ bool instructionTests(iris::Core& c) {
     X(Min)
     X(Max)
 #undef X
+    if (! testBitwiseNot(c, 0)) { return true; }
+    if (! testBitwiseNot(c, 0xFFFF)) { return true; }
+    if (! testBitwiseNot(c, 1)) { return true; }
     return false;
 }
 int main(int, char* []) {
