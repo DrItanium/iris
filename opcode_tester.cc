@@ -226,12 +226,48 @@ bool testMinSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWo
     return verifyResult<iris::SignedWord>("min signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
 
-bool testBitwiseNot(iris::Core& c, iris::UnsignedWord value) noexcept {
-    setRegisters<decltype(value)>(c, 0, value, 0);
-    auto check = ~value;
+bool testBitwiseNot(iris::Core& c, iris::UnsignedWord src1) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, 0);
+    auto check = ~src1;
     c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
     return verifyResult<iris::Word>("bitwise not operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
+
+bool testBitwiseAnd(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 & src2;
+    c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("bitwise and operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testBitwiseOr(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 | src2;
+    c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("bitwise or operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testBitwiseXor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 ^ src2;
+    c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("bitwise xor operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testBitwiseNor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = ~(src1 | src2);
+    c.invoke(iris::instructions::bitwiseNor(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("bitwise nor operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testBitwiseNand(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = ~(src1 & src2);
+    c.invoke(iris::instructions::bitwiseNand(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>("bitwise nand operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
 
 
 bool instructionTests(iris::Core& c) {
@@ -252,6 +288,25 @@ bool instructionTests(iris::Core& c) {
     if (! testBitwiseNot(c, 0)) { return true; }
     if (! testBitwiseNot(c, 0xFFFF)) { return true; }
     if (! testBitwiseNot(c, 1)) { return true; }
+#define X(op) \
+    if (! testBitwise ## op (c, 0xFDED, 0x000F)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0x00F0)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0x0F00)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xF000)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0x00FF)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0x0FF0)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xFF00)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0x0FFF)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xFFF0)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xFFFF)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xF00F)) { return true; } \
+    if (! testBitwise ## op (c, 0xFDED, 0xFF0F)) { return true; }
+    X(And)
+    X(Or)
+    X(Xor)
+    X(Nor)
+    X(Nand)
+#undef X
     return false;
 }
 int main(int, char* []) {
