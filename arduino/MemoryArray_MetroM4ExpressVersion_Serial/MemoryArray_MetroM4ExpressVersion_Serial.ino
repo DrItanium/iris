@@ -77,10 +77,11 @@ void setupRegisters() {
 // pins associated with the different spi memory chips
 // two spi chips are necessary to hold code space so we have to do some 
 // math to figure out which chip to select
-constexpr auto CodeSectionLowerHalf = 0;
-constexpr auto CodeSectionUpperHalf = 1;
-constexpr auto DataSection = 2;
-constexpr auto StackSection = 3;
+constexpr auto CodeSectionLowerHalf = 4;
+constexpr auto CodeSectionUpperHalf = 5;
+constexpr auto DataSection = 6;
+constexpr auto StackSection = 7;
+constexpr auto OtherSection = 3; // DON'T USE RIGHT NOW!
 constexpr auto delayAmount = 30;
 
 constexpr RawAddress computeWordAddress(IrisAddress addr) noexcept {
@@ -271,12 +272,12 @@ constexpr auto WHITE = 1;
 void setup(void) { 
   Serial.begin(115200);
   for (int i = 3; i < 8; ++i) {
-
+    pinMode(i, OUTPUT);
   }
   SPI.begin();
  
   setupRegisters();
-  auto result = performCodeStorageTests() && performDataStorageTests() && performStackStorageTests();
+  auto result = performCodeStorageTests() && performDataStorageTests() && performStackStorageTests();  
   Serial.print("TESTS ");
   if (result) {
     Serial.print("PASSED");
