@@ -83,64 +83,56 @@ bool stackTests(iris::Core& c) {
     }
     return false;
 }
+template<typename T>
+void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
+    c.setRegisterValue<T>(17_reg, r17);
+    c.setRegisterValue<T>(18_reg, r18);
+    c.setRegisterValue<T>(19_reg, r19);
+}
 bool testAddUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<iris::Word>(c, 0, src1, src2);
     auto check = src1 + src2;
     c.invoke(iris::instructions::opAddUnsigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
 bool testAddSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<iris::SignedWord>(c, 0, src1, src2);
     auto check = src1 + src2;
     c.invoke(iris::instructions::opAddSigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::SignedWord>("add operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
 
 bool testSubtractUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 - src2;
     c.invoke(iris::instructions::opSubtractUnsigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::Word>("subtract operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
 bool testSubtractSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 - src2;
     c.invoke(iris::instructions::opSubtractSigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::SignedWord>("subtract operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
 
 bool testMultiplyUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 * src2;
     c.invoke(iris::instructions::opMultiplyUnsigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::Word>("multiply unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
 bool testMultiplySignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 * src2;
     c.invoke(iris::instructions::opMultiplySigned(17_reg, 18_reg, 19_reg));
     return verifyResult<iris::SignedWord>("multiply signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
 
 bool testDivideUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 / src2;
     c.invoke(iris::instructions::opDivideUnsigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
@@ -148,9 +140,7 @@ bool testDivideUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2
 }
 
 bool testDivideSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 / src2;
     c.invoke(iris::instructions::opDivideSigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
@@ -158,9 +148,7 @@ bool testDivideSignedOperation(iris::Core& c, iris::SignedWord src1, iris::Signe
 }
 
 bool testRemainderUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 % src2;
     c.invoke(iris::instructions::opRemainderUnsigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
@@ -168,9 +156,7 @@ bool testRemainderUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word s
 }
 
 bool testRemainderSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    c.setRegisterValue(17_reg, 0); // destination
-    c.setRegisterValue(18_reg, src1); // src1
-    c.setRegisterValue(19_reg, src2); // src2
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 % src2;
     c.invoke(iris::instructions::opRemainderSigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
