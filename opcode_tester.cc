@@ -162,6 +162,70 @@ bool testRemainderSignedOperation(iris::Core& c, iris::SignedWord src1, iris::Si
     /// @todo do the divide by zero validation 
     return verifyResult<iris::SignedWord>("remainder signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
 }
+bool testShiftLeftUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 << src2;
+    c.invoke(iris::instructions::opShiftLeftUnsigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::Word>("shift left unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testShiftLeftSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 << src2;
+    c.invoke(iris::instructions::opShiftLeftSigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::SignedWord>("shift left signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
+}
+
+bool testShiftRightUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 >> src2;
+    c.invoke(iris::instructions::opShiftRightUnsigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::Word>("shift right unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testShiftRightSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = src1 >> src2;
+    c.invoke(iris::instructions::opShiftRightSigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::SignedWord>("shift right signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
+}
+
+bool testMaxUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = std::max(src1, src2);
+    c.invoke(iris::instructions::opMaxUnsigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::Word>("max unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testMaxSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = std::max(src1, src2);
+    c.invoke(iris::instructions::opMaxSigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::SignedWord>("max signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
+}
+
+bool testMinUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = std::min(src1, src2);
+    c.invoke(iris::instructions::opMinUnsigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::Word>("min unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
+bool testMinSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    auto check = std::min(src1, src2);
+    c.invoke(iris::instructions::opMinSigned(17_reg, 18_reg, 19_reg));
+    /// @todo do the divide by zero validation 
+    return verifyResult<iris::SignedWord>("min signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
+}
+
 
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
@@ -173,6 +237,10 @@ bool instructionTests(iris::Core& c) {
     X(Multiply)
     X(Divide)
     X(Remainder)
+    X(ShiftLeft)
+    X(ShiftRight)
+    X(Min)
+    X(Max)
 #undef X
     return false;
 }
