@@ -268,6 +268,13 @@ bool testBitwiseNand(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord 
     return verifyResult<iris::Word>("bitwise nand operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
+bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, 0);
+    auto check = src1;
+    c.invoke(iris::instructions::move(17_reg, 18_reg));
+    return verifyResult<iris::Word>("copy register operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+}
+
 
 
 bool instructionTests(iris::Core& c) {
@@ -307,6 +314,7 @@ bool instructionTests(iris::Core& c) {
     X(Nor)
     X(Nand)
 #undef X
+    if (!testCopyRegister(c, 32)) { return true; }
     return false;
 }
 int main(int, char* []) {
