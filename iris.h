@@ -460,9 +460,9 @@ class Core {
             } else if constexpr (IsMultiplyOperation<K>) {
                 result = src1 * src2;
             } else if constexpr (IsRemainderOperation<K>) {
-                result = src1 / src2;
-            } else if constexpr (IsDivideOperation<K>) {
                 result = src1 % src2;
+            } else if constexpr (IsDivideOperation<K>) {
+                result = src1 / src2;
             } else if constexpr (IsShiftLeftOperation<K>) {
                 result = src1 << src2;
             } else if constexpr (IsShiftRightOperation<K>) {
