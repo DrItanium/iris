@@ -298,6 +298,17 @@ bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
                   src1);
 }
 
+bool testPushImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
+    setRegisters<decltype(src1)>(c, 0, 0, 0); // r17 is the stack pointer in this case
+    c.invoke(iris::instructions::push(17_reg, src1));
+    return verifyResult<iris::Word>("push register operation failed!",
+            c.getRegisterValue<iris::Word>(17_reg), 
+            0 - 1) &&
+          verifyResult<iris::Word>("push register operation failed!",
+                  c.loadStack<iris::Word>(c.getRegisterValue(17_reg)),
+                  src1);
+}
+
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
 #define X(op) \
@@ -339,6 +350,7 @@ bool instructionTests(iris::Core& c) {
     if (!testSwapRegisters(c, 32, 64)) { return true; }
     if (!testAssignRegister(c, 128)) { return true; }
     if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
+    if (!testPushImmediateOperation(c, 0xFDED)) { return true; }
     return false;
 }
 int main(int, char* []) {
