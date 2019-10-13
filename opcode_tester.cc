@@ -301,11 +301,24 @@ bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
 bool testPushImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0); // r17 is the stack pointer in this case
     c.invoke(iris::instructions::push(17_reg, src1));
-    return verifyResult<iris::Word>("push register operation failed!",
+    return verifyResult<iris::Word>("push immediate operation failed!",
             c.getRegisterValue<iris::Word>(17_reg), 
             0 - 1) &&
-          verifyResult<iris::Word>("push register operation failed!",
+          verifyResult<iris::Word>("push immediate operation failed!",
                   c.loadStack<iris::Word>(c.getRegisterValue(17_reg)),
+                  src1);
+}
+
+bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
+    setRegisters<decltype(src1)>(c, 0, src1, 0);
+    c.invoke(iris::instructions::push(17_reg, 18_reg));
+    c.setRegisterValue(18_reg, 0);
+    c.invoke(iris::instructions::pop(17_reg, 18_reg));
+    return verifyResult<iris::Word>("pop operation failed!",
+            c.getRegisterValue<iris::Word>(17_reg), 
+            0) &&
+          verifyResult<iris::Word>("pop operation failed!",
+                  c.getRegisterValue(18_reg),
                   src1);
 }
 
@@ -351,6 +364,7 @@ bool instructionTests(iris::Core& c) {
     if (!testAssignRegister(c, 128)) { return true; }
     if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
     if (!testPushImmediateOperation(c, 0xFDED)) { return true; }
+    if (!testPopOperation(c, 0xFDED)) { return true; }
     return false;
 }
 int main(int, char* []) {
