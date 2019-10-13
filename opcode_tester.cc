@@ -322,7 +322,7 @@ bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
                   src1);
 }
 
-bool testBranchImmediateOperations(iris::Core& c, iris::Word src1) noexcept {
+bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     c.setIP(0);
     c.invoke(iris::instructions::branch(src1));
     return verifyResult<iris::Word>("branch immediate operation failed",
@@ -382,7 +382,7 @@ bool instructionTests(iris::Core& c) {
     if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
     if (!testPushImmediateOperation(c, 0xFDED)) { return true; }
     if (!testPopOperation(c, 0xFDED)) { return true; }
-    if (!testBranchImmediateOperations(c, 0xFDED)) { return true; }
+    if (!testBranchImmediateOperation(c, 0xFDED)) { return true; }
     if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
 
     return false;
