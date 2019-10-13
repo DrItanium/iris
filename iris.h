@@ -559,6 +559,8 @@ class Core {
         }
     public:
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
+        constexpr Word getIP() const noexcept { return _ip.get<Word>(); }
+        void setIP(Word value) noexcept { _ip.put(value); }
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;
