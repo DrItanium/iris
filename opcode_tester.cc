@@ -330,6 +330,14 @@ bool testBranchImmediateOperations(iris::Core& c, iris::Word src1) noexcept {
             src1);
 }
 
+bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
+    c.setIP(0x20);
+    c.invoke(iris::instructions::branch(src1));
+    return verifyResult<iris::Word>("branch immediate operation failed",
+            c.getIP(),
+            0x20 + src1);
+}
+
 
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
@@ -375,6 +383,7 @@ bool instructionTests(iris::Core& c) {
     if (!testPushImmediateOperation(c, 0xFDED)) { return true; }
     if (!testPopOperation(c, 0xFDED)) { return true; }
     if (!testBranchImmediateOperations(c, 0xFDED)) { return true; }
+    if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
 
     return false;
 }
