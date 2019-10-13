@@ -380,8 +380,8 @@ class Core {
                     // so stack grows downward
                     // pops grow towards 0xFFFF
                     // StackPop StackPointerRegister DestinationRegister
+                    incrementRegister(sp); // sp should always point to the front
                     setRegisterValue(other, loadStack(sp));
-                    incrementRegister(sp);
                 } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
                         std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
                     // stack grows downward
