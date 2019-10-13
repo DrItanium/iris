@@ -295,7 +295,6 @@ class Core {
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
-        void invoke(const iris::BranchRegisterInstruction&);
         void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
         void invoke(const iris::BranchConditionalImmediateInstruction&);
 

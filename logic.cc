@@ -57,12 +57,6 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
 }
 
 void
-Core::invoke(const iris::BranchRegisterInstruction& s) {
-    auto [ dest ] = s.arguments();
-    branchTo(getRegisterValue(dest));
-}
-
-void
 Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
     auto [ address, link ] = s.arguments();
     updateLinkRegister(link);

@@ -215,13 +215,15 @@ namespace iris::instructions {
     }
     template<typename T>
     Bits branch(T addr) noexcept {
+        // unconditional branches are branches where the conditional register is hardwired
+        // to 1
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return BranchImmediate({0_reg, static_cast<Address>(addr)});
+            return branchConditional(1_reg, static_cast<Address>(addr));
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
-            return BranchRelativeImmediate({0_reg, static_cast<Offset16>(addr)});
+            return branchConditional(1_reg, static_cast<Offset16>(addr));
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return BranchRegister({addr});
+            return branchConditional(1_reg, addr);
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }

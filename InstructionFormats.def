@@ -55,12 +55,11 @@
     IO(StoreImmediateValue, OneRegisterU16)
     Memory(MoveFromIP, OneRegister)
     Memory(MoveToIP, OneRegister)
-    Branch(Immediate, OneRegisterU16)
+    // all unconditional one way branches are redefined in terms of the conditional
+    // versions
     Branch(ConditionalImmediate, OneRegisterU16)
-    Branch(RelativeImmediate, OneRegisterS16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(RelativeImmediateAndLink, OneRegisterS16)
-    Branch(Register, OneRegister)
     Branch(ConditionalRegister, TwoRegister)
     Branch(RegisterAndLink, TwoRegister)
     Branch(ImmediateAndLink, OneRegisterU16)

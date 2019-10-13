@@ -58,7 +58,7 @@ twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
 }
 Bits 
 ret(RegisterIndex link) noexcept {
-    return iris::instructions::BranchRegister(link);
+    return iris::instructions::branch(link);
 }
 
 Bits 
