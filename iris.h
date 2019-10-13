@@ -290,7 +290,6 @@ class Core {
             }
         }
     private:
-        void invoke(const std::monostate&);
         void invoke(const iris::ErrorInstruction&);
         void invoke(const iris::BranchSelectInstruction&);
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
@@ -300,6 +299,18 @@ class Core {
         void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
         void invoke(const iris::BranchConditionalImmediateInstruction&);
 
+        inline void updateLinkRegister(RegisterIndex index) noexcept {
+            setRegisterValue(index, _ip.get() + 1);
+        }
+        template<typename T>
+        void branchTo(T addr) noexcept {
+            _ip.put<T>(addr);
+            _advanceIP = false;
+        }
+        template<typename T>
+        void relativeBranchTo(T offset) noexcept {
+            branchTo<T>(_ip.get<T>() + offset);
+        }
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
@@ -339,11 +350,10 @@ class Core {
                 setRegisterValue(link, _ip.get() + 1); 
             } 
             if constexpr (UsesRelativeOffset<K>) { 
-                _ip.put(_ip.get<SignedWord>() + offset); 
+                relativeBranchTo<SignedWord>(offset);
             } else { 
-                _ip.put(offset); 
+                branchTo(offset);
             } 
-            _advanceIP = false; 
         }
         template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& input) noexcept {

@@ -29,11 +29,6 @@
 namespace iris {
 
 void
-Core::invoke(const std::monostate&) {
-    throw UnimplementedOperationException();
-}
-
-void
 Core::invoke(const iris::ErrorInstruction&) {
     throw ErrorInstructionException();
 }
@@ -42,16 +37,13 @@ void
 Core::invoke(const iris::BranchSelectInstruction& s) {
     // BranchSelect ConditionalRegister TrueAddress FalseAddress
     auto [ cond, onTrue, onFalse] = s.arguments();
-    _ip.put(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
-    _advanceIP = false;
+    branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
 }
 
 void
 Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {
-    auto [ cond, to ] = s.arguments();
-    if (getRegisterValue<bool>(cond)) {
-        _ip.put(to);
-        _advanceIP = false;
+    if (auto [ cond, to ] = s.arguments(); getRegisterValue<bool>(cond)) {
+        branchTo(to);
     }
 }
 
@@ -59,39 +51,34 @@ void
 Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
     auto [ dest, cond, link ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {
-        setRegisterValue(link, _ip.get() + 1);
-        _ip.put(getRegisterValue(dest));
-        _advanceIP = false;
+        updateLinkRegister(link);
+        branchTo(getRegisterValue(dest));
     }
 }
 
 void
 Core::invoke(const iris::BranchRegisterInstruction& s) {
     auto [ dest ] = s.arguments();
-    _ip.put(getRegisterValue(dest));
-    _advanceIP = false;
+    branchTo(getRegisterValue(dest));
 }
 
 void
 Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
     auto [ address, link ] = s.arguments();
-    setRegisterValue(link, _ip.get() + 1);
-    _ip.put(getRegisterValue(address));
-    _advanceIP = false;
+    updateLinkRegister(link);
+    branchTo(getRegisterValue(address));
 }
 
 void
 Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
     if (auto [ dest, cond ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        _ip.put(getRegisterValue<Word>(dest));
-        _advanceIP = false;
+        branchTo(getRegisterValue<Word>(dest));
     }
 }
 void
 Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
     if (auto [ cond, offset ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        _ip.put(_ip.get<SignedWord>() + offset);
-        _advanceIP = false;
+        relativeBranchTo<SignedWord>(offset);
     }
 }
 
