@@ -139,48 +139,6 @@ selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIn
     return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
 }
 
-
-Bits
-storeData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
-    return MemoryDataStoreWithOffset({addr, value, offset});
-}
-Bits
-storeData(RegisterIndex addr, Address value) noexcept {
-    return MemoryDataStoreImmediateValue({addr, value});
-}
-
-Bits
-loadData(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
-    return MemoryDataLoadWithOffset({addr, dest, offset});
-}
-Bits
-storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
-    return MemoryIOStoreWithOffset({addr, value, offset});
-}
-Bits
-storeIO(RegisterIndex addr, Address value) noexcept {
-    return MemoryIOStoreImmediateValue({addr, value});
-}
-
-Bits
-loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept {
-    return MemoryIOLoadWithOffset({addr, dest, offset});
-}
-
-Bits
-loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
-    return MemoryCodeLoadWithOffset({addr, lower, offset});
-}
-Bits
-storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
-    return MemoryCodeStoreWithOffset({addr, lower, offset});
-}
-
-Bits
-bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept {
-    return LogicalBitwiseNot({dest, src});
-}
-
 #define X(kind) \
     Bits \
     bitwise ## kind ( RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { \

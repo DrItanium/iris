@@ -259,14 +259,14 @@ namespace iris::instructions {
         }
     }
     constexpr Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
-    Bits storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
-    Bits storeData(RegisterIndex dest, Address value) noexcept; 
-    Bits loadData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
-    Bits storeIO(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
-    Bits storeIO(RegisterIndex dest, Address value) noexcept; 
-    Bits loadIO(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
-    Bits storeCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
-    Bits loadCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
+    constexpr Bits storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
+    constexpr Bits storeData(RegisterIndex dest, Address value) noexcept { return MemoryDataStoreImmediateValue({dest, value}); }
+    constexpr Bits loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
+    constexpr Bits storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
+    constexpr Bits storeIO(RegisterIndex addr, Address value) noexcept { return MemoryIOStoreImmediateValue({addr, value}); }
+    constexpr Bits loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept { return MemoryIOLoadWithOffset({addr, dest, offset}); }
+    constexpr Bits loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeLoadWithOffset({addr, lower, offset}); }
+    constexpr Bits storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
     constexpr Bits getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
     constexpr Bits setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 
@@ -332,8 +332,8 @@ namespace iris::instructions {
     MultiInstructionExpression selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     MultiInstructionExpression selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept;
-    inline auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
+    constexpr Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
     Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
     Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
