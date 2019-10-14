@@ -29,47 +29,6 @@
 #include <functional>
 
 namespace iris::instructions {
-Bits
-twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftLeftUnsigned({dest, src, 1_reg});
-}
-Bits
-twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticShiftRightUnsigned({dest, src, 1_reg});
-}
-
-Bits 
-twoTimes(RegisterIndex targetRegister) noexcept {
-    return twoTimes(targetRegister, targetRegister);
-}
-Bits 
-twoDivide(RegisterIndex value) noexcept {
-    return twoDivide(value, value);
-}
-Bits 
-invert(RegisterIndex dest, RegisterIndex src) noexcept {
-    return LogicalBitwiseNot({dest, src});
-}
-Bits 
-invert(RegisterIndex dest) noexcept { 
-    return invert(dest, dest); 
-}
-Bits 
-square(RegisterIndex dest, RegisterIndex src) noexcept {
-    return ArithmeticMultiplySigned({dest, src, src });
-}
-Bits 
-square(RegisterIndex dest) noexcept {
-    return square(dest, dest);
-}
-Bits 
-increment(RegisterIndex target) noexcept {
-    return ArithmeticAddUnsigned({target, target, 1_reg});
-}
-Bits 
-decrement(RegisterIndex target) noexcept {
-    return ArithmeticAddUnsigned({target, target, 1_reg});
-}
 MultiInstructionExpression
 branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {
     return std::visit([src](auto&& addr) { return branchConditional(src, addr); }, loc);
@@ -169,14 +128,14 @@ halt(RegisterIndex temp, Address code) noexcept {
 MultiInstructionExpression
 cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept {
     return std::make_tuple(square(temporary, src), 
-            opMultiplyUnsigned(dest, src, temporary));
+            opMultiply(dest, src, temporary, OrdinalOperation()));
 }
 
 MultiInstructionExpression
 getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, 
                 RegisterIndex numerator, RegisterIndex denominator) noexcept {
-    return std::make_tuple(opDivideUnsigned(quotient, numerator, denominator),
-                           opRemainderUnsigned(remainder, numerator, denominator));
+    return std::make_tuple(opDivide(quotient, numerator, denominator, OrdinalOperation()),
+                           opRemainder(remainder, numerator, denominator, OrdinalOperation()));
 }
 
 MultiInstructionExpression

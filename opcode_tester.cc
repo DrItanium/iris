@@ -89,142 +89,108 @@ void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
     c.setRegisterValue<T>(18_reg, r18);
     c.setRegisterValue<T>(19_reg, r19);
 }
-bool testAddUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<iris::Word>(c, 0, src1, src2);
+template<typename T>
+bool testAddOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 + src2;
-    c.invoke(iris::instructions::opAddUnsigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("add operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("add operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testAddSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<iris::SignedWord>(c, 0, src1, src2);
-    auto check = src1 + src2;
-    c.invoke(iris::instructions::opAddSigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::SignedWord>("add operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testSubtractUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testSubtractOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 - src2;
-    c.invoke(iris::instructions::opSubtractUnsigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("subtract operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("subtract operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testSubtractSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 - src2;
-    c.invoke(iris::instructions::opSubtractSigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::SignedWord>("subtract operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testMultiplyUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testMultiplyOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 * src2;
-    c.invoke(iris::instructions::opMultiplyUnsigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("multiply unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("multiply operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testMultiplySignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 * src2;
-    c.invoke(iris::instructions::opMultiplySigned(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::SignedWord>("multiply signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testDivideUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testDivideOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 / src2;
-    c.invoke(iris::instructions::opDivideUnsigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("divide unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("divide operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testDivideSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 / src2;
-    c.invoke(iris::instructions::opDivideSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("divide signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testRemainderUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testRemainderOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 % src2;
-    c.invoke(iris::instructions::opRemainderUnsigned(17_reg, 18_reg, 19_reg));
     /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("remainder unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("remainder operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testRemainderSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 % src2;
-    c.invoke(iris::instructions::opRemainderSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("remainder signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-bool testShiftLeftUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testShiftLeftOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 << src2;
-    c.invoke(iris::instructions::opShiftLeftUnsigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("shift left unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("left shift operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testShiftLeftSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 << src2;
-    c.invoke(iris::instructions::opShiftLeftSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("shift left signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testShiftRightUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testShiftRightOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = src1 >> src2;
-    c.invoke(iris::instructions::opShiftRightUnsigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("shift right unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("right shift operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testShiftRightSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 >> src2;
-    c.invoke(iris::instructions::opShiftRightSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("shift right signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testMaxUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testMaxOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = std::max(src1, src2);
-    c.invoke(iris::instructions::opMaxUnsigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("max unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opMax(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("max operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testMaxSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = std::max(src1, src2);
-    c.invoke(iris::instructions::opMaxSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("max signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
-
-bool testMinUnsignedOperation(iris::Core& c, iris::Word src1, iris::Word src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+template<typename T>
+bool testMinOperation(iris::Core& c, T src1, T src2) noexcept {
+    using K = std::decay_t<T>;
+    static_assert(std::is_integral_v<std::decay_t<T>>);
+    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
+    setRegisters<K>(c, 0, src1, src2);
     auto check = std::min(src1, src2);
-    c.invoke(iris::instructions::opMinUnsigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::Word>("min unsigned operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    c.invoke(iris::instructions::opMin(17_reg, 18_reg, 19_reg, D{}));
+    return verifyResult<K>("min operation failed!", c.getRegisterValue<K>(17_reg), check);
 }
 
-bool testMinSignedOperation(iris::Core& c, iris::SignedWord src1, iris::SignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = std::min(src1, src2);
-    c.invoke(iris::instructions::opMinSigned(17_reg, 18_reg, 19_reg));
-    /// @todo do the divide by zero validation 
-    return verifyResult<iris::SignedWord>("min signed operation failed!", c.getRegisterValue<iris::SignedWord>(17_reg), check);
-}
+
 
 bool testBitwiseNot(iris::Core& c, iris::UnsignedWord src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);

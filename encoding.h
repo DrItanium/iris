@@ -47,6 +47,8 @@ namespace iris::instructions {
     using ListContents = std::variant<Bits, DelayedBits, ExternalDelayedBits>;
     using List = std::vector<ListContents>;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
+    class OrdinalOperation { };
+    class IntegerOperation { };
     class MultiInstructionExpression {
         public:
             using Body = std::function<void(MultiInstructionExpression&)>;
@@ -273,43 +275,33 @@ namespace iris::instructions {
     /// @todo Double and Quad memory operations
 
     // arithmetic operations
-    Bits twoTimes(RegisterIndex dest, RegisterIndex src) noexcept ;
-    Bits twoDivide(RegisterIndex dest, RegisterIndex src) noexcept ;
-    Bits twoTimes(RegisterIndex targetRegister)  noexcept ;
-    Bits twoDivide(RegisterIndex value)  noexcept ;
-    Bits invert(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits invert(RegisterIndex dest)  noexcept ; 
-    Bits square(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits square(RegisterIndex dest)  noexcept ;
-    Bits increment(RegisterIndex target)  noexcept ;
-    Bits decrement(RegisterIndex target)  noexcept ;
+    constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
+    constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftLeftSigned({dest, src, 1_reg}); }
+    constexpr Bits twoTimes(RegisterIndex val, OrdinalOperation op) noexcept { return twoTimes(val, val, op); }
+    constexpr Bits twoTimes(RegisterIndex val, IntegerOperation op) noexcept { return twoTimes(val, val, op); }
+    constexpr Bits twoDivide(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftRightUnsigned({dest, src, 1_reg}); }
+    constexpr Bits twoDivide(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftRightSigned({dest, src, 1_reg}); }
+    constexpr Bits twoDivide(RegisterIndex val, OrdinalOperation op) noexcept { return twoDivide(val, val, op); }
+    constexpr Bits twoDivide(RegisterIndex val, IntegerOperation op) noexcept { return twoDivide(val, val, op); }
+    constexpr Bits invert(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr Bits invert(RegisterIndex dest)  noexcept { return invert(dest, dest); }
+    constexpr Bits square(RegisterIndex dest, RegisterIndex src)  noexcept { return ArithmeticMultiplySigned({dest, src, src}); }
+    constexpr Bits square(RegisterIndex dest) noexcept { return square(dest, dest); }
+    constexpr Bits increment(RegisterIndex target)  noexcept { return ArithmeticAddUnsigned({target, target, 1_reg}); }
+    constexpr Bits decrement(RegisterIndex target)  noexcept { return ArithmeticSubtractUnsigned({target, target, 1_reg}); }
 #define X(kind) \
-    template<typename T> \
-    constexpr Bits op ## kind ## Signed (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
-        using K = std::decay_t<T>; \
-        if constexpr (std::is_same_v<K, RegisterIndex>) { \
-            return Arithmetic ## kind ## Signed({dest, src0, src1}); \
-        } else { \
-            static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
-        } \
+    constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, RegisterIndex src2, OrdinalOperation) noexcept { \
+        return Arithmetic ## kind ## Unsigned({dest, src1, src2}); \
     } \
-    template<typename T> \
-    constexpr auto op ## kind ## Signed (RegisterIndex dest, T src) noexcept { \
-        return op ## kind ## Signed( dest, dest, src); \
+    constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, RegisterIndex src2, IntegerOperation) noexcept { \
+        return Arithmetic ## kind ## Signed({dest, src1, src2}); \
     } \
-    template<typename T> \
-    constexpr Bits op ## kind ## Unsigned (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
-        using K = std::decay_t<T>; \
-        if constexpr (std::is_same_v<K, RegisterIndex>) { \
-            return Arithmetic ## kind ## Unsigned({dest, src0, src1}); \
-        } else { \
-            static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
-        } \
+    constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src, OrdinalOperation op) noexcept { \
+        return op ## kind (dest, dest, src, op); \
     } \
-    template<typename T> \
-    constexpr auto op ## kind ## Unsigned (RegisterIndex dest, T src) noexcept { \
-        return op ## kind ## Unsigned( dest, dest, src); \
-    } 
+    constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, IntegerOperation op) noexcept { \
+        return op ## kind (dest, dest, src1, op); \
+    }
     X(Add);
     X(Subtract);
     X(Multiply);
