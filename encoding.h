@@ -172,15 +172,26 @@ namespace iris::instructions {
     };
 
 #define X(title, fmt) \
-    Bits title ( const title ## Instruction &) noexcept;
+    constexpr Bits title ( const title ## Instruction & i) noexcept { \
+        return static_cast<Instruction>(i).getRawBits(); \
+    }
 #include "InstructionFormats.def"
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
-    Bits zeroRegister(RegisterIndex targetRegister) noexcept ;
-    Bits nop(RegisterIndex target = 0_reg) noexcept;
-    Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
+    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept {
+        return MemoryCopyRegisterInstruction({targetRegister, 0_reg}).getRawValue();
+    }
+
+    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept {
+        return MemoryCopyRegisterInstruction({target, target}).getRawValue();
+    }
+    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept  {
+        return CompareGreaterThanSignedInstruction({dest, src, 0_reg}).getRawValue();
+    }
+    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept {
+        return CompareGreaterThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue();
+    }
     Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
     Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
@@ -245,7 +256,13 @@ namespace iris::instructions {
     Bits move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return MemoryAssignRegisterImmediate({dest, value});
+            if (value < 17) {
+                // do a register transfer since [0,16] is held within [r0,r16]
+                // in a hardwired context
+                return MemoryCopyRegister({dest, static_cast<RegisterIndex>(value)});
+            } else {
+                return MemoryAssignRegisterImmediate({dest, value});
+            }
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return MemoryCopyRegister({dest, value});
         } else {
@@ -290,33 +307,29 @@ namespace iris::instructions {
     Bits decrement(RegisterIndex target)  noexcept ;
 #define X(kind) \
     template<typename T> \
-    Bits op ## kind ## Signed (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
+    constexpr Bits op ## kind ## Signed (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
         using K = std::decay_t<T>; \
-        if constexpr (std::is_same_v<K, SignedByte>) { \
-            return Arithmetic ## kind ## SignedImmediate({dest, src0, src1}); \
-        } else if constexpr (std::is_same_v<K, RegisterIndex>) { \
+        if constexpr (std::is_same_v<K, RegisterIndex>) { \
             return Arithmetic ## kind ## Signed({dest, src0, src1}); \
         } else { \
             static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
         } \
     } \
     template<typename T> \
-    inline auto op ## kind ## Signed (RegisterIndex dest, T src) noexcept { \
+    constexpr auto op ## kind ## Signed (RegisterIndex dest, T src) noexcept { \
         return op ## kind ## Signed( dest, dest, src); \
     } \
     template<typename T> \
-    Bits op ## kind ## Unsigned (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
+    constexpr Bits op ## kind ## Unsigned (RegisterIndex dest, RegisterIndex src0, T src1) noexcept { \
         using K = std::decay_t<T>; \
-        if constexpr (std::is_same_v<K, UnsignedByte>) { \
-            return Arithmetic ## kind ## UnsignedImmediate({dest, src0, src1}); \
-        } else if constexpr (std::is_same_v<K, RegisterIndex>) { \
+        if constexpr (std::is_same_v<K, RegisterIndex>) { \
             return Arithmetic ## kind ## Unsigned({dest, src0, src1}); \
         } else { \
             static_assert(false_v<T>, "Bad kind to " #kind " with!"); \
         } \
     } \
     template<typename T> \
-    inline auto op ## kind ## Unsigned (RegisterIndex dest, T src) noexcept { \
+    constexpr auto op ## kind ## Unsigned (RegisterIndex dest, T src) noexcept { \
         return op ## kind ## Unsigned( dest, dest, src); \
     } 
     X(Add);

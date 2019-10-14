@@ -29,6 +29,7 @@
 #include <functional>
 
 namespace iris::instructions {
+#if 0
 #define X(title, fmt) \
     UnsignedDoubleWord \
     title ( const title ## Instruction & s) noexcept {\
@@ -36,17 +37,10 @@ namespace iris::instructions {
     }
 #include "InstructionFormats.def"
 #undef X
-Bits
-zeroRegister(RegisterIndex t) noexcept {
-    return MemoryAssignRegisterImmediate({t, 0x0000_imm16});
-}
+#endif
 Bits
 swap(RegisterIndex a, RegisterIndex b) noexcept {
     return MemorySwapRegisters({a, b});
-}
-Bits
-nop(RegisterIndex idx) noexcept {
-    return MemorySwapRegisters({idx, idx});
 }
 Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
@@ -86,10 +80,6 @@ square(RegisterIndex dest) noexcept {
     return square(dest, dest);
 }
 Bits 
-greaterThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareGreaterThanSigned({dest, src, 0_reg});
-}
-Bits 
 lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
     return CompareLessThanSigned({dest, src, 0_reg});
 }
@@ -108,10 +98,6 @@ increment(RegisterIndex target) noexcept {
 Bits 
 decrement(RegisterIndex target) noexcept {
     return ArithmeticAddUnsigned({target, target, 1_reg});
-}
-Bits
-greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg});
 }
 Bits
 lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {

@@ -100,7 +100,7 @@ struct Instruction {
         }
     public:
         explicit constexpr Instruction(DoubleWord bits = 0) noexcept : _bits(bits) { }
-        Instruction(Opcodes opcode) noexcept;
+        explicit constexpr Instruction(Opcodes opcode) noexcept : _bits(static_cast<decltype(_bits)>(opcode)) { }
         template<typename T>
         Instruction(Opcodes opcode, T arg0) noexcept : Instruction(opcode) {
             setArg0(arg0);
@@ -269,7 +269,7 @@ class ThreeArgumentsFormat : public ArgumentFormat<op> {
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr auto getThird() const noexcept { return _third; }
         constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
-        operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
+        constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
     private:
         RegisterIndex _first;
         RegisterIndex _second;
@@ -284,7 +284,7 @@ class TwoArgumentsFormat : public ArgumentFormat<op> {
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr auto getSecond() const noexcept { return _second; }
         constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
-        operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
+        constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
     private:
         RegisterIndex _first;
         T _second;
@@ -297,7 +297,7 @@ class OneArgumentFormat : public ArgumentFormat<op> {
         constexpr OneArgumentFormat(T first) : _first(first) { }
         constexpr auto getFirst() const noexcept { return _first; }
         constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
-        operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
+        constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
     private:
         T _first;
 };
@@ -306,7 +306,7 @@ class ZeroArgumentFormat : public ArgumentFormat<op> {
     public:
         using Parent = ArgumentFormat<op>;
         using Parent::Parent;
-        operator Instruction() const noexcept { return { this->getOpcode() }; }
+        constexpr explicit operator Instruction() const noexcept { return { this->getOpcode() }; }
 };
 template<Opcodes op>
 using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
