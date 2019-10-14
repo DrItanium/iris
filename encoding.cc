@@ -98,16 +98,6 @@ selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIn
     return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
 }
 
-#define X(kind) \
-    Bits \
-    bitwise ## kind ( RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { \
-        return LogicalBitwise ## kind ( { dest, src0, src1 } ); \
-    }
-X(And);
-X(Or);
-X(Xor);
-#undef X
-
 MultiInstructionExpression
 bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept {
     return std::make_tuple(bitwiseAnd(dest, src0, src1),

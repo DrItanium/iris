@@ -326,12 +326,12 @@ namespace iris::instructions {
     MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     constexpr Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
     constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
-    Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
-    inline auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
-    Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
-    inline auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
-    Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
-    inline auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
+    constexpr Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }
+    constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
+    constexpr Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseOr({dest, src0, src1}); }
+    constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
+    constexpr Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseXor({dest, src0, src1}); }
+    constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
     MultiInstructionExpression bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
     MultiInstructionExpression bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
