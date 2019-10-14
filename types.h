@@ -143,6 +143,9 @@ constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
     return static_cast<DoubleWord>(lower) | (static_cast<DoubleWord>(upper) << 16);
 }
 
+template<typename T, typename A>
+constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
+
 } // end namespace iris
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<std::underlying_type_t<iris::RegisterIndex>>(conversion)}; }
 iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);

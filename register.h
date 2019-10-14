@@ -35,7 +35,7 @@ constexpr Word boolToWord(bool value) noexcept {
 class Register final {
     public:
         explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
-        explicit constexpr Register(bool value) noexcept : _storage(value ? 0xFFFF : 0) { }
+        explicit constexpr Register(bool value) noexcept : _storage(boolToWord(value)) { }
         constexpr Register(const Register& other) noexcept = delete;
         constexpr Register(Register&& other) noexcept = delete;
         ~Register() = default;
@@ -76,11 +76,11 @@ class Register final {
         constexpr void put(T value) noexcept {
             using K = std::decay_t<T>;
             if (!_hardwired) {
-                if constexpr (std::is_same_v<K, Word> || std::is_convertible_v<K, Word>) {
+                if constexpr (IsSameOrConvertible<K, Word>) {
                     _storage._value = value;
-                } else if constexpr (std::is_same_v<K, SignedWord> || std::is_convertible_v<K, SignedWord>) {
+                } else if constexpr (IsSameOrConvertible<K, SignedWord>) {
                     _storage._signedValue = value;
-                } else if constexpr (std::is_same_v<K, bool> || std::is_convertible_v<K, bool>) {
+                } else if constexpr (IsSameOrConvertible<K, bool>) {
                     _storage._value = boolToWord(value);
                 } else {
                     static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
@@ -144,7 +144,7 @@ class DoubleRegister final {
                     DoubleWord _u;
                 };
                 put<DoubleWord>(temporary(value)._u);
-            } else if constexpr (std::is_same_v<T, bool> || std::is_convertible_v<T, bool>) {
+            } else if constexpr (IsSameOrConvertible<T, bool>) {
                 put(boolToWord(value), boolToWord(value));
             } else {
                 static_assert(false_v<T>, "Illegal type requested!");
