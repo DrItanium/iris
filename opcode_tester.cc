@@ -41,6 +41,10 @@ bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
         return true;
     }
 }
+template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, iris::RegisterIndex>, int> = 0>
+bool verifyResult(const std::string& failMsg, iris::RegisterIndex got, T expected, iris::Core& c) noexcept {
+    return verifyResult<T>(failMsg, c.getRegisterValue<T>(got), expected);
+}
 bool codeTests(iris::Core& c) {
     std::cout << "Code writing tests" << std::endl;
     std::cout << "\t1. Write and readback from code memory" << std::endl;
@@ -97,7 +101,7 @@ bool testAddOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = src1 + src2;
     c.invoke(iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("add operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("add operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -108,7 +112,7 @@ bool testSubtractOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = src1 - src2;
     c.invoke(iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("subtract operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("subtract operation failed!", 17_reg, check,c);
 }
 
 template<typename T>
@@ -119,7 +123,7 @@ bool testMultiplyOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = src1 * src2;
     c.invoke(iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("multiply operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("multiply operation failed!", 17_reg, check,c);
 }
 
 template<typename T>
@@ -131,7 +135,7 @@ bool testDivideOperation(iris::Core& c, T src1, T src2) noexcept {
     auto check = src1 / src2;
     /// @todo do the divide by zero validation 
     c.invoke(iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("divide operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("divide operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -143,7 +147,7 @@ bool testRemainderOperation(iris::Core& c, T src1, T src2) noexcept {
     auto check = src1 % src2;
     /// @todo do the divide by zero validation 
     c.invoke(iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("remainder operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("remainder operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -154,7 +158,7 @@ bool testShiftLeftOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = src1 << src2;
     c.invoke(iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("left shift operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("left shift operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -165,7 +169,7 @@ bool testShiftRightOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = src1 >> src2;
     c.invoke(iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("right shift operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("right shift operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -176,7 +180,7 @@ bool testMaxOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = std::max(src1, src2);
     c.invoke(iris::instructions::opMax(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("max operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("max shift operation failed!", 17_reg, check, c);
 }
 
 template<typename T>
@@ -187,7 +191,7 @@ bool testMinOperation(iris::Core& c, T src1, T src2) noexcept {
     setRegisters<K>(c, 0, src1, src2);
     auto check = std::min(src1, src2);
     c.invoke(iris::instructions::opMin(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("min operation failed!", c.getRegisterValue<K>(17_reg), check);
+    return verifyResult<K>("min shift operation failed!", 17_reg, check, c);
 }
 
 
@@ -196,47 +200,47 @@ bool testBitwiseNot(iris::Core& c, iris::UnsignedWord src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = ~src1;
     c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
-    return verifyResult<iris::Word>("bitwise not operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    return verifyResult<iris::Word>("bitwise not operation failed!", 17_reg, check, c);
 }
 
 bool testBitwiseAnd(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 & src2;
     c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise and operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    return verifyResult<iris::Word>("bitwise and operation failed!", 17_reg, check, c);
 }
 
 bool testBitwiseOr(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 | src2;
     c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise or operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    return verifyResult<iris::Word>("bitwise or operation failed!", 17_reg, check, c);
 }
 
 bool testBitwiseXor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
     auto check = src1 ^ src2;
     c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise xor operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    return verifyResult<iris::Word>("bitwise xor operation failed!", 17_reg, check, c);
 }
 
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = src1;
     c.invoke(iris::instructions::move(17_reg, 18_reg));
-    return verifyResult<iris::Word>("copy register operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
+    return verifyResult<iris::Word>("copy register operation failed!", 17_reg, check, c);
 }
 
 bool testSwapRegisters(iris::Core& c, iris::Word dest, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, dest, src1, 0);
     c.invoke(iris::instructions::swap(17_reg, 18_reg));
-    return verifyResult<iris::Word>("swap register operation failed!", c.getRegisterValue<iris::Word>(17_reg), src1) &&
-           verifyResult<iris::Word>("swap register operation failed!", c.getRegisterValue<iris::Word>(18_reg), dest);
+    return verifyResult<iris::Word>("swap register operation failed!", 17_reg, src1, c) &&
+           verifyResult<iris::Word>("swap register operation failed!", 18_reg, dest, c);
 }
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
     c.invoke(iris::instructions::move(17_reg, src1));
-    return verifyResult<iris::Word>("register immediate assign operation failed!", c.getRegisterValue<iris::Word>(17_reg), src1);
+    return verifyResult<iris::Word>("assign register operation failed!", 17_reg, src1, c);
 }
 
 bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
