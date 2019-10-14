@@ -134,25 +134,24 @@ class Core {
                 static_assert(false_v<A>, "Bad address kind!");
             }
         }
+        template<typename T>
+        Word extractValue(T value) noexcept {
+            if constexpr (std::is_same_v<T, Word>) {
+                return value;
+            } else if constexpr (std::is_same_v<T, RegisterIndex>) {
+                return getRegisterValue<Word>(value);
+            } else {
+                static_assert(false_v<T>, "Bad value kind!");
+            }
+        }
+        
         template<typename A, typename V>
         void storeStack(A address, V value) {
-            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
-                _stack[addr] = value;
-            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                _stack[addr] = getRegisterValue(value);
-            } else {
-                static_assert(false_v<V>, "Bad value kind!");
-            }
+            _stack[extractAddress<A>(address)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeData(A address, V value) {
-            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
-                _data[addr] = value;
-            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                _data[addr] = getRegisterValue(value);
-            } else {
-                static_assert(false_v<V>, "Bad value kind!");
-            }
+            _data[extractAddress<A>(address)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeCode(A address, V value) {
@@ -166,13 +165,7 @@ class Core {
         }
         template<typename A, typename V>
         void storeIO(A address, V value) {
-            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
-                _io.store(addr, value);
-            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                _io.store(addr, getRegisterValue(value));
-            } else {
-                static_assert(false_v<V>, "Bad value kind!");
-            }
+            _io.store(extractAddress<A>(address), extractValue<V>(value));
         }
         template<typename V>
         inline void storeCode(RegisterIndex addr, V value, Address offset) {
