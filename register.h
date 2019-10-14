@@ -53,26 +53,6 @@ class Register final {
             }
             return *this;
         }
-        constexpr bool operator==(const Register& other) const noexcept { return other.get<Word>() == get<Word>(); }
-        constexpr bool operator==(SignedWord other) const noexcept      { return get<SignedWord>() == other; }
-        constexpr bool operator==(Word other) const noexcept            { return get<Word>() == other; }
-        constexpr bool operator==(bool other) const noexcept            { return get<bool>() == other; }
-        constexpr bool operator!=(const Register& other) const noexcept { return other.get<Word>() != get<Word>(); }
-        constexpr bool operator!=(SignedWord other) const noexcept      { return other != get<SignedWord>(); }
-        constexpr bool operator!=(Word other) const noexcept            { return other != get<Word>(); }
-        constexpr bool operator!=(bool other) const noexcept            { return other != get<bool>(); }
-        constexpr bool operator<(const Register& other) const noexcept  { return get<Word>() < other.get<Word>(); }
-        constexpr bool operator<(SignedWord other) const noexcept       { return get<SignedWord>() < other; }
-        constexpr bool operator<(Word other) const noexcept             { return get<Word>() < other; }
-        constexpr bool operator<=(const Register& other) const noexcept { return get<Word>() <= other.get<Word>(); }
-        constexpr bool operator<=(SignedWord other) const noexcept      { return get<SignedWord>() <= other; }
-        constexpr bool operator<=(Word other) const noexcept            { return get<Word>() <= other; }
-        constexpr bool operator>(SignedWord other) const noexcept       { return get<SignedWord>() > other; }
-        constexpr bool operator>(Word other) const noexcept             { return get<Word>() > other; }
-        constexpr bool operator>(const Register& other) const noexcept  { return get<Word>() > other.get<Word>(); }
-        constexpr bool operator>=(SignedWord other) const noexcept      { return get<SignedWord>() >= other; }
-        constexpr bool operator>=(Word other) const noexcept            { return get<Word>() >= other; }
-        constexpr bool operator>=(const Register& other) const noexcept { return get<Word>() >= other.get<Word>(); }
         constexpr bool IsHardwired() const noexcept { return _hardwired; }
         void hardwireTo(Word value) noexcept {
             _hardwired = true;
