@@ -62,10 +62,17 @@ using SignedByte = int8_t;
 using Byte = UnsignedByte;
 using RegisterIndex = std::byte;
 using Address = UnsignedWord;
-using UnsignedQuadWord = uint64_t;
-using SignedQuadWord = int64_t;
-using QuadWord = UnsignedQuadWord;
 using Offset16 = SignedWord;
+
+template<typename T>
+constexpr auto isDoubleWide = false;
+template<typename T>
+constexpr auto isRelativeOffset = false;
+
+template<> constexpr auto isDoubleWide<UnsignedDoubleWord> = true;
+template<> constexpr auto isDoubleWide<SignedDoubleWord> = true;
+
+template<> constexpr auto isRelativeOffset<SignedWord> = true;
 
 
 template<typename T, typename R, T mask, T shift>
@@ -132,6 +139,10 @@ using DataMemoryBank = MemoryBank<Word>;
  */
 using StackMemoryBank = MemoryBank<Word>;
 
+constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
+    return static_cast<DoubleWord>(lower) | (static_cast<DoubleWord>(upper) << 16);
+}
+
 } // end namespace iris
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(static_cast<std::underlying_type_t<iris::RegisterIndex>>(conversion)); }
 iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);
@@ -144,8 +155,6 @@ constexpr iris::UnsignedWord operator "" _uw(unsigned long long int conversion) 
 constexpr iris::UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
 constexpr iris::UnsignedDoubleWord operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedDoubleWord>(conversion); }
 constexpr iris::SignedDoubleWord operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::SignedDoubleWord>(conversion); }
-constexpr iris::UnsignedQuadWord operator "" _uqw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedQuadWord>(conversion); }
-constexpr iris::SignedQuadWord operator "" _sqw(unsigned long long int conversion) noexcept { return static_cast<iris::SignedQuadWord>(conversion); }
 
 
 

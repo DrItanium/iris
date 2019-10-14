@@ -120,147 +120,76 @@ class Core {
         inline Word loadData(Address addr, Address offset) {
             return loadData<Address>(addr + offset);
         }
-        template<typename A, typename V>
-        void storeData(A address, V value) {
-            if constexpr (std::is_same_v<A, Address>) {
-                if constexpr (std::is_same_v<V, Word>) {
-                    _data[address] = value;
-                } else if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _data[address] = value;
-                    _data[address+1] = value >> 16;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _data[address] = getRegisterValue(value);
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
-            } else if constexpr (std::is_same_v<A, RegisterIndex>) {
-                auto addr = getRegisterValue(address);
-                if constexpr (std::is_same_v<V, Word>) {
-                    _data[addr] = value;
-                } else if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _data[addr] = value;
-                    _data[addr+1] = value >> 16;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    if (address == value) {
-                        _data[addr] = addr;
-                    } else {
-                        _data[addr] = getRegisterValue(value);
-                    }
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
-            } else {
-                static_assert(false_v<A>, "Bad address kind!");
-            }
-        }
         template<typename V>
         void storeData(RegisterIndex addr, V value, Address offset) {
             storeData(getRegisterValue<Address>(addr, offset), value);
         }
-        template<typename A, typename V>
-        void storeStack(A address, V value) {
+        template<typename A>
+        Address extractAddress(A address) noexcept {
             if constexpr (std::is_same_v<A, Address>) {
-                if constexpr (std::is_same_v<V, Word>) {
-                    _stack[address] = value;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _stack[address] = getRegisterValue(value);
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
+                return address;
             } else if constexpr (std::is_same_v<A, RegisterIndex>) {
-                auto addr = getRegisterValue(address);
-                if constexpr (std::is_same_v<V, Word>) {
-                    _stack[addr] = value;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    if (address == value) {
-                        _stack[addr] = addr;
-                    } else {
-                        _stack[addr] = getRegisterValue(value);
-                    }
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
+                return getRegisterValue(address);
             } else {
                 static_assert(false_v<A>, "Bad address kind!");
             }
         }
         template<typename A, typename V>
-        void storeCode(A address, V value) {
-            if constexpr (std::is_same_v<A, Address>) {
-                if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _code[address] = value;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _code[address] = getDoubleRegisterValue(value);
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
-            } else if constexpr (std::is_same_v<A, RegisterIndex>) {
-                auto addr = getRegisterValue(address);
-                if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _code[addr] = value;
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _code[addr] = getDoubleRegisterValue(value);
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
+        void storeStack(A address, V value) {
+            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
+                _stack[addr] = value;
+            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
+                _stack[addr] = getRegisterValue(value);
             } else {
-                static_assert(false_v<A>, "Bad address kind!");
+                static_assert(false_v<V>, "Bad value kind!");
+            }
+        }
+        template<typename A, typename V>
+        void storeData(A address, V value) {
+            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
+                _data[addr] = value;
+            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
+                _data[addr] = getRegisterValue(value);
+            } else {
+                static_assert(false_v<V>, "Bad value kind!");
+            }
+        }
+        template<typename A, typename V>
+        void storeCode(A address, V value) {
+            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, DoubleWord>) {
+                _code[addr] = value;
+            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
+                _code[addr] = getDoubleRegisterValue(value);
+            } else {
+                static_assert(false_v<V>, "Bad value kind!");
+            }
+        }
+        template<typename A, typename V>
+        void storeIO(A address, V value) {
+            if constexpr (auto addr = extractAddress<A>(address); std::is_same_v<V, Word>) {
+                _io.store(addr, value);
+            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
+                _io.store(addr, getRegisterValue(value));
+            } else {
+                static_assert(false_v<V>, "Bad value kind!");
             }
         }
         template<typename V>
         inline void storeCode(RegisterIndex addr, V value, Address offset) {
             return storeCode(getRegisterValue<Address>(addr, offset), value);
         }
-        template<typename A, typename V>
-        void storeIO(A address, V value) {
-            if constexpr (std::is_same_v<A, Address>) {
-                if constexpr (std::is_same_v<V, Word>) {
-                    _io.store(address, value);
-                } else if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _io.store(address, value);
-                    _io.store(address + 1, value >> 16);
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    _io.store(address, getRegisterValue(value));
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
-            } else if constexpr (std::is_same_v<A, RegisterIndex>) {
-                auto addr = getRegisterValue(address);
-                if constexpr (std::is_same_v<V, Word>) {
-                    _io.store(addr, value);
-                } else if constexpr (std::is_same_v<V, DoubleWord>) {
-                    _io.store(address, value);
-                    _io.store(address + 1, value >> 16);
-                } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                    if (address == value) {
-                        _io.store(addr, addr);
-                    } else {
-                        _io.store(addr, getRegisterValue(value));
-                    }
-                } else {
-                    static_assert(false_v<V>, "Bad value kind!");
-                }
-            } else {
-                static_assert(false_v<A>, "Bad address kind!");
-            }
-        }
         template<typename V>
         inline void storeIO(RegisterIndex addr, V value, Address offset) {
             storeIO(getRegisterValue<Address>(addr, offset), value);
         }
-        inline void storeIO(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeIO(addr, reg.get(), offset); }
         inline void storeIO(RegisterIndex addr, const Register& reg, Address offset) { storeIO(addr, reg.get(), offset); }
-        inline void storeData(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeData(addr, reg.get(), offset); }
         inline void storeData(RegisterIndex addr, const Register& reg, Address offset) { storeData(addr, reg.get(), offset); }
         inline void storeStack(RegisterIndex addr, const Register& reg) { storeStack(addr, reg.get()); }
-        inline void storeCode(RegisterIndex addr, const DoubleRegister& reg, Address offset) { storeCode(addr, reg.get(), offset); }
         template<typename R = Word>
         inline R loadData(RegisterIndex addr, Address offset) {
             auto loc = getRegisterValue<Address>(addr, offset); 
             if constexpr (std::is_same_v<R, DoubleWord>) {
-                auto low = static_cast<DoubleWord>(loadData<Address>(loc));
-                auto high = static_cast<DoubleWord>(loadData<Address>(loc+1)) << 16;
-                return low | high;
+                return makeDoubleWord(loadData<Address>(loc), loadData<Address>(loc+1));
             } else if constexpr (std::is_same_v<R, Word>) {
                 return loadData(loc);
             } else {
@@ -280,9 +209,7 @@ class Core {
         inline R loadIO(RegisterIndex addr, Address offset) {
             auto loc = getRegisterValue<Address>(addr, offset); 
             if constexpr (std::is_same_v<R, DoubleWord>) {
-                auto low = static_cast<DoubleWord>(loadIO<Address>(loc));
-                auto high = static_cast<DoubleWord>(loadIO<Address>(loc+1)) << 16;
-                return low | high;
+                return makeDoubleWord(loadIO<Address>(loc), loadIO<Address>(loc+1));
             } else if constexpr (std::is_same_v<R, Word>) {
                 return loadIO(loc);
             } else {
@@ -310,6 +237,7 @@ class Core {
         void relativeBranchTo(T offset) noexcept {
             branchTo<T>(_ip.get<T>() + offset);
         }
+
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
@@ -323,8 +251,7 @@ class Core {
             } else {
                 src2 = getRegisterValue(rsrc2);
             }
-            auto src1 = getRegisterValue<D>(rsrc1);
-            if constexpr (IsEqualsOperation<K>) {
+            if constexpr (auto src1 = getRegisterValue<D>(rsrc1); IsEqualsOperation<K>) {
                 result = src1 == src2;
             } else if constexpr (IsNotEqualsOperation<K>) {
                 result = src1 != src2;
@@ -346,7 +273,7 @@ class Core {
             using K = std::decay_t<decltype(s)>; 
             auto [ link, offset] = s.arguments(); 
             if constexpr (UsesLinkRegister<K>) { 
-                setRegisterValue(link, _ip.get() + 1); 
+                updateLinkRegister(link);
             } 
             if constexpr (UsesRelativeOffset<K>) { 
                 relativeBranchTo<SignedWord>(offset);
@@ -384,8 +311,7 @@ class Core {
                     static_assert(false_v<K>, "Unimplemented gpr manipulator");
                 }
             } else if constexpr (IsStackOperation<K>) {
-                auto [ sp, other ] = input.arguments();
-                if constexpr (IsPopOperation<K>) {
+                if constexpr (auto [sp, other] = input.arguments(); IsPopOperation<K>) {
                     // so stack grows downward
                     // pops grow towards 0xFFFF
                     // StackPop StackPointerRegister DestinationRegister
