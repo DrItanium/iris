@@ -29,19 +29,6 @@
 #include <functional>
 
 namespace iris::instructions {
-#if 0
-#define X(title, fmt) \
-    UnsignedDoubleWord \
-    title ( const title ## Instruction & s) noexcept {\
-        return ((Instruction)s).getRawBits(); \
-    }
-#include "InstructionFormats.def"
-#undef X
-#endif
-Bits
-swap(RegisterIndex a, RegisterIndex b) noexcept {
-    return MemorySwapRegisters({a, b});
-}
 Bits
 twoTimes(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftLeftUnsigned({dest, src, 1_reg});
@@ -119,11 +106,6 @@ branchIfLessThanOrEqualToZero(RegisterIndex temp, RegisterIndex src, AddressType
     return branchIfCompareZero(temp, src, loc, lessThanOrEqualToZero);
 }
 
-Bits
-select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept {
-    return BranchSelect({cond, then, _else});
-}
-
 MultiInstructionExpression
 selectCompareWithZero(RegisterIndex cond, RegisterIndex src, RegisterIndex then, RegisterIndex _else, 
         std::function<Bits(RegisterIndex, RegisterIndex)> compareWithZero) noexcept {
@@ -157,10 +139,6 @@ selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIn
     return selectCompareWithZero(cond, src0, then, _else, lessThanOrEqualToZero);
 }
 
-Bits
-pop(RegisterIndex sp, RegisterIndex dest) noexcept {
-    return MemoryStackPop({sp, dest});
-}
 
 Bits
 storeData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept {
@@ -196,15 +174,6 @@ loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept 
 Bits
 storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept {
     return MemoryCodeStoreWithOffset({addr, lower, offset});
-}
-
-Bits
-getIP(RegisterIndex r) noexcept {
-    return MemoryMoveFromIP({r});
-}
-Bits
-setIP(RegisterIndex r) noexcept {
-    return MemoryMoveToIP({r});
 }
 
 Bits

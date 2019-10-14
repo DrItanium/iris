@@ -179,14 +179,16 @@ namespace iris::instructions {
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
-    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept                      { return MemoryCopyRegisterInstruction({targetRegister, 0_reg}).getRawValue(); }
-    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept                               { return MemoryCopyRegisterInstruction({target, target}).getRawValue(); }
-    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept         { return CompareGreaterThanSignedInstruction({dest, src, 0_reg}).getRawValue(); }
-    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept { return CompareGreaterThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue(); }
-    constexpr Bits lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept             { return CompareLessThanSignedInstruction({dest, src, 0_reg}).getRawValue(); }
-    constexpr Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept   { return CompareLessThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue(); }
-    constexpr Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept              { return CompareEqualsInstruction({dest, src, 0_reg}).getRawValue(); }
-    constexpr Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept           { return CompareNotEqualsInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept                          { return MemoryCopyRegister({targetRegister, 0_reg}); }
+    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept                                   { return MemoryCopyRegister({target, target}); }
+    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept             { return CompareGreaterThanSigned({dest, src, 0_reg}); }
+    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept     { return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg}); }
+    constexpr Bits lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept                 { return CompareLessThanSigned({dest, src, 0_reg}); }
+    constexpr Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept       { return CompareLessThanOrEqualToSigned({dest, src, 0_reg}); }
+    constexpr Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept                  { return CompareEquals({dest, src, 0_reg}); }
+    constexpr Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
+    constexpr Bits swap(RegisterIndex a, RegisterIndex b) noexcept                              { return MemorySwapRegisters({a, b}); }
+    constexpr Bits select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
     template<typename T>
     constexpr Bits call(RegisterIndex link, T value) noexcept {
         using K = std::decay_t<T>;
@@ -200,7 +202,6 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    Bits swap(RegisterIndex, RegisterIndex) noexcept;
     template<typename T>
     constexpr Bits branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
@@ -229,21 +230,8 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    MultiInstructionExpression branchIfZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept;
-    MultiInstructionExpression branchIfNotZero(RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    Bits select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     template<typename T>
-    Bits move(RegisterIndex dest, T value) noexcept {
+    constexpr Bits move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             if (value < 17) {
@@ -260,7 +248,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    Bits push(RegisterIndex sp, T value) noexcept {
+    constexpr Bits push(RegisterIndex sp, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return MemoryStackPushImmediateValue({sp, value});
@@ -270,7 +258,7 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept;
+    constexpr Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
     Bits storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
     Bits storeData(RegisterIndex dest, Address value) noexcept; 
     Bits loadData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
@@ -279,8 +267,8 @@ namespace iris::instructions {
     Bits loadIO(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept;
     Bits storeCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
     Bits loadCode(RegisterIndex dest, RegisterIndex lower, UnsignedByte offset = 0) noexcept;
-    Bits getIP(RegisterIndex) noexcept;
-    Bits setIP(RegisterIndex) noexcept;
+    constexpr Bits getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
+    constexpr Bits setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 
     /// @todo Double and Quad memory operations
 
@@ -332,6 +320,18 @@ namespace iris::instructions {
     X(Max);
     X(Min);
 #undef X
+    MultiInstructionExpression branchIfZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept;
+    MultiInstructionExpression branchIfNotZero(RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
+    MultiInstructionExpression selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
     Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept;
     inline auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
     Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
