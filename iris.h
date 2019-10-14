@@ -95,10 +95,6 @@ class Core {
         Word loadData(T addr, Address offset = 0) {
             return _data[extractAddress<T>(addr, offset)];
         }
-        template<typename V>
-        void storeData(RegisterIndex addr, V value, Address offset) {
-            storeData(getRegisterValue<Address>(addr, offset), value);
-        }
         template<typename A, typename V>
         void storeStack(A address, V value, Address offset = 0) {
             _stack[extractAddress<A>(address, offset)] = extractValue<V>(value);
