@@ -144,15 +144,16 @@ constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
 }
 
 } // end namespace iris
-constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(static_cast<std::underlying_type_t<iris::RegisterIndex>>(conversion)); }
+constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<std::underlying_type_t<iris::RegisterIndex>>(conversion)}; }
 iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);
 constexpr iris::RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111110); }
-constexpr iris::RegisterIndex operator "" _qreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111100); }
 constexpr iris::SignedWord operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
 constexpr iris::SignedWord operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
+constexpr iris::SignedWord operator "" _s16(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
 constexpr iris::Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<iris::Address>(conversion); }
 constexpr iris::UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
 constexpr iris::UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
+constexpr iris::UnsignedWord operator "" _u16(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
 constexpr iris::UnsignedDoubleWord operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedDoubleWord>(conversion); }
 constexpr iris::SignedDoubleWord operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::SignedDoubleWord>(conversion); }
 

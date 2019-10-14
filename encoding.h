@@ -272,8 +272,6 @@ namespace iris::instructions {
     constexpr Bits getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
     constexpr Bits setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 
-    /// @todo Double and Quad memory operations
-
     // arithmetic operations
     constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
     constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftLeftSigned({dest, src, 1_reg}); }
