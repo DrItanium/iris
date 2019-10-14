@@ -50,10 +50,6 @@ Bits
 twoDivide(RegisterIndex dest, RegisterIndex src) noexcept {
     return ArithmeticShiftRightUnsigned({dest, src, 1_reg});
 }
-Bits 
-ret(RegisterIndex link) noexcept {
-    return iris::instructions::branch(link);
-}
 
 Bits 
 twoTimes(RegisterIndex targetRegister) noexcept {
@@ -80,28 +76,12 @@ square(RegisterIndex dest) noexcept {
     return square(dest, dest);
 }
 Bits 
-lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareLessThanSigned({dest, src, 0_reg});
-}
-Bits 
-equalsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareEquals({dest, src, 0_reg});
-}
-Bits 
-notEqualsZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareNotEquals({dest, src, 0_reg});
-}
-Bits 
 increment(RegisterIndex target) noexcept {
     return ArithmeticAddUnsigned({target, target, 1_reg});
 }
 Bits 
 decrement(RegisterIndex target) noexcept {
     return ArithmeticAddUnsigned({target, target, 1_reg});
-}
-Bits
-lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept {
-    return CompareLessThanOrEqualToSigned({dest, src, 0_reg});
 }
 MultiInstructionExpression
 branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {

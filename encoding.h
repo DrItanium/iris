@@ -179,26 +179,16 @@ namespace iris::instructions {
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
-    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept {
-        return MemoryCopyRegisterInstruction({targetRegister, 0_reg}).getRawValue();
-    }
-
-    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept {
-        return MemoryCopyRegisterInstruction({target, target}).getRawValue();
-    }
-    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept  {
-        return CompareGreaterThanSignedInstruction({dest, src, 0_reg}).getRawValue();
-    }
-    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept {
-        return CompareGreaterThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue();
-    }
-    Bits lessThanZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept ;
-    Bits ret(RegisterIndex) noexcept ;
+    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept                      { return MemoryCopyRegisterInstruction({targetRegister, 0_reg}).getRawValue(); }
+    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept                               { return MemoryCopyRegisterInstruction({target, target}).getRawValue(); }
+    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept         { return CompareGreaterThanSignedInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept { return CompareGreaterThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept             { return CompareLessThanSignedInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept   { return CompareLessThanOrEqualToSignedInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept              { return CompareEqualsInstruction({dest, src, 0_reg}).getRawValue(); }
+    constexpr Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept           { return CompareNotEqualsInstruction({dest, src, 0_reg}).getRawValue(); }
     template<typename T>
-    Bits call(RegisterIndex link, T value) noexcept {
+    constexpr Bits call(RegisterIndex link, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediateAndLink({link, value});
@@ -212,7 +202,7 @@ namespace iris::instructions {
     }
     Bits swap(RegisterIndex, RegisterIndex) noexcept;
     template<typename T>
-    Bits branchConditional(RegisterIndex cond, T addr) noexcept {
+    constexpr Bits branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchConditionalImmediate({cond, static_cast<Address>(addr)});
@@ -225,7 +215,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    Bits branch(T addr) noexcept {
+    constexpr Bits branch(T addr) noexcept {
         // unconditional branches are branches where the conditional register is hardwired
         // to 1
         using K = std::decay_t<T>;
@@ -382,5 +372,6 @@ namespace iris::instructions {
         me.conditionalBackwardJump(cond);
         return me;
     }
+    constexpr Bits ret(RegisterIndex link) noexcept                                              { return branch(link); }
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
