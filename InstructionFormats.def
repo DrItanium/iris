@@ -37,8 +37,6 @@
     Logical(BitwiseAnd, ThreeRegister)
     Logical(BitwiseOr, ThreeRegister)
     Logical(BitwiseXor, ThreeRegister)
-    Logical(BitwiseNor, ThreeRegister)
-    Logical(BitwiseNand, ThreeRegister)
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)

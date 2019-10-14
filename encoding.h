@@ -337,9 +337,9 @@ namespace iris::instructions {
     inline auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
     Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
-    Bits bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    MultiInstructionExpression bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
-    Bits bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
+    MultiInstructionExpression bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
     inline auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
     MultiInstructionExpression halt(RegisterIndex, Address = 0) noexcept;
 

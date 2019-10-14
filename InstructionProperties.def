@@ -86,13 +86,7 @@ ArithmeticSignedUnsigned(ShiftRight)
 Logical(BitwiseOr)
 Logical(BitwiseAnd)
 Logical(BitwiseNot)
-Logical(BitwiseNor)
-Logical(BitwiseNand)
 Logical(BitwiseXor)
-DeclareProperty(LogicalBitwiseNand, NotTheResult)
-DeclareProperty(LogicalBitwiseNor,  NotTheResult)
-PartOfClass(LogicalBitwiseNand, BitwiseAnd)
-PartOfClass(LogicalBitwiseNor,  BitwiseOr)
 #define CompareUnsigned(op) \
         GroupCompare(op ## Unsigned) \
         PartOfClass(Compare ## op ## Unsigned, Ordinal)

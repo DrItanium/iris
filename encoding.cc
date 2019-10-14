@@ -253,10 +253,20 @@ bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept {
     }
 X(And);
 X(Or);
-X(Nor);
-X(Nand);
 X(Xor);
 #undef X
+
+MultiInstructionExpression
+bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept {
+    return std::make_tuple(bitwiseAnd(dest, src0, src1),
+                           bitwiseNot(dest));
+}
+
+MultiInstructionExpression
+bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept {
+    return std::make_tuple(bitwiseOr(dest, src0, src1),
+                           bitwiseNot(dest));
+}
 
 
 MultiInstructionExpression

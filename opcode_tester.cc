@@ -254,20 +254,6 @@ bool testBitwiseXor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord s
     return verifyResult<iris::Word>("bitwise xor operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
 }
 
-bool testBitwiseNor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = ~(src1 | src2);
-    c.invoke(iris::instructions::bitwiseNor(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise nor operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
-}
-
-bool testBitwiseNand(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = ~(src1 & src2);
-    c.invoke(iris::instructions::bitwiseNand(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise nand operation failed!", c.getRegisterValue<iris::Word>(17_reg), check);
-}
-
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = src1;
@@ -373,8 +359,6 @@ bool instructionTests(iris::Core& c) {
     X(And)
     X(Or)
     X(Xor)
-    X(Nor)
-    X(Nand)
 #undef X
     if (!testCopyRegister(c, 32)) { return true; }
     if (!testSwapRegisters(c, 32, 64)) { return true; }
