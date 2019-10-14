@@ -34,11 +34,11 @@ Core::Core() noexcept : _io(*this) {
     }
 }
 
-DestinationRegister
+Register&
 Core::getDestinationRegister(RegisterIndex idx) noexcept {
     return _regs[static_cast<Byte>(idx)];
 }
-SourceRegister
+const Register&
 Core::getSourceRegister(RegisterIndex idx) const noexcept {
     return _regs[static_cast<Byte>(idx)];
 }

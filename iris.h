@@ -349,8 +349,8 @@ class Core {
     private:
         void cycle();
     private:
-        DestinationRegister getDestinationRegister(RegisterIndex idx) noexcept;
-        SourceRegister getSourceRegister(RegisterIndex idx) const noexcept;
+        Register& getDestinationRegister(RegisterIndex idx) noexcept;
+        const Register& getSourceRegister(RegisterIndex idx) const noexcept;
         DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
         const DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
     public:

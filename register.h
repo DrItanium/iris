@@ -98,8 +98,6 @@ class Register final {
             SignedWord _signedValue;
         } _storage;
 };
-using DestinationRegister = Register&;
-using SourceRegister = const Register&;
 
 constexpr auto RegisterCount = (0xFF + 1);
 using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
