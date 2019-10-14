@@ -138,12 +138,17 @@ class Core {
         }
         template<typename T>
         void branchTo(T addr) noexcept {
-            _ip.put<T>(addr);
+            if constexpr (std::is_same_v<T, RegisterIndex>) {
+                _ip.put<Word>(getRegisterValue<Word>(addr));
+            } else if constexpr (std::is_unsigned_v<T>) {
+                _ip.put<Word>(addr);
+            } else if constexpr (std::is_signed_v<T>) {
+                // this becomes relative offset
+                _ip.put<SignedWord>(addr + _ip.get<SignedWord>());
+            } else {
+                static_assert(false_v<T>, "Bad branch to kind!");
+            }
             _advanceIP = false;
-        }
-        template<typename T>
-        void relativeBranchTo(T offset) noexcept {
-            branchTo<T>(_ip.get<T>() + offset);
         }
 
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
@@ -184,9 +189,9 @@ class Core {
                 updateLinkRegister(link);
             } 
             if constexpr (UsesRelativeOffset<K>) { 
-                relativeBranchTo<SignedWord>(offset);
+                branchTo<SignedWord>(offset);
             } else { 
-                branchTo(offset);
+                branchTo<Word>(offset);
             } 
         }
         template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>

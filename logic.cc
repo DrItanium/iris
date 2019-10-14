@@ -72,7 +72,7 @@ Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
 void
 Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
     if (auto [ cond, offset ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        relativeBranchTo<SignedWord>(offset);
+        branchTo<SignedWord>(offset);
     }
 }
 
