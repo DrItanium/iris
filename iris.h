@@ -290,13 +290,12 @@ class Core {
             } else {
                 src2 = getRegisterValue(rsrc2);
             }
-            auto src1 = getRegisterValue<D>(rsrc1);
             if constexpr (DisallowsDivideByZero<K>) {
                 if (src2 == 0) {
                     throw DivideByZeroException();
                 }
             }
-            if constexpr (IsAddOperation<K>) {
+            if constexpr (auto src1 = getRegisterValue<D>(rsrc1); IsAddOperation<K>) {
                 result = src1 + src2;
             } else if constexpr (IsSubtractOperation<K>) {
                 result = src1 - src2;
