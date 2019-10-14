@@ -385,14 +385,13 @@ class Core {
                 }
             } else if constexpr (IsStackOperation<K>) {
                 auto [ sp, other ] = input.arguments();
-                if constexpr (std::is_same_v<K, MemoryStackPopInstruction>) {
+                if constexpr (IsPopOperation<K>) {
                     // so stack grows downward
                     // pops grow towards 0xFFFF
                     // StackPop StackPointerRegister DestinationRegister
                     setRegisterValue(other, loadStack(sp));
                     incrementRegister(sp); // sp should always point to the front
-                } else if constexpr (std::is_same_v<K, MemoryStackPushInstruction> ||
-                        std::is_same_v<K, MemoryStackPushImmediateValueInstruction>) {
+                } else if constexpr (IsPushOperation<K>) {
                     // stack grows downward
                     // StackPush StackPointerRegister SourceRegister|Imm16
                     decrementRegister(sp);
