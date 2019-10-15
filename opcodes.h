@@ -424,6 +424,7 @@ template<typename T> constexpr auto IsLoadOperation = false;
 template<typename T> constexpr auto IsStoreOperation = false;
 template<typename T> constexpr auto IsStoreImmediateOperation = false;
 template<typename T> constexpr auto IsSelectOperation = false;
+template<typename T> constexpr auto IsConditionalOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

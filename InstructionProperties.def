@@ -105,8 +105,13 @@ PartOfClass(MemoryAssignRegisterImmediate, AssignRegisterImmediate)
 // Branch 
 //-----------------------------------------------------------------------------
 GroupBranch(ConditionalImmediate)
+DeclareProperty(BranchConditionalImmediate, IsBranchImmediateInstruction)
+PartOfClass(BranchConditionalImmediate, Conditional)
 
 GroupBranch(ConditionalRelativeImmediate)
+DeclareProperty(BranchConditionalRelativeImmediate, IsBranchImmediateInstruction)
+DeclareProperty(BranchConditionalRelativeImmediate, UsesRelativeOffset)
+PartOfClass(BranchConditionalRelativeImmediate, Conditional)
 
 GroupBranch(RelativeImmediateAndLink)
 DeclareProperty(BranchRelativeImmediateAndLink, IsBranchImmediateInstruction)
@@ -118,13 +123,18 @@ DeclareProperty(BranchImmediateAndLink, IsBranchImmediateInstruction)
 DeclareProperty(BranchImmediateAndLink, UsesLinkRegister)
 
 GroupBranch(ConditionalRegister)
+PartOfClass(BranchConditionalRegister, Conditional)
 
 GroupBranch(RegisterAndLink)
+DeclareProperty(BranchRegisterAndLink, UsesLinkRegister)
 
 GroupBranch(ConditionalRegisterAndLink)
+DeclareProperty(BranchConditionalRegisterAndLink, UsesLinkRegister)
+PartOfClass(BranchConditionalRegisterAndLink, Conditional)
 
 GroupBranch(Select)
 PartOfClass(BranchSelect, Select)
+PartOfClass(BranchSelect, Conditional)
 //-----------------------------------------------------------------------------
 // Arithmetic 
 //-----------------------------------------------------------------------------

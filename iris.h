@@ -123,7 +123,6 @@ class Core {
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
         void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
-        void invoke(const iris::BranchConditionalImmediateInstruction&);
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
@@ -146,13 +145,21 @@ class Core {
         void invoke(const T& s) {
             using K = std::decay_t<T>;
             if constexpr (IsBranchImmediateInstruction<K>) {
+                using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
                 auto [ link, offset] = s.arguments(); 
+                static_assert(std::is_same_v<O, decltype(offset)>);
+                static_assert(!(UsesLinkRegister<K> && IsConditionalOperation<K>), 
+                              "Impossible state, cannot have an immediate which is conditional and link at the same time!");
                 if constexpr (UsesLinkRegister<K>) { 
                     updateLinkRegister(link);
                 } 
-                using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
-                static_assert(std::is_same_v<O, decltype(offset)>);
-                branchTo<O>(offset);
+                if constexpr (IsConditionalOperation<K>) {
+                    if (getRegisterValue<bool>(link)) {
+                        branchTo<O>(offset);
+                    }
+                } else {
+                    branchTo<O>(offset);
+                }
             } else if constexpr (IsSelectOperation<K>) {
                 // BranchSelect ConditionalRegister TrueAddress FalseAddress
                 auto [ cond, onTrue, onFalse ] = s.arguments();
