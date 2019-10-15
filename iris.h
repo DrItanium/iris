@@ -129,19 +129,22 @@ class Core {
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
         }
-
-        template<typename T, std::enable_if_t<IsBranchImmediateInstruction<std::decay_t<T>>, int> = 0>
-        void invoke(const T & s) { 
-            using K = std::decay_t<decltype(s)>; 
-            auto [ link, offset] = s.arguments(); 
-            if constexpr (UsesLinkRegister<K>) { 
-                updateLinkRegister(link);
-            } 
-            if constexpr (UsesRelativeOffset<K>) { 
-                branchTo<SignedWord>(offset);
-            } else { 
-                branchTo<Word>(offset);
-            } 
+        template<typename T, std::enable_if_t<IsBranchOperation<std::decay_t<T>>, int> = 0> 
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            if constexpr (IsBranchImmediateInstruction<K>) {
+                auto [ link, offset] = s.arguments(); 
+                if constexpr (UsesLinkRegister<K>) { 
+                    updateLinkRegister(link);
+                } 
+                if constexpr (UsesRelativeOffset<K>) { 
+                    branchTo<SignedWord>(offset);
+                } else { 
+                    branchTo<Word>(offset);
+                } 
+            } else {
+                static_assert(false_v<T>, "Bad branch kind!");
+            }
         }
         template<typename T>
         void branchTo(T addr) noexcept {
