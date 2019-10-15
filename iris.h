@@ -396,11 +396,6 @@ class Core {
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
         constexpr Word getIP() const noexcept { return _ip.get<Word>(); }
         void setIP(Word value) noexcept { _ip.put(value); }
-        /// @todo fix this so that invoke can automatically unpack stuff
-        template<typename T>
-        void invokeCompoundExpression(T&& t) noexcept {
-            std::apply([this](auto value) { invoke(value); }, t);
-        }
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;
