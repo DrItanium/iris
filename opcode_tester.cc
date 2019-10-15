@@ -207,12 +207,6 @@ bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     return verifyResult<iris::Word>("copy register operation failed!", 17_reg, check, c);
 }
 
-bool testSwapRegisters(iris::Core& c, iris::Word dest, iris::Word src1) noexcept {
-    setRegisters<decltype(src1)>(c, dest, src1, 0);
-    c.invoke(iris::instructions::swap(17_reg, 18_reg));
-    return verifyResult<iris::Word>("swap register operation failed!", 17_reg, src1, c) &&
-           verifyResult<iris::Word>("swap register operation failed!", 18_reg, dest, c);
-}
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
     c.invoke(iris::instructions::move(17_reg, src1));
@@ -305,7 +299,6 @@ bool instructionTests(iris::Core& c) {
     X(Xor)
 #undef X
     if (!testCopyRegister(c, 32)) { return true; }
-    if (!testSwapRegisters(c, 32, 64)) { return true; }
     if (!testAssignRegister(c, 128)) { return true; }
     if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
     if (!testPushImmediateOperation(c, 0xFDED)) { return true; }

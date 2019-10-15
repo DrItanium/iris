@@ -66,7 +66,28 @@ namespace iris::instructions {
     constexpr auto lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept       { return CompareLessThanOrEqualToSigned({dest, src, 0_reg}); }
     constexpr auto equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept                  { return CompareEquals({dest, src, 0_reg}); }
     constexpr auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
-    constexpr auto swap(RegisterIndex a, RegisterIndex b) noexcept                              { return MemorySwapRegisters({a, b}); }
+    template<typename T>
+    constexpr auto move(RegisterIndex dest, T value) noexcept {
+        using K = std::decay_t<T>;
+        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
+            if (value < 17) {
+                // do a register transfer since [0,16] is held within [r0,r16]
+                // in a hardwired context
+                return MemoryCopyRegister({dest, static_cast<RegisterIndex>(value)});
+            } else {
+                return MemoryAssignRegisterImmediate({dest, value});
+            }
+        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
+            return MemoryCopyRegister({dest, value});
+        } else {
+            static_assert(false_v<T>, "Bad kind to branch with!");
+        }
+    }
+    constexpr auto swap(RegisterIndex a, RegisterIndex b, RegisterIndex temp) noexcept          { 
+        return std::make_tuple(move(temp, a),
+                               move(a, b),
+                               move(b, temp));
+    }
     constexpr auto select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
     constexpr auto branchConditionalAndLink(RegisterIndex dest, RegisterIndex cond = 1_reg, RegisterIndex link = 0_reg) noexcept { return BranchConditionalRegisterAndLink({dest, cond, link }); }
     template<typename T>
@@ -106,23 +127,6 @@ namespace iris::instructions {
             return branchConditional(1_reg, static_cast<Offset16>(addr));
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return branchConditionalAndLink(addr);
-        } else {
-            static_assert(false_v<T>, "Bad kind to branch with!");
-        }
-    }
-    template<typename T>
-    constexpr auto move(RegisterIndex dest, T value) noexcept {
-        using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            if (value < 17) {
-                // do a register transfer since [0,16] is held within [r0,r16]
-                // in a hardwired context
-                return MemoryCopyRegister({dest, static_cast<RegisterIndex>(value)});
-            } else {
-                return MemoryAssignRegisterImmediate({dest, value});
-            }
-        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return MemoryCopyRegister({dest, value});
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
