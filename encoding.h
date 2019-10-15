@@ -69,13 +69,7 @@ namespace iris::instructions {
     constexpr auto move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            if (value < 17) {
-                // do a register transfer since [0,16] is held within [r0,r16]
-                // in a hardwired context
-                return LogicalBitwiseOr({dest, static_cast<RegisterIndex>(value), 0_reg});
-            } else {
-                return MemoryAssignRegisterImmediate({dest, value});
-            }
+            return MemoryAssignRegisterImmediate({dest, value});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
             return LogicalBitwiseOr({dest, value, 0_reg});
         } else {
