@@ -293,14 +293,15 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     }
 }
 
+
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
     //-----------------------------------------------------------------------------
     // Arithmetic
     //-----------------------------------------------------------------------------
 #define X(op) \
-    if (! test ## op ## Operation <iris::Word> (c, 0xFDED, 2)) { return true; } \
-    if (! test ## op ## Operation <iris::SignedWord> (c, -1, 2)) { return true; } 
+    if (! test ## op ## Operation <iris::Word> (c, 0xFDED, 2) || \
+        ! test ## op ## Operation <iris::SignedWord> (c, -1 ,2)) { return true; }
     X(Add)
     X(Subtract)
     X(Multiply)
@@ -312,10 +313,10 @@ bool instructionTests(iris::Core& c) {
     //-----------------------------------------------------------------------------
     // Logical 
     //-----------------------------------------------------------------------------
-    if (! testLogicalOperationKind<LogicalOperation::Not>(c) ||
-        ! testLogicalOperationKind<LogicalOperation::And>(c) ||
-        ! testLogicalOperationKind<LogicalOperation::Or>(c) ||
-        ! testLogicalOperationKind<LogicalOperation::Xor>(c)) { return true; }
+    if ((! testLogicalOperationKind<LogicalOperation::Not>(c)) ||
+        (! testLogicalOperationKind<LogicalOperation::And>(c)) ||
+        (! testLogicalOperationKind<LogicalOperation::Or>(c)) ||
+        (! testLogicalOperationKind<LogicalOperation::Xor>(c))) { return true; }
     //-----------------------------------------------------------------------------
     // Memory 
     //-----------------------------------------------------------------------------
