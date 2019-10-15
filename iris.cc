@@ -23,7 +23,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "types.h"
 #include "iris.h"
+#include "opcodes.h"
 
 namespace iris {
 
@@ -94,6 +96,18 @@ Core::readTerminateCell(Core& c) {
     return c._terminateCell;
 }
 
+void 
+Core::invoke(DoubleWord ibits) {
+    switch (Instruction inst(ibits); inst.getOpcodeIndex()) {
+#define X(t, f) case t ## Instruction :: RawValue : \
+        invoke(t ## Instruction(inst)); \
+        break;
+#include "InstructionFormats.def"
+#undef X
+        default:
+            throw BadOperationException();
+    }
+}
 
 
 } // end namespace iris
