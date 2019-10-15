@@ -36,7 +36,7 @@ Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
         branchTo(getRegisterValue(dest));
     }
 }
-
+#if 0
 void
 Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
     auto [ address, link ] = s.arguments();
@@ -50,5 +50,6 @@ Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
         branchTo(getRegisterValue<Word>(dest));
     }
 }
+#endif
 
 } // end namespace iris

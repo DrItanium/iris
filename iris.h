@@ -123,8 +123,10 @@ class Core {
             throw ErrorInstructionException();
         }
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
+#if 0
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
+#endif
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
@@ -152,20 +154,28 @@ class Core {
                 static_assert(std::is_same_v<O, decltype(offset)>);
                 static_assert(!(UsesLinkRegister<K> && IsConditionalOperation<K>), 
                               "Impossible state, cannot have an immediate which is conditional and link at the same time!");
-                if constexpr (UsesLinkRegister<K>) { 
-                    updateLinkRegister(link);
-                } 
+                auto performBranch = true;
                 if constexpr (IsConditionalOperation<K>) {
-                    if (getRegisterValue<bool>(link)) {
-                        branchTo<O>(offset);
-                    }
-                } else {
+                    performBranch = getRegisterValue<bool>(link);
+                } 
+                if (performBranch) {
+                    if constexpr (UsesLinkRegister<K>) { 
+                        updateLinkRegister(link);
+                    } 
                     branchTo<O>(offset);
                 }
-            } else if constexpr (IsSelectOperation<K>) {
-                // BranchSelect ConditionalRegister TrueAddress FalseAddress
-                auto [ cond, onTrue, onFalse ] = s.arguments();
-                branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
+            } else if constexpr (IsBranchRegisterInstruction<K>) {
+                if constexpr (IsSelectOperation<K>) {
+                    // BranchSelect ConditionalRegister TrueAddress FalseAddress
+                    auto [ cond, onTrue, onFalse ] = s.arguments();
+                    branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
+                } else {
+                    auto [ dest, cond, link ] = s.arguments();
+                    if (getRegisterValue<bool>(cond)) {
+                        updateLinkRegister(link);
+                        branchTo(getRegisterValue<Address>(dest));
+                    }
+                }
             } else {
                 static_assert(false_v<T>, "Bad branch kind!");
             }

@@ -126,19 +126,15 @@ GroupBranch(ImmediateAndLink)
 DeclareProperty(BranchImmediateAndLink, IsBranchImmediateInstruction)
 DeclareProperty(BranchImmediateAndLink, UsesLinkRegister)
 
-GroupBranch(ConditionalRegister)
-PartOfClass(BranchConditionalRegister, Conditional)
-
-GroupBranch(RegisterAndLink)
-DeclareProperty(BranchRegisterAndLink, UsesLinkRegister)
-
 GroupBranch(ConditionalRegisterAndLink)
 DeclareProperty(BranchConditionalRegisterAndLink, UsesLinkRegister)
 PartOfClass(BranchConditionalRegisterAndLink, Conditional)
+DeclareProperty(BranchConditionalRegisterAndLink, IsBranchRegisterInstruction)
 
 GroupBranch(Select)
 PartOfClass(BranchSelect, Select)
 PartOfClass(BranchSelect, Conditional)
+DeclareProperty(BranchSelect, IsBranchRegisterInstruction)
 //-----------------------------------------------------------------------------
 // Arithmetic 
 //-----------------------------------------------------------------------------

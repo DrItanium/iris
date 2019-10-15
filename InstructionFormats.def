@@ -58,8 +58,6 @@
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(RelativeImmediateAndLink, OneRegisterS16)
-    Branch(ConditionalRegister, TwoRegister)
-    Branch(RegisterAndLink, TwoRegister)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
