@@ -319,25 +319,69 @@ namespace iris::instructions {
     constexpr ComplexBinaryInstruction branchIfZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
     }
-    MultiInstructionExpression branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression branchIfLessThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
-    MultiInstructionExpression selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
-    MultiInstructionExpression selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept;
+    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+        return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+        return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+        return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+        return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+        return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+        return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+        return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+        return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+        return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+        return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+        return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+        return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr auto selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(equalsZero(cond, src0), select(cond, then, _else));
+    }
+    constexpr auto selectIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(notEqualsZero(cond, src0), select(cond, then, _else));
+    }
+    constexpr auto selectIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(greaterThanZero(cond, src0), select(cond, then, _else));
+    }
+    constexpr auto selectIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(lessThanZero(cond, src0), select(cond, then, _else));
+    }
+    constexpr auto selectIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(greaterThanOrEqualToZero(cond, src0), select(cond, then, _else));
+    }
+    constexpr auto selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
+        return std::make_tuple(lessThanOrEqualToZero(cond, src0), select(cond, then, _else));
+    }
     constexpr Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
     constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
     constexpr Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }
@@ -346,13 +390,12 @@ namespace iris::instructions {
     constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
     constexpr Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseXor({dest, src0, src1}); }
     constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
-    MultiInstructionExpression bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
-    inline auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
-    MultiInstructionExpression bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept;
-    inline auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
-    MultiInstructionExpression halt(RegisterIndex, Address = 0) noexcept;
-
-    MultiInstructionExpression cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temporary) noexcept;
+    constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseOr(dest, src0, src1), bitwiseNot(dest)); }
+    constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
+    constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseAnd(dest, src0, src1), bitwiseNot(dest)); }
+    constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
+    constexpr auto halt(RegisterIndex temp, Address code = 0) noexcept { return std::make_tuple(zeroRegister(temp), storeIO(temp, code)); }
+    constexpr auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temp) noexcept { return std::make_tuple(square(temp, src), opMultiply(dest, src, temp, OrdinalOperation())); }
     /**
      * Compute quotient and remainder together
      */
