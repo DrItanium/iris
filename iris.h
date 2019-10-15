@@ -348,8 +348,7 @@ class Core {
     private:
         Register& getDestinationRegister(RegisterIndex idx) noexcept;
         const Register& getSourceRegister(RegisterIndex idx) const noexcept;
-        DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) noexcept;
-        const DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
+        DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
     public:
         void invoke(DoubleWord bits);
     private:

@@ -42,12 +42,8 @@ const Register&
 Core::getSourceRegister(RegisterIndex idx) const noexcept {
     return _regs[static_cast<Byte>(idx)];
 }
-DoubleRegister
-Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) noexcept {
-    return DoubleRegister::make(_regs, lower, upper);
-}
 
-const DoubleRegister
+DoubleRegister
 Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
     return DoubleRegister::make(_regs, lower, upper);
 }
