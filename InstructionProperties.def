@@ -124,6 +124,7 @@ GroupBranch(RegisterAndLink)
 GroupBranch(ConditionalRegisterAndLink)
 
 GroupBranch(Select)
+PartOfClass(BranchSelect, Select)
 //-----------------------------------------------------------------------------
 // Arithmetic 
 //-----------------------------------------------------------------------------

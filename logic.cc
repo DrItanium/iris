@@ -34,13 +34,6 @@ Core::invoke(const iris::ErrorInstruction&) {
 }
 
 void
-Core::invoke(const iris::BranchSelectInstruction& s) {
-    // BranchSelect ConditionalRegister TrueAddress FalseAddress
-    auto [ cond, onTrue, onFalse] = s.arguments();
-    branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
-}
-
-void
 Core::invoke(const iris::BranchConditionalImmediateInstruction& s) {
     if (auto [ cond, to ] = s.arguments(); getRegisterValue<bool>(cond)) {
         branchTo(to);

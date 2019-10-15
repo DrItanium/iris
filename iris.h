@@ -119,7 +119,6 @@ class Core {
         }
     private:
         void invoke(const iris::ErrorInstruction&);
-        void invoke(const iris::BranchSelectInstruction&);
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
@@ -128,23 +127,6 @@ class Core {
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
-        }
-        template<typename T, std::enable_if_t<IsBranchOperation<std::decay_t<T>>, int> = 0> 
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            if constexpr (IsBranchImmediateInstruction<K>) {
-                auto [ link, offset] = s.arguments(); 
-                if constexpr (UsesLinkRegister<K>) { 
-                    updateLinkRegister(link);
-                } 
-                if constexpr (UsesRelativeOffset<K>) { 
-                    branchTo<SignedWord>(offset);
-                } else { 
-                    branchTo<Word>(offset);
-                } 
-            } else {
-                static_assert(false_v<T>, "Bad branch kind!");
-            }
         }
         template<typename T>
         void branchTo(T addr) noexcept {
@@ -159,6 +141,25 @@ class Core {
                 static_assert(false_v<T>, "Bad branch to kind!");
             }
             _advanceIP = false;
+        }
+        template<typename T, std::enable_if_t<IsBranchOperation<std::decay_t<T>>, int> = 0> 
+        void invoke(const T& s) {
+            using K = std::decay_t<T>;
+            if constexpr (IsBranchImmediateInstruction<K>) {
+                auto [ link, offset] = s.arguments(); 
+                if constexpr (UsesLinkRegister<K>) { 
+                    updateLinkRegister(link);
+                } 
+                using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
+                static_assert(std::is_same_v<O, decltype(offset)>);
+                branchTo<O>(offset);
+            } else if constexpr (IsSelectOperation<K>) {
+                // BranchSelect ConditionalRegister TrueAddress FalseAddress
+                auto [ cond, onTrue, onFalse ] = s.arguments();
+                branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
+            } else {
+                static_assert(false_v<T>, "Bad branch kind!");
+            }
         }
 
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
