@@ -61,6 +61,7 @@ using UnsignedByte = uint8_t;
 using SignedByte = int8_t;
 using Byte = UnsignedByte;
 using RegisterIndex = std::byte;
+using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
 using Address = UnsignedWord;
 using Offset16 = SignedWord;
 using QuadOrdinal = uint64_t;
@@ -151,7 +152,7 @@ template<typename T, typename A>
 constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
 
 } // end namespace iris
-constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<std::underlying_type_t<iris::RegisterIndex>>(conversion)}; }
+constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
 iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);
 constexpr iris::RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111110); }
 constexpr iris::SignedWord operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }

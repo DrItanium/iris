@@ -349,16 +349,13 @@ class Core {
         Register& getDestinationRegister(RegisterIndex idx) noexcept;
         const Register& getSourceRegister(RegisterIndex idx) const noexcept;
         DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
+        inline DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
+            return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
+        }
     public:
         void invoke(DoubleWord bits);
     private:
-        inline const DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
-            return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
-        }
-        inline DoubleRegister getDoubleRegister(RegisterIndex start) noexcept {
-            return getDoubleRegister(start, static_cast<RegisterIndex>( static_cast<Byte>(start) + 1));
-        }
-        inline void incrementRegister(RegisterIndex idx, std::underlying_type_t<RegisterIndex> times = 0) noexcept {
+        void incrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
             // it is impossible to actually do zero here!
             if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
                 ++getDestinationRegister(idx);
@@ -366,7 +363,7 @@ class Core {
                 setRegisterValue(idx, getRegisterValue(idx) + actualCount);
             }
         }
-        inline void decrementRegister(RegisterIndex idx, std::underlying_type_t<RegisterIndex> times = 0) noexcept {
+        void decrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
             // it is impossible to actually do zero here!
             if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
                 --getDestinationRegister(idx);
@@ -375,24 +372,24 @@ class Core {
             }
         }
         template<typename T>
-        inline void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
+        void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
             getDoubleRegister(lower).put<T>(value);
         }
         template<typename T = DoubleWord>
-        inline T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
+        T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
             return getDoubleRegister(lower).get<T>();
         }
     public:
         template<typename T>
-        inline void setRegisterValue(RegisterIndex idx, T value) noexcept {
+        void setRegisterValue(RegisterIndex idx, T value) noexcept {
             getDestinationRegister(idx).put(value);
         }
         template<typename T = Word>
-        inline T getRegisterValue(RegisterIndex idx) const noexcept {
+        T getRegisterValue(RegisterIndex idx) const noexcept {
             return getSourceRegister(idx).get<T>();
         }
         template<typename T = Word>
-        inline T getRegisterValue(RegisterIndex idx, T offset) const noexcept {
+        T getRegisterValue(RegisterIndex idx, T offset) const noexcept {
             return getRegisterValue<T>(idx) + offset;
         }
     public:
