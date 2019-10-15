@@ -249,6 +249,24 @@ bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     return verifyResult<iris::Word>("branch immediate operation failed", c.getIP(), src1);
 }
 
+bool testBranchRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
+    setRegisters<decltype(src1)>(c, src1, 0, 0);
+    c.setIP(0);
+    c.invoke(iris::instructions::branch(17_reg));
+    return verifyResult<iris::Word>("branch register operation failed", c.getIP(), src1);
+}
+
+bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris::Word cond, iris::Word expect) noexcept {
+    setRegisters<decltype(src1)>(c, src1, cond, 0);
+    c.setIP(0);
+    c.invoke(iris::instructions::branchConditional(18_reg, 17_reg));
+    return verifyResult<iris::Word>("conditional branch register operation failed", c.getIP(), expect);
+}
+bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris::Word cond) noexcept {
+    return testBranchConditionalRegisterOperation(c, src1, cond, src1);
+}
+
+
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
     c.invoke(iris::instructions::branch(src1));
@@ -330,8 +348,11 @@ bool instructionTests(iris::Core& c) {
     //-----------------------------------------------------------------------------
     // Branch 
     //-----------------------------------------------------------------------------
-    if (!testBranchImmediateOperation(c, 0xFDED)) { return true; }
-    if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
+    if (!testBranchImmediateOperation(c, 0xFDED) ||
+        !testBranchRelativeImmediateOperation(c, -1) ||
+        !testBranchRegisterOperation(c, 0xFDED) ||
+        !testBranchConditionalRegisterOperation(c, 0xFDED, 1, 0xFDED) ||
+        !testBranchConditionalRegisterOperation(c, 0xFDED, 0, 0)) { return true; }
     /// @todo test the rest of the core branch kinds
     //-----------------------------------------------------------------------------
     // Compare 

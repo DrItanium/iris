@@ -168,7 +168,7 @@ class Core {
                     auto [ dest, cond, link ] = s.arguments();
                     if (getRegisterValue<bool>(cond)) {
                         updateLinkRegister(link);
-                        branchTo(getRegisterValue<Address>(dest));
+                        branchTo(dest);
                     }
                 }
             } else {
