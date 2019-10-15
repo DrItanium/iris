@@ -57,8 +57,8 @@ namespace iris::instructions {
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
-    constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return MemoryCopyRegister({targetRegister, 0_reg}); }
-    constexpr auto nop(RegisterIndex target = 0_reg) noexcept                                   { return MemoryCopyRegister({target, target}); }
+    constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return LogicalBitwiseAnd({targetRegister, targetRegister, 0_reg}); }
+    constexpr auto nop(RegisterIndex target = 0_reg) noexcept                                   { return LogicalBitwiseOr({target, target, 0_reg}); }
     constexpr auto greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept             { return CompareGreaterThanSigned({dest, src, 0_reg}); }
     constexpr auto greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept     { return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg}); }
     constexpr auto lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept                 { return CompareLessThanSigned({dest, src, 0_reg}); }
@@ -72,12 +72,12 @@ namespace iris::instructions {
             if (value < 17) {
                 // do a register transfer since [0,16] is held within [r0,r16]
                 // in a hardwired context
-                return MemoryCopyRegister({dest, static_cast<RegisterIndex>(value)});
+                return LogicalBitwiseOr({dest, static_cast<RegisterIndex>(value), 0_reg});
             } else {
                 return MemoryAssignRegisterImmediate({dest, value});
             }
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return MemoryCopyRegister({dest, value});
+            return LogicalBitwiseOr({dest, value, 0_reg});
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }

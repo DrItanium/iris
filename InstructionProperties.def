@@ -80,10 +80,6 @@ PartOfClass(MemoryMoveToIP, MoveToIP)
 IP(MoveFromIP)
 PartOfClass(MemoryMoveFromIP, MoveFromIP)
 
-GroupMemory(CopyRegister)
-PartOfClass(MemoryCopyRegister, GPRManipulator)
-PartOfClass(MemoryCopyRegister, CopyRegister)
-
 GroupMemory(AssignRegisterImmediate)
 PartOfClass(MemoryAssignRegisterImmediate, GPRManipulator)
 PartOfClass(MemoryAssignRegisterImmediate, AssignRegisterImmediate)
