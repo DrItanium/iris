@@ -29,11 +29,6 @@
 namespace iris {
 
 void
-Core::invoke(const iris::ErrorInstruction&) {
-    throw ErrorInstructionException();
-}
-
-void
 Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
     auto [ dest, cond, link ] = s.arguments();
     if (getRegisterValue<bool>(cond)) {

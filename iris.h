@@ -118,7 +118,10 @@ class Core {
             _io.store(extractAddress<A>(address, offset), extractValue<V>(value));
         }
     private:
-        void invoke(const iris::ErrorInstruction&);
+        template<typename T, std::enable_if_t<IsErrorOperation<std::decay_t<T>>, int> = 0>
+        void invoke(const T& s) {
+            throw ErrorInstructionException();
+        }
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
