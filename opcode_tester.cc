@@ -171,34 +171,40 @@ bool testShiftRightOperation(iris::Core& c, T src1, T src2) noexcept {
     c.invoke(iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{}));
     return verifyResult<K>("right shift operation failed!", 17_reg, check, c);
 }
+enum class LogicalOperation {
+    And,
+    Or,
+    Xor,
+    Not,
+};
 
-bool testBitwiseNot(iris::Core& c, iris::UnsignedWord src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, 0);
-    auto check = ~src1;
-    c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
-    return verifyResult<iris::Word>("bitwise not operation failed!", 17_reg, check, c);
-}
-
-bool testBitwiseAnd(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
+template<LogicalOperation op>
+bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2 = 0) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 & src2;
-    c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise and operation failed!", 17_reg, check, c);
+    iris::Word check = 0u;
+    std::string msg;
+    if constexpr (op == LogicalOperation::Not) {
+        check = ~src1;
+        c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
+        msg = "bitwise not operation failed!";
+    } else if constexpr (op == LogicalOperation::And) {
+        check = src1 & src2;
+        c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
+        msg = "bitwise and operation failed!";
+    } else if constexpr (op == LogicalOperation::Or) {
+        check = src1 | src2;
+        c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
+        msg = "bitwise or operation failed!";
+    } else if constexpr (op == LogicalOperation::Xor) {
+        check = src1 ^ src2;
+        c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
+        msg = "bitwise xor operation failed!";
+    } else {
+        static_assert(iris::false_v<decltype(op)>, "Bad logical operation kind!");
+    }
+    return verifyResult<iris::Word>(msg, 17_reg, check, c);
 }
 
-bool testBitwiseOr(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 | src2;
-    c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise or operation failed!", 17_reg, check, c);
-}
-
-bool testBitwiseXor(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
-    auto check = src1 ^ src2;
-    c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
-    return verifyResult<iris::Word>("bitwise xor operation failed!", 17_reg, check, c);
-}
 
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
@@ -264,9 +270,34 @@ bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
     return verifyResult<iris::Word>("move to ip failed!", c.getIP(), src1);
 }
 
+template<LogicalOperation op>
+bool testLogicalOperationKind(iris::Core& c) noexcept {
+    if constexpr (op == LogicalOperation::Not) {
+        return testLogicalOperation<op>(c, 0) &&
+               testLogicalOperation<op>(c, 0xFFFF) &&
+               testLogicalOperation<op>(c, 1);
+    } else {
+        return testLogicalOperation<op>(c, 0xFDED, 0x000F) &&
+               testLogicalOperation<op>(c, 0xFDED, 0x00F0) &&
+               testLogicalOperation<op>(c, 0xFDED, 0x0F00) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xF000) &&
+               testLogicalOperation<op>(c, 0xFDED, 0x00FF) &&
+               testLogicalOperation<op>(c, 0xFDED, 0x0FF0) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xFF00) &&
+               testLogicalOperation<op>(c, 0xFDED, 0x0FFF) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xFFF0) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xFFFF) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xF00F) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xFF0F) &&
+               testLogicalOperation<op>(c, 0xFDED, 0xF0FF);
+    }
+}
 
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
+    //-----------------------------------------------------------------------------
+    // Arithmetic
+    //-----------------------------------------------------------------------------
 #define X(op) \
     if (! test ## op ## Operation <iris::Word> (c, 0xFDED, 2)) { return true; } \
     if (! test ## op ## Operation <iris::SignedWord> (c, -1, 2)) { return true; } 
@@ -278,34 +309,33 @@ bool instructionTests(iris::Core& c) {
     X(ShiftLeft)
     X(ShiftRight)
 #undef X
-    if (! testBitwiseNot(c, 0)) { return true; }
-    if (! testBitwiseNot(c, 0xFFFF)) { return true; }
-    if (! testBitwiseNot(c, 1)) { return true; }
-#define X(op) \
-    if (! testBitwise ## op (c, 0xFDED, 0x000F)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0x00F0)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0x0F00)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xF000)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0x00FF)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0x0FF0)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xFF00)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0x0FFF)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xFFF0)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xFFFF)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xF00F)) { return true; } \
-    if (! testBitwise ## op (c, 0xFDED, 0xFF0F)) { return true; }
-    X(And)
-    X(Or)
-    X(Xor)
-#undef X
+    //-----------------------------------------------------------------------------
+    // Logical 
+    //-----------------------------------------------------------------------------
+    if (! testLogicalOperationKind<LogicalOperation::Not>(c) ||
+        ! testLogicalOperationKind<LogicalOperation::And>(c) ||
+        ! testLogicalOperationKind<LogicalOperation::Or>(c) ||
+        ! testLogicalOperationKind<LogicalOperation::Xor>(c)) { return true; }
+    //-----------------------------------------------------------------------------
+    // Memory 
+    //-----------------------------------------------------------------------------
     if (!testCopyRegister(c, 32)) { return true; }
     if (!testAssignRegister(c, 128)) { return true; }
     if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
     if (!testPopOperation(c, 0xFDED)) { return true; }
-    if (!testBranchImmediateOperation(c, 0xFDED)) { return true; }
-    if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
     if (!testMoveFromIP(c, 0xFDED)) { return true; }
     if (!testMoveToIP(c, 0xFDED)) { return true; }
+    /// @todo test the data, io, and code operations
+    //-----------------------------------------------------------------------------
+    // Branch 
+    //-----------------------------------------------------------------------------
+    if (!testBranchImmediateOperation(c, 0xFDED)) { return true; }
+    if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
+    /// @todo test the rest of the core branch kinds
+    //-----------------------------------------------------------------------------
+    // Compare 
+    //-----------------------------------------------------------------------------
+    /// @todo implement compare checks
 
     return false;
 }

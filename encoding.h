@@ -49,7 +49,6 @@ namespace iris::instructions {
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class OrdinalOperation { };
     class IntegerOperation { };
-
 #define X(title, fmt) \
     constexpr auto title ( const title ## Instruction & i) noexcept { \
         return static_cast<Instruction>(i).getRawBits(); \
