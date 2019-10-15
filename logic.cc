@@ -50,11 +50,5 @@ Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
         branchTo(getRegisterValue<Word>(dest));
     }
 }
-void
-Core::invoke(const iris::BranchConditionalRelativeImmediateInstruction& s) {
-    if (auto [ cond, offset ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        branchTo<SignedWord>(offset);
-    }
-}
 
 } // end namespace iris

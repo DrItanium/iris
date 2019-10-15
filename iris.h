@@ -125,7 +125,6 @@ class Core {
         void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
         void invoke(const iris::BranchRegisterAndLinkInstruction&);
         void invoke(const iris::BranchConditionalRegisterInstruction&);
-        void invoke(const iris::BranchConditionalRelativeImmediateInstruction&);
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
