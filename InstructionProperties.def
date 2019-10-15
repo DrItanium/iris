@@ -20,58 +20,6 @@
 #define Data(op) Memory(Data ## op, IsDataOperation)
 #define IO(op) Memory(IO ## op, IsIOOperation)
 #define IP(op) Memory(op, ManipulatesIP)
-Stack(Push)
-Stack(PushImmediateValue)
-Stack(Pop)
-PartOfClass(MemoryStackPush, Push)
-PartOfClass(MemoryStackPushImmediateValue, Push)
-PartOfClass(MemoryStackPop, Pop)
-Code(LoadWithOffset)
-PartOfClass(MemoryCodeLoadWithOffset, Load)
-Code(StoreWithOffset)
-PartOfClass(MemoryCodeStoreWithOffset, Store)
-Data(LoadWithOffset)
-PartOfClass(MemoryDataLoadWithOffset, Load)
-Data(StoreWithOffset)
-PartOfClass(MemoryDataStoreWithOffset, Store)
-Data(StoreImmediateValue)
-PartOfClass(MemoryDataStoreImmediateValue, StoreImmediate)
-IO(LoadWithOffset)
-PartOfClass(MemoryIOLoadWithOffset, Load)
-IO(StoreWithOffset)
-PartOfClass(MemoryIOStoreWithOffset, Store)
-IO(StoreImmediateValue)
-PartOfClass(MemoryIOStoreImmediateValue, StoreImmediate)
-IP(MoveToIP)
-PartOfClass(MemoryMoveToIP, MoveToIP)
-IP(MoveFromIP)
-PartOfClass(MemoryMoveFromIP, MoveFromIP)
-GroupMemory(CopyRegister)
-PartOfClass(MemoryCopyRegister, GPRManipulator)
-PartOfClass(MemoryCopyRegister, CopyRegister)
-GroupMemory(SwapRegisters)
-PartOfClass(MemorySwapRegisters, GPRManipulator)
-PartOfClass(MemorySwapRegisters, SwapRegisters)
-GroupMemory(AssignRegisterImmediate)
-PartOfClass(MemoryAssignRegisterImmediate, GPRManipulator)
-PartOfClass(MemoryAssignRegisterImmediate, AssignRegisterImmediate)
-GroupBranch(ConditionalImmediate)
-GroupBranch(ConditionalRelativeImmediate)
-GroupBranch(RelativeImmediateAndLink)
-GroupBranch(ConditionalRegister)
-GroupBranch(RegisterAndLink)
-GroupBranch(ImmediateAndLink)
-GroupBranch(ConditionalRegisterAndLink)
-GroupBranch(Select)
-DeclareProperty(BranchRelativeImmediateAndLink, IsBranchImmediateInstruction)
-DeclareProperty(BranchImmediateAndLink, IsBranchImmediateInstruction)
-DeclareProperty(BranchRelativeImmediateAndLink, UsesRelativeOffset)
-DeclareProperty(BranchRelativeImmediateAndLink, UsesLinkRegister)
-DeclareProperty(BranchImmediateAndLink, UsesLinkRegister)
-DeclareProperty(ArithmeticRemainderSigned, DisallowsDivideByZero)
-DeclareProperty(ArithmeticRemainderUnsigned, DisallowsDivideByZero)
-DeclareProperty(ArithmeticDivideSigned, DisallowsDivideByZero)
-DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
 #define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
         PartOfClass(Arithmetic ## op ## Unsigned, Ordinal)
@@ -85,24 +33,9 @@ DeclareProperty(ArithmeticDivideUnsigned, DisallowsDivideByZero)
         ArithmeticSigned(op) \
         PartOfClass(Arithmetic ## op ## Signed, op) \
         PartOfClass(Arithmetic ## op ## Unsigned, op)
-        
-
-ArithmeticSignedUnsigned(Add)
-ArithmeticSignedUnsigned(Subtract)
-ArithmeticSignedUnsigned(Multiply)
-ArithmeticSignedUnsigned(Divide)
-ArithmeticSignedUnsigned(Remainder)
-ArithmeticSignedUnsigned(Max)
-ArithmeticSignedUnsigned(Min)
-ArithmeticSignedUnsigned(ShiftLeft)
-ArithmeticSignedUnsigned(ShiftRight)
 #define Logical(op) \
         GroupLogical(op) \
         PartOfClass(Logical ## op , op)
-Logical(BitwiseOr)
-Logical(BitwiseAnd)
-Logical(BitwiseNot)
-Logical(BitwiseXor)
 #define CompareUnsigned(op) \
         GroupCompare(op ## Unsigned) \
         PartOfClass(Compare ## op ## Unsigned, Ordinal)
@@ -115,21 +48,140 @@ Logical(BitwiseXor)
         CompareSigned(op) \
         PartOfClass(Compare ## op ## Signed, op) \
         PartOfClass(Compare ## op ## Unsigned, op)
+//-----------------------------------------------------------------------------
+// Memory
+//-----------------------------------------------------------------------------
+Stack(Push)
+PartOfClass(MemoryStackPush, Push)
+
+Stack(PushImmediateValue)
+PartOfClass(MemoryStackPushImmediateValue, Push)
+
+Stack(Pop)
+PartOfClass(MemoryStackPop, Pop)
+
+Code(LoadWithOffset)
+PartOfClass(MemoryCodeLoadWithOffset, Load)
+
+Code(StoreWithOffset)
+PartOfClass(MemoryCodeStoreWithOffset, Store)
+
+Data(LoadWithOffset)
+PartOfClass(MemoryDataLoadWithOffset, Load)
+
+Data(StoreWithOffset)
+PartOfClass(MemoryDataStoreWithOffset, Store)
+
+Data(StoreImmediateValue)
+PartOfClass(MemoryDataStoreImmediateValue, StoreImmediate)
+
+IO(LoadWithOffset)
+PartOfClass(MemoryIOLoadWithOffset, Load)
+
+IO(StoreWithOffset)
+PartOfClass(MemoryIOStoreWithOffset, Store)
+
+IO(StoreImmediateValue)
+PartOfClass(MemoryIOStoreImmediateValue, StoreImmediate)
+
+IP(MoveToIP)
+PartOfClass(MemoryMoveToIP, MoveToIP)
+
+IP(MoveFromIP)
+PartOfClass(MemoryMoveFromIP, MoveFromIP)
+
+GroupMemory(CopyRegister)
+PartOfClass(MemoryCopyRegister, GPRManipulator)
+PartOfClass(MemoryCopyRegister, CopyRegister)
+
+GroupMemory(SwapRegisters)
+PartOfClass(MemorySwapRegisters, GPRManipulator)
+PartOfClass(MemorySwapRegisters, SwapRegisters)
+
+GroupMemory(AssignRegisterImmediate)
+PartOfClass(MemoryAssignRegisterImmediate, GPRManipulator)
+PartOfClass(MemoryAssignRegisterImmediate, AssignRegisterImmediate)
+//-----------------------------------------------------------------------------
+// Branch 
+//-----------------------------------------------------------------------------
+GroupBranch(ConditionalImmediate)
+
+GroupBranch(ConditionalRelativeImmediate)
+
+GroupBranch(RelativeImmediateAndLink)
+DeclareProperty(BranchRelativeImmediateAndLink, IsBranchImmediateInstruction)
+DeclareProperty(BranchRelativeImmediateAndLink, UsesRelativeOffset)
+DeclareProperty(BranchRelativeImmediateAndLink, UsesLinkRegister)
+
+GroupBranch(ImmediateAndLink)
+DeclareProperty(BranchImmediateAndLink, IsBranchImmediateInstruction)
+DeclareProperty(BranchImmediateAndLink, UsesLinkRegister)
+
+GroupBranch(ConditionalRegister)
+
+GroupBranch(RegisterAndLink)
+
+GroupBranch(ConditionalRegisterAndLink)
+
+GroupBranch(Select)
+//-----------------------------------------------------------------------------
+// Arithmetic 
+//-----------------------------------------------------------------------------
+ArithmeticSignedUnsigned(Add)
+
+ArithmeticSignedUnsigned(Subtract)
+
+ArithmeticSignedUnsigned(Multiply)
+
+ArithmeticSignedUnsigned(Divide)
+DeclareProperty(ArithmeticDivideSigned, Src2CannotBeZero)
+DeclareProperty(ArithmeticDivideUnsigned, Src2CannotBeZero)
+
+ArithmeticSignedUnsigned(Remainder)
+DeclareProperty(ArithmeticRemainderSigned, Src2CannotBeZero)
+DeclareProperty(ArithmeticRemainderUnsigned, Src2CannotBeZero)
+
+ArithmeticSignedUnsigned(Max)
+
+ArithmeticSignedUnsigned(Min)
+
+ArithmeticSignedUnsigned(ShiftLeft)
+
+ArithmeticSignedUnsigned(ShiftRight)
+//-----------------------------------------------------------------------------
+// Logical 
+//-----------------------------------------------------------------------------
+Logical(BitwiseOr)
+
+Logical(BitwiseAnd)
+
+Logical(BitwiseNot)
+
+Logical(BitwiseXor)
+//-----------------------------------------------------------------------------
+// Compare
+//-----------------------------------------------------------------------------
 GroupCompare(Equals)
 PartOfClass(CompareEquals, Ordinal)
 PartOfClass(CompareEquals, Equals)
+
 GroupCompare(NotEquals)
 PartOfClass(CompareNotEquals, Ordinal)
 PartOfClass(CompareNotEquals, NotEquals)
+
 CompareSignedUnsigned(LessThan)
+
 CompareSignedUnsigned(GreaterThan)
+
 CompareSignedUnsigned(LessThanOrEqualTo)
+
 CompareSignedUnsigned(GreaterThanOrEqualTo)
+
+//-----------------------------------------------------------------------------
 #undef CompareSigned
 #undef CompareUnsigned
 #undef CompareSignedUnsigned
 #undef Logical
-
 #undef ArithmeticSigned
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
