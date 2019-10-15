@@ -174,25 +174,25 @@ namespace iris::instructions {
     };
 
 #define X(title, fmt) \
-    constexpr Bits title ( const title ## Instruction & i) noexcept { \
+    constexpr auto title ( const title ## Instruction & i) noexcept { \
         return static_cast<Instruction>(i).getRawBits(); \
     }
 #include "InstructionFormats.def"
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
     // single instruction aliases useful for ease of use
-    constexpr Bits zeroRegister(RegisterIndex targetRegister) noexcept                          { return MemoryCopyRegister({targetRegister, 0_reg}); }
-    constexpr Bits nop(RegisterIndex target = 0_reg) noexcept                                   { return MemoryCopyRegister({target, target}); }
-    constexpr Bits greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept             { return CompareGreaterThanSigned({dest, src, 0_reg}); }
-    constexpr Bits greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept     { return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg}); }
-    constexpr Bits lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept                 { return CompareLessThanSigned({dest, src, 0_reg}); }
-    constexpr Bits lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept       { return CompareLessThanOrEqualToSigned({dest, src, 0_reg}); }
-    constexpr Bits equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept                  { return CompareEquals({dest, src, 0_reg}); }
-    constexpr Bits notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
-    constexpr Bits swap(RegisterIndex a, RegisterIndex b) noexcept                              { return MemorySwapRegisters({a, b}); }
-    constexpr Bits select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
+    constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return MemoryCopyRegister({targetRegister, 0_reg}); }
+    constexpr auto nop(RegisterIndex target = 0_reg) noexcept                                   { return MemoryCopyRegister({target, target}); }
+    constexpr auto greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept             { return CompareGreaterThanSigned({dest, src, 0_reg}); }
+    constexpr auto greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept     { return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg}); }
+    constexpr auto lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept                 { return CompareLessThanSigned({dest, src, 0_reg}); }
+    constexpr auto lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept       { return CompareLessThanOrEqualToSigned({dest, src, 0_reg}); }
+    constexpr auto equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept                  { return CompareEquals({dest, src, 0_reg}); }
+    constexpr auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
+    constexpr auto swap(RegisterIndex a, RegisterIndex b) noexcept                              { return MemorySwapRegisters({a, b}); }
+    constexpr auto select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
     template<typename T>
-    constexpr Bits call(RegisterIndex link, T value) noexcept {
+    constexpr auto call(RegisterIndex link, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchImmediateAndLink({link, value});
@@ -205,7 +205,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    constexpr Bits branchConditional(RegisterIndex cond, T addr) noexcept {
+    constexpr auto branchConditional(RegisterIndex cond, T addr) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return BranchConditionalImmediate({cond, static_cast<Address>(addr)});
@@ -218,7 +218,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    constexpr Bits branch(T addr) noexcept {
+    constexpr auto branch(T addr) noexcept {
         // unconditional branches are branches where the conditional register is hardwired
         // to 1
         using K = std::decay_t<T>;
@@ -233,7 +233,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    constexpr Bits move(RegisterIndex dest, T value) noexcept {
+    constexpr auto move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             if (value < 17) {
@@ -250,7 +250,7 @@ namespace iris::instructions {
         }
     }
     template<typename T>
-    constexpr Bits push(RegisterIndex sp, T value) noexcept {
+    constexpr auto push(RegisterIndex sp, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
             return MemoryStackPushImmediateValue({sp, value});
@@ -260,33 +260,33 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    constexpr Bits pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
-    constexpr Bits storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
-    constexpr Bits storeData(RegisterIndex dest, Address value) noexcept { return MemoryDataStoreImmediateValue({dest, value}); }
-    constexpr Bits loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
-    constexpr Bits storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
-    constexpr Bits storeIO(RegisterIndex addr, Address value) noexcept { return MemoryIOStoreImmediateValue({addr, value}); }
-    constexpr Bits loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept { return MemoryIOLoadWithOffset({addr, dest, offset}); }
-    constexpr Bits loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeLoadWithOffset({addr, lower, offset}); }
-    constexpr Bits storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
-    constexpr Bits getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
-    constexpr Bits setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
+    constexpr auto pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
+    constexpr auto storeData(RegisterIndex dest, Address value) noexcept { return MemoryDataStoreImmediateValue({dest, value}); }
+    constexpr auto loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
+    constexpr auto storeIO(RegisterIndex addr, Address value) noexcept { return MemoryIOStoreImmediateValue({addr, value}); }
+    constexpr auto loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept { return MemoryIOLoadWithOffset({addr, dest, offset}); }
+    constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeLoadWithOffset({addr, lower, offset}); }
+    constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
+    constexpr auto getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
+    constexpr auto setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 
     // arithmetic operations
-    constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
-    constexpr Bits twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftLeftSigned({dest, src, 1_reg}); }
-    constexpr Bits twoTimes(RegisterIndex val, OrdinalOperation op) noexcept { return twoTimes(val, val, op); }
-    constexpr Bits twoTimes(RegisterIndex val, IntegerOperation op) noexcept { return twoTimes(val, val, op); }
-    constexpr Bits twoDivide(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftRightUnsigned({dest, src, 1_reg}); }
-    constexpr Bits twoDivide(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftRightSigned({dest, src, 1_reg}); }
-    constexpr Bits twoDivide(RegisterIndex val, OrdinalOperation op) noexcept { return twoDivide(val, val, op); }
-    constexpr Bits twoDivide(RegisterIndex val, IntegerOperation op) noexcept { return twoDivide(val, val, op); }
-    constexpr Bits invert(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
-    constexpr Bits invert(RegisterIndex dest)  noexcept { return invert(dest, dest); }
-    constexpr Bits square(RegisterIndex dest, RegisterIndex src)  noexcept { return ArithmeticMultiplySigned({dest, src, src}); }
-    constexpr Bits square(RegisterIndex dest) noexcept { return square(dest, dest); }
-    constexpr Bits increment(RegisterIndex target)  noexcept { return ArithmeticAddUnsigned({target, target, 1_reg}); }
-    constexpr Bits decrement(RegisterIndex target)  noexcept { return ArithmeticSubtractUnsigned({target, target, 1_reg}); }
+    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
+    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftLeftSigned({dest, src, 1_reg}); }
+    constexpr auto twoTimes(RegisterIndex val, OrdinalOperation op) noexcept { return twoTimes(val, val, op); }
+    constexpr auto twoTimes(RegisterIndex val, IntegerOperation op) noexcept { return twoTimes(val, val, op); }
+    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftRightUnsigned({dest, src, 1_reg}); }
+    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftRightSigned({dest, src, 1_reg}); }
+    constexpr auto twoDivide(RegisterIndex val, OrdinalOperation op) noexcept { return twoDivide(val, val, op); }
+    constexpr auto twoDivide(RegisterIndex val, IntegerOperation op) noexcept { return twoDivide(val, val, op); }
+    constexpr auto invert(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr auto invert(RegisterIndex dest)  noexcept { return invert(dest, dest); }
+    constexpr auto square(RegisterIndex dest, RegisterIndex src)  noexcept { return ArithmeticMultiplySigned({dest, src, src}); }
+    constexpr auto square(RegisterIndex dest) noexcept { return square(dest, dest); }
+    constexpr auto increment(RegisterIndex target)  noexcept { return ArithmeticAddUnsigned({target, target, 1_reg}); }
+    constexpr auto decrement(RegisterIndex target)  noexcept { return ArithmeticSubtractUnsigned({target, target, 1_reg}); }
 #define X(kind) \
     constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, RegisterIndex src2, OrdinalOperation) noexcept { \
         return Arithmetic ## kind ## Unsigned({dest, src1, src2}); \
@@ -310,13 +310,13 @@ namespace iris::instructions {
     X(Max);
     X(Min);
 #undef X
-    constexpr ComplexBinaryInstruction branchIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
     constexpr auto branchIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
@@ -328,40 +328,40 @@ namespace iris::instructions {
     constexpr auto branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfGreaterThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(greaterThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfLessThanZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(lessThanZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfGreaterThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(greaterThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+    constexpr auto branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+    constexpr auto branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
-    constexpr ComplexBinaryInstruction branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+    constexpr auto branchIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), branchConditional(cond, dest));
     }
     constexpr auto selectIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
@@ -382,13 +382,13 @@ namespace iris::instructions {
     constexpr auto selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), select(cond, then, _else));
     }
-    constexpr Bits bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr auto bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
     constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
-    constexpr Bits bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }
+    constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }
     constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
-    constexpr Bits bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseOr({dest, src0, src1}); }
+    constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseOr({dest, src0, src1}); }
     constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
-    constexpr Bits bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseXor({dest, src0, src1}); }
+    constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseXor({dest, src0, src1}); }
     constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
     constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseOr(dest, src0, src1), bitwiseNot(dest)); }
     constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
@@ -405,8 +405,13 @@ namespace iris::instructions {
     constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, IntegerOperation op) noexcept {
         return std::make_tuple(opDivide(quotient, numerator, denominator, op), opRemainder(remainder, numerator, denominator, op));
     }
-    MultiInstructionExpression indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
-    MultiInstructionExpression indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
+    constexpr auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept {
+        return std::make_tuple(loadData(dest, addr, offset), loadData(dest, dest));
+    }
+    constexpr auto indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept {
+        return std::make_tuple(loadData(temporary, dest, offset),
+                               storeData(temporary, addr));
+    }
     template<typename ... Args>
     MultiInstructionExpression unconditionalLoop(Args&& ... body) {
         MultiInstructionExpression me;
@@ -423,6 +428,6 @@ namespace iris::instructions {
         me.conditionalBackwardJump(cond);
         return me;
     }
-    constexpr Bits ret(RegisterIndex link) noexcept                                              { return branch(link); }
+    constexpr auto ret(RegisterIndex link) noexcept                                              { return branch(link); }
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

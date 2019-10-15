@@ -29,18 +29,6 @@
 #include <functional>
 
 namespace iris::instructions {
-using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
-
-MultiInstructionExpression
-indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset) noexcept {
-    return std::make_tuple(loadData(dest, addr, offset), 
-            loadData(dest, dest));
-}
-MultiInstructionExpression
-indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset) noexcept {
-    return std::make_tuple(loadData(temporary, dest, offset),
-            storeData(temporary, addr));
-}
 
 void
 MultiInstructionExpression::addInstruction(Bits b) {
