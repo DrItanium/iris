@@ -240,17 +240,28 @@ bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
 bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     c.setIP(0);
     c.invoke(iris::instructions::branch(src1));
-    return verifyResult<iris::Word>("branch immediate operation failed",
-            c.getIP(),
-            src1);
+    return verifyResult<iris::Word>("branch immediate operation failed", c.getIP(), src1);
 }
 
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
     c.invoke(iris::instructions::branch(src1));
-    return verifyResult<iris::Word>("branch immediate operation failed",
-            c.getIP(),
-            0x20 + src1);
+    auto check = 0x20 + src1;
+    return verifyResult<iris::Word>("branch relative immediate operation failed", c.getIP(), check);
+}
+
+bool testMoveFromIP(iris::Core& c, iris::Address src1) noexcept {
+    setRegisters<decltype(src1)>(c, 0, 0, 0);
+    c.setIP(src1);
+    c.invoke(iris::instructions::MemoryMoveFromIP({17_reg}));
+    return verifyResult<iris::Word>("move from ip failed!", 17_reg, src1, c);
+}
+
+bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
+    setRegisters<decltype(src1)>(c, src1, 0, 0);
+    c.setIP(0);
+    c.invoke(iris::instructions::MemoryMoveToIP({17_reg}));
+    return verifyResult<iris::Word>("move to ip failed!", c.getIP(), src1);
 }
 
 
@@ -293,6 +304,8 @@ bool instructionTests(iris::Core& c) {
     if (!testPopOperation(c, 0xFDED)) { return true; }
     if (!testBranchImmediateOperation(c, 0xFDED)) { return true; }
     if (!testBranchRelativeImmediateOperation(c, -1)) { return true; }
+    if (!testMoveFromIP(c, 0xFDED)) { return true; }
+    if (!testMoveToIP(c, 0xFDED)) { return true; }
 
     return false;
 }
