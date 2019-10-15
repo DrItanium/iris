@@ -413,6 +413,9 @@ template<typename T> constexpr auto IsMoveToIPOperation = false;
 template<typename T> constexpr auto IsCopyRegisterOperation = false;
 template<typename T> constexpr auto IsSwapRegistersOperation = false;
 template<typename T> constexpr auto IsAssignRegisterImmediateOperation = false;
+template<typename T> constexpr auto IsLoadOperation = false;
+template<typename T> constexpr auto IsStoreOperation = false;
+template<typename T> constexpr auto IsStoreImmediateOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

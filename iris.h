@@ -235,37 +235,37 @@ class Core {
                     static_assert(false_v<K>, "Unimplemented stack operation!");
                 }
             } else if constexpr (IsDataOperation<K>) {
-                if constexpr (std::is_same_v<K, MemoryDataLoadWithOffsetInstruction>) {
+                if constexpr (IsLoadOperation<K>) {
                     auto [ dest, loc, offset ] = input.arguments();
                     setRegisterValue(dest, loadData(loc, offset));
-                } else if constexpr (std::is_same_v<K, MemoryDataStoreWithOffsetInstruction>) {
+                } else if constexpr (IsStoreOperation<K>) {
                     auto [ dest, value, offset ] = input.arguments();
                     storeData(dest, value, offset);
-                } else if constexpr (std::is_same_v<K, MemoryDataStoreImmediateValueInstruction>) {
+                } else if constexpr (IsStoreImmediateOperation<K>) {
                     auto [ addr, imm16 ] = input.arguments();
                     storeData(addr, imm16);
                 } else {
                     static_assert(false_v<K>, "Unimplemented stack operation!");
                 }
             } else if constexpr (IsIOOperation<K>) {
-                if constexpr (std::is_same_v<K, MemoryIOLoadWithOffsetInstruction>) {
+                if constexpr (IsLoadOperation<K>) {
                     auto [ dest, loc, offset ] = input.arguments();
                     setRegisterValue(dest, loadIO(loc, offset));
-                } else if constexpr (std::is_same_v<K, MemoryIOStoreWithOffsetInstruction>) {
+                } else if constexpr (IsStoreOperation<K>) {
                     auto [ dest, value, offset ] = input.arguments();
                     storeIO(dest, value, offset);
-                } else if constexpr (std::is_same_v<K, MemoryIOStoreImmediateValueInstruction>) {
+                } else if constexpr (IsStoreImmediateOperation<K>) {
                     auto [ addr, imm16 ] = input.arguments();
                     storeIO(addr, imm16);
                 } else {
                     static_assert(false_v<K>, "Unimplemented stack operation!");
                 }
             } else if constexpr (IsCodeOperation<K>) {
-                if constexpr (std::is_same_v<K, MemoryCodeLoadWithOffsetInstruction>) {
+                if constexpr (IsLoadOperation<K>) {
                     // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
                     auto [addr, lower, offset] = input.arguments();
                     setDoubleRegisterValue(lower, loadCode(addr, offset));
-                } else if constexpr (std::is_same_v<K, MemoryCodeStoreWithOffsetInstruction>) {
+                } else if constexpr (IsStoreOperation<K>) {
                     // CodeStore AddressRegister <= LowerRegister (upper register implied)
                     auto [addr, lower, offset ] = input.arguments();
                     storeCode(addr, lower, offset);
