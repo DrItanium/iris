@@ -408,6 +408,11 @@ template<typename T> constexpr auto IsNotEqualsOperation = false;
 template<typename T> constexpr auto IsGPRManipulatorOperation = false;
 template<typename T> constexpr auto IsPopOperation = false;
 template<typename T> constexpr auto IsPushOperation = false;
+template<typename T> constexpr auto IsMoveFromIPOperation = false;
+template<typename T> constexpr auto IsMoveToIPOperation = false;
+template<typename T> constexpr auto IsCopyRegisterOperation = false;
+template<typename T> constexpr auto IsSwapRegistersOperation = false;
+template<typename T> constexpr auto IsAssignRegisterImmediateOperation = false;
 
 struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     static constexpr auto Opcode = Opcodes::Error; 

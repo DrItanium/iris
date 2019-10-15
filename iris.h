@@ -195,25 +195,25 @@ class Core {
             using K = std::decay_t<T>;
             if constexpr (ManipulatesIP<K>) {
                 auto [ reg ] = input.arguments();
-                if constexpr (std::is_same_v<K, iris::MemoryMoveToIPInstruction>) {
+                if constexpr (IsMoveToIPOperation<K>) {
                     _ip.put(getRegisterValue(reg));
-                } else if constexpr (std::is_same_v<K, iris::MemoryMoveFromIPInstruction>) {
+                } else if constexpr (IsMoveFromIPOperation<K>) {
                     setRegisterValue(reg, _ip.get());
                 } else {
                     static_assert(false_v<K>, "Unimplemented ip manipulation operation!");
                 }
             } else if constexpr (IsGPRManipulatorOperation<K>) {
-                if constexpr (std::is_same_v<K, iris::MemoryCopyRegisterInstruction>) {
+                if constexpr (IsCopyRegisterOperation<K>) {
                     if (auto [dest, src] = input.arguments(); dest != src) {
                         setRegisterValue(dest, getRegisterValue(src));
                     }
-                } else if constexpr (std::is_same_v<K, iris::MemorySwapRegistersInstruction>) {
+                } else if constexpr (IsSwapRegistersOperation<K>) {
                     if (auto [ar, br] = input.arguments(); ar != br) {
                         auto aValue = getRegisterValue<Word>(ar);
                         setRegisterValue(ar, getRegisterValue(br));
                         setRegisterValue(br, aValue);
                     } 
-                } else if constexpr (std::is_same_v<K, iris::MemoryAssignRegisterImmediateInstruction>) {
+                } else if constexpr (IsAssignRegisterImmediateOperation<K>) {
                     auto [dest, imm16] = input.arguments();
                     setRegisterValue(dest, imm16);
                 } else {
