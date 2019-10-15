@@ -131,23 +131,14 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
-    template<typename T>
-    constexpr auto push(RegisterIndex sp, T value) noexcept {
-        using K = std::decay_t<T>;
-        if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return MemoryStackPushImmediateValue({sp, value});
-        } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return MemoryStackPush({sp, value});
-        } else {
-            static_assert(false_v<T>, "Bad kind to branch with!");
-        }
-    }
+    constexpr auto push(RegisterIndex sp, RegisterIndex value) noexcept { return MemoryStackPush({sp, value}); }
+    constexpr auto push(RegisterIndex sp, RegisterIndex temporary, Address value) noexcept { return std::make_tuple(move(temporary, value), push(sp, temporary)); }
     constexpr auto pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
     constexpr auto storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
-    constexpr auto storeData(RegisterIndex dest, Address value) noexcept { return MemoryDataStoreImmediateValue({dest, value}); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, UnsignedByte offset = 0) noexcept { return std::make_tuple(move(storage, value), storeData(dest, storage, offset)); }
     constexpr auto loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
     constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
-    constexpr auto storeIO(RegisterIndex addr, Address value) noexcept { return MemoryIOStoreImmediateValue({addr, value}); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage, Address value, UnsignedByte offset = 0) noexcept { return std::make_tuple(move(storage, value), storeIO(addr, storage, offset)); }
     constexpr auto loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept { return MemoryIOLoadWithOffset({addr, dest, offset}); }
     constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeLoadWithOffset({addr, lower, offset}); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
@@ -274,7 +265,6 @@ namespace iris::instructions {
     constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
     constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseAnd(dest, src0, src1), bitwiseNot(dest)); }
     constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
-    constexpr auto halt(RegisterIndex temp, Address code = 0) noexcept { return std::make_tuple(zeroRegister(temp), storeIO(temp, code)); }
     constexpr auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temp) noexcept { return std::make_tuple(square(temp, src), opMultiply(dest, src, temp, OrdinalOperation())); }
     /**
      * Compute quotient and remainder together

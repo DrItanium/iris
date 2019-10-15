@@ -53,9 +53,6 @@ PartOfClass(Error, Error)
 Stack(Push)
 PartOfClass(MemoryStackPush, Push)
 
-Stack(PushImmediateValue)
-PartOfClass(MemoryStackPushImmediateValue, Push)
-
 Stack(Pop)
 PartOfClass(MemoryStackPop, Pop)
 
@@ -71,17 +68,11 @@ PartOfClass(MemoryDataLoadWithOffset, Load)
 Data(StoreWithOffset)
 PartOfClass(MemoryDataStoreWithOffset, Store)
 
-Data(StoreImmediateValue)
-PartOfClass(MemoryDataStoreImmediateValue, StoreImmediate)
-
 IO(LoadWithOffset)
 PartOfClass(MemoryIOLoadWithOffset, Load)
 
 IO(StoreWithOffset)
 PartOfClass(MemoryIOStoreWithOffset, Store)
-
-IO(StoreImmediateValue)
-PartOfClass(MemoryIOStoreImmediateValue, StoreImmediate)
 
 IP(MoveToIP)
 PartOfClass(MemoryMoveToIP, MoveToIP)
