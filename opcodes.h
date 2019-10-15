@@ -364,6 +364,12 @@ constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
 template<typename T>
 constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
 
+template<typename T>
+constexpr auto MustBeIntegerOrOrdinalOperation = (IsOrdinalOperation<std::decay_t<T>> || IsIntegerOperation<std::decay_t<T>>);
+
+template<typename T, std::enable_if_t<MustBeIntegerOrOrdinalOperation<T>, int> = 0>
+using DeterminedNumericType = std::conditional_t<IsOrdinalOperation<std::decay_t<T>>, UnsignedWord, SignedWord>;
+
 template<typename T> constexpr auto IsStackOperation = false;
 template<typename T> constexpr auto IsCodeOperation = false;
 template<typename T> constexpr auto IsDataOperation = false;

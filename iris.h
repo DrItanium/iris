@@ -164,8 +164,8 @@ class Core {
         template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
-            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
-            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
+            static_assert(MustBeIntegerOrOrdinalOperation<K>);
+            using D = DeterminedNumericType<K>;
             auto [ dest, rsrc1, rsrc2 ] = s.arguments();
             D src2 = static_cast<D>(0);
             bool result = false;
@@ -195,8 +195,7 @@ class Core {
         void invoke(const T& input) noexcept {
             using K = std::decay_t<T>;
             if constexpr (ManipulatesIP<K>) {
-                auto [ reg ] = input.arguments();
-                if constexpr (IsMoveToIPOperation<K>) {
+                if constexpr (auto [ reg ] = input.arguments(); IsMoveToIPOperation<K>) {
                     _ip.put(getRegisterValue(reg));
                 } else if constexpr (IsMoveFromIPOperation<K>) {
                     setRegisterValue(reg, _ip.get());
@@ -281,8 +280,8 @@ class Core {
         template<typename T, std::enable_if_t<IsArithmeticOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
             using K = std::decay_t<T>;
-            static_assert(IsOrdinalOperation<K> || IsIntegerOperation<K>);
-            using D = std::conditional_t<IsOrdinalOperation<K>, Word, SignedWord>;
+            static_assert(MustBeIntegerOrOrdinalOperation<K>);
+            using D = DeterminedNumericType<K>;
             auto [ dest, rsrc1, rsrc2 ] = s.arguments();
             D src2 = static_cast<D>(0);
             D result = static_cast<D>(0);
