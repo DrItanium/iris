@@ -49,129 +49,6 @@ namespace iris::instructions {
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class OrdinalOperation { };
     class IntegerOperation { };
-    class MultiInstructionExpression {
-        public:
-            using Body = std::function<void(MultiInstructionExpression&)>;
-        public:
-            MultiInstructionExpression() = default;
-            ~MultiInstructionExpression() = default;
-            MultiInstructionExpression(Bits);
-            MultiInstructionExpression(DelayedBits);
-            MultiInstructionExpression(ExternalDelayedBits);
-            MultiInstructionExpression(ComplexBinaryInstruction);
-            void addInstruction(Bits);
-            void addInstruction(DelayedBits);
-            void addInstruction(ExternalDelayedBits);
-            void addInstruction(ComplexBinaryInstruction);
-            void addInstruction(MultiInstructionExpression&&);
-            void addInstruction(Body b);
-            template<typename ... Args>
-            void addInstructions(Args&& ... instructions) {
-                (addInstruction(std::forward<Args>(instructions)), ...);
-            }
-            auto size() const noexcept { return _instructions.size(); }
-            bool tooLarge() const noexcept { return size() > 0xFFFF; }
-            auto begin() { return _instructions.begin(); }
-            auto end() { return _instructions.end(); }
-            auto begin() const { return _instructions.cbegin(); }
-            auto end() const { return _instructions.cend(); }
-
-            /**
-             * Pop the most recent value off of the data stack
-             */
-            size_t dataPop(); 
-
-            /**
-             * Push a value onto the data stack
-             * @param value A size_t to be pushed onto the internal data stack
-             */
-            void dataPush(size_t value);
-            /**
-             * Push the current position onto the data stack
-             */
-            inline void mark() { dataPush(size()); }
-            /**
-             * Add the given delayed instruction to the expression and mark its
-             * position. Use resolve to cause the
-             * deferred function to be replaced with a final product. Failure to call
-             * resolve for each defer may lead to shenanigans and incorrect behavior.
-             * @param fn The function to install and 
-             */
-            void defer(DelayedBits fn);
-            /**
-             * Add the given delayed instruction to the expression and mark its
-             * position. Use resolve to cause the
-             * deferred function to be replaced with a final product. Failure to call
-             * resolve for each defer may lead to shenanigans and incorrect behavior.
-             * @param fn The function to install and 
-             */
-            void defer(ExternalDelayedBits fn);
-            /**
-             * Invoke the most recently deferred instruction and put the resultant 
-             * value in the place of the generator function. The position on the
-             * dataStack is also popped.
-             */
-            void resolve();
-            /**
-             * Register a desire to unconditionally jump forward relative to the 
-             * current position via defer; At some point forwardJumpTarget must 
-             * be called to complete the generation of the jump. 
-             */
-            void forwardJump();
-            /**
-             * Register a desire to conditionally jump forward relative to the
-             * current position via defer; At some point forwardJumpTarget must
-             * be called to complete the generation of the jump.
-             * @param cond The register that is used for the conditional evaluation
-             */
-            void conditionalForwardJump(RegisterIndex cond);
-            /**
-             * Mark the implied next instruction inserted as the target of the most recent
-             * forward jump request; Thus it must be done before the next instruction
-             * inserted.
-             */
-            void forwardJumpTarget();
-            /**
-             * Mark the position where a backward jump will jump to; Most likely this will
-             * be used for a loop of some kind where you jump back to the top.
-             */
-            void backwardJumpTarget();
-            /**
-             * Generate an unconditional jump instruction back to the most recent backwardJumpTarget.
-             */
-            void backwardJump();
-            /**
-             * Generate an conditional jump instruction back to the most recent backwardJumpTarget.
-             * @param cond The register to use for the index
-             */
-            void conditionalBackwardJump(RegisterIndex cond);
-
-            /**
-             * Swap the top two elements of the data stack.
-             * @throw Exception Too few elements to perform the swap with
-             */
-            void dataStackSwap();
-
-            /**
-             * Start an if condition statement
-             */
-            void ifComponent(RegisterIndex idx);
-            /**
-             * Complete the if statement jump after embedding an unconditional
-             * jump request first
-             */
-            void elseComponent();
-            /**
-             * Stop a conditional statement
-             */
-            void thenComponent();
-
-            void ifStatement(RegisterIndex cond, Body onTrue);
-            void ifStatement(RegisterIndex cond, Body onTrue, Body onFalse);
-        private:
-            List _instructions;
-            std::list<size_t> _dataStack;
-    };
 
 #define X(title, fmt) \
     constexpr auto title ( const title ## Instruction & i) noexcept { \
@@ -412,22 +289,160 @@ namespace iris::instructions {
         return std::make_tuple(loadData(temporary, dest, offset),
                                storeData(temporary, addr));
     }
-    template<typename ... Args>
-    MultiInstructionExpression unconditionalLoop(Args&& ... body) {
-        MultiInstructionExpression me;
-        me.backwardJumpTarget();
-        me.addInstructions(std::forward<Args>(body)...);
-        me.backwardJump();
-        return me;
-    }
-    template<typename ... Args>
-    MultiInstructionExpression conditionalLoop(RegisterIndex cond, Args&& ... body) {
-        MultiInstructionExpression me;
-        me.backwardJumpTarget();
-        me.addInstructions(std::forward<Args>(body)...);
-        me.conditionalBackwardJump(cond);
-        return me;
-    }
     constexpr auto ret(RegisterIndex link) noexcept                                              { return branch(link); }
+    constexpr auto swapStackTop(RegisterIndex sp, RegisterIndex t0, RegisterIndex t1) noexcept {
+        return std::make_tuple(pop(sp, t0),
+                               pop(sp, t1),
+                               push(sp, t0),
+                               push(sp, t1));
+    }
+    constexpr auto dropStackTop(RegisterIndex sp) noexcept {
+        // hardwired zero will ignore the attempt to write
+        return pop(sp, 0_reg);
+    }
+    constexpr auto rotateStack(RegisterIndex sp, RegisterIndex a, RegisterIndex b, RegisterIndex c) noexcept {
+        // ( a b c -- c a b )
+        return std::make_tuple(pop(sp, c),
+                               pop(sp, b),
+                               pop(sp, a),
+                               push(sp, c),
+                               push(sp, a),
+                               push(sp, b));
+    }
+    class MultiInstructionExpression {
+        public:
+            using Body = std::function<void(MultiInstructionExpression&)>;
+        public:
+            MultiInstructionExpression() = default;
+            ~MultiInstructionExpression() = default;
+            MultiInstructionExpression(Bits);
+            MultiInstructionExpression(DelayedBits);
+            MultiInstructionExpression(ExternalDelayedBits);
+            MultiInstructionExpression(ComplexBinaryInstruction);
+            void addInstruction(Bits);
+            void addInstruction(DelayedBits);
+            void addInstruction(ExternalDelayedBits);
+            void addInstruction(ComplexBinaryInstruction);
+            void addInstruction(MultiInstructionExpression&&);
+            void addInstruction(Body b);
+            template<typename ... Args>
+            void addInstructions(Args&& ... instructions) {
+                (addInstruction(std::forward<Args>(instructions)), ...);
+            }
+            auto size() const noexcept { return _instructions.size(); }
+            bool tooLarge() const noexcept { return size() > 0xFFFF; }
+            auto begin() { return _instructions.begin(); }
+            auto end() { return _instructions.end(); }
+            auto begin() const { return _instructions.cbegin(); }
+            auto end() const { return _instructions.cend(); }
+
+            /**
+             * Pop the most recent value off of the data stack
+             */
+            size_t dataPop(); 
+
+            /**
+             * Push a value onto the data stack
+             * @param value A size_t to be pushed onto the internal data stack
+             */
+            void dataPush(size_t value);
+            /**
+             * Push the current position onto the data stack
+             */
+            inline void mark() { dataPush(size()); }
+            /**
+             * Add the given delayed instruction to the expression and mark its
+             * position. Use resolve to cause the
+             * deferred function to be replaced with a final product. Failure to call
+             * resolve for each defer may lead to shenanigans and incorrect behavior.
+             * @param fn The function to install and 
+             */
+            void defer(DelayedBits fn);
+            /**
+             * Add the given delayed instruction to the expression and mark its
+             * position. Use resolve to cause the
+             * deferred function to be replaced with a final product. Failure to call
+             * resolve for each defer may lead to shenanigans and incorrect behavior.
+             * @param fn The function to install and 
+             */
+            void defer(ExternalDelayedBits fn);
+            /**
+             * Invoke the most recently deferred instruction and put the resultant 
+             * value in the place of the generator function. The position on the
+             * dataStack is also popped.
+             */
+            void resolve();
+            /**
+             * Register a desire to unconditionally jump forward relative to the 
+             * current position via defer; At some point forwardJumpTarget must 
+             * be called to complete the generation of the jump. 
+             */
+            void forwardJump();
+            /**
+             * Register a desire to conditionally jump forward relative to the
+             * current position via defer; At some point forwardJumpTarget must
+             * be called to complete the generation of the jump.
+             * @param cond The register that is used for the conditional evaluation
+             */
+            void conditionalForwardJump(RegisterIndex cond);
+            /**
+             * Mark the implied next instruction inserted as the target of the most recent
+             * forward jump request; Thus it must be done before the next instruction
+             * inserted.
+             */
+            void forwardJumpTarget();
+            /**
+             * Mark the position where a backward jump will jump to; Most likely this will
+             * be used for a loop of some kind where you jump back to the top.
+             */
+            void backwardJumpTarget();
+            /**
+             * Generate an unconditional jump instruction back to the most recent backwardJumpTarget.
+             */
+            void backwardJump();
+            /**
+             * Generate an conditional jump instruction back to the most recent backwardJumpTarget.
+             * @param cond The register to use for the index
+             */
+            void conditionalBackwardJump(RegisterIndex cond);
+
+            /**
+             * Swap the top two elements of the data stack.
+             * @throw Exception Too few elements to perform the swap with
+             */
+            void dataStackSwap();
+
+            /**
+             * Start an if condition statement
+             */
+            void ifComponent(RegisterIndex idx);
+            /**
+             * Complete the if statement jump after embedding an unconditional
+             * jump request first
+             */
+            void elseComponent();
+            /**
+             * Stop a conditional statement
+             */
+            void thenComponent();
+
+            void ifStatement(RegisterIndex cond, Body onTrue);
+            void ifStatement(RegisterIndex cond, Body onTrue, Body onFalse);
+            template<typename ... Args>
+            void unconditionalLoop(Args&& ... body) {
+                backwardJumpTarget();
+                addInstructions(std::forward<Args>(body)...);
+                backwardJump();
+            }
+            template<typename ... Args>
+            void conditionalLoop(RegisterIndex cond, Args&& ... body) {
+                backwardJumpTarget();
+                addInstructions(std::forward<Args>(body)...);
+                conditionalBackwardJump(cond);
+            }
+        private:
+            List _instructions;
+            std::list<size_t> _dataStack;
+    };
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
