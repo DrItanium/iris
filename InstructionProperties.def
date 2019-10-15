@@ -93,10 +93,6 @@ GroupMemory(CopyRegister)
 PartOfClass(MemoryCopyRegister, GPRManipulator)
 PartOfClass(MemoryCopyRegister, CopyRegister)
 
-GroupMemory(SwapRegisters)
-PartOfClass(MemorySwapRegisters, GPRManipulator)
-PartOfClass(MemorySwapRegisters, SwapRegisters)
-
 GroupMemory(AssignRegisterImmediate)
 PartOfClass(MemoryAssignRegisterImmediate, GPRManipulator)
 PartOfClass(MemoryAssignRegisterImmediate, AssignRegisterImmediate)

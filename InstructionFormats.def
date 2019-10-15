@@ -45,7 +45,6 @@
 // Memory
 //-----------------------------------------------------------------------------
     Memory(CopyRegister, TwoRegister)
-    Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
     Stack(Push, TwoRegister)
     Stack(Pop, TwoRegister)

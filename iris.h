@@ -222,12 +222,6 @@ class Core {
                     if (auto [dest, src] = input.arguments(); dest != src) {
                         setRegisterValue(dest, getRegisterValue(src));
                     }
-                } else if constexpr (IsSwapRegistersOperation<K>) {
-                    if (auto [ar, br] = input.arguments(); ar != br) {
-                        auto aValue = getRegisterValue<Word>(ar);
-                        setRegisterValue(ar, getRegisterValue(br));
-                        setRegisterValue(br, aValue);
-                    } 
                 } else if constexpr (IsAssignRegisterImmediateOperation<K>) {
                     auto [dest, imm16] = input.arguments();
                     setRegisterValue(dest, imm16);
