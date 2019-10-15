@@ -31,8 +31,6 @@
     ArithmeticSignedUnsigned(Remainder, ThreeRegister)
     ArithmeticSignedUnsigned(ShiftLeft, ThreeRegister)
     ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
-    ArithmeticSignedUnsigned(Max, ThreeRegister)
-    ArithmeticSignedUnsigned(Min, ThreeRegister)
     Logical(BitwiseNot, TwoRegister)
     Logical(BitwiseAnd, ThreeRegister)
     Logical(BitwiseOr, ThreeRegister)

@@ -172,30 +172,6 @@ bool testShiftRightOperation(iris::Core& c, T src1, T src2) noexcept {
     return verifyResult<K>("right shift operation failed!", 17_reg, check, c);
 }
 
-template<typename T>
-bool testMaxOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = std::max(src1, src2);
-    c.invoke(iris::instructions::opMax(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("max shift operation failed!", 17_reg, check, c);
-}
-
-template<typename T>
-bool testMinOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = std::min(src1, src2);
-    c.invoke(iris::instructions::opMin(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("min shift operation failed!", 17_reg, check, c);
-}
-
-
-
 bool testBitwiseNot(iris::Core& c, iris::UnsignedWord src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = ~src1;
@@ -307,8 +283,6 @@ bool instructionTests(iris::Core& c) {
     X(Remainder)
     X(ShiftLeft)
     X(ShiftRight)
-    X(Min)
-    X(Max)
 #undef X
     if (! testBitwiseNot(c, 0)) { return true; }
     if (! testBitwiseNot(c, 0xFFFF)) { return true; }

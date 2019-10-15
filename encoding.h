@@ -185,8 +185,6 @@ namespace iris::instructions {
     X(Remainder);
     X(ShiftLeft);
     X(ShiftRight);
-    X(Max);
-    X(Min);
 #undef X
     constexpr auto branchIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));

@@ -152,10 +152,6 @@ ArithmeticSignedUnsigned(Remainder)
 DeclareProperty(ArithmeticRemainderSigned, Src2CannotBeZero)
 DeclareProperty(ArithmeticRemainderUnsigned, Src2CannotBeZero)
 
-ArithmeticSignedUnsigned(Max)
-
-ArithmeticSignedUnsigned(Min)
-
 ArithmeticSignedUnsigned(ShiftLeft)
 
 ArithmeticSignedUnsigned(ShiftRight)
