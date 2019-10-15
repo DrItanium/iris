@@ -4,7 +4,6 @@ CORE_OBJS := iris.o \
 	exceptions.o \
 	invoke.o \
 	register.o \
-	logic.o \
 	IODevices.o \
 	opcodes.o \
 	encoding.o
@@ -53,19 +52,17 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
+IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
 encoding.o: encoding.cc encoding.h opcodes.h types.h \
  InstructionFormats.def InstructionProperties.def exceptions.h
 exceptions.o: exceptions.cc exceptions.h types.h
 invoke.o: invoke.cc types.h iris.h exceptions.h IODevices.h register.h \
  opcodes.h InstructionFormats.def InstructionProperties.def
-IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
 iris.o: iris.cc iris.h types.h exceptions.h IODevices.h register.h \
  opcodes.h InstructionFormats.def InstructionProperties.def
-logic.o: logic.cc iris.h types.h exceptions.h IODevices.h register.h \
- opcodes.h InstructionFormats.def InstructionProperties.def
-opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def \
- InstructionProperties.def
 opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h IODevices.h \
  register.h opcodes.h InstructionFormats.def InstructionProperties.def \
  encoding.h
+opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def \
+ InstructionProperties.def
 register.o: register.cc register.h types.h
