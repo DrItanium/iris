@@ -28,28 +28,4 @@
 
 namespace iris {
 
-void
-Core::invoke(const iris::BranchConditionalRegisterAndLinkInstruction& s) {
-    auto [ dest, cond, link ] = s.arguments();
-    if (getRegisterValue<bool>(cond)) {
-        updateLinkRegister(link);
-        branchTo(getRegisterValue(dest));
-    }
-}
-#if 0
-void
-Core::invoke(const iris::BranchRegisterAndLinkInstruction& s) {
-    auto [ address, link ] = s.arguments();
-    updateLinkRegister(link);
-    branchTo(getRegisterValue(address));
-}
-
-void
-Core::invoke(const iris::BranchConditionalRegisterInstruction& s) {
-    if (auto [ dest, cond ] = s.arguments(); getRegisterValue<bool>(cond)) {
-        branchTo(getRegisterValue<Word>(dest));
-    }
-}
-#endif
-
 } // end namespace iris

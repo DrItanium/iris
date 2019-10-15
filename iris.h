@@ -122,11 +122,6 @@ class Core {
         void invoke(const T& s) {
             throw ErrorInstructionException();
         }
-        void invoke(const iris::BranchConditionalRegisterAndLinkInstruction&);
-#if 0
-        void invoke(const iris::BranchRegisterAndLinkInstruction&);
-        void invoke(const iris::BranchConditionalRegisterInstruction&);
-#endif
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);

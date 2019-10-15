@@ -68,6 +68,7 @@ namespace iris::instructions {
     constexpr auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
     constexpr auto swap(RegisterIndex a, RegisterIndex b) noexcept                              { return MemorySwapRegisters({a, b}); }
     constexpr auto select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
+    constexpr auto branchConditionalAndLink(RegisterIndex dest, RegisterIndex cond = 1_reg, RegisterIndex link = 0_reg) noexcept { return BranchConditionalRegisterAndLink({dest, cond, link }); }
     template<typename T>
     constexpr auto call(RegisterIndex link, T value) noexcept {
         using K = std::decay_t<T>;
@@ -76,7 +77,7 @@ namespace iris::instructions {
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
             return BranchRelativeImmediateAndLink({link, static_cast<Offset16>(value)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return BranchRegisterAndLink({value, link });
+            return branchConditionalAndLink(value, 1_reg, link);
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
@@ -89,7 +90,7 @@ namespace iris::instructions {
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
             return BranchConditionalRelativeImmediate({cond, static_cast<Offset16>(addr)});
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return BranchConditionalRegister({addr, cond});
+            return branchConditionalAndLink(addr, cond);
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
@@ -104,7 +105,7 @@ namespace iris::instructions {
         } else if constexpr (std::is_same_v<K, Offset16> || std::is_signed_v<K>) {
             return branchConditional(1_reg, static_cast<Offset16>(addr));
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return branchConditional(1_reg, addr);
+            return branchConditionalAndLink(addr);
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
