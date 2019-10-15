@@ -32,13 +32,6 @@ namespace iris::instructions {
 using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
 
 MultiInstructionExpression
-getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, 
-                RegisterIndex numerator, RegisterIndex denominator) noexcept {
-    return std::make_tuple(opDivide(quotient, numerator, denominator, OrdinalOperation()),
-                           opRemainder(remainder, numerator, denominator, OrdinalOperation()));
-}
-
-MultiInstructionExpression
 indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset) noexcept {
     return std::make_tuple(loadData(dest, addr, offset), 
             loadData(dest, dest));

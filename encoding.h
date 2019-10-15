@@ -399,10 +399,12 @@ namespace iris::instructions {
     /**
      * Compute quotient and remainder together
      */
-    MultiInstructionExpression getDivRemainder(RegisterIndex quotient, 
-                         RegisterIndex remainder, 
-                         RegisterIndex numerator,
-                         RegisterIndex denominator) noexcept;
+    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, OrdinalOperation op) noexcept {
+        return std::make_tuple(opDivide(quotient, numerator, denominator, op), opRemainder(remainder, numerator, denominator, op));
+    }
+    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, IntegerOperation op) noexcept {
+        return std::make_tuple(opDivide(quotient, numerator, denominator, op), opRemainder(remainder, numerator, denominator, op));
+    }
     MultiInstructionExpression indirectLoadData(RegisterIndex dest, RegisterIndex addr, UnsignedByte offset = 0) noexcept;
     MultiInstructionExpression indirectStoreData(RegisterIndex dest, RegisterIndex addr, RegisterIndex temporary, UnsignedByte offset = 0) noexcept;
     template<typename ... Args>
