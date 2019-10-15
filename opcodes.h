@@ -361,6 +361,7 @@ constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::
 
 template<typename T>
 constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
+
 template<typename T>
 constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
 

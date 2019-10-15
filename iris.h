@@ -117,9 +117,6 @@ class Core {
         void storeIO(A address, V value, Address offset = 0) {
             _io.store(extractAddress<A>(address, offset), extractValue<V>(value));
         }
-        inline void storeIO(RegisterIndex addr, const Register& reg, Address offset) { storeIO(addr, reg.get(), offset); }
-        inline void storeData(RegisterIndex addr, const Register& reg, Address offset) { storeData(addr, reg.get(), offset); }
-        inline void storeStack(RegisterIndex addr, const Register& reg) { storeStack(addr, reg.get()); }
     private:
         void invoke(const iris::ErrorInstruction&);
         void invoke(const iris::BranchSelectInstruction&);
