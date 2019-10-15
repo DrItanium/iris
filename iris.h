@@ -132,6 +132,20 @@ class Core {
         inline void updateLinkRegister(RegisterIndex index) noexcept {
             setRegisterValue(index, _ip.get() + 1);
         }
+
+        template<typename T, std::enable_if_t<IsBranchImmediateInstruction<std::decay_t<T>>, int> = 0>
+        void invoke(const T & s) { 
+            using K = std::decay_t<decltype(s)>; 
+            auto [ link, offset] = s.arguments(); 
+            if constexpr (UsesLinkRegister<K>) { 
+                updateLinkRegister(link);
+            } 
+            if constexpr (UsesRelativeOffset<K>) { 
+                branchTo<SignedWord>(offset);
+            } else { 
+                branchTo<Word>(offset);
+            } 
+        }
         template<typename T>
         void branchTo(T addr) noexcept {
             if constexpr (std::is_same_v<T, RegisterIndex>) {
@@ -176,19 +190,6 @@ class Core {
                 static_assert(false_v<K>, "Bad compare operation!");
             }
             setRegisterValue(dest, result);
-        }
-        template<typename T, std::enable_if_t<IsBranchImmediateInstruction<std::decay_t<T>>, int> = 0>
-        void invoke(const T & s) { 
-            using K = std::decay_t<decltype(s)>; 
-            auto [ link, offset] = s.arguments(); 
-            if constexpr (UsesLinkRegister<K>) { 
-                updateLinkRegister(link);
-            } 
-            if constexpr (UsesRelativeOffset<K>) { 
-                branchTo<SignedWord>(offset);
-            } else { 
-                branchTo<Word>(offset);
-            } 
         }
         template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& input) noexcept {
@@ -290,7 +291,7 @@ class Core {
             } else {
                 src2 = getRegisterValue(rsrc2);
             }
-            if constexpr (DisallowsDivideByZero<K>) {
+            if constexpr (Src2CannotBeZero<K>) {
                 if (src2 == 0) {
                     throw DivideByZeroException();
                 }
