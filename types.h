@@ -63,14 +63,18 @@ using Byte = UnsignedByte;
 using RegisterIndex = std::byte;
 using Address = UnsignedWord;
 using Offset16 = SignedWord;
+using QuadOrdinal = uint64_t;
 
 template<typename T>
 constexpr auto isDoubleWide = false;
+template<typename T>
+constexpr auto isQuadWide = false;
 template<typename T>
 constexpr auto isRelativeOffset = false;
 
 template<> constexpr auto isDoubleWide<UnsignedDoubleWord> = true;
 template<> constexpr auto isDoubleWide<SignedDoubleWord> = true;
+template<> constexpr auto isQuadWide<QuadOrdinal> = true;
 
 template<> constexpr auto isRelativeOffset<SignedWord> = true;
 

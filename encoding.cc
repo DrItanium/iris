@@ -42,10 +42,6 @@ branchIfCompareZero(RegisterIndex temp, RegisterIndex src,
                            std::visit([temp](auto&& value) { return branchConditional(temp, value); }, dest));
 }
 MultiInstructionExpression
-branchIfZero(RegisterIndex cond, RegisterIndex src0, AddressTypes addr) noexcept {
-    return branchIfCompareZero(cond, src0, addr, equalsZero);
-}
-MultiInstructionExpression
 branchIfGreaterThanZero(RegisterIndex temp, RegisterIndex src, AddressTypes dest) noexcept {
     return branchIfCompareZero(temp, src, dest, greaterThanZero);
 }
