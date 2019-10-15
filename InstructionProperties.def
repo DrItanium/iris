@@ -2,9 +2,7 @@
  * Contains all of the defined properties for different instructions, defining it implies
  * that it is true
  */
-
 // DeclareProperty(InstructionName, PropertyName) 
-
 #define PartOfClass(op, class) DeclareProperty(op, Is ## class ## Operation)
 #define OfGroup(group, op) DeclareProperty(group ## op, Is ## group ## Operation)
 #define GroupArithmetic(op) OfGroup(Arithmetic, op)
@@ -23,11 +21,9 @@
 #define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
         PartOfClass(Arithmetic ## op ## Unsigned, Ordinal)
-
 #define ArithmeticSigned(op) \
         GroupArithmetic(op ## Signed) \
         PartOfClass(Arithmetic ## op ## Signed, Integer)
-    
 #define ArithmeticSignedUnsigned(op) \
         ArithmeticUnsigned(op) \
         ArithmeticSigned(op) \
@@ -39,7 +35,6 @@
 #define CompareUnsigned(op) \
         GroupCompare(op ## Unsigned) \
         PartOfClass(Compare ## op ## Unsigned, Ordinal)
-
 #define CompareSigned(op) \
         GroupCompare(op ## Signed) \
         PartOfClass(Compare ## op ## Signed, Integer)
@@ -183,7 +178,6 @@ CompareSignedUnsigned(GreaterThan)
 CompareSignedUnsigned(LessThanOrEqualTo)
 
 CompareSignedUnsigned(GreaterThanOrEqualTo)
-
 //-----------------------------------------------------------------------------
 #undef CompareSigned
 #undef CompareUnsigned

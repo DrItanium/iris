@@ -24,6 +24,9 @@
         NormalSignedCompare(op) \
         NormalUnsignedCompare(op)
 #define Branch(op, Format) Instruction(Branch, op, Format)
+//-----------------------------------------------------------------------------
+// Arithmetic
+//-----------------------------------------------------------------------------
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
     ArithmeticSignedUnsigned(Multiply, ThreeRegister)
@@ -31,10 +34,16 @@
     ArithmeticSignedUnsigned(Remainder, ThreeRegister)
     ArithmeticSignedUnsigned(ShiftLeft, ThreeRegister)
     ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
+//-----------------------------------------------------------------------------
+// Logical
+//-----------------------------------------------------------------------------
     Logical(BitwiseNot, TwoRegister)
     Logical(BitwiseAnd, ThreeRegister)
     Logical(BitwiseOr, ThreeRegister)
     Logical(BitwiseXor, ThreeRegister)
+//-----------------------------------------------------------------------------
+// Memory
+//-----------------------------------------------------------------------------
     Memory(CopyRegister, TwoRegister)
     Memory(SwapRegisters, TwoRegister)
     Memory(AssignRegisterImmediate, OneRegisterU16)
@@ -53,12 +62,18 @@
     Memory(MoveToIP, OneRegister)
     // all unconditional one way branches are redefined in terms of the conditional
     // versions
+//-----------------------------------------------------------------------------
+// Branch
+//-----------------------------------------------------------------------------
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(RelativeImmediateAndLink, OneRegisterS16)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
     Branch(Select, ThreeRegister)
+//-----------------------------------------------------------------------------
+// Compare
+//-----------------------------------------------------------------------------
     NormalCompare(Equals)
     NormalCompare(NotEquals)
     NormalSignedUnsignedCompare(LessThan)
