@@ -29,10 +29,6 @@
 #include <functional>
 
 namespace iris::instructions {
-MultiInstructionExpression
-branchIfNotZero(RegisterIndex src, AddressTypes loc) noexcept {
-    return std::visit([src](auto&& addr) { return branchConditional(src, addr); }, loc);
-}
 using CompareOperation = std::function<Bits(RegisterIndex, RegisterIndex)>;
 MultiInstructionExpression
 branchIfCompareZero(RegisterIndex temp, RegisterIndex src,

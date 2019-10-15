@@ -319,7 +319,15 @@ namespace iris::instructions {
     constexpr ComplexBinaryInstruction branchIfZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
-    MultiInstructionExpression branchIfNotZero(RegisterIndex, AddressTypes) noexcept;
+    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
+        return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Offset16 dest) noexcept {
+        return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
+    }
+    constexpr ComplexBinaryInstruction branchIfNotZero(RegisterIndex cond, RegisterIndex src0, Address dest) noexcept {
+        return std::make_tuple(notEqualsZero(cond, src0), branchConditional(cond, dest));
+    }
     MultiInstructionExpression branchIfGreaterThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
     MultiInstructionExpression branchIfLessThanZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
     MultiInstructionExpression branchIfGreaterThanOrEqualToZero(RegisterIndex, RegisterIndex, AddressTypes) noexcept ;
