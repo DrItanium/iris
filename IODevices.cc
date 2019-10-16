@@ -29,19 +29,27 @@ namespace iris {
 
 Word
 IOMemoryBank::load(Address address) {
-    return _storage[address].read(_core);
+    if (_storage[address]) {
+        return _storage[address]->read(_core);
+    } else {
+        throw MemoryLoadException("illegal io read!");
+    }
 }
 void
 IOMemoryBank::store(Address address, Word value) {
-    _storage[address].write(_core, value);
+    if (_storage[address]) {
+        _storage[address]->write(_core, value);
+    } else {
+        throw MemoryStoreException("illegal io write!");
+    }
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
-    _storage[address] = LambdaMMIOEntry(read, write);
+    _storage[address] = std::make_unique<LambdaMMIOEntry>(read, write);
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
-    _storage[address] = CaptiveMMIOEntry(entry);
+    _storage[address] = std::make_unique<CaptiveMMIOEntry>(entry);
 }
 void
 IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
@@ -93,7 +101,7 @@ void
 IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
     for (const auto& entry : map) {
         auto [ addr, value ] = entry;
-        std::visit([this, addr](auto&& value) { mapIntoMemory(addr, value); }, value);
+        std::visit([this, a = addr](auto&& value) { mapIntoMemory(a, value); }, value);
     }
 }
 void

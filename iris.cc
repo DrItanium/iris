@@ -34,6 +34,8 @@ Core::Core() noexcept : _io(*this) {
     for (int i = 0; i < 17; ++i) {
         _regs[i].hardwireTo(i);
     }
+    // basic io reservations the processor will reserve
+    _io.mapIntoMemory(0, Core::readTerminateCell, Core::terminateCore);
 }
 
 Register&
@@ -93,7 +95,7 @@ Core::terminateCore(Core& c, Word code) {
 }
 Word
 Core::readTerminateCell(Core& c) {
-    return c._terminateCell;
+    return c.getTerminateCell();
 }
 
 void 

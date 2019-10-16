@@ -245,7 +245,7 @@ class Core {
                 }
             } else if constexpr (IsDataOperation<K>) {
                 if constexpr (IsLoadOperation<K>) {
-                    auto [ dest, loc, offset ] = input.arguments();
+                    auto [ loc, dest, offset ] = input.arguments();
                     setRegisterValue(dest, loadData(loc, offset));
                 } else if constexpr (IsStoreOperation<K>) {
                     auto [ dest, value, offset ] = input.arguments();
@@ -258,7 +258,7 @@ class Core {
                 }
             } else if constexpr (IsIOOperation<K>) {
                 if constexpr (IsLoadOperation<K>) {
-                    auto [ dest, loc, offset ] = input.arguments();
+                    auto [ loc, dest, offset ] = input.arguments();
                     setRegisterValue(dest, loadIO(loc, offset));
                 } else if constexpr (IsStoreOperation<K>) {
                     auto [ dest, value, offset ] = input.arguments();
@@ -408,6 +408,9 @@ class Core {
         constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
         constexpr Word getIP() const noexcept { return _ip.get<Word>(); }
         void setIP(Word value) noexcept { _ip.put(value); }
+        void resetExecutionStatus() noexcept { _executing = true; }
+        constexpr auto getExecutingStatus() const noexcept { return _executing; }
+        void setTerminateCell(Word value) noexcept { _terminateCell = value; }
     private:
         RegisterBank _regs;
         CodeMemoryBank _code;

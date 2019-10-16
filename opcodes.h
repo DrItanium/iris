@@ -176,7 +176,7 @@ struct Instruction {
                 return convertByteIndex<T>(getHighestQuarter());
             }
         }
-        constexpr Byte getImm8() const noexcept { return getArg2<Byte>(); }
+        constexpr Byte getImm8() const noexcept { return getHighestQuarter(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
         constexpr std::optional<DecodedInstruction> decode() const noexcept;
         constexpr auto getRawBits() const noexcept { return _bits; }

@@ -55,12 +55,12 @@ bool executeTestSuite(const TestSuite& ts, iris::Core& c) noexcept {
 template<typename T>
 bool verifyResult(T got, T expected) noexcept {
     if (got != expected) {
+        std::cout << "\tAssertion Failed!" << std::endl;
         std::cout << "\tGot: " << std::hex << got << std::endl;
         std::cout << "\tExpected: " << std::hex << expected << std::endl;
         return false;
-    } else {
-        return true;
-    }
+    } 
+    return true;
 }
 template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, iris::RegisterIndex>, int> = 0>
 bool verifyResult(iris::RegisterIndex got, T expected, iris::Core& c) noexcept {
@@ -465,8 +465,7 @@ TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T, T)> fn, T fi
     return [fn, first, second, third, fourth](iris::Core& c) { return fn(c, first, second, third, fourth); };
 }
 TestSuites suites {
-    {
-        "Arithmetic Operation Validation", {
+    { "Arithmetic Operation Validation", {
             { "Add Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Add> },
             { "Subtract Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Subtract> },
             { "Multiply Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Multiply> },
@@ -477,8 +476,7 @@ TestSuites suites {
         },
 
     },
-    {
-        "Branch Operation Validation", {
+    { "Branch Operation Validation", {
             { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
             { "Branch Absolute Immediate and Link", setupFunction<iris::Word>(testBranchImmediateAndLinkOperation, 0xFDED) },
             { "Branch Relative Immediate", setupFunction<iris::SignedWord>(testBranchRelativeImmediateOperation, -1) },
@@ -492,8 +490,7 @@ TestSuites suites {
             { "Select (False)", testSelectOperation<false> },
         },
     },
-    {
-        "Compare Operation Validation", {
+    { "Compare Operation Validation", {
             { "Equals", testCompareOperation<CompareOperations::Equals>},
             { "Not Equals", testCompareOperation<CompareOperations::NotEquals>},
             { "Less Than Signed and Unsigned", testCompareOperation<CompareOperations::LessThan> },
@@ -502,38 +499,52 @@ TestSuites suites {
             { "Greater Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThanOrEqualTo> },
         },
     },
-    {
-        "Logical Operation Validation", {
+    { "Logical Operation Validation", {
             { "Logical Not Operation", testLogicalOperationKind<LogicalOperation::Not>},
             { "Logical And Operation", testLogicalOperationKind<LogicalOperation::And>},
             { "Logical Or Operation", testLogicalOperationKind<LogicalOperation::Or>},
             { "Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
         },
     },
-    {
-        "Memory Operation Validation", {
+    { "Memory Operation Validation", {
             { "Copy Register", setupFunction<iris::Word>(testCopyRegister,0xFDED) },
             { "Assign Register", setupFunction<iris::Word>(testAssignRegister, 0xFDED) },
             { "Push Register onto stack", setupFunction<iris::Word>(testPushRegisterOperation, 0xFDED) },
             { "Pop Register from stack", setupFunction<iris::Word>(testPopOperation, 0xFDED) },
             { "Move from IP", setupFunction<iris::Word>(testMoveFromIP, 0xFDED) },
             { "Move to IP", setupFunction<iris::Word>(testMoveToIP, 0xFDED) },
-            /// @todo implement loads and stores for the different spaces
         },
     },
-    { 
-        "Code Space", {
+    { "Code Space", {
             {"Write and readback from code memory", codeTests } 
         },
     },
-    { 
-        "Data Space", {
+    { "Data Space", {
             {"Write and readback from data memory", dataTests},
         },
     },
-    { 
-        "Stack Space", {
+    { "Stack Space", {
             {"Write and readback from stack memory", stackTests},
+        },
+    },
+    { "IO Space", {
+            { "Write to terminate cell!", 
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    setRegisters<iris::Word>(c, 0, 1, 0);
+                    c.invoke(iris::instructions::storeIO(17_reg, 18_reg));
+                    return verifyResult<iris::Word>(c.getTerminateCell(), 1) && verifyResult<bool>(c.getExecutingStatus(), false);
+                } 
+            },
+            { "Read from terminate cell",
+               [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    c.setTerminateCell(0xFDED);
+                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    c.invoke(iris::instructions::loadIO(17_reg, 18_reg, 0));
+                    return verifyResult<iris::Word>(18_reg, 0xFDED, c);
+               }
+            },
         },
     },
 };

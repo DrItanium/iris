@@ -25,6 +25,7 @@
  */
 #ifndef IRIS_IODEVICES_H__
 #define IRIS_IODEVICES_H__
+#include <memory>
 #include <functional>
 #include <variant>
 #include <map>
@@ -43,7 +44,7 @@ struct MMIOEntry {
         virtual Word read(Core&);
 
 };
-struct LambdaMMIOEntry : MMIOEntry {
+struct LambdaMMIOEntry : public MMIOEntry {
     public:
         static void illegalWriteError(Core&, Word) {
             throw MemoryStoreException("illegal io write!");
@@ -53,19 +54,19 @@ struct LambdaMMIOEntry : MMIOEntry {
             return 0;
         }
     public:
-        LambdaMMIOEntry(MMIOReadFunction read = illegalReadError, MMIOWriteFunction write = illegalWriteError);
-        virtual ~LambdaMMIOEntry() = default;
-        void write(Core&, Word value) override;
+        LambdaMMIOEntry(MMIOReadFunction, MMIOWriteFunction);
+        ~LambdaMMIOEntry() override = default;
+        void write(Core&, Word) override;
         Word read(Core&) override;
     private:
         MMIOReadFunction _read;
         MMIOWriteFunction _write;
 
 };
-struct CaptiveMMIOEntry : MMIOEntry {
+struct CaptiveMMIOEntry : public MMIOEntry {
     public:
         CaptiveMMIOEntry(MMIOEntry& other);
-        virtual ~CaptiveMMIOEntry() = default;
+        ~CaptiveMMIOEntry() override = default;
         void write(Core&, Word) override;
         Word read(Core&) override;
     private:
@@ -90,7 +91,7 @@ using IOMemoryMap = std::map<Address, MemoryMapEntryKind>;
  */
 class IOMemoryBank {
     public:
-        using MMIOTable = NumericalStorageBank<MMIOEntry, MemoryBankElementCount>;
+        using MMIOTable = NumericalStorageBank<std::unique_ptr<MMIOEntry>, MemoryBankElementCount>;
     public:
         IOMemoryBank(Core& c) : _core(c) { }
         ~IOMemoryBank() = default;
