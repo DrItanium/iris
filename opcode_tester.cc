@@ -33,7 +33,8 @@
 #include <functional>
 #include <list>
 
-using TestCase = std::tuple<std::string, std::function<bool(iris::Core&)>>;
+using TestCaseBody = std::function<bool(iris::Core&)>;
+using TestCase = std::tuple<std::string, TestCaseBody>;
 using TestSuite = std::tuple<std::string, std::list<TestCase>>;
 using TestSuites = std::list<TestSuite>;
 
@@ -277,10 +278,6 @@ bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris
     c.invoke(iris::instructions::branchConditional(18_reg, 17_reg));
     return verifyResult<iris::Word>("conditional branch register operation failed", c.getIP(), expect);
 }
-bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris::Word cond) noexcept {
-    return testBranchConditionalRegisterOperation(c, src1, cond, src1);
-}
-
 
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
@@ -407,13 +404,29 @@ bool branchTests(iris::Core& c) noexcept {
            testBranchConditionalRegisterOperation(c, 0xFDED, 1, 0xFDED) &&
            testBranchConditionalRegisterOperation(c, 0xFDED, 0, 0);
 }
+template<typename T>
+TestCaseBody setupFunction(std::function<bool(iris::Core&, T)> fn, T value) noexcept {
+    return [fn, value](iris::Core& c) { return fn(c, value); };
+}
+template<typename T>
+TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T)> fn, T first, T second, T third) noexcept {
+    return [fn, first, second, third](iris::Core& c) { return fn(c, first, second, third); };
+}
 TestSuites suites {
     {
         "Instruction Validation", {
             { "Arithmetic Operations", testArithmeticOperationKinds},
-            { "Branch Operations", branchTests},
-            /// @todo test the rest of the core branch kinds
-            /// @todo implement compare checks
+        },
+    },
+        /// @todo test the rest of the core branch kinds
+        /// @todo implement compare checks
+    {
+        "Branch Operation Validation", {
+            { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
+            { "Branch Relative Immediate", setupFunction<iris::SignedWord>(testBranchRelativeImmediateOperation, -1) },
+            { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
+            { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
+            { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
         },
     },
     {
