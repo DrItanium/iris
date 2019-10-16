@@ -256,6 +256,15 @@ bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris
     return verifyResult<iris::Word>(c.getIP(), expect);
 }
 
+bool testBranchConditionalRegisterAndLinkOperation(iris::Core& c, iris::Word src1, iris::Word cond, iris::Word expect, iris::Word expectLink) noexcept {
+    setRegisters<decltype(src1)>(c, src1, cond, 0);
+    c.setIP(0);
+    c.invoke(iris::instructions::branchConditionalAndLink(17_reg, 18_reg, 19_reg));
+    return verifyResult<iris::Word>(c.getIP(), expect) &&
+           verifyResult<iris::Word>(19_reg, expectLink, c);
+
+}
+
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
     c.invoke(iris::instructions::branch(src1));
@@ -435,6 +444,10 @@ template<typename T>
 TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T)> fn, T first, T second, T third) noexcept {
     return [fn, first, second, third](iris::Core& c) { return fn(c, first, second, third); };
 }
+template<typename T>
+TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T, T)> fn, T first, T second, T third, T fourth) noexcept {
+    return [fn, first, second, third, fourth](iris::Core& c) { return fn(c, first, second, third, fourth); };
+}
 TestSuites suites {
     {
         "Arithmetic Operation Validation", {
@@ -457,6 +470,8 @@ TestSuites suites {
             { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
+            { "Branch Conditional Absolute Register And Link (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 1, 0xFDED, 1) },
+            { "Branch Conditional Absolute Register And Link (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 0, 0, 0) },
             /// @todo test the rest of the core branch kinds
         },
     },
