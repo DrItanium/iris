@@ -395,8 +395,8 @@ bool testNotEquals(iris::Core& c) noexcept {
         for (auto j = i; j < 0x100; ++j) {
             setRegisters<iris::Word>(c, 0, i, j);
             auto result = i != j;
-            c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Equality check failed", 17_reg, result, c)) {
+            c.invoke(iris::instructions::CompareNotEquals({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Inequality check failed", 17_reg, result, c)) {
                 return false;
             }
         }
