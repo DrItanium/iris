@@ -265,6 +265,22 @@ bool testBranchConditionalRegisterAndLinkOperation(iris::Core& c, iris::Word src
 
 }
 
+template<bool selection,
+         iris::Word onTrue = 1,
+         iris::Word onFalse = 2>
+bool testSelectOperation(iris::Core& c) noexcept {
+    setRegisters<iris::Word>(c, selection ? 1 : 0, onTrue, onFalse);
+    c.setIP(0);
+    c.invoke(iris::instructions::select(17_reg, 18_reg, 19_reg));
+    iris::Word expectation = 0;
+    if constexpr (selection) {
+        expectation = onTrue;
+    } else {
+        expectation = onFalse;
+    }
+    return verifyResult<iris::Word>(c.getIP(), expectation);
+}
+
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
     c.invoke(iris::instructions::branch(src1));
@@ -472,7 +488,8 @@ TestSuites suites {
             { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
             { "Branch Conditional Absolute Register And Link (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 1, 0xFDED, 1) },
             { "Branch Conditional Absolute Register And Link (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 0, 0, 0) },
-            /// @todo test the rest of the core branch kinds
+            { "Select (True)", testSelectOperation<true> },
+            { "Select (False)", testSelectOperation<false> },
         },
     },
     {
