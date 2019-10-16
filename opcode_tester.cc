@@ -93,83 +93,83 @@ void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
     c.setRegisterValue<T>(18_reg, r18);
     c.setRegisterValue<T>(19_reg, r19);
 }
-template<typename T>
-bool testAddOperation(iris::Core& c, T src1, T src2) noexcept {
+enum class ArithmeticOperation {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+    ShiftLeft,
+    ShiftRight,
+};
+template<typename T, ArithmeticOperation op>
+bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
     using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
+    static_assert(std::is_integral_v<K>);
     using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
     setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 + src2;
-    c.invoke(iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("add operation failed!", 17_reg, check, c);
-}
-
-template<typename T>
-bool testSubtractOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 - src2;
-    c.invoke(iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("subtract operation failed!", 17_reg, check,c);
-}
-
-template<typename T>
-bool testMultiplyOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 * src2;
-    c.invoke(iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("multiply operation failed!", 17_reg, check,c);
-}
-
-template<typename T>
-bool testDivideOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 / src2;
-    /// @todo do the divide by zero validation 
-    c.invoke(iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("divide operation failed!", 17_reg, check, c);
-}
-
-template<typename T>
-bool testRemainderOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 % src2;
-    /// @todo do the divide by zero validation 
-    c.invoke(iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("remainder operation failed!", 17_reg, check, c);
-}
-
-template<typename T>
-bool testShiftLeftOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 << src2;
-    c.invoke(iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("left shift operation failed!", 17_reg, check, c);
-}
-
-template<typename T>
-bool testShiftRightOperation(iris::Core& c, T src1, T src2) noexcept {
-    using K = std::decay_t<T>;
-    static_assert(std::is_integral_v<std::decay_t<T>>);
-    using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
-    auto check = src1 >> src2;
-    c.invoke(iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{}));
-    return verifyResult<K>("right shift operation failed!", 17_reg, check, c);
+    K check = 0;
+    iris::instructions::Bits instruction = 0;
+    bool expectDivideByZero = false;
+    std::stringstream ss;
+    if (std::is_signed_v<K>) {
+        ss << "integer ";
+    } else {
+        ss << "ordinal ";
+    }
+    if constexpr (op == ArithmeticOperation::Add) {
+        check = src1 + src2;
+        instruction = iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{});
+        ss << "add ";
+    } else if constexpr (op == ArithmeticOperation::Subtract) {
+        check = src1 - src2;
+        instruction = iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{});
+        ss << "subtract ";
+    } else if constexpr (op == ArithmeticOperation::Multiply) {
+        check = src1 * src2;
+        instruction = iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{});
+        ss << "multiply ";
+    } else if constexpr (op == ArithmeticOperation::Divide) {
+        if (src2 != 0) {
+            check = src1 / src2;
+        } else {
+            expectDivideByZero = true;
+        }
+        instruction = iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{});
+        ss << "divide ";
+    } else if constexpr (op == ArithmeticOperation::Remainder) {
+        if (src2 != 0) {
+            check = src1 % src2;
+        } else {
+            expectDivideByZero = true;
+        }
+        instruction = iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{});
+        ss << "remainder ";
+    } else if constexpr (op == ArithmeticOperation::ShiftLeft) {
+        check = src1 << src2;
+        instruction = iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{});
+        ss << "shift left ";
+    } else if constexpr (op == ArithmeticOperation::ShiftRight) {
+        check = src1 >> src2;
+        instruction = iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{});
+        ss << "shift right ";
+    } else {
+        static_assert(iris::false_v<decltype(op)>, "Unimplemented arithmetic Operation");
+    }
+    ss << "operation failed!";
+    auto str = ss.str();
+    try {
+        c.invoke(instruction);
+        return verifyResult<T>(str, 17_reg, check, c);
+    } catch (iris::DivideByZeroException&) {
+        if (expectDivideByZero) {
+            return true;
+        } else {
+            std::cout << str << std::endl;
+            std::cout << "unexpected divide by zero happened!" << std::endl;
+            return false;
+        }
+    }
 }
 enum class LogicalOperation {
     And,
@@ -338,23 +338,30 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     return true;
 }
 
+template<ArithmeticOperation op>
+bool testArithmeticOperationKind(iris::Core& c) noexcept {
+    for (iris::DoubleWord i = 0, j = ~i; i < 0x10000; ++i, j = ~i) {
+        if (!testArithmeticOperation<iris::Word, op>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+            !testArithmeticOperation<iris::SignedWord, op>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+            return false;
+        }
+    }
+    return true;
+}
 
 bool instructionTests(iris::Core& c) {
     std::cout << "Instruction related tests" << std::endl;
     //-----------------------------------------------------------------------------
     // Arithmetic
     //-----------------------------------------------------------------------------
-#define X(op) \
-    if (! test ## op ## Operation <iris::Word> (c, 0xFDED, 2) || \
-        ! test ## op ## Operation <iris::SignedWord> (c, -1 ,2)) { return true; }
-    X(Add)
-    X(Subtract)
-    X(Multiply)
-    X(Divide)
-    X(Remainder)
-    X(ShiftLeft)
-    X(ShiftRight)
-#undef X
+    if (!testArithmeticOperationKind<ArithmeticOperation::Add>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::Subtract>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::Multiply>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::Divide>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::Remainder>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::ShiftLeft>(c) ||
+        !testArithmeticOperationKind<ArithmeticOperation::ShiftRight>(c)) { return true; }
+
     //-----------------------------------------------------------------------------
     // Logical 
     //-----------------------------------------------------------------------------
