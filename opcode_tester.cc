@@ -288,7 +288,7 @@ bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
     return verifyResult<iris::Word>("move to ip failed!", c.getIP(), src1);
 }
 
-template<LogicalOperation op, bool testAllCombinations = false>
+template<LogicalOperation op, bool testAllCombinations = true>
 bool testLogicalOperationKind(iris::Core& c) noexcept {
     iris::DoubleWord start = 0;
     iris::DoubleWord end = 0x10000;
