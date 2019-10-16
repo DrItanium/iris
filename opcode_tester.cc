@@ -400,14 +400,6 @@ bool testArithmeticOperationKinds(iris::Core& c) noexcept {
     }
     return true;
 }
-bool memoryClassTests(iris::Core& c) noexcept {
-    return testCopyRegister(c, 32) &&
-        testAssignRegister(c, 128) &&
-        testPushRegisterOperation(c, 0xFDED) &&
-        testPopOperation(c, 0xFDED) &&
-        testMoveFromIP(c, 0xFDED) &&
-        testMoveToIP(c, 0xFDED);
-}
 bool branchTests(iris::Core& c) noexcept {
     return testBranchImmediateOperation(c, 0xFDED) &&
            testBranchRelativeImmediateOperation(c, -1) &&
@@ -419,14 +411,27 @@ TestSuites suites {
     {
         "Instruction Validation", {
             { "Arithmetic Operations", testArithmeticOperationKinds},
+            { "Branch Operations", branchTests},
+            /// @todo test the rest of the core branch kinds
+            /// @todo implement compare checks
+        },
+    },
+    {
+        "Logical Operation Validation", {
             { "Logical Not Operation", testLogicalOperationKind<LogicalOperation::Not>},
             { "Logical And Operation", testLogicalOperationKind<LogicalOperation::And>},
             { "Logical Or Operation", testLogicalOperationKind<LogicalOperation::Or>},
             { "Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
-            { "Memory Operations", memoryClassTests},
-            { "Branch Operations", branchTests},
-            /// @todo test the rest of the core branch kinds
-            /// @todo implement compare checks
+        },
+    },
+    {
+        "Memory Operation Validation", {
+            { "Copy Register", [](auto& c) noexcept { return testCopyRegister(c, 32); } },
+            { "Assign Register", [](auto& c) noexcept { return testAssignRegister(c, 0xFDED); } },
+            { "Push Register onto stack", [](auto& c) noexcept { return testPushRegisterOperation(c, 0xFDED); } },
+            { "Pop Register from stack", [](auto& c) noexcept { return testPopOperation(c, 0xFDED); } },
+            { "Move from IP", [](auto& c) noexcept { return testMoveFromIP(c, 0xFDED); } },
+            { "Move to IP", [](auto& c) noexcept { return testMoveToIP(c, 0xFDED); } },
         },
     },
     { 
