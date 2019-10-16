@@ -30,7 +30,25 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <functional>
+#include <list>
 
+using TestCase = std::tuple<std::string, std::function<bool(iris::Core&)>>;
+using TestSuite = std::tuple<std::string, std::list<TestCase>>;
+using TestSuites = std::list<TestSuite>;
+
+bool executeTestSuite(const TestSuite& ts, iris::Core& c) noexcept {
+    auto [ sname, suite ] = ts;
+    std::cout << "Executing Test Suite: " << sname << std::endl;
+    for (auto const& tc : suite) {
+        auto [title, op] = tc;
+        std::cout << "\tExecuting Test Case: " << title << std::endl;
+        if (!op(c)) {
+            return false;
+        }
+    }
+    return true;
+}
 template<typename T>
 bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
     if (got != expected) {
@@ -47,17 +65,16 @@ bool verifyResult(const std::string& failMsg, iris::RegisterIndex got, T expecte
     return verifyResult<T>(failMsg, c.getRegisterValue<T>(got), expected);
 }
 bool codeTests(iris::Core& c) {
-    std::cout << "Code writing tests" << std::endl;
     std::cout << "\t1. Write and readback from code memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         auto valueToWrite = ~i;
         auto address = static_cast<iris::Address>(i);
         c.storeCode(address, valueToWrite);
         if (!verifyResult("Write to code memory failed", c.loadCode(address), valueToWrite)) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 
 }
 bool dataTests(iris::Core& c) {
@@ -69,10 +86,10 @@ bool dataTests(iris::Core& c) {
         // data write
         c.storeData<iris::Address, iris::Word>(address, valueToWrite);
         if (!verifyResult("Write to data memory failed", c.loadData(address), valueToWrite)) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 bool stackTests(iris::Core& c) {
     std::cout << "Stack memory tests" << std::endl;
@@ -83,10 +100,10 @@ bool stackTests(iris::Core& c) {
         // data write
         c.storeStack(address, valueToWrite);
         if (!verifyResult("Write to stack memory failed", c.loadStack(address), valueToWrite)) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 template<typename T>
 void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
@@ -339,8 +356,8 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     return true;
 }
 
-bool testArithmeticOperationKinds() noexcept {
-    static constexpr auto innerBody = [](iris::Core& c, iris::DoubleWord i, iris::DoubleWord j) noexcept {
+bool testArithmeticOperationKinds(iris::Core& c) noexcept {
+    auto innerBody = [&c](iris::DoubleWord i, iris::DoubleWord j) noexcept {
                 if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Add>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
                         !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Add>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
                     return false;
@@ -371,15 +388,14 @@ bool testArithmeticOperationKinds() noexcept {
                 }
                 return true;
     };
-    iris::Core c;
     for (auto i = 0; i < 0x100; ++i) {
         // eliminate chain walk downs by computing both i,j and j,i versions at the same time
         for (auto j = i; j < 0x100; ++j) {
-            if (!innerBody(c, i, j)) {
+            if (!innerBody(i, j)) {
                 return false;
             }
             if (i != j) {
-                if (!innerBody(c, j, i)) {
+                if (!innerBody(j, i)) {
                     return false;
                 }
             }
@@ -387,72 +403,59 @@ bool testArithmeticOperationKinds() noexcept {
     }
     return true;
 }
-
-bool instructionTests(iris::Core& c) {
-    std::cout << "Instruction related tests" << std::endl;
-    //-----------------------------------------------------------------------------
-    // Arithmetic
-    //-----------------------------------------------------------------------------
-    if (!testArithmeticOperationKinds()) { return true; }
-#if 0
-    if (!testArithmeticOperationKind<ArithmeticOperation::Add>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::Subtract>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::Multiply>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::Divide>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::Remainder>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::ShiftLeft>() ||
-        !testArithmeticOperationKind<ArithmeticOperation::ShiftRight>()) { return true; }
-#endif
-
-    //-----------------------------------------------------------------------------
-    // Logical 
-    //-----------------------------------------------------------------------------
-    if ((! testLogicalOperationKind<LogicalOperation::Not>(c)) ||
-        (! testLogicalOperationKind<LogicalOperation::And>(c)) ||
-        (! testLogicalOperationKind<LogicalOperation::Or>(c)) ||
-        (! testLogicalOperationKind<LogicalOperation::Xor>(c))) { return true; }
-    //-----------------------------------------------------------------------------
-    // Memory 
-    //-----------------------------------------------------------------------------
-    if (!testCopyRegister(c, 32) ||
-        !testAssignRegister(c, 128) ||
-        !testPushRegisterOperation(c, 0xFDED) ||
-        !testPopOperation(c, 0xFDED) ||
-        !testMoveFromIP(c, 0xFDED) ||
-        !testMoveToIP(c, 0xFDED)) { return true; }
-    /// @todo test the data, io, and code operations
-    //-----------------------------------------------------------------------------
-    // Branch 
-    //-----------------------------------------------------------------------------
-    if (!testBranchImmediateOperation(c, 0xFDED) ||
-        !testBranchRelativeImmediateOperation(c, -1) ||
-        !testBranchRegisterOperation(c, 0xFDED) ||
-        !testBranchConditionalRegisterOperation(c, 0xFDED, 1, 0xFDED) ||
-        !testBranchConditionalRegisterOperation(c, 0xFDED, 0, 0)) { return true; }
-    /// @todo test the rest of the core branch kinds
-    //-----------------------------------------------------------------------------
-    // Compare 
-    //-----------------------------------------------------------------------------
-    /// @todo implement compare checks
-
-    return false;
+bool memoryClassTests(iris::Core& c) noexcept {
+    return testCopyRegister(c, 32) &&
+        testAssignRegister(c, 128) &&
+        testPushRegisterOperation(c, 0xFDED) &&
+        testPopOperation(c, 0xFDED) &&
+        testMoveFromIP(c, 0xFDED) &&
+        testMoveToIP(c, 0xFDED);
 }
+bool branchTests(iris::Core& c) noexcept {
+    return testBranchImmediateOperation(c, 0xFDED) &&
+           testBranchRelativeImmediateOperation(c, -1) &&
+           testBranchRegisterOperation(c, 0xFDED) &&
+           testBranchConditionalRegisterOperation(c, 0xFDED, 1, 0xFDED) &&
+           testBranchConditionalRegisterOperation(c, 0xFDED, 0, 0);
+}
+TestSuites suites {
+    {
+        "Instruction Tests", {
+            { "Testing Arithmetic Operations", testArithmeticOperationKinds},
+            { "Testing Logical Not Operation", testLogicalOperationKind<LogicalOperation::Not>},
+            { "Testing Logical And Operation", testLogicalOperationKind<LogicalOperation::And>},
+            { "Testing Logical Or Operation", testLogicalOperationKind<LogicalOperation::Or>},
+            { "Testing Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
+            { "Testing Memory Operations", memoryClassTests},
+            { "Testing Branch Operations", branchTests},
+            /// @todo test the rest of the core branch kinds
+            /// @todo implement compare checks
+        },
+    },
+    { 
+        "Code writing tests", {
+            {"", codeTests } 
+        },
+    },
+    { 
+        "Data writing tests", {
+            {"", dataTests},
+        },
+    },
+    { 
+        "Stack writing tests", {
+            {"", stackTests},
+        },
+    },
+};
 int main(int, char* []) {
     iris::Core c;
-    if (codeTests(c)) {
-        return 1;
-    } 
-    if (dataTests(c)) {
-        return 1;
+    for (const auto & suite : suites) {
+        if (!executeTestSuite(suite, c)) {
+            std::cout << "tests failed!" << std::endl;
+            return 1;
+        }
     }
-    if (stackTests(c)) {
-        return 1;
-    }
-    if (instructionTests(c)) {
-        return 1;
-    }
-
-
-    std::cout << "All tests passed!" << std::endl;
+    std::cout << "all tests passed!" << std::endl;
     return 0;
 }
