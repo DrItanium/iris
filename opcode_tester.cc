@@ -373,6 +373,37 @@ bool testArithmeticOperationKinds(iris::Core& c) noexcept {
     }
     return true;
 }
+
+bool testEquals(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = i == j;
+            c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Equality check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool testNotEquals(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = i != j;
+            c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Equality check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 template<typename T>
 TestCaseBody setupFunction(std::function<bool(iris::Core&, T)> fn, T value) noexcept {
     return [fn, value](iris::Core& c) { return fn(c, value); };
@@ -382,7 +413,6 @@ TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T)> fn, T first
     return [fn, first, second, third](iris::Core& c) { return fn(c, first, second, third); };
 }
 TestSuites suites {
-    /// @todo test the rest of the core branch kinds
     /// @todo implement compare checks
     {
         "Arithmetic Operation Validation", {
@@ -403,6 +433,13 @@ TestSuites suites {
             { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
+            /// @todo test the rest of the core branch kinds
+        },
+    },
+    {
+        "Compare Operation Validation", {
+            { "Equals", testEquals },
+            { "Not Equals", testNotEquals },
         },
     },
     {
