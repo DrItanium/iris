@@ -29,7 +29,6 @@
 #include "encoding.h"
 #include <iostream>
 #include <string>
-#include <future>
 #include <array>
 
 template<typename T>
@@ -372,39 +371,18 @@ bool testArithmeticOperationKinds() noexcept {
                 }
                 return true;
     };
-    auto fn = [](iris::DoubleWord start, iris::DoubleWord end) {
-        iris::Core c;
-        for (auto i = start; i < end; ++i) {
-            // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-            for (auto j = i; j < 0x10000; ++j) {
-                innerBody(c, i, j);
-                if (i != j) {
-                    innerBody(c, j, i);
+    iris::Core c;
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            if (!innerBody(c, i, j)) {
+                return false;
+            }
+            if (i != j) {
+                if (!innerBody(c, j, i)) {
+                    return false;
                 }
             }
-        }
-        return true;
-    };
-    static constexpr std::tuple<iris::DoubleWord, iris::DoubleWord> ranges[] {
-        { 0, 0x2000 },
-        { 0x2000, 0x4000},
-        { 0x4000, 0x6000},
-        { 0x6000, 0x8000},
-        { 0x8000, 0xA000},
-        { 0xA000, 0xC000},
-        { 0xC000, 0xE000},
-        { 0xE000, 0x10000},
-    };
-
-    using Future = decltype(std::async(std::launch::async, fn, 0x10000, 0x10001));
-    std::array<Future, 8> futures;
-    for (int i = 0; i < 8; ++i) {
-        auto [ start, finish ] = ranges[i];
-        futures[i] = std::async(std::launch::async, fn, start, finish);
-    }
-    for (auto& f : futures) {
-        if (!f.get()) {
-            return false;
         }
     }
     return true;
