@@ -349,25 +349,17 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     }
     return true;
 }
-template<ArithmeticOperation op>
+template<ArithmeticOperation op, 
+    iris::DoubleWord outerStart = 0,
+    iris::DoubleWord outerEnd = 0x100,
+    iris::DoubleWord innerStart = outerStart,
+    iris::DoubleWord innerEnd = outerEnd>
 bool testArithmeticOperationKinds(iris::Core& c) noexcept {
-    auto innerBody = [&c](iris::DoubleWord i, iris::DoubleWord j) noexcept {
-                if (!testArithmeticOperation<iris::Word, op>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, op>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                return true;
-    };
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            if (!innerBody(i, j)) {
+    for (auto i = outerStart; i < outerEnd; ++i) {
+        for (auto j = innerStart; j < innerEnd; ++j) {
+            if (!testArithmeticOperation<iris::Word, op>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                    !testArithmeticOperation<iris::SignedWord, op>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
                 return false;
-            }
-            if (i != j) {
-                if (!innerBody(j, i)) {
-                    return false;
-                }
             }
         }
     }
