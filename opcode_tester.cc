@@ -29,6 +29,8 @@
 #include "encoding.h"
 #include <iostream>
 #include <string>
+#include <future>
+#include <array>
 
 template<typename T>
 bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
@@ -338,11 +340,70 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     return true;
 }
 
-template<ArithmeticOperation op>
-bool testArithmeticOperationKind(iris::Core& c) noexcept {
-    for (iris::DoubleWord i = 0, j = ~i; i < 0x10000; ++i, j = ~i) {
-        if (!testArithmeticOperation<iris::Word, op>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-            !testArithmeticOperation<iris::SignedWord, op>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+bool testArithmeticOperationKinds() noexcept {
+    static constexpr auto innerBody = [](iris::Core& c, iris::DoubleWord i, iris::DoubleWord j) noexcept {
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Add>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Add>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Subtract>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Subtract>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Multiply>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Multiply>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Divide>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Divide>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Remainder>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Remainder>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::ShiftLeft>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::ShiftLeft>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::ShiftRight>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::ShiftRight>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                    return false;
+                }
+                return true;
+    };
+    auto fn = [](iris::DoubleWord start, iris::DoubleWord end) {
+        iris::Core c;
+        for (auto i = start; i < end; ++i) {
+            // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+            for (auto j = i; j < 0x10000; ++j) {
+                innerBody(c, i, j);
+                if (i != j) {
+                    innerBody(c, j, i);
+                }
+            }
+        }
+        return true;
+    };
+    static constexpr std::tuple<iris::DoubleWord, iris::DoubleWord> ranges[] {
+        { 0, 0x2000 },
+        { 0x2000, 0x4000},
+        { 0x4000, 0x6000},
+        { 0x6000, 0x8000},
+        { 0x8000, 0xA000},
+        { 0xA000, 0xC000},
+        { 0xC000, 0xE000},
+        { 0xE000, 0x10000},
+    };
+
+    using Future = decltype(std::async(std::launch::async, fn, 0x10000, 0x10001));
+    std::array<Future, 8> futures;
+    for (int i = 0; i < 8; ++i) {
+        auto [ start, finish ] = ranges[i];
+        futures[i] = std::async(std::launch::async, fn, start, finish);
+    }
+    for (auto& f : futures) {
+        if (!f.get()) {
             return false;
         }
     }
@@ -354,13 +415,16 @@ bool instructionTests(iris::Core& c) {
     //-----------------------------------------------------------------------------
     // Arithmetic
     //-----------------------------------------------------------------------------
-    if (!testArithmeticOperationKind<ArithmeticOperation::Add>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::Subtract>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::Multiply>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::Divide>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::Remainder>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::ShiftLeft>(c) ||
-        !testArithmeticOperationKind<ArithmeticOperation::ShiftRight>(c)) { return true; }
+    if (!testArithmeticOperationKinds()) { return true; }
+#if 0
+    if (!testArithmeticOperationKind<ArithmeticOperation::Add>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::Subtract>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::Multiply>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::Divide>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::Remainder>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::ShiftLeft>() ||
+        !testArithmeticOperationKind<ArithmeticOperation::ShiftRight>()) { return true; }
+#endif
 
     //-----------------------------------------------------------------------------
     // Logical 
