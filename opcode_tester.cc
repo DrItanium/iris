@@ -512,12 +512,12 @@ TestSuites suites {
     },
     {
         "Memory Operation Validation", {
-            { "Copy Register", [](auto& c) noexcept { return testCopyRegister(c, 32); } },
-            { "Assign Register", [](auto& c) noexcept { return testAssignRegister(c, 0xFDED); } },
-            { "Push Register onto stack", [](auto& c) noexcept { return testPushRegisterOperation(c, 0xFDED); } },
-            { "Pop Register from stack", [](auto& c) noexcept { return testPopOperation(c, 0xFDED); } },
-            { "Move from IP", [](auto& c) noexcept { return testMoveFromIP(c, 0xFDED); } },
-            { "Move to IP", [](auto& c) noexcept { return testMoveToIP(c, 0xFDED); } },
+            { "Copy Register", setupFunction<iris::Word>(testCopyRegister,0xFDED) },
+            { "Assign Register", setupFunction<iris::Word>(testAssignRegister, 0xFDED) },
+            { "Push Register onto stack", setupFunction<iris::Word>(testPushRegisterOperation, 0xFDED) },
+            { "Pop Register from stack", setupFunction<iris::Word>(testPopOperation, 0xFDED) },
+            { "Move from IP", setupFunction<iris::Word>(testMoveFromIP, 0xFDED) },
+            { "Move to IP", setupFunction<iris::Word>(testMoveToIP, 0xFDED) },
             /// @todo implement loads and stores for the different spaces
         },
     },
