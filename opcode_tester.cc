@@ -288,27 +288,54 @@ bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
     return verifyResult<iris::Word>("move to ip failed!", c.getIP(), src1);
 }
 
-template<LogicalOperation op>
+template<LogicalOperation op, bool testAllCombinations = false>
 bool testLogicalOperationKind(iris::Core& c) noexcept {
-    if constexpr (op == LogicalOperation::Not) {
-        return testLogicalOperation<op>(c, 0) &&
-               testLogicalOperation<op>(c, 0xFFFF) &&
-               testLogicalOperation<op>(c, 1);
-    } else {
-        return testLogicalOperation<op>(c, 0xFDED, 0x000F) &&
-               testLogicalOperation<op>(c, 0xFDED, 0x00F0) &&
-               testLogicalOperation<op>(c, 0xFDED, 0x0F00) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xF000) &&
-               testLogicalOperation<op>(c, 0xFDED, 0x00FF) &&
-               testLogicalOperation<op>(c, 0xFDED, 0x0FF0) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xFF00) &&
-               testLogicalOperation<op>(c, 0xFDED, 0x0FFF) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xFFF0) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xFFFF) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xF00F) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xFF0F) &&
-               testLogicalOperation<op>(c, 0xFDED, 0xF0FF);
+    iris::DoubleWord start = 0;
+    iris::DoubleWord end = 0x10000;
+    if constexpr (!testAllCombinations) {
+        if constexpr (op == LogicalOperation::Not) {
+            start = 0xFFFF;
+            end = 0x10002;
+        } else {
+            start = 0xFDED;
+            end = start + 1;
+        }
     }
+    std::function<bool(iris::Word)> fn = nullptr;
+    if constexpr (op == LogicalOperation::Not) {
+        fn = [&c](iris::Word i) { return testLogicalOperation<op>(c, i); };
+    } else {
+        static constexpr iris::Word masks[] = {
+            0x000F,
+            0x00F0,
+            0x0F00,
+            0xF000,
+            0x00FF,
+            0x0FF0,
+            0xFF00,
+            0x0FFF,
+            0xFFF0,
+            0xFFFF,
+            0xF00F,
+            0xFF0F,
+            0xF0FF,
+            0xFDED,
+        };
+        fn = [&c](iris::Word i) {
+            for (const auto& mask : masks) {
+                if (!testLogicalOperation<op>(c,static_cast<iris::Word>(i), mask)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+    }
+    for (iris::DoubleWord i = start; i < end; ++i) {
+        if (!fn(static_cast<iris::Word>(i))) {
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -338,12 +365,12 @@ bool instructionTests(iris::Core& c) {
     //-----------------------------------------------------------------------------
     // Memory 
     //-----------------------------------------------------------------------------
-    if (!testCopyRegister(c, 32)) { return true; }
-    if (!testAssignRegister(c, 128)) { return true; }
-    if (!testPushRegisterOperation(c, 0xFDED)) { return true; }
-    if (!testPopOperation(c, 0xFDED)) { return true; }
-    if (!testMoveFromIP(c, 0xFDED)) { return true; }
-    if (!testMoveToIP(c, 0xFDED)) { return true; }
+    if (!testCopyRegister(c, 32) ||
+        !testAssignRegister(c, 128) ||
+        !testPushRegisterOperation(c, 0xFDED) ||
+        !testPopOperation(c, 0xFDED) ||
+        !testMoveFromIP(c, 0xFDED) ||
+        !testMoveToIP(c, 0xFDED)) { return true; }
     /// @todo test the data, io, and code operations
     //-----------------------------------------------------------------------------
     // Branch 
