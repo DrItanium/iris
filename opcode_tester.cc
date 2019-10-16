@@ -234,6 +234,13 @@ bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     c.invoke(iris::instructions::branch(src1));
     return verifyResult<iris::Word>(c.getIP(), src1);
 }
+bool testBranchImmediateAndLinkOperation(iris::Core& c, iris::Word src1) noexcept {
+    setRegisters<iris::Word>(c, 0, 0, 0);
+    c.setIP(0);
+    c.invoke(iris::instructions::call(17_reg, src1));
+    return verifyResult<iris::Word>(c.getIP(), src1) &&
+           verifyResult<iris::Word>(17_reg, 1, c);
+}
 
 bool testBranchRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, src1, 0, 0);
@@ -254,6 +261,15 @@ bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) no
     c.invoke(iris::instructions::branch(src1));
     auto check = 0x20 + src1;
     return verifyResult<iris::Word>(c.getIP(), check);
+}
+
+bool testBranchRelativeImmediateAndLinkOperation(iris::Core& c, iris::Offset16 src1) noexcept {
+    setRegisters<iris::Word>(c, 0, 0, 0);
+    c.setIP(0x20);
+    c.invoke(iris::instructions::call(17_reg, src1));
+    auto check = 0x20 + src1;
+    return verifyResult<iris::Word>(c.getIP(), check) &&
+           verifyResult<iris::Word>(17_reg, 0x21, c);
 }
 
 bool testMoveFromIP(iris::Core& c, iris::Address src1) noexcept {
@@ -420,7 +436,6 @@ TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T)> fn, T first
     return [fn, first, second, third](iris::Core& c) { return fn(c, first, second, third); };
 }
 TestSuites suites {
-    /// @todo implement compare checks
     {
         "Arithmetic Operation Validation", {
             { "Add Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Add> },
@@ -436,7 +451,9 @@ TestSuites suites {
     {
         "Branch Operation Validation", {
             { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
+            { "Branch Absolute Immediate and Link", setupFunction<iris::Word>(testBranchImmediateAndLinkOperation, 0xFDED) },
             { "Branch Relative Immediate", setupFunction<iris::SignedWord>(testBranchRelativeImmediateOperation, -1) },
+            { "Branch Relative Immediate and Link", setupFunction<iris::SignedWord>(testBranchRelativeImmediateAndLinkOperation, -1) },
             { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
             { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
@@ -469,6 +486,7 @@ TestSuites suites {
             { "Pop Register from stack", [](auto& c) noexcept { return testPopOperation(c, 0xFDED); } },
             { "Move from IP", [](auto& c) noexcept { return testMoveFromIP(c, 0xFDED); } },
             { "Move to IP", [](auto& c) noexcept { return testMoveToIP(c, 0xFDED); } },
+            /// @todo implement loads and stores for the different spaces
         },
     },
     { 
