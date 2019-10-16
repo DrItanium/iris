@@ -404,6 +404,95 @@ bool testNotEquals(iris::Core& c) noexcept {
     return true;
 }
 
+bool testLessThan(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = static_cast<iris::Word>(i) < static_cast<iris::Word>(j);
+            c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
+                return false;
+            }
+
+            setRegisters<iris::SignedWord>(c, 0, i, j);
+            result = static_cast<iris::SignedWord>(i) < static_cast<iris::SignedWord>(j);
+            c.invoke(iris::instructions::CompareLessThanSigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool testLessThanOrEqualTo(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = static_cast<iris::Word>(i) <= static_cast<iris::Word>(j);
+            c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
+                return false;
+            }
+
+            setRegisters<iris::SignedWord>(c, 0, i, j);
+            result = static_cast<iris::SignedWord>(i) <= static_cast<iris::SignedWord>(j);
+            c.invoke(iris::instructions::CompareLessThanOrEqualToSigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool testGreaterThan(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = static_cast<iris::Word>(i) > static_cast<iris::Word>(j);
+            c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
+                return false;
+            }
+
+            setRegisters<iris::SignedWord>(c, 0, i, j);
+            result = static_cast<iris::SignedWord>(i) > static_cast<iris::SignedWord>(j);
+            c.invoke(iris::instructions::CompareGreaterThanSigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool testGreaterThanOrEqualTo(iris::Core& c) noexcept {
+    for (auto i = 0; i < 0x100; ++i) {
+        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
+        for (auto j = i; j < 0x100; ++j) {
+            setRegisters<iris::Word>(c, 0, i, j);
+            auto result = static_cast<iris::Word>(i) >= static_cast<iris::Word>(j);
+            c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
+                return false;
+            }
+
+            setRegisters<iris::SignedWord>(c, 0, i, j);
+            result = static_cast<iris::SignedWord>(i) >= static_cast<iris::SignedWord>(j);
+            c.invoke(iris::instructions::CompareGreaterThanOrEqualToSigned({ 17_reg, 18_reg, 19_reg }));
+            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 template<typename T>
 TestCaseBody setupFunction(std::function<bool(iris::Core&, T)> fn, T value) noexcept {
     return [fn, value](iris::Core& c) { return fn(c, value); };
@@ -440,6 +529,10 @@ TestSuites suites {
         "Compare Operation Validation", {
             { "Equals", testEquals },
             { "Not Equals", testNotEquals },
+            { "Less Than Signed and Unsigned", testLessThan },
+            { "Less Than Or Equal To Signed and Unsigned", testLessThanOrEqualTo },
+            { "Greater Than Signed and Unsigned", testGreaterThan },
+            { "Greater Than Or Equal To Signed and Unsigned", testGreaterThanOrEqualTo },
         },
     },
     {
