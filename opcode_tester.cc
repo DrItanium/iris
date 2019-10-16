@@ -349,35 +349,11 @@ bool testLogicalOperationKind(iris::Core& c) noexcept {
     }
     return true;
 }
-
+template<ArithmeticOperation op>
 bool testArithmeticOperationKinds(iris::Core& c) noexcept {
     auto innerBody = [&c](iris::DoubleWord i, iris::DoubleWord j) noexcept {
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Add>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Add>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Subtract>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Subtract>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Multiply>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Multiply>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Divide>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Divide>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::Remainder>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::Remainder>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::ShiftLeft>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::ShiftLeft>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
-                    return false;
-                }
-                if (!testArithmeticOperation<iris::Word, ArithmeticOperation::ShiftRight>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
-                        !testArithmeticOperation<iris::SignedWord, ArithmeticOperation::ShiftRight>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
+                if (!testArithmeticOperation<iris::Word, op>(c, static_cast<iris::Word>(i), static_cast<iris::Word>(j)) ||
+                        !testArithmeticOperation<iris::SignedWord, op>(c, static_cast<iris::SignedWord>(i), static_cast<iris::SignedWord>(j))) {
                     return false;
                 }
                 return true;
@@ -406,13 +382,20 @@ TestCaseBody setupFunction(std::function<bool(iris::Core&, T, T, T)> fn, T first
     return [fn, first, second, third](iris::Core& c) { return fn(c, first, second, third); };
 }
 TestSuites suites {
+    /// @todo test the rest of the core branch kinds
+    /// @todo implement compare checks
     {
-        "Instruction Validation", {
-            { "Arithmetic Operations", testArithmeticOperationKinds},
+        "Arithmetic Operation Validation", {
+            { "Add Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Add> },
+            { "Subtract Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Subtract> },
+            { "Multiply Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Multiply> },
+            { "Divide Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Divide> },
+            { "Remainder Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::Remainder> },
+            { "Shift Left Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::ShiftLeft> },
+            { "Shift Right Signed and Unsigned", testArithmeticOperationKinds<ArithmeticOperation::ShiftRight> },
         },
+
     },
-        /// @todo test the rest of the core branch kinds
-        /// @todo implement compare checks
     {
         "Branch Operation Validation", {
             { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
