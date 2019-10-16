@@ -397,13 +397,6 @@ bool testArithmeticOperationKinds(iris::Core& c) noexcept {
     }
     return true;
 }
-bool branchTests(iris::Core& c) noexcept {
-    return testBranchImmediateOperation(c, 0xFDED) &&
-           testBranchRelativeImmediateOperation(c, -1) &&
-           testBranchRegisterOperation(c, 0xFDED) &&
-           testBranchConditionalRegisterOperation(c, 0xFDED, 1, 0xFDED) &&
-           testBranchConditionalRegisterOperation(c, 0xFDED, 0, 0);
-}
 template<typename T>
 TestCaseBody setupFunction(std::function<bool(iris::Core&, T)> fn, T value) noexcept {
     return [fn, value](iris::Core& c) { return fn(c, value); };
