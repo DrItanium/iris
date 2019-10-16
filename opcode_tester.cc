@@ -40,12 +40,14 @@ using TestSuites = std::list<TestSuite>;
 bool executeTestSuite(const TestSuite& ts, iris::Core& c) noexcept {
     auto [ sname, suite ] = ts;
     std::cout << "Executing Test Suite: " << sname << std::endl;
+    auto index = 0;
     for (auto const& tc : suite) {
         auto [title, op] = tc;
-        std::cout << "\tExecuting Test Case: " << title << std::endl;
+        std::cout << "\tExecuting Test Case " << index << ": " << title << std::endl;
         if (!op(c)) {
             return false;
         }
+        ++index;
     }
     return true;
 }
@@ -65,7 +67,6 @@ bool verifyResult(const std::string& failMsg, iris::RegisterIndex got, T expecte
     return verifyResult<T>(failMsg, c.getRegisterValue<T>(got), expected);
 }
 bool codeTests(iris::Core& c) {
-    std::cout << "\t1. Write and readback from code memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         auto valueToWrite = ~i;
         auto address = static_cast<iris::Address>(i);
@@ -78,8 +79,6 @@ bool codeTests(iris::Core& c) {
 
 }
 bool dataTests(iris::Core& c) {
-    std::cout << "Data writing tests" << std::endl;
-    std::cout << "\t1. Write and readback from data memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         iris::Word valueToWrite(~i);
         iris::Word address(i);
@@ -92,8 +91,6 @@ bool dataTests(iris::Core& c) {
     return true;
 }
 bool stackTests(iris::Core& c) {
-    std::cout << "Stack memory tests" << std::endl;
-    std::cout << "\t1. Write and readback from stack memory" << std::endl;
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         iris::Address address(i);
         iris::Word valueToWrite(~(i + 12));
@@ -420,31 +417,31 @@ bool branchTests(iris::Core& c) noexcept {
 }
 TestSuites suites {
     {
-        "Instruction Tests", {
-            { "Testing Arithmetic Operations", testArithmeticOperationKinds},
-            { "Testing Logical Not Operation", testLogicalOperationKind<LogicalOperation::Not>},
-            { "Testing Logical And Operation", testLogicalOperationKind<LogicalOperation::And>},
-            { "Testing Logical Or Operation", testLogicalOperationKind<LogicalOperation::Or>},
-            { "Testing Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
-            { "Testing Memory Operations", memoryClassTests},
-            { "Testing Branch Operations", branchTests},
+        "Instruction Validation", {
+            { "Arithmetic Operations", testArithmeticOperationKinds},
+            { "Logical Not Operation", testLogicalOperationKind<LogicalOperation::Not>},
+            { "Logical And Operation", testLogicalOperationKind<LogicalOperation::And>},
+            { "Logical Or Operation", testLogicalOperationKind<LogicalOperation::Or>},
+            { "Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
+            { "Memory Operations", memoryClassTests},
+            { "Branch Operations", branchTests},
             /// @todo test the rest of the core branch kinds
             /// @todo implement compare checks
         },
     },
     { 
-        "Code writing tests", {
-            {"", codeTests } 
+        "Code Space", {
+            {"Write and readback from code memory", codeTests } 
         },
     },
     { 
-        "Data writing tests", {
-            {"", dataTests},
+        "Data Space", {
+            {"Write and readback from data memory", dataTests},
         },
     },
     { 
-        "Stack writing tests", {
-            {"", stackTests},
+        "Stack Space", {
+            {"Write and readback from stack memory", stackTests},
         },
     },
 };
