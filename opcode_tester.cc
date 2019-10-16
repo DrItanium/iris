@@ -53,9 +53,8 @@ bool executeTestSuite(const TestSuite& ts, iris::Core& c) noexcept {
     return true;
 }
 template<typename T>
-bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
+bool verifyResult(T got, T expected) noexcept {
     if (got != expected) {
-        std::cout << failMsg << std::endl;
         std::cout << "\tGot: " << std::hex << got << std::endl;
         std::cout << "\tExpected: " << std::hex << expected << std::endl;
         return false;
@@ -64,15 +63,15 @@ bool verifyResult(const std::string& failMsg, T got, T expected) noexcept {
     }
 }
 template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, iris::RegisterIndex>, int> = 0>
-bool verifyResult(const std::string& failMsg, iris::RegisterIndex got, T expected, iris::Core& c) noexcept {
-    return verifyResult<T>(failMsg, c.getRegisterValue<T>(got), expected);
+bool verifyResult(iris::RegisterIndex got, T expected, iris::Core& c) noexcept {
+    return verifyResult<T>(c.getRegisterValue<T>(got), expected);
 }
 bool codeTests(iris::Core& c) {
     for (iris::DoubleWord i = 0; i < 0x10000; ++i) {
         auto valueToWrite = ~i;
         auto address = static_cast<iris::Address>(i);
         c.storeCode(address, valueToWrite);
-        if (!verifyResult("Write to code memory failed", c.loadCode(address), valueToWrite)) {
+        if (!verifyResult(c.loadCode(address), valueToWrite)) {
             return false;
         }
     }
@@ -85,7 +84,7 @@ bool dataTests(iris::Core& c) {
         iris::Word address(i);
         // data write
         c.storeData<iris::Address, iris::Word>(address, valueToWrite);
-        if (!verifyResult("Write to data memory failed", c.loadData(address), valueToWrite)) {
+        if (!verifyResult(c.loadData(address), valueToWrite)) {
             return false;
         }
     }
@@ -97,7 +96,7 @@ bool stackTests(iris::Core& c) {
         iris::Word valueToWrite(~(i + 12));
         // data write
         c.storeStack(address, valueToWrite);
-        if (!verifyResult("Write to stack memory failed", c.loadStack(address), valueToWrite)) {
+        if (!verifyResult(c.loadStack(address), valueToWrite)) {
             return false;
         }
     }
@@ -127,24 +126,15 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
     K check = 0;
     iris::instructions::Bits instruction = 0;
     bool expectDivideByZero = false;
-    std::stringstream ss;
-    if (std::is_signed_v<K>) {
-        ss << "integer ";
-    } else {
-        ss << "ordinal ";
-    }
     if constexpr (op == ArithmeticOperation::Add) {
         check = src1 + src2;
         instruction = iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{});
-        ss << "add ";
     } else if constexpr (op == ArithmeticOperation::Subtract) {
         check = src1 - src2;
         instruction = iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{});
-        ss << "subtract ";
     } else if constexpr (op == ArithmeticOperation::Multiply) {
         check = src1 * src2;
         instruction = iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{});
-        ss << "multiply ";
     } else if constexpr (op == ArithmeticOperation::Divide) {
         if (src2 != 0) {
             check = src1 / src2;
@@ -152,7 +142,6 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
             expectDivideByZero = true;
         }
         instruction = iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{});
-        ss << "divide ";
     } else if constexpr (op == ArithmeticOperation::Remainder) {
         if (src2 != 0) {
             check = src1 % src2;
@@ -160,28 +149,22 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
             expectDivideByZero = true;
         }
         instruction = iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{});
-        ss << "remainder ";
     } else if constexpr (op == ArithmeticOperation::ShiftLeft) {
         check = src1 << src2;
         instruction = iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{});
-        ss << "shift left ";
     } else if constexpr (op == ArithmeticOperation::ShiftRight) {
         check = src1 >> src2;
         instruction = iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{});
-        ss << "shift right ";
     } else {
         static_assert(iris::false_v<decltype(op)>, "Unimplemented arithmetic Operation");
     }
-    ss << "operation failed!";
-    auto str = ss.str();
     try {
         c.invoke(instruction);
-        return verifyResult<T>(str, 17_reg, check, c);
+        return verifyResult<T>(17_reg, check, c);
     } catch (iris::DivideByZeroException&) {
         if (expectDivideByZero) {
             return true;
         } else {
-            std::cout << str << std::endl;
             std::cout << "unexpected divide by zero happened!" << std::endl;
             return false;
         }
@@ -198,27 +181,22 @@ template<LogicalOperation op>
 bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2 = 0) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
     iris::Word check = 0u;
-    std::string msg;
     if constexpr (op == LogicalOperation::Not) {
         check = ~src1;
         c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
-        msg = "bitwise not operation failed!";
     } else if constexpr (op == LogicalOperation::And) {
         check = src1 & src2;
         c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
-        msg = "bitwise and operation failed!";
     } else if constexpr (op == LogicalOperation::Or) {
         check = src1 | src2;
         c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
-        msg = "bitwise or operation failed!";
     } else if constexpr (op == LogicalOperation::Xor) {
         check = src1 ^ src2;
         c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
-        msg = "bitwise xor operation failed!";
     } else {
         static_assert(iris::false_v<decltype(op)>, "Bad logical operation kind!");
     }
-    return verifyResult<iris::Word>(msg, 17_reg, check, c);
+    return verifyResult<iris::Word>(17_reg, check, c);
 }
 
 
@@ -226,24 +204,20 @@ bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = src1;
     c.invoke(iris::instructions::move(17_reg, 18_reg));
-    return verifyResult<iris::Word>("copy register operation failed!", 17_reg, check, c);
+    return verifyResult<iris::Word>(17_reg, check, c);
 }
 
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
     c.invoke(iris::instructions::move(17_reg, src1));
-    return verifyResult<iris::Word>("assign register operation failed!", 17_reg, src1, c);
+    return verifyResult<iris::Word>(17_reg, src1, c);
 }
 
 bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0); // r17 is the stack pointer in this case
     c.invoke(iris::instructions::push(17_reg, 18_reg));
-    return verifyResult<iris::Word>("push register operation failed!",
-            c.getRegisterValue<iris::Word>(17_reg), 
-            0 - 1) &&
-          verifyResult<iris::Word>("push register operation failed!",
-                  c.loadStack<iris::Word>(c.getRegisterValue(17_reg)),
-                  src1);
+    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(17_reg), 0 - 1) &&
+          verifyResult<iris::Word>(c.loadStack<iris::Word>(c.getRegisterValue(17_reg)), src1);
 }
 
 bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
@@ -251,53 +225,49 @@ bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
     c.invoke(iris::instructions::push(17_reg, 18_reg));
     c.setRegisterValue(18_reg, 0);
     c.invoke(iris::instructions::pop(17_reg, 18_reg));
-    return verifyResult<iris::Word>("pop operation failed!",
-            c.getRegisterValue<iris::Word>(17_reg), 
-            0) &&
-          verifyResult<iris::Word>("pop operation failed!",
-                  c.getRegisterValue(18_reg),
-                  src1);
+    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(17_reg), 0) &&
+          verifyResult<iris::Word>(c.getRegisterValue(18_reg), src1);
 }
 
 bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     c.setIP(0);
     c.invoke(iris::instructions::branch(src1));
-    return verifyResult<iris::Word>("branch immediate operation failed", c.getIP(), src1);
+    return verifyResult<iris::Word>(c.getIP(), src1);
 }
 
 bool testBranchRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, src1, 0, 0);
     c.setIP(0);
     c.invoke(iris::instructions::branch(17_reg));
-    return verifyResult<iris::Word>("branch register operation failed", c.getIP(), src1);
+    return verifyResult<iris::Word>(c.getIP(), src1);
 }
 
 bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris::Word cond, iris::Word expect) noexcept {
     setRegisters<decltype(src1)>(c, src1, cond, 0);
     c.setIP(0);
     c.invoke(iris::instructions::branchConditional(18_reg, 17_reg));
-    return verifyResult<iris::Word>("conditional branch register operation failed", c.getIP(), expect);
+    return verifyResult<iris::Word>(c.getIP(), expect);
 }
 
 bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     c.setIP(0x20);
     c.invoke(iris::instructions::branch(src1));
     auto check = 0x20 + src1;
-    return verifyResult<iris::Word>("branch relative immediate operation failed", c.getIP(), check);
+    return verifyResult<iris::Word>(c.getIP(), check);
 }
 
 bool testMoveFromIP(iris::Core& c, iris::Address src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
     c.setIP(src1);
     c.invoke(iris::instructions::MemoryMoveFromIP({17_reg}));
-    return verifyResult<iris::Word>("move from ip failed!", 17_reg, src1, c);
+    return verifyResult<iris::Word>(17_reg, src1, c);
 }
 
 bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
     setRegisters<decltype(src1)>(c, src1, 0, 0);
     c.setIP(0);
     c.invoke(iris::instructions::MemoryMoveToIP({17_reg}));
-    return verifyResult<iris::Word>("move to ip failed!", c.getIP(), src1);
+    return verifyResult<iris::Word>(c.getIP(), src1);
 }
 
 template<LogicalOperation op, bool testAllCombinations = true>
@@ -365,125 +335,81 @@ bool testArithmeticOperationKinds(iris::Core& c) noexcept {
     }
     return true;
 }
+enum class CompareOperations {
+    Equals,
+    NotEquals,
+    LessThan,
+    LessThanOrEqualTo,
+    GreaterThan,
+    GreaterThanOrEqualTo,
+};
 
-bool testEquals(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = i == j;
-            c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Equality check failed", 17_reg, result, c)) {
+template<CompareOperations op,
+    iris::DoubleWord outerStart = 0,
+    iris::DoubleWord outerEnd = 0x100,
+    iris::DoubleWord innerStart = outerStart,
+    iris::DoubleWord innerEnd = outerEnd>
+bool testCompareOperation(iris::Core& c) noexcept {
+    constexpr auto HasSignedVersion = (op != CompareOperations::Equals &&
+                                       op != CompareOperations::NotEquals);
+    for (auto i = outerStart; i < outerEnd; ++i) {
+        for (auto j = innerStart; j < innerEnd; ++j) {
+            bool result = false;
+            iris::Word ci = static_cast<iris::Word>(i);
+            iris::Word cj = static_cast<iris::Word>(j);
+            setRegisters<iris::Word>(c, 0, ci, cj);
+            if constexpr (op == CompareOperations::Equals) {
+                result = ci == cj;
+                c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg}));
+            } else if constexpr (op == CompareOperations::NotEquals) {
+                result = ci != cj;
+                c.invoke(iris::instructions::CompareNotEquals({ 17_reg, 18_reg, 19_reg}));
+            } else if constexpr (op == CompareOperations::LessThan) {
+                result = ci < cj;
+                c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg}));
+            } else if constexpr (op == CompareOperations::GreaterThan) {
+                result = ci > cj;
+                c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg}));
+            } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
+                result = ci <= cj;
+                c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
+            } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
+                result = ci >= cj;
+                c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
+            } else {
+                static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
+            }
+            if (!verifyResult<bool>(17_reg, result, c)) {
                 return false;
+            }
+            if constexpr (HasSignedVersion) {
+                result = false;
+                iris::SignedWord si = static_cast<iris::SignedWord>(i);
+                iris::SignedWord sj = static_cast<iris::SignedWord>(j);
+                setRegisters<iris::SignedWord>(c, 0, si, sj);
+                if constexpr (op == CompareOperations::LessThan) {
+                    result = si < sj;
+                    c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg}));
+                } else if constexpr (op == CompareOperations::GreaterThan) {
+                    result = si > sj;
+                    c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg}));
+                } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
+                    result = si <= sj;
+                    c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
+                } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
+                    result = si >= sj;
+                    c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
+                } else {
+                    static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
+                }
+                if (!verifyResult<bool>(17_reg, result, c)) {
+                    return false;
+                }
             }
         }
     }
     return true;
 }
-
-bool testNotEquals(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = i != j;
-            c.invoke(iris::instructions::CompareNotEquals({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Inequality check failed", 17_reg, result, c)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool testLessThan(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = static_cast<iris::Word>(i) < static_cast<iris::Word>(j);
-            c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
-                return false;
-            }
-
-            setRegisters<iris::SignedWord>(c, 0, i, j);
-            result = static_cast<iris::SignedWord>(i) < static_cast<iris::SignedWord>(j);
-            c.invoke(iris::instructions::CompareLessThanSigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool testLessThanOrEqualTo(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = static_cast<iris::Word>(i) <= static_cast<iris::Word>(j);
-            c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
-                return false;
-            }
-
-            setRegisters<iris::SignedWord>(c, 0, i, j);
-            result = static_cast<iris::SignedWord>(i) <= static_cast<iris::SignedWord>(j);
-            c.invoke(iris::instructions::CompareLessThanOrEqualToSigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool testGreaterThan(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = static_cast<iris::Word>(i) > static_cast<iris::Word>(j);
-            c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
-                return false;
-            }
-
-            setRegisters<iris::SignedWord>(c, 0, i, j);
-            result = static_cast<iris::SignedWord>(i) > static_cast<iris::SignedWord>(j);
-            c.invoke(iris::instructions::CompareGreaterThanSigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool testGreaterThanOrEqualTo(iris::Core& c) noexcept {
-    for (auto i = 0; i < 0x100; ++i) {
-        // eliminate chain walk downs by computing both i,j and j,i versions at the same time
-        for (auto j = i; j < 0x100; ++j) {
-            setRegisters<iris::Word>(c, 0, i, j);
-            auto result = static_cast<iris::Word>(i) >= static_cast<iris::Word>(j);
-            c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than unsigned check failed", 17_reg, result, c)) {
-                return false;
-            }
-
-            setRegisters<iris::SignedWord>(c, 0, i, j);
-            result = static_cast<iris::SignedWord>(i) >= static_cast<iris::SignedWord>(j);
-            c.invoke(iris::instructions::CompareGreaterThanOrEqualToSigned({ 17_reg, 18_reg, 19_reg }));
-            if (!verifyResult<bool>("Less than signed check failed", 17_reg, result, c)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 
 template<typename T>
 TestCaseBody setupFunction(std::function<bool(iris::Core&, T)> fn, T value) noexcept {
@@ -519,12 +445,12 @@ TestSuites suites {
     },
     {
         "Compare Operation Validation", {
-            { "Equals", testEquals },
-            { "Not Equals", testNotEquals },
-            { "Less Than Signed and Unsigned", testLessThan },
-            { "Less Than Or Equal To Signed and Unsigned", testLessThanOrEqualTo },
-            { "Greater Than Signed and Unsigned", testGreaterThan },
-            { "Greater Than Or Equal To Signed and Unsigned", testGreaterThanOrEqualTo },
+            { "Equals", testCompareOperation<CompareOperations::Equals>},
+            { "Not Equals", testCompareOperation<CompareOperations::NotEquals>},
+            { "Less Than Signed and Unsigned", testCompareOperation<CompareOperations::LessThan> },
+            { "Less Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::LessThanOrEqualTo>},
+            { "Greater Than Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThan> },
+            { "Greater Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThanOrEqualTo> },
         },
     },
     {
