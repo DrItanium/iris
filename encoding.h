@@ -127,14 +127,19 @@ namespace iris::instructions {
     constexpr auto push(RegisterIndex sp, RegisterIndex value) noexcept { return MemoryStackPush({sp, value}); }
     constexpr auto push(RegisterIndex sp, RegisterIndex temporary, Address value) noexcept { return std::make_tuple(move(temporary, value), push(sp, temporary)); }
     constexpr auto pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
-    constexpr auto storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
-    constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, UnsignedByte offset = 0) noexcept { return std::make_tuple(move(storage, value), storeData(dest, storage, offset)); }
-    constexpr auto loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
-    constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset = 0) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
-    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage, Address value, UnsignedByte offset = 0) noexcept { return std::make_tuple(move(storage, value), storeIO(addr, storage, offset)); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, UnsignedByte offset) noexcept { return std::make_tuple(move(storage, value), storeData(dest, storage, offset)); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex value) noexcept { return storeData(dest, value, 0); }
+    constexpr auto loadData(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept { return MemoryDataLoadWithOffset({addr, value, offset}); }
+    constexpr auto loadData(RegisterIndex addr, RegisterIndex value) noexcept { return loadData(addr, value, 0); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, UnsignedByte offset) noexcept { return MemoryIOStoreWithOffset({addr, value, offset}); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage, Address value, UnsignedByte offset) noexcept { return std::make_tuple(move(storage, value), storeIO(addr, storage, offset)); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage) noexcept { return storeIO(addr, storage, 0); }
     constexpr auto loadIO(RegisterIndex addr, RegisterIndex dest, UnsignedByte offset) noexcept { return MemoryIOLoadWithOffset({addr, dest, offset}); }
     constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeLoadWithOffset({addr, lower, offset}); }
+    constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower) noexcept { return loadCode(addr, lower, 0); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
+    constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower) noexcept { return storeCode(addr, lower, 0); }
     constexpr auto getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
     constexpr auto setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 

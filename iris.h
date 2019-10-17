@@ -383,6 +383,7 @@ class Core {
                 setRegisterValue(idx, getRegisterValue(idx) - actualCount);
             }
         }
+    public:
         template<typename T>
         void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
             getDoubleRegister(lower).put<T>(value);

@@ -506,25 +506,95 @@ TestSuites suites {
             { "Logical Xor Operation", testLogicalOperationKind<LogicalOperation::Xor>},
         },
     },
-    { "Memory Operation Validation", {
+    { "Miscellaneous Memory Operations", {
             { "Copy Register", setupFunction<iris::Word>(testCopyRegister,0xFDED) },
             { "Assign Register", setupFunction<iris::Word>(testAssignRegister, 0xFDED) },
-            { "Push Register onto stack", setupFunction<iris::Word>(testPushRegisterOperation, 0xFDED) },
-            { "Pop Register from stack", setupFunction<iris::Word>(testPopOperation, 0xFDED) },
             { "Move from IP", setupFunction<iris::Word>(testMoveFromIP, 0xFDED) },
             { "Move to IP", setupFunction<iris::Word>(testMoveToIP, 0xFDED) },
         },
     },
     { "Code Space", {
-            {"Write and readback from code memory", codeTests } 
+            {"Write and readback from code memory", codeTests },
+            { "Code Cell Write via instructions", 
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
+                    c.invoke(iris::instructions::storeCode(17_reg, 18_reg, 0));
+                    return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0), 0x89ABCDEF);
+                }, 
+            },
+            { "Code Cell Write via instructions (non zero address)", 
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
+                    c.invoke(iris::instructions::storeCode(17_reg, 18_reg, 0));
+                    return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0xFDED), 0x89ABCDEF);
+                }, 
+            },
+            { "Code cell read via instructions",
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    c.storeCode<iris::Address, iris::DoubleWord>(0, 0x89ABCDEF);
+                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    c.invoke(iris::instructions::loadCode(17_reg, 18_reg, 0));
+                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(18_reg);
+                    return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
+                }, 
+            },
+            { "Code cell read via instructions (non zero address)",
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    c.storeCode<iris::Address, iris::DoubleWord>(0xfded, 0x89ABCDEF);
+                    setRegisters<iris::Word>(c, 0xfded, 0, 0);
+                    c.invoke(iris::instructions::loadCode(17_reg, 18_reg, 0));
+                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(18_reg);
+                    return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
+                }, 
+            },
         },
     },
     { "Data Space", {
             {"Write and readback from data memory", dataTests},
+            { "Data cell write via instructions", 
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
+                    c.invoke(iris::instructions::storeData(17_reg, 18_reg, 0));
+                    return verifyResult<iris::Word>(c.loadData<iris::Address>(0), 0xCDEF);
+                }, 
+            },
+            { "Data cell write via instructions (non zero address)", 
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
+                    c.invoke(iris::instructions::storeData(17_reg, 18_reg, 0));
+                    return verifyResult<iris::Word>(c.loadData<iris::Address>(0xFDED), 0xCDEF);
+                }, 
+            },
+            { "Data cell read via instructions",
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    c.storeData<iris::Address, iris::Word>(0, 0xCDEF);
+                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    c.invoke(iris::instructions::loadData(17_reg, 18_reg));
+                    return verifyResult<iris::Word>(18_reg, 0xCDEF, c);
+                }, 
+            },
+            { "Data cell read via instructions (non zero address)",
+                [](iris::Core& c) {
+                    c.resetExecutionStatus();
+                    c.storeData<iris::Address, iris::Word>(0xfded, 0xCDEF);
+                    setRegisters<iris::Word>(c, 0xfded, 0, 0);
+                    c.invoke(iris::instructions::loadData(17_reg, 18_reg));
+                    return verifyResult<iris::Word>(18_reg, 0xCDEF, c);
+                }, 
+            },
         },
     },
     { "Stack Space", {
             {"Write and readback from stack memory", stackTests},
+            { "Push Register onto stack", setupFunction<iris::Word>(testPushRegisterOperation, 0xFDED) },
+            { "Pop Register from stack", setupFunction<iris::Word>(testPopOperation, 0xFDED) },
         },
     },
     { "IO Space", {
@@ -534,7 +604,7 @@ TestSuites suites {
                     setRegisters<iris::Word>(c, 0, 1, 0);
                     c.invoke(iris::instructions::storeIO(17_reg, 18_reg));
                     return verifyResult<iris::Word>(c.getTerminateCell(), 1) && verifyResult<bool>(c.getExecutingStatus(), false);
-                } 
+                }
             },
             { "Read from terminate cell",
                [](iris::Core& c) {
