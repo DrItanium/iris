@@ -53,7 +53,10 @@ class Core {
         Core() noexcept;
         ~Core() = default;
         void run();
-        void installIOMemoryMap(const IOMemoryMap& map);
+        void mapIntoIOSpace(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
+        void mapIntoIOSpace(Address, MMIOReadFunction);
+        void mapIntoIOSpace(Address, MMIOWriteFunction);
+        void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
         void terminateCycle();
     public: 
         template<typename A>

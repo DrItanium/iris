@@ -45,11 +45,11 @@ IOMemoryBank::store(Address address, Word value) {
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
-    _storage[address] = std::make_unique<LambdaMMIOEntry>(read, write);
+    return emplaceIntoMemory<LambdaMMIOEntry>(address, read, write);
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
-    _storage[address] = std::make_unique<CaptiveMMIOEntry>(entry);
+    return emplaceIntoMemory<CaptiveMMIOEntry>(address, entry);
 }
 void
 IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
@@ -75,37 +75,4 @@ MMIOEntry::read(Core&) {
     return 0;
 }
 
-void
-LambdaMMIOEntry::write(Core& c, Word value) {
-    _write(c, value);
-}
-
-Word
-LambdaMMIOEntry::read(Core& c) {
-    return _read(c);
-}
-
-void
-CaptiveMMIOEntry::write(Core& c, Word value) {
-    _other.write(c, value);
-}
-
-Word
-CaptiveMMIOEntry::read(Core& c) {
-    return _other.read(c);
-}
-
-LambdaMMIOEntry::LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
-CaptiveMMIOEntry::CaptiveMMIOEntry(MMIOEntry& capture) : _other(capture) { }
-void
-IOMemoryBank::installMemoryMap(const IOMemoryMap& map) {
-    for (const auto& entry : map) {
-        auto [ addr, value ] = entry;
-        std::visit([this, a = addr](auto&& value) { mapIntoMemory(a, value); }, value);
-    }
-}
-void
-IOMemoryBank::mapIntoMemory(Address baseAddress, ComplexMemoryMapping fn) {
-    fn(*this, baseAddress);
-}
 } // end namespace iris

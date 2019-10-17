@@ -54,10 +54,10 @@ struct LambdaMMIOEntry : public MMIOEntry {
             return 0;
         }
     public:
-        LambdaMMIOEntry(MMIOReadFunction, MMIOWriteFunction);
+        LambdaMMIOEntry(MMIOReadFunction read, MMIOWriteFunction write) : _read(read), _write(write) { }
         ~LambdaMMIOEntry() override = default;
-        void write(Core&, Word) override;
-        Word read(Core&) override;
+        void write(Core& c, Word addr) override { _write(c, addr); }
+        Word read(Core& c) override { return _read(c); }
     private:
         MMIOReadFunction _read;
         MMIOWriteFunction _write;
@@ -65,25 +65,13 @@ struct LambdaMMIOEntry : public MMIOEntry {
 };
 struct CaptiveMMIOEntry : public MMIOEntry {
     public:
-        CaptiveMMIOEntry(MMIOEntry& other);
+        CaptiveMMIOEntry(MMIOEntry& other) : _other(other) { }
         ~CaptiveMMIOEntry() override = default;
-        void write(Core&, Word) override;
-        Word read(Core&) override;
+        void write(Core& c, Word w) override { _other.write(c, w); }
+        Word read(Core& c) override { return _other.read(c); }
     private:
         MMIOEntry& _other;
 };
-class IOMemoryBank;
-using ComplexMemoryMapping = std::function<void(IOMemoryBank&, Address)>;
-using MemoryMapEntryKind = std::variant<MMIOEntry,
-      std::tuple<MMIOReadFunction, MMIOWriteFunction>,
-      MMIOReadFunction,
-      MMIOWriteFunction,
-      ComplexMemoryMapping>;
-using MemoryMapEntry = std::tuple<Address, MemoryMapEntryKind>;
-/**
- * Description of the io memory map to be installed into IO memory
- */
-using IOMemoryMap = std::map<Address, MemoryMapEntryKind>;
 /**
  * the MMIO space that is exposed to the program, one registers functions at
  * addresses into the space. Writing to an address which is not registers
@@ -102,8 +90,14 @@ class IOMemoryBank {
         void mapIntoMemory(Address, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOEntry&);
-        void mapIntoMemory(Address, ComplexMemoryMapping);
-        void installMemoryMap(const IOMemoryMap&);
+        template<typename T, typename ... Args>
+        void emplaceIntoMemory(Address addr, Args&& ... args) {
+            if (!_storage[addr]) {
+                _storage[addr] = std::make_unique<T>(args...);
+            } else {
+                throw MMIOException("Address ", std::hex, addr, " is already claimed by another device!");
+            }
+        }
     private:
         Core& _core;
         IOMemoryBank::MMIOTable _storage;

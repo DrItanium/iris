@@ -84,11 +84,6 @@ Core::terminateCycle() {
 }
 
 void
-Core::installIOMemoryMap(const IOMemoryMap& map) {
-    _io.installMemoryMap(map);
-}
-
-void
 Core::terminateCore(Core& c, Word code) {
     c.terminateCycle();
     c._terminateCell = code;
@@ -109,6 +104,26 @@ Core::invoke(DoubleWord ibits) {
         default:
             throw BadOperationException();
     }
+}
+
+void 
+Core::mapIntoIOSpace(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> tup) {
+    _io.mapIntoMemory(addr, tup);
+}
+void 
+Core::mapIntoIOSpace(Address addr, MMIOReadFunction read) {
+    _io.mapIntoMemory(addr, read);
+
+}
+void 
+Core::mapIntoIOSpace(Address addr, MMIOWriteFunction write) {
+    _io.mapIntoMemory(addr, write);
+
+}
+void 
+Core::mapIntoIOSpace(Address addr, MMIOReadFunction read, MMIOWriteFunction write) {
+    _io.mapIntoMemory(addr, read, write);
+
 }
 
 

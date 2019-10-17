@@ -43,7 +43,7 @@ class Exception : public std::exception {
             _msg = os.str();
         }
         virtual ~Exception() = default;
-        virtual const char* what() const noexcept override final;
+        const char* what() const noexcept override final;
         auto message() const { return _msg; }
     private:
         std::string _msg;
@@ -52,34 +52,40 @@ class Exception : public std::exception {
 class UnimplementedOperationException : public Exception {
     public:
         UnimplementedOperationException() noexcept : Exception("Unimplemented operation") { }
-        virtual ~UnimplementedOperationException() = default;
+        ~UnimplementedOperationException() override = default;
 };
 class BadOperationException : public Exception {
     public:
         BadOperationException() noexcept : Exception("Bad operation") { }
-        virtual ~BadOperationException() = default;
+        ~BadOperationException() override = default;
 };
 class ErrorInstructionException : public Exception {
     public:
         ErrorInstructionException() noexcept : Exception("Error instruction raised!") { }
-        virtual ~ErrorInstructionException() = default;
+        ~ErrorInstructionException() override = default;
 };
 class DivideByZeroException : public Exception {
     public:
         DivideByZeroException() noexcept : Exception("Divide by zero!") { }
-        virtual ~DivideByZeroException() = default;
+        ~DivideByZeroException() override = default;
 };
 class MemoryLoadException : public Exception {
     public:
         template<typename ... Args>
         MemoryLoadException(Args&& ... args) noexcept : Exception("MemoryLoadException: ", std::forward<Args>(args)...) { }
-        virtual ~MemoryLoadException() = default;
+        ~MemoryLoadException() override = default;
 };
 class MemoryStoreException : public Exception {
     public:
         template<typename ... Args>
         MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward<Args>(args)...) { }
-        virtual ~MemoryStoreException() = default;
+        ~MemoryStoreException() override = default;
+};
+class MMIOException : public Exception {
+    public:
+        template<typename ... Args>
+        MMIOException(Args&& ... args) noexcept : Exception("MMIOException: ", std::forward<Args>(args)...) { }
+        ~MMIOException() override = default;
 };
 } // end namespace iris
 
