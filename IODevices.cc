@@ -29,19 +29,17 @@ namespace iris {
 
 Word
 IOMemoryBank::load(Address address) {
-    if (_storage[address]) {
-        return _storage[address]->read(_core);
-    } else {
-        throw MemoryLoadException("illegal io read!");
+    if (!addressClaimed(address)) {
+        throw MMIOException("Address ", address, " is unmapped, cannot read from it");
     }
+    return _storage[address]->read(_core);
 }
 void
 IOMemoryBank::store(Address address, Word value) {
-    if (_storage[address]) {
-        _storage[address]->write(_core, value);
-    } else {
-        throw MemoryStoreException("illegal io write!");
+    if (!addressClaimed(address)) {
+        throw MMIOException("Address ", address, " is unmapped, cannot write to it");
     }
+    _storage[address]->write(_core, value);
 }
 void
 IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
