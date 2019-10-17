@@ -209,15 +209,7 @@ class Core {
         template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& input) noexcept {
             using K = std::decay_t<T>;
-            if constexpr (ManipulatesIP<K>) {
-                if constexpr (auto [ reg ] = input.arguments(); IsMoveToIPOperation<K>) {
-                    _ip.put(getRegisterValue(reg));
-                } else if constexpr (IsMoveFromIPOperation<K>) {
-                    setRegisterValue(reg, _ip.get());
-                } else {
-                    static_assert(false_v<K>, "Unimplemented ip manipulation operation!");
-                }
-            } else if constexpr (IsGPRManipulatorOperation<K>) {
+            if constexpr (IsGPRManipulatorOperation<K>) {
                 if constexpr (IsCopyRegisterOperation<K>) {
                     if (auto [dest, src] = input.arguments(); dest != src) {
                         setRegisterValue(dest, getRegisterValue(src));

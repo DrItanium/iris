@@ -53,13 +53,11 @@
     Code(StoreWithOffset, TwoRegisterU8)
     IO(LoadWithOffset, TwoRegisterU8)
     IO(StoreWithOffset, TwoRegisterU8)
-    Memory(MoveFromIP, OneRegister)
-    Memory(MoveToIP, OneRegister)
-    // all unconditional one way branches are redefined in terms of the conditional
-    // versions
 //-----------------------------------------------------------------------------
 // Branch
 //-----------------------------------------------------------------------------
+    // all unconditional one way branches are redefined in terms of the conditional
+    // versions
     Branch(ConditionalImmediate, OneRegisterU16)
     Branch(ConditionalRelativeImmediate, OneRegisterS16)
     Branch(RelativeImmediateAndLink, OneRegisterS16)

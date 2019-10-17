@@ -47,11 +47,6 @@ MultiInstructionExpression::defer(DelayedBits b) {
     addInstruction(b);
     mark();
 }
-void
-MultiInstructionExpression::addInstruction(ComplexBinaryInstruction tup) {
-    addInstruction(std::get<0>(tup));
-    addInstruction(std::get<1>(tup));
-}
 
 void
 MultiInstructionExpression::addInstruction(MultiInstructionExpression&& other) {

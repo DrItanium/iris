@@ -297,20 +297,6 @@ bool testBranchRelativeImmediateAndLinkOperation(iris::Core& c, iris::Offset16 s
            verifyResult<iris::Word>(17_reg, 0x21, c);
 }
 
-bool testMoveFromIP(iris::Core& c, iris::Address src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, 0, 0);
-    c.setIP(src1);
-    c.invoke(iris::instructions::MemoryMoveFromIP({17_reg}));
-    return verifyResult<iris::Word>(17_reg, src1, c);
-}
-
-bool testMoveToIP(iris::Core& c, iris::Address src1) noexcept {
-    setRegisters<decltype(src1)>(c, src1, 0, 0);
-    c.setIP(0);
-    c.invoke(iris::instructions::MemoryMoveToIP({17_reg}));
-    return verifyResult<iris::Word>(c.getIP(), src1);
-}
-
 template<LogicalOperation op, bool testAllCombinations = true>
 bool testLogicalOperationKind(iris::Core& c) noexcept {
     iris::DoubleWord start = 0;
@@ -509,8 +495,6 @@ TestSuites suites {
     { "Miscellaneous Memory Operations", {
             { "Copy Register", setupFunction<iris::Word>(testCopyRegister,0xFDED) },
             { "Assign Register", setupFunction<iris::Word>(testAssignRegister, 0xFDED) },
-            { "Move from IP", setupFunction<iris::Word>(testMoveFromIP, 0xFDED) },
-            { "Move to IP", setupFunction<iris::Word>(testMoveToIP, 0xFDED) },
         },
     },
     { "Code Space", {

@@ -17,7 +17,6 @@
 #define Code(op) Memory(Code ## op, IsCodeOperation)
 #define Data(op) Memory(Data ## op, IsDataOperation)
 #define IO(op) Memory(IO ## op, IsIOOperation)
-#define IP(op) Memory(op, ManipulatesIP)
 #define ArithmeticUnsigned(op) \
         GroupArithmetic(op ## Unsigned) \
         PartOfClass(Arithmetic ## op ## Unsigned, Ordinal)
@@ -73,12 +72,6 @@ PartOfClass(MemoryIOLoadWithOffset, Load)
 
 IO(StoreWithOffset)
 PartOfClass(MemoryIOStoreWithOffset, Store)
-
-IP(MoveToIP)
-PartOfClass(MemoryMoveToIP, MoveToIP)
-
-IP(MoveFromIP)
-PartOfClass(MemoryMoveFromIP, MoveFromIP)
 
 GroupMemory(AssignRegisterImmediate)
 PartOfClass(MemoryAssignRegisterImmediate, GPRManipulator)
@@ -169,7 +162,6 @@ CompareSignedUnsigned(GreaterThanOrEqualTo)
 #undef ArithmeticSigned
 #undef ArithmeticUnsigned
 #undef ArithmeticSignedUnsigned
-#undef IP
 #undef IO
 #undef Data
 #undef Code

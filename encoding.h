@@ -140,8 +140,6 @@ namespace iris::instructions {
     constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower) noexcept { return loadCode(addr, lower, 0); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, UnsignedByte offset) noexcept { return MemoryCodeStoreWithOffset({addr, lower, offset}); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower) noexcept { return storeCode(addr, lower, 0); }
-    constexpr auto getIP(RegisterIndex dest) noexcept { return MemoryMoveFromIP({dest}); }
-    constexpr auto setIP(RegisterIndex dest) noexcept { return MemoryMoveToIP({dest}); }
 
     // arithmetic operations
     constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
@@ -313,12 +311,15 @@ namespace iris::instructions {
             void addInstruction(Bits);
             void addInstruction(DelayedBits);
             void addInstruction(ExternalDelayedBits);
-            void addInstruction(ComplexBinaryInstruction);
             void addInstruction(MultiInstructionExpression&&);
             void addInstruction(Body b);
             template<typename ... Args>
             void addInstructions(Args&& ... instructions) {
                 (addInstruction(std::forward<Args>(instructions)), ...);
+            }
+            template<typename Tuple, size_t... Is>
+            void addInstruction(Tuple&& t, std::index_sequence<Is...>) {
+                addInstructions(std::get<Is>(t)...);
             }
             auto size() const noexcept { return _instructions.size(); }
             bool tooLarge() const noexcept { return size() > 0xFFFF; }
