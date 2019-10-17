@@ -90,13 +90,13 @@ class IOMemoryBank {
         void mapIntoMemory(Address, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
         void mapIntoMemory(Address, MMIOEntry&);
+        bool addressClaimed(Address addr) const noexcept { return static_cast<bool>(_storage[addr]); }
         template<typename T, typename ... Args>
         void emplaceIntoMemory(Address addr, Args&& ... args) {
-            if (!_storage[addr]) {
-                _storage[addr] = std::make_unique<T>(args...);
-            } else {
+            if (addressClaimed(addr)) {
                 throw MMIOException("Address ", std::hex, addr, " is already claimed by another device!");
             }
+            _storage[addr] = std::make_unique<T>(args...);
         }
     private:
         Core& _core;
