@@ -186,26 +186,18 @@ class Core {
             using D = DeterminedNumericType<K>;
             auto [ dest, rsrc1, rsrc2 ] = s.arguments();
             D src2 = static_cast<D>(0);
-            bool result = false;
+            iris::Word result = false;
             if constexpr (TreatArg2AsImmediate<K>) {
                 src2 = static_cast<D>(rsrc2);
             } else {
                 src2 = getRegisterValue(rsrc2);
             }
-            if constexpr (auto src1 = getRegisterValue<D>(rsrc1); IsEqualsOperation<K>) {
-                result = src1 == src2;
-            } else if constexpr (IsNotEqualsOperation<K>) {
-                result = src1 != src2;
-            } else if constexpr (IsLessThanOrEqualToOperation<K>) {
-                result = src1 <= src2;
-            } else if constexpr (IsGreaterThanOrEqualToOperation<K>) {
-                result = src1 >= src2;
-            } else if constexpr (IsLessThanOperation<K>) {
-                result = src1 < src2;
-            } else if constexpr (IsGreaterThanOperation<K>) {
-                result = src1 > src2;
+            if (auto src1 = getRegisterValue<D>(rsrc1); src1 < src2) {
+                result = 0b100;
+            } else if (src1 == src2) {
+                result = 0b010;
             } else {
-                static_assert(false_v<K>, "Bad compare operation!");
+                result = 0b001;
             }
             setRegisterValue(dest, result);
         }

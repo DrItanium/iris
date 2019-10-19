@@ -131,8 +131,9 @@ MultiInstructionExpression::dataStackSwap() {
 
 void
 MultiInstructionExpression::ifComponent(RegisterIndex idx) {
-    addInstruction(equalsZero(idx, idx));
-    conditionalForwardJump(idx);
+#warning "FIX THIS!"
+    //addInstruction(equalsZero(idx, idx));
+    //conditionalForwardJump(idx);
 }
 
 void

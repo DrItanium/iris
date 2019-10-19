@@ -59,12 +59,7 @@ namespace iris::instructions {
     // single instruction aliases useful for ease of use
     constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return LogicalBitwiseAnd({targetRegister, targetRegister, 0_reg}); }
     constexpr auto nop(RegisterIndex target = 0_reg) noexcept                                   { return LogicalBitwiseOr({target, target, 0_reg}); }
-    constexpr auto greaterThanZero(RegisterIndex dest, RegisterIndex src)  noexcept             { return CompareGreaterThanSigned({dest, src, 0_reg}); }
-    constexpr auto greaterThanOrEqualToZero(RegisterIndex dest, RegisterIndex src) noexcept     { return CompareGreaterThanOrEqualToSigned({dest, src, 0_reg}); }
-    constexpr auto lessThanZero(RegisterIndex dest, RegisterIndex src) noexcept                 { return CompareLessThanSigned({dest, src, 0_reg}); }
-    constexpr auto lessThanOrEqualToZero(RegisterIndex dest, RegisterIndex src)  noexcept       { return CompareLessThanOrEqualToSigned({dest, src, 0_reg}); }
-    constexpr auto equalsZero(RegisterIndex dest, RegisterIndex src)  noexcept                  { return CompareEquals({dest, src, 0_reg}); }
-    constexpr auto notEqualsZero(RegisterIndex dest, RegisterIndex src)  noexcept               { return CompareNotEquals({dest, src, 0_reg}); }
+    constexpr auto compareWithZero(RegisterIndex dest, RegisterIndex src) noexcept              { return CompareInteger({dest, src, 0_reg}); }
     template<typename T>
     constexpr auto move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
@@ -177,6 +172,7 @@ namespace iris::instructions {
     X(ShiftLeft);
     X(ShiftRight);
 #undef X
+#if 0
     constexpr auto branchIfZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex dest) noexcept {
         return std::make_tuple(equalsZero(cond, src0), branchConditional(cond, dest));
     }
@@ -249,6 +245,7 @@ namespace iris::instructions {
     constexpr auto selectIfLessThanOrEqualToZero(RegisterIndex cond, RegisterIndex src0, RegisterIndex then, RegisterIndex _else) noexcept {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), select(cond, then, _else));
     }
+#endif
     constexpr auto bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
     constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
     constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }

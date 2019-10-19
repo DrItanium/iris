@@ -385,24 +385,19 @@ bool testCompareOperation(iris::Core& c) noexcept {
             iris::Word ci = static_cast<iris::Word>(i);
             iris::Word cj = static_cast<iris::Word>(j);
             setRegisters<iris::Word>(c, 0, ci, cj);
+            c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
             if constexpr (op == CompareOperations::Equals) {
-                result = ci == cj;
-                c.invoke(iris::instructions::CompareEquals({ 17_reg, 18_reg, 19_reg}));
+                result = 0b010;
             } else if constexpr (op == CompareOperations::NotEquals) {
                 result = ci != cj;
-                c.invoke(iris::instructions::CompareNotEquals({ 17_reg, 18_reg, 19_reg}));
             } else if constexpr (op == CompareOperations::LessThan) {
                 result = ci < cj;
-                c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg}));
             } else if constexpr (op == CompareOperations::GreaterThan) {
                 result = ci > cj;
-                c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg}));
             } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
                 result = ci <= cj;
-                c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
             } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
                 result = ci >= cj;
-                c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
             } else {
                 static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
             }
@@ -414,18 +409,15 @@ bool testCompareOperation(iris::Core& c) noexcept {
                 iris::SignedWord si = static_cast<iris::SignedWord>(i);
                 iris::SignedWord sj = static_cast<iris::SignedWord>(j);
                 setRegisters<iris::SignedWord>(c, 0, si, sj);
+                c.invoke(iris::instructions::CompareInteger({ 17_reg, 18_reg, 19_reg}));
                 if constexpr (op == CompareOperations::LessThan) {
                     result = si < sj;
-                    c.invoke(iris::instructions::CompareLessThanUnsigned({ 17_reg, 18_reg, 19_reg}));
                 } else if constexpr (op == CompareOperations::GreaterThan) {
                     result = si > sj;
-                    c.invoke(iris::instructions::CompareGreaterThanUnsigned({ 17_reg, 18_reg, 19_reg}));
                 } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
                     result = si <= sj;
-                    c.invoke(iris::instructions::CompareLessThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
                 } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
                     result = si >= sj;
-                    c.invoke(iris::instructions::CompareGreaterThanOrEqualToUnsigned({ 17_reg, 18_reg, 19_reg}));
                 } else {
                     static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
                 }
