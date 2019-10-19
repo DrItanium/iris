@@ -40,8 +40,8 @@ struct MMIOEntry {
     public:
         MMIOEntry() = default;
         virtual ~MMIOEntry() = default;
-        virtual void write(Core&, Word);
-        virtual Word read(Core&);
+        virtual void write(Core&, Word) = 0;
+        virtual Word read(Core&) = 0;
 
 };
 struct LambdaMMIOEntry : public MMIOEntry {
@@ -85,11 +85,6 @@ class IOMemoryBank {
         ~IOMemoryBank() = default;
         Word load(Address);
         void store(Address, Word);
-        void mapIntoMemory(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
-        void mapIntoMemory(Address, MMIOReadFunction);
-        void mapIntoMemory(Address, MMIOWriteFunction);
-        void mapIntoMemory(Address, MMIOReadFunction, MMIOWriteFunction);
-        void mapIntoMemory(Address, MMIOEntry&);
         bool addressClaimed(Address addr) const noexcept { return static_cast<bool>(_storage[addr]); }
         template<typename T, typename ... Args>
         void emplaceIntoMemory(Address addr, Args&& ... args) {
@@ -98,6 +93,16 @@ class IOMemoryBank {
             }
             _storage[addr] = std::make_unique<T>(args...);
         }
+        void mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> tup) {
+            auto [ r, w ] = tup;
+            emplaceIntoMemory<LambdaMMIOEntry>(addr, r, w);
+        }
+        void mapIntoMemory(Address addr, MMIOReadFunction read) { mapIntoMemory(addr, read, LambdaMMIOEntry::illegalWriteError); }
+        void mapIntoMemory(Address addr, MMIOWriteFunction write) { mapIntoMemory(addr, LambdaMMIOEntry::illegalReadError, write); }
+        void mapIntoMemory(Address addr, MMIOReadFunction read, MMIOWriteFunction write) {
+            emplaceIntoMemory<LambdaMMIOEntry>(addr, read, write);
+        }
+        void mapIntoMemory(Address addr, MMIOEntry& entry) { emplaceIntoMemory<CaptiveMMIOEntry>(addr, entry); }
     private:
         Core& _core;
         IOMemoryBank::MMIOTable _storage;

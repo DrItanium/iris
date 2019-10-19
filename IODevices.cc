@@ -41,36 +41,4 @@ IOMemoryBank::store(Address address, Word value) {
     }
     _storage[address]->write(_core, value);
 }
-void
-IOMemoryBank::mapIntoMemory(Address address, MMIOReadFunction read, MMIOWriteFunction write) {
-    return emplaceIntoMemory<LambdaMMIOEntry>(address, read, write);
-}
-void
-IOMemoryBank::mapIntoMemory(Address address, MMIOEntry& entry) {
-    return emplaceIntoMemory<CaptiveMMIOEntry>(address, entry);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, MMIOReadFunction r) {
-    mapIntoMemory(addr, r, LambdaMMIOEntry::illegalWriteError);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, MMIOWriteFunction w) {
-    mapIntoMemory(addr, LambdaMMIOEntry::illegalReadError, w);
-}
-void
-IOMemoryBank::mapIntoMemory(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> t) {
-    auto [ r, w ] = t;
-    mapIntoMemory(addr, r, w);
-}
-void
-MMIOEntry::write(Core&, Word) {
-    throw MemoryStoreException("illegal io write!");
-}
-
-Word
-MMIOEntry::read(Core&) {
-    throw MemoryLoadException("illegal io read!");
-    return 0;
-}
-
 } // end namespace iris
