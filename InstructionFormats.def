@@ -67,12 +67,12 @@
 //-----------------------------------------------------------------------------
 // Compare
 //-----------------------------------------------------------------------------
-    NormalCompare(Equals)
-    NormalCompare(NotEquals)
-    NormalSignedUnsignedCompare(LessThan)
-    NormalSignedUnsignedCompare(GreaterThan)
-    NormalSignedUnsignedCompare(LessThanOrEqualTo)
-    NormalSignedUnsignedCompare(GreaterThanOrEqualTo)
+    X(CompareUnsigned, ThreeRegister)
+    X(CompareSigned, ThreeRegister)
+//-----------------------------------------------------------------------------
+// Compare and Branch
+//-----------------------------------------------------------------------------
+
 
 #undef NormalSignedCompare
 #undef NormalUnsignedCompare 
