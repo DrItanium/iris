@@ -52,7 +52,55 @@ namespace iris {
     constexpr Byte CompareOperation_Integer = Common_Compare | 0b0;
     constexpr Byte CompareOperation_Ordinal = Common_Compare | 0b1;
     constexpr Byte MajorOpcode_Memory = 0b0100'0000;
+    constexpr Byte MemoryManipulateKind = MajorOpcode_Memory | 0b00'0000;
+    constexpr Byte MemoryLoadKind = MemoryManipulateKind | 0b00'1000;
+    constexpr Byte MemoryStoreKind = MemoryManipulateKind | 0b00'0000;
+    constexpr Byte MemoryManipulateCode = MemoryManipulateKind | 0b00;
+    constexpr Byte MemoryManipulateData = MemoryManipulateKind | 0b01;
+    constexpr Byte MemoryManipulateStack = MemoryManipulateKind | 0b10;
+    constexpr Byte MemoryManipulateIO = MemoryManipulateKind | 0b11;
+#define X(space) \
+    constexpr Byte MemoryManipulate_Load ## space = MemoryLoadKind | MemoryManipulate ## space ; \
+    constexpr Byte MemoryManipulate_Store ## space = MemoryStoreKind | MemoryManipulate ## space
+    X(Code);
+    X(Data);
+    X(Stack);
+    X(IO);
+#undef X
+    constexpr Byte MemoryMiscKind = MajorOpcode_Memory | 0b00'1000;
+    constexpr Byte AssignRegisterImmediate = MemoryMiscKind | 0b000;
     constexpr Byte MajorOpcode_Branch = 0b1000'0000;
+    constexpr Byte ConditionalCode_NeverTake = MajorOpcode_Branch | 0b000;
+    constexpr Byte ConditionalCode_GreaterThan = MajorOpcode_Branch | 0b001;
+    constexpr Byte ConditionalCode_Equals = MajorOpcode_Branch | 0b010;
+    constexpr Byte ConditionalCode_LessThan = MajorOpcode_Branch | 0b100;
+    constexpr Byte ConditionalCode_LessThanOrEqual = ConditionalCode_LessThan | ConditionalCode_Equals;
+    constexpr Byte ConditionalCode_GreaterThanOrEqual = ConditionalCode_GreaterThan | ConditionalCode_Equals;
+    constexpr Byte ConditionalCode_Unconditional = ConditionalCode_GreaterThan | ConditionalCode_LessThan | ConditionalCode_Equals;
+    constexpr Byte ConditionalCode_NotEquals = ConditionalCode_LessThan | ConditionalCode_GreaterThan;
+    constexpr Byte BranchAction_TreatTargetAsRelative = MajorOpcode_Branch | 0b0'00'000;
+    constexpr Byte BranchAction_TreatTargetAsAbsolute = MajorOpcode_Branch | 0b1'00'000;
+    constexpr Byte BranchAction_RegisterForm = MajorOpcode_Branch | 0b0'0'000;
+    constexpr Byte BranchAction_ImmediateForm = MajorOpcode_Branch | 0b1'0'000;
+#define Y(sign, form, cc) \
+        constexpr Byte Branch_ ## sign ## _ ## form ## _ ## cc = MajorOpcode_Branch | \
+        ConditionalCode_ ## cc | \
+        BranchAction_TreatTargetAs ## sign | \
+        BranchAction_ ## form ## Form 
+#define X(cc) \
+    Y(Relative, Immediate, cc); \
+    Y(Relative, Register, cc); \
+    Y(Absolute, Immediate, cc); \
+    Y(Absolute, Register, cc); 
+    X(NeverTake);
+    X(GreaterThan);
+    X(Equals);
+    X(LessThanOrEqual);
+    X(GreaterThanOrEqual);
+    X(Unconditional);
+    X(NotEquals);
+#undef X
+#undef Y
     constexpr Byte MajorOpcode_Unused = 0b1100'0000;
 
 
