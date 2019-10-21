@@ -401,8 +401,9 @@ class Core {
         void setTerminateCell(Word value) noexcept { _terminateCell = value; }
     private:
         RegisterBank _regs;
-        // upgrade to a 1 megaword address space
-        MemoryBank _memory;
+        CodeMemoryBank _code;
+        DataMemoryBank _data;
+        StackMemoryBank _stack;
         IOMemoryBank _io;
         Register _ip;
         bool _executing = false;
