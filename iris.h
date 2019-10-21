@@ -406,6 +406,7 @@ class Core {
         StackMemoryBank _stack;
         IOMemoryBank _io;
         Register _ip;
+        GenericRegister<Byte, 0b111>  _cond;
         bool _executing = false;
         bool _advanceIP = true;
         Word _terminateCell = 0;
