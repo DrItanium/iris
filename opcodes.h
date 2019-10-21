@@ -31,115 +31,11 @@
 #include "types.h"
 
 namespace iris {
-    constexpr Byte MajorOpcode_Common = 0b0000'0000;
-    constexpr Byte Common_Error = MajorOpcode_Common | 0b00'0000;
-    constexpr Byte Common_Arithmetic = MajorOpcode_Common | 0b01'0000;
-    constexpr Byte TreatArithmeticOperationAsInteger = Common_Arithmetic | 0b0000;
-    constexpr Byte TreatArithmeticOperationAsOrdinal = Common_Arithmetic | 0b1000;
-    constexpr Byte ArithmeticOperation_Add           = Common_Arithmetic | 0b000;
-    constexpr Byte ArithmeticOperation_Subtract      = Common_Arithmetic | 0b001;
-    constexpr Byte ArithmeticOperation_Multiply      = Common_Arithmetic | 0b010;
-    constexpr Byte ArithmeticOperation_Divide        = Common_Arithmetic | 0b011;
-    constexpr Byte ArithmeticOperation_Remainder     = Common_Arithmetic | 0b100;
-    constexpr Byte ArithmeticOperation_ShiftLeft     = Common_Arithmetic | 0b101;
-    constexpr Byte ArithmeticOperation_ShiftRight    = Common_Arithmetic | 0b110;
-    constexpr Byte Common_Bitwise = MajorOpcode_Common | 0b10'0000;
-    constexpr Byte BitwiseOperation_Not = Common_Bitwise | 0b00;
-    constexpr Byte BitwiseOperation_And = Common_Bitwise | 0b01;
-    constexpr Byte BitwiseOperation_Or  = Common_Bitwise | 0b10;
-    constexpr Byte BitwiseOperation_Xor = Common_Bitwise | 0b11;
-    constexpr Byte Common_Compare = MajorOpcode_Common | 0b10'0100;
-    constexpr Byte CompareOperation_Integer = Common_Compare | 0b0;
-    constexpr Byte CompareOperation_Ordinal = Common_Compare | 0b1;
-    constexpr Byte MajorOpcode_Memory = 0b0100'0000;
-    constexpr Byte MemoryManipulateKind = MajorOpcode_Memory | 0b00'0000;
-    constexpr Byte MemoryLoadKind = MemoryManipulateKind | 0b00'1000;
-    constexpr Byte MemoryStoreKind = MemoryManipulateKind | 0b00'0000;
-    constexpr Byte MemoryManipulateCode = MemoryManipulateKind | 0b00;
-    constexpr Byte MemoryManipulateData = MemoryManipulateKind | 0b01;
-    constexpr Byte MemoryManipulateStack = MemoryManipulateKind | 0b10;
-    constexpr Byte MemoryManipulateIO = MemoryManipulateKind | 0b11;
-#define X(space) \
-    constexpr Byte MemoryManipulate_Load ## space = MemoryLoadKind | MemoryManipulate ## space ; \
-    constexpr Byte MemoryManipulate_Store ## space = MemoryStoreKind | MemoryManipulate ## space
-    X(Code);
-    X(Data);
-    X(Stack);
-    X(IO);
-#undef X
-    constexpr Byte MemoryMiscKind = MajorOpcode_Memory | 0b00'1000;
-    constexpr Byte AssignRegisterImmediate = MemoryMiscKind | 0b000;
-    constexpr Byte MajorOpcode_Branch = 0b1000'0000;
-    constexpr Byte ConditionalCode_NeverTake = MajorOpcode_Branch | 0b000;
-    constexpr Byte ConditionalCode_GreaterThan = MajorOpcode_Branch | 0b001;
-    constexpr Byte ConditionalCode_Equals = MajorOpcode_Branch | 0b010;
-    constexpr Byte ConditionalCode_LessThan = MajorOpcode_Branch | 0b100;
-    constexpr Byte ConditionalCode_LessThanOrEqual = ConditionalCode_LessThan | ConditionalCode_Equals;
-    constexpr Byte ConditionalCode_GreaterThanOrEqual = ConditionalCode_GreaterThan | ConditionalCode_Equals;
-    constexpr Byte ConditionalCode_Unconditional = ConditionalCode_GreaterThan | ConditionalCode_LessThan | ConditionalCode_Equals;
-    constexpr Byte ConditionalCode_NotEquals = ConditionalCode_LessThan | ConditionalCode_GreaterThan;
-    constexpr Byte BranchAction_TreatTargetAsRelative = MajorOpcode_Branch | 0b0'00'000;
-    constexpr Byte BranchAction_TreatTargetAsAbsolute = MajorOpcode_Branch | 0b1'00'000;
-    constexpr Byte BranchAction_RegisterForm = MajorOpcode_Branch | 0b0'0'000;
-    constexpr Byte BranchAction_ImmediateForm = MajorOpcode_Branch | 0b1'0'000;
-#define Y(sign, form, cc) \
-        constexpr Byte Branch_ ## sign ## _ ## form ## _ ## cc = MajorOpcode_Branch | \
-        ConditionalCode_ ## cc | \
-        BranchAction_TreatTargetAs ## sign | \
-        BranchAction_ ## form ## Form 
-#define X(cc) \
-    Y(Relative, Immediate, cc); \
-    Y(Relative, Register, cc); \
-    Y(Absolute, Immediate, cc); \
-    Y(Absolute, Register, cc); 
-    X(NeverTake);
-    X(GreaterThan);
-    X(Equals);
-    X(LessThanOrEqual);
-    X(GreaterThanOrEqual);
-    X(Unconditional);
-    X(NotEquals);
-#undef X
-#undef Y
-    constexpr Byte MajorOpcode_Unused = 0b1100'0000;
 
 
 
-    enum class ArithmeticOpcodes : Byte {
-        IntegerError = 0b0000'0000,
-        IntegerAdd,
-        IntegerSubtract,
-        IntegerMultiply,
-        IntegerDivide,
-        IntegerRemainder,
-        IntegerShiftLeft,
-        IntegerShiftRight,
-        OrdinalError = 0b0000'1000,
-        OrdinalAdd,
-        OrdinalSubtract,
-        OrdinalMultiply,
-        OrdinalDivide,
-        OrdinalRemainder,
-        OrdinalShiftLeft,
-        OrdinalShiftRight,
-    };
     enum class Opcodes : UnsignedWord {
-        Error = 0b0000'0000,
-        IntegerAdd,
-        IntegerSubtract,
-        IntegerMultiply,
-        IntegerDivide,
-        IntegerRemainder,
-        IntegerShiftLeft,
-        IntegerShiftRight,
-        OrdinalError = 0b0000'1000,
-        OrdinalAdd,
-        OrdinalSubtract,
-        OrdinalMultiply,
-        OrdinalDivide,
-        OrdinalRemainder,
-        OrdinalShiftLeft,
-        OrdinalShiftRight,
+        Error = 0,
 #define X(t, _) t ,
 #include "InstructionFormats.def"
 #undef X
@@ -153,14 +49,6 @@ namespace iris {
 #define X(t, f) struct t ## Instruction ; 
 #include "InstructionFormats.def"
 #undef X
-
-using DecodedInstruction = std::variant<
-            std::monostate, 
-            ErrorInstruction
-#define X(t, f) , t ## Instruction
-#include "InstructionFormats.def"
-#undef X
-            >;
 
 /**
  * The fields of an iris instruction are:
@@ -186,7 +74,7 @@ using DecodedInstruction = std::variant<
  * implied, the simulator just dispatches on the 8-bit code directly. The separation is 
  * purely there to separate instructions out. 
  */
-struct Instruction {
+class Instruction {
     private:
         template<typename T = RegisterIndex>
         static constexpr T convertByteIndex(Byte result) noexcept {
@@ -285,7 +173,6 @@ struct Instruction {
         }
         constexpr Byte getImm8() const noexcept { return getHighestQuarter(); }
         constexpr Word getImm16() const noexcept { return getUpperHalf(); }
-        constexpr std::optional<DecodedInstruction> decode() const noexcept;
         constexpr auto getRawBits() const noexcept { return _bits; }
         
     public:
@@ -355,7 +242,128 @@ struct Instruction {
         DoubleWord _bits;
 };
 
-static_assert(sizeof(Instruction) == sizeof(DoubleWord), "Instruction size mismatch large!");
+template<Byte opcode>
+class DispatchableInstruction {
+    private:
+        template<Byte mask>
+        static constexpr bool CommonCompareBody = (opcode & mask) == mask;
+    public:
+        DispatchableInstruction() = delete;
+        ~DispatchableInstruction() = delete;
+        DispatchableInstruction(const DispatchableInstruction&) = delete;
+        DispatchableInstruction(DispatchableInstruction&&) = delete;
+        DispatchableInstruction operator=(const DispatchableInstruction&) = delete;
+        DispatchableInstruction operator=(DispatchableInstruction&&) = delete;
+    private:
+    constexpr static Byte MajorOpcode_Branch = 0b1000'0000;
+    constexpr static Byte ConditionalCode_NeverTake = MajorOpcode_Branch | 0b000;
+    constexpr static Byte ConditionalCode_GreaterThan = MajorOpcode_Branch | 0b001;
+    constexpr static Byte ConditionalCode_Equals = MajorOpcode_Branch | 0b010;
+    constexpr static Byte ConditionalCode_LessThan = MajorOpcode_Branch | 0b100;
+    constexpr static Byte ConditionalCode_LessThanOrEqual = ConditionalCode_LessThan | ConditionalCode_Equals;
+    constexpr static Byte ConditionalCode_GreaterThanOrEqual = ConditionalCode_GreaterThan | ConditionalCode_Equals;
+    constexpr static Byte ConditionalCode_Unconditional = ConditionalCode_GreaterThan | ConditionalCode_LessThan | ConditionalCode_Equals;
+    constexpr static Byte ConditionalCode_NotEquals = ConditionalCode_LessThan | ConditionalCode_GreaterThan;
+    constexpr static Byte BranchAction_TreatTargetAsRelative = MajorOpcode_Branch | 0b0'00'000;
+    constexpr static Byte BranchAction_TreatTargetAsAbsolute = MajorOpcode_Branch | 0b1'00'000;
+    constexpr static Byte BranchAction_RegisterForm = MajorOpcode_Branch | 0b0'0'000;
+    constexpr static Byte BranchAction_ImmediateForm = MajorOpcode_Branch | 0b1'0'000;
+    public:
+#define X(name, mask) \
+        static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
+        X(Branch, MajorOpcode_Branch);
+        // conditional codes
+        X(NeverTaken, ConditionalCode_NeverTake);
+        X(GreaterThan, ConditionalCode_GreaterThan);
+        X(LessThan, ConditionalCode_LessThan);
+        X(GreaterThanOrEqual, ConditionalCode_GreaterThanOrEqual);
+        X(LessThanOrEqual, ConditionalCode_LessThanOrEqual);
+        X(Unconditional, ConditionalCode_Unconditional);
+        X(NotEquals, ConditionalCode_NotEquals);
+        X(Equals, ConditionalCode_Equals);
+        X(RelativeAddress, BranchAction_TreatTargetAsRelative);
+        X(AbsoluteAddress, BranchAction_TreatTargetAsAbsolute);
+        X(RegisterForm, BranchAction_RegisterForm);
+        X(ImmediateForm, BranchAction_ImmediateForm);
+#undef X
+    private:
+    constexpr static Byte MajorOpcode_Common = 0b0000'0000;
+    constexpr static Byte Common_Error = MajorOpcode_Common | 0b00'0000;
+    constexpr static Byte Common_Arithmetic = MajorOpcode_Common | 0b01'0000;
+    constexpr static Byte TreatArithmeticOperationAsInteger = Common_Arithmetic | 0b0000;
+    constexpr static Byte TreatArithmeticOperationAsOrdinal = Common_Arithmetic | 0b1000;
+    constexpr static Byte ArithmeticOperation_Add           = Common_Arithmetic | 0b000;
+    constexpr static Byte ArithmeticOperation_Subtract      = Common_Arithmetic | 0b001;
+    constexpr static Byte ArithmeticOperation_Multiply      = Common_Arithmetic | 0b010;
+    constexpr static Byte ArithmeticOperation_Divide        = Common_Arithmetic | 0b011;
+    constexpr static Byte ArithmeticOperation_Remainder     = Common_Arithmetic | 0b100;
+    constexpr static Byte ArithmeticOperation_ShiftLeft     = Common_Arithmetic | 0b101;
+    constexpr static Byte ArithmeticOperation_ShiftRight    = Common_Arithmetic | 0b110;
+    constexpr static Byte Common_Bitwise = MajorOpcode_Common | 0b10'0000;
+    constexpr static Byte BitwiseOperation_Not = Common_Bitwise | 0b00;
+    constexpr static Byte BitwiseOperation_And = Common_Bitwise | 0b01;
+    constexpr static Byte BitwiseOperation_Or  = Common_Bitwise | 0b10;
+    constexpr static Byte BitwiseOperation_Xor = Common_Bitwise | 0b11;
+    constexpr static Byte Common_Compare = MajorOpcode_Common | 0b10'0100;
+    constexpr static Byte CompareOperation_Integer = Common_Compare | 0b0;
+    constexpr static Byte CompareOperation_Ordinal = Common_Compare | 0b1;
+    public:
+#define X(name, mask) \
+        static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
+        X(Common, MajorOpcode_Common);
+        X(Error, Common_Error);
+        X(Arithmetic, Common_Arithmetic);
+        X(Add, ArithmeticOperation_Add);
+        X(Subtract, ArithmeticOperation_Subtract);
+        X(Multiply, ArithmeticOperation_Multiply);
+        X(Divide, ArithmeticOperation_Divide);
+        X(Remainder, ArithmeticOperation_Remainder);
+        X(ShiftLeft, ArithmeticOperation_ShiftLeft);
+        X(ShiftRight, ArithmeticOperation_ShiftRight);
+        X(Bitwise, Common_Bitwise);
+        X(Not, BitwiseOperation_Not);
+        X(And, BitwiseOperation_And);
+        X(Or, BitwiseOperation_Or);
+        X(Xor, BitwiseOperation_Xor);
+        X(Compare, Common_Compare);
+#undef X
+        static constexpr auto IsShiftInstruction = IsShiftLeftInstruction || IsShiftRightInstruction;
+        static constexpr auto Src2CannotBeZero = IsDivideInstruction || IsRemainderInstruction;
+        static constexpr auto IsIntegerInstruction = (CommonCompareBody<CompareOperation_Integer> ||
+                                                    CommonCompareBody<TreatArithmeticOperationAsInteger>);
+        static constexpr auto IsOrdinalInstruction = (CommonCompareBody<CompareOperation_Ordinal> ||
+                                                    CommonCompareBody<TreatArithmeticOperationAsOrdinal>);
+    private:
+    constexpr static Byte MajorOpcode_Memory = 0b0100'0000;
+    constexpr static Byte MemoryManipulateKind = MajorOpcode_Memory | 0b00'0000;
+    constexpr static Byte MemoryLoadKind = MemoryManipulateKind | 0b00'1000;
+    constexpr static Byte MemoryStoreKind = MemoryManipulateKind | 0b00'0000;
+    constexpr static Byte MemoryManipulateCode = MemoryManipulateKind | 0b00;
+    constexpr static Byte MemoryManipulateData = MemoryManipulateKind | 0b01;
+    constexpr static Byte MemoryManipulateStack = MemoryManipulateKind | 0b10;
+    constexpr static Byte MemoryManipulateIO = MemoryManipulateKind | 0b11;
+    constexpr static Byte MemoryMiscKind = MajorOpcode_Memory | 0b00'1000;
+    constexpr static Byte AssignRegisterImmediate = MemoryMiscKind | 0b000;
+    public:
+#define X(name, mask) \
+        static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
+        // common ops
+        // memory ops
+        X(Memory, MajorOpcode_Memory);
+        X(LoadStore, MemoryManipulateKind);
+        X(MiscMemory, MemoryMiscKind);
+        X(AssignRegister, AssignRegisterImmediate);
+        X(MemoryStore, MemoryStoreKind);
+        X(MemoryLoad, MemoryLoadKind);
+#undef X
+        static constexpr auto TargetsCodeSpace = CommonCompareBody<MemoryManipulateCode>;
+        static constexpr auto TargetsIOSpace = CommonCompareBody<MemoryManipulateIO>;
+        static constexpr auto TargetsStackSpace = CommonCompareBody<MemoryManipulateStack>;
+        static constexpr auto TargetsDataSpace = CommonCompareBody<MemoryManipulateData>;
+    private:
+    constexpr static Byte MajorOpcode_Unused = 0b1100'0000;
+};
+
 template<Opcodes op>
 class ArgumentFormat {
     public:
@@ -550,19 +558,6 @@ struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
 #include "InstructionProperties.def"
 #undef DeclareProperty
 
-constexpr std::optional<DecodedInstruction> Instruction::decode() const noexcept {
-    // Since the opcode is stashed in the first byte we should switch on the 
-    // undecoded byte. The group and kind is still but only at compile time.
-    // This greatly cuts down on code complexity. When optimization is active 
-    // we even get a huge performance boost too :)
-    switch (getOpcodeIndex()) {
-#define X(t, f) case t ## Instruction :: RawValue : return t ## Instruction ( *this ) ;
-#include "InstructionFormats.def"
-#undef X
-        default:
-            return std::nullopt;
-    }
-}
 
 } // end namespace iris
 #endif // end IRIS_OPCODES_H__
