@@ -31,8 +31,67 @@
 #include "types.h"
 
 namespace iris {
+    constexpr Byte MajorOpcode_Common = 0b0000'0000;
+    constexpr Byte Common_Error = MajorOpcode_Common | 0b00'0000;
+    constexpr Byte Common_Arithmetic = MajorOpcode_Common | 0b01'0000;
+    constexpr Byte TreatArithmeticOperationAsInteger = Common_Arithmetic | 0b0000;
+    constexpr Byte TreatArithmeticOperationAsOrdinal = Common_Arithmetic | 0b1000;
+    constexpr Byte ArithmeticOperation_Add           = Common_Arithmetic | 0b000;
+    constexpr Byte ArithmeticOperation_Subtract      = Common_Arithmetic | 0b001;
+    constexpr Byte ArithmeticOperation_Multiply      = Common_Arithmetic | 0b010;
+    constexpr Byte ArithmeticOperation_Divide        = Common_Arithmetic | 0b011;
+    constexpr Byte ArithmeticOperation_Remainder     = Common_Arithmetic | 0b100;
+    constexpr Byte ArithmeticOperation_ShiftLeft     = Common_Arithmetic | 0b101;
+    constexpr Byte ArithmeticOperation_ShiftRight    = Common_Arithmetic | 0b110;
+    constexpr Byte Common_Bitwise = MajorOpcode_Common | 0b10'0000;
+    constexpr Byte BitwiseOperation_Not = Common_Bitwise | 0b00;
+    constexpr Byte BitwiseOperation_And = Common_Bitwise | 0b01;
+    constexpr Byte BitwiseOperation_Or  = Common_Bitwise | 0b10;
+    constexpr Byte BitwiseOperation_Xor = Common_Bitwise | 0b11;
+    constexpr Byte Common_Compare = MajorOpcode_Common | 0b10'0100;
+    constexpr Byte CompareOperation_Integer = Common_Compare | 0b0;
+    constexpr Byte CompareOperation_Ordinal = Common_Compare | 0b1;
+    constexpr Byte MajorOpcode_Memory = 0b0100'0000;
+    constexpr Byte MajorOpcode_Branch = 0b1000'0000;
+    constexpr Byte MajorOpcode_Unused = 0b1100'0000;
+
+
+
+    enum class ArithmeticOpcodes : Byte {
+        IntegerError = 0b0000'0000,
+        IntegerAdd,
+        IntegerSubtract,
+        IntegerMultiply,
+        IntegerDivide,
+        IntegerRemainder,
+        IntegerShiftLeft,
+        IntegerShiftRight,
+        OrdinalError = 0b0000'1000,
+        OrdinalAdd,
+        OrdinalSubtract,
+        OrdinalMultiply,
+        OrdinalDivide,
+        OrdinalRemainder,
+        OrdinalShiftLeft,
+        OrdinalShiftRight,
+    };
     enum class Opcodes : UnsignedWord {
-        Error = 0,
+        Error = 0b0000'0000,
+        IntegerAdd,
+        IntegerSubtract,
+        IntegerMultiply,
+        IntegerDivide,
+        IntegerRemainder,
+        IntegerShiftLeft,
+        IntegerShiftRight,
+        OrdinalError = 0b0000'1000,
+        OrdinalAdd,
+        OrdinalSubtract,
+        OrdinalMultiply,
+        OrdinalDivide,
+        OrdinalRemainder,
+        OrdinalShiftLeft,
+        OrdinalShiftRight,
 #define X(t, _) t ,
 #include "InstructionFormats.def"
 #undef X
