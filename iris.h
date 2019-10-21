@@ -402,10 +402,7 @@ class Core {
     private:
         RegisterBank _regs;
         // upgrade to a 1 megaword address space
-        
-        CodeMemoryBank _code;
-        DataMemoryBank _data;
-        StackMemoryBank _stack;
+        MemoryBank _memory;
         IOMemoryBank _io;
         Register _ip;
         bool _executing = false;

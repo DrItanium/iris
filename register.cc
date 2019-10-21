@@ -27,44 +27,5 @@
 #include "register.h"
 
 namespace iris {
-void
-DoubleRegister::put(Word lower, Word upper) noexcept {
-    _lower.put(lower);
-    _upper.put(upper);
-}
 
-DoubleRegister
-DoubleRegister::make(RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
-    if constexpr (!std::is_same_v<Byte, RegisterIndexNumericType>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
-    } else {
-        return DoubleRegister(bank[Byte(lower)], bank[Byte(upper)]);
-    }
-}
-
-const DoubleRegister
-DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower, RegisterIndex upper) noexcept {
-    if constexpr (!std::is_same_v<Byte, RegisterIndexNumericType>) {
-        constexpr RegisterIndex registerBankMask = RegisterIndex(0xFF);
-        return DoubleRegister(bank[Byte(lower & registerBankMask)], bank[Byte(upper & registerBankMask)]);
-    } else {
-        return DoubleRegister(bank[Byte(lower)], bank[Byte(upper)]);
-    }
-}
-
-DoubleRegister
-DoubleRegister::make(RegisterBank& bank, RegisterIndex lower) noexcept {
-    auto conv = static_cast<Byte>(lower);
-    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
-}
-const DoubleRegister
-DoubleRegister::make(const RegisterBank& bank, RegisterIndex lower) noexcept {
-    auto conv = static_cast<Byte>(lower);
-    return make(bank, lower, static_cast<RegisterIndex>(conv + 1));
-}
-
-constexpr RegisterIndex increment(RegisterIndex input, RegisterIndexNumericType by = 1) noexcept {
-    return static_cast<RegisterIndex>(std::to_integer<RegisterIndexNumericType>(input) + by);
-}
 } // end namespace iris

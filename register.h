@@ -32,22 +32,28 @@ namespace iris {
 constexpr Word boolToWord(bool value) noexcept {
     return value ? 0xFFFF : 0;
 }
-class Register final {
+template<typename T = Word, T mask = 0xFFFF>
+class GenericRegister final {
     public:
-        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
-        explicit constexpr Register(bool value) noexcept : _storage(boolToWord(value)) { }
-        constexpr Register(const Register& other) noexcept = delete;
-        constexpr Register(Register&& other) noexcept = delete;
-        ~Register() = default;
-        Register& operator=(const Register& other) noexcept = delete;
-        Register& operator=(Register&& other) noexcept = delete;
-        constexpr Register& operator++() noexcept {
+        static_assert(std::is_integral_v<T>);
+        using SignedType = std::make_signed_t<T>;
+        using UnsignedType = std::make_unsigned_t<T>;
+        using RawType = T;
+    public:
+        explicit constexpr GenericRegister(Word value = 0) noexcept : _storage(value) { }
+        explicit constexpr GenericRegister(bool value) noexcept : _storage(boolToWord(value)) { }
+        constexpr GenericRegister(const GenericRegister& other) noexcept = delete;
+        constexpr GenericRegister(GenericRegister&& other) noexcept = delete;
+        ~GenericRegister() = default;
+        GenericRegister& operator=(const GenericRegister& other) noexcept = delete;
+        GenericRegister& operator=(GenericRegister&& other) noexcept = delete;
+        constexpr GenericRegister& operator++() noexcept {
             if (!_hardwired) {
                 ++_storage._value;
             }
             return *this;
         }
-        constexpr Register& operator--() noexcept {
+        constexpr GenericRegister& operator--() noexcept {
             if (!_hardwired) {
                 --_storage._value;
             }
@@ -59,9 +65,9 @@ class Register final {
             _storage._value = value;
         }
 
-        template<typename T = Word>
-        constexpr T get() const noexcept {
-            using K = std::decay_t<T>;
+        template<typename Z = Word>
+        constexpr Z get() const noexcept {
+            using K = std::decay_t<Z>;
             if constexpr (std::is_same_v<K, Word>) {
                 return _storage._value;
             } else if constexpr (std::is_same_v<K, SignedWord>) {
@@ -72,9 +78,9 @@ class Register final {
                 static_assert(false_v<T>, "Illegal type requested!");
             }
         }
-        template<typename T>
-        constexpr void put(T value) noexcept {
-            using K = std::decay_t<T>;
+        template<typename Z>
+        constexpr void put(Z value) noexcept {
+            using K = std::decay_t<Z>;
             if (!_hardwired) {
                 if constexpr (IsSameOrConvertible<K, Word>) {
                     _storage._value = value;
@@ -93,26 +99,51 @@ class Register final {
     private:
         bool _hardwired = false;
         union BackingStore {
-            constexpr BackingStore(Word v) : _value(v) { }
-            Word _value;
-            SignedWord _signedValue;
+            constexpr BackingStore(UnsignedType v) : _value(v) { }
+            UnsignedType _value;
+            SignedType _signedValue;
         } _storage;
 };
 
 constexpr auto RegisterCount = (0xFF + 1);
-using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
+template<typename T = Word, T mask = 0xFFFF>
+using GenericRegisterBank = NumericalStorageBank<GenericRegister<T, mask>, RegisterCount>;
 
-class DoubleRegister final {
+using RegisterBank = GenericRegisterBank<Word>;
+using Register = GenericRegister<Word>;
+
+template<typename R>
+class GenericDoubleRegister final {
     public:
-        static DoubleRegister make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-        static DoubleRegister make(RegisterBank& reg, RegisterIndex a) noexcept;
-        static const DoubleRegister make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept;
-        static const DoubleRegister make(const RegisterBank& reg, RegisterIndex a) noexcept;
+        static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
+            if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
+                return {reg[std::to_integer<Byte>(a)],
+                        reg[std::to_integer<Byte>(b)] };
+            } else {
+                constexpr RegisterIndex registerBankMask = static_cast<RegisterIndex>(0xFF);
+                return {reg[std::to_integer<Byte>(a & registerBankMask)], reg[std::to_integer<Byte>(b & registerBankMask)]};
+            }
+        }
+        static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a) noexcept {
+            return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
+        }
+        static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
+            if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
+                return {reg[std::to_integer<Byte>(a)],
+                        reg[std::to_integer<Byte>(b)] };
+            } else {
+                constexpr RegisterIndex registerBankMask = static_cast<RegisterIndex>(0xFF);
+                return {reg[std::to_integer<Byte>(a & registerBankMask)], reg[std::to_integer<Byte>(b & registerBankMask)]};
+            }
+        }
+        static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a) noexcept {
+            return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
+        }
     public:
-        constexpr DoubleRegister(Register& lower, Register& upper) : _lower(lower), _upper(upper) { }
-        constexpr DoubleRegister(const Register& lower, const Register& upper) : _lower(const_cast<Register&>(lower)), _upper(const_cast<Register&>(upper)) { }
-        constexpr Word upperHalf() const noexcept { return _upper.get<Word>(); }
-        constexpr Word lowerHalf() const noexcept { return _lower.get<Word>(); }
+        constexpr GenericDoubleRegister(R& lower, R& upper) : _lower(lower), _upper(upper) { }
+        constexpr GenericDoubleRegister(const R& lower, const R& upper) : _lower(const_cast<R&>(lower)), _upper(const_cast<R&>(upper)) { }
+        constexpr Word upperHalf() const noexcept { return _upper.template get<Word>(); }
+        constexpr Word lowerHalf() const noexcept { return _lower.template get<Word>(); }
         template<typename T = DoubleWord>
         constexpr T get() const noexcept {
             if constexpr (std::is_same_v<T, DoubleWord>) {
@@ -132,7 +163,10 @@ class DoubleRegister final {
                 static_assert(false_v<T>, "Illegal type requested");
             }
         }
-        void put(Word lower, Word upper) noexcept;
+        void put(Word lower, Word upper) noexcept {
+            _lower.put(lower);
+            _upper.put(upper);
+        }
         template<typename T = DoubleWord>
         void put(T value) noexcept {
             if constexpr (std::is_same_v<T, DoubleWord>) {
@@ -166,8 +200,9 @@ class DoubleRegister final {
             return *this;
         }
     private:
-        Register& _lower;
-        Register& _upper;
+        R& _lower;
+        R& _upper;
 };
+using DoubleRegister = GenericDoubleRegister<Register>;
 } // end namespace iris
 #endif // end IRIS_REGISTER_H__
