@@ -146,8 +146,8 @@ class Core {
         template<typename T, std::enable_if_t<IsBranchOperation<std::decay_t<T>>, int> = 0> 
         void invoke(const T& s) {
             using K = std::decay_t<T>;
-            using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
             if constexpr (IsBranchImmediateInstruction<K>) {
+                using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
                 auto [ link, offset] = s.arguments(); 
                 static_assert(std::is_same_v<O, decltype(offset)>);
                 static_assert(!(UsesLinkRegister<K> && IsConditionalOperation<K>), 
@@ -171,7 +171,7 @@ class Core {
                     auto [ dest, cond, link ] = s.arguments();
                     if (getRegisterValue<bool>(cond)) {
                         updateLinkRegister(link);
-                        branchTo(getRegisterValue<O>(dest));
+                        branchTo(dest);
                     }
                 }
             } else {
