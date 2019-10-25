@@ -114,9 +114,9 @@ bool stackTests(iris::Core& c) {
 }
 template<typename T>
 void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
-    c.setRegisterValue<T>(17_reg, r17);
-    c.setRegisterValue<T>(18_reg, r18);
-    c.setRegisterValue<T>(19_reg, r19);
+    c.setRegisterValue<T>(20_reg, r17);
+    c.setRegisterValue<T>(21_reg, r18);
+    c.setRegisterValue<T>(22_reg, r19);
 }
 enum class ArithmeticOperation {
     Add,
@@ -138,39 +138,39 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
     bool expectDivideByZero = false;
     if constexpr (op == ArithmeticOperation::Add) {
         check = src1 + src2;
-        instruction = iris::instructions::opAdd(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opAdd(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::Subtract) {
         check = src1 - src2;
-        instruction = iris::instructions::opSubtract(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opSubtract(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::Multiply) {
         check = src1 * src2;
-        instruction = iris::instructions::opMultiply(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opMultiply(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::Divide) {
         if (src2 != 0) {
             check = src1 / src2;
         } else {
             expectDivideByZero = true;
         }
-        instruction = iris::instructions::opDivide(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opDivide(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::Remainder) {
         if (src2 != 0) {
             check = src1 % src2;
         } else {
             expectDivideByZero = true;
         }
-        instruction = iris::instructions::opRemainder(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opRemainder(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::ShiftLeft) {
         check = src1 << src2;
-        instruction = iris::instructions::opShiftLeft(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opShiftLeft(20_reg, 21_reg, 22_reg, D{});
     } else if constexpr (op == ArithmeticOperation::ShiftRight) {
         check = src1 >> src2;
-        instruction = iris::instructions::opShiftRight(17_reg, 18_reg, 19_reg, D{});
+        instruction = iris::instructions::opShiftRight(20_reg, 21_reg, 22_reg, D{});
     } else {
         static_assert(iris::false_v<decltype(op)>, "Unimplemented arithmetic Operation");
     }
     try {
         c.invoke(instruction);
-        return verifyResult<T>(17_reg, check, c);
+        return verifyResult<T>(20_reg, check, c);
     } catch (iris::DivideByZeroException&) {
         if (expectDivideByZero) {
             return true;
@@ -193,50 +193,50 @@ bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::Unsigned
     iris::Word check = 0u;
     if constexpr (op == LogicalOperation::Not) {
         check = ~src1;
-        c.invoke(iris::instructions::bitwiseNot(17_reg, 18_reg));
+        c.invoke(iris::instructions::bitwiseNot(20_reg, 21_reg));
     } else if constexpr (op == LogicalOperation::And) {
         check = src1 & src2;
-        c.invoke(iris::instructions::bitwiseAnd(17_reg, 18_reg, 19_reg));
+        c.invoke(iris::instructions::bitwiseAnd(20_reg, 21_reg, 22_reg));
     } else if constexpr (op == LogicalOperation::Or) {
         check = src1 | src2;
-        c.invoke(iris::instructions::bitwiseOr(17_reg, 18_reg, 19_reg));
+        c.invoke(iris::instructions::bitwiseOr(20_reg, 21_reg, 22_reg));
     } else if constexpr (op == LogicalOperation::Xor) {
         check = src1 ^ src2;
-        c.invoke(iris::instructions::bitwiseXor(17_reg, 18_reg, 19_reg));
+        c.invoke(iris::instructions::bitwiseXor(20_reg, 21_reg, 22_reg));
     } else {
         static_assert(iris::false_v<decltype(op)>, "Bad logical operation kind!");
     }
-    return verifyResult<iris::Word>(17_reg, check, c);
+    return verifyResult<iris::Word>(20_reg, check, c);
 }
 
 
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = src1;
-    c.invoke(iris::instructions::move(17_reg, 18_reg));
-    return verifyResult<iris::Word>(17_reg, check, c);
+    c.invoke(iris::instructions::move(20_reg, 21_reg));
+    return verifyResult<iris::Word>(20_reg, check, c);
 }
 
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
-    c.invoke(iris::instructions::move(17_reg, src1));
-    return verifyResult<iris::Word>(17_reg, src1, c);
+    c.invoke(iris::instructions::move(20_reg, src1));
+    return verifyResult<iris::Word>(20_reg, src1, c);
 }
 
 bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0); // r17 is the stack pointer in this case
-    c.invoke(iris::instructions::push(17_reg, 18_reg));
-    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(17_reg), 0 - 1) &&
-          verifyResult<iris::Word>(c.loadStack<iris::Word>(c.getRegisterValue(17_reg)), src1);
+    c.invoke(iris::instructions::push(20_reg, 21_reg));
+    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(20_reg), 0 - 1) &&
+          verifyResult<iris::Word>(c.loadStack<iris::Word>(c.getRegisterValue(20_reg)), src1);
 }
 
 bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
-    c.invoke(iris::instructions::push(17_reg, 18_reg));
-    c.setRegisterValue(18_reg, 0);
-    c.invoke(iris::instructions::pop(17_reg, 18_reg));
-    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(17_reg), 0) &&
-          verifyResult<iris::Word>(c.getRegisterValue(18_reg), src1);
+    c.invoke(iris::instructions::push(20_reg, 21_reg));
+    c.setRegisterValue(21_reg, 0);
+    c.invoke(iris::instructions::pop(20_reg, 21_reg));
+    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(20_reg), 0) &&
+          verifyResult<iris::Word>(c.getRegisterValue(21_reg), src1);
 }
 
 bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
@@ -247,31 +247,31 @@ bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
 bool testBranchImmediateAndLinkOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<iris::Word>(c, 0, 0, 0);
     c.setIP(0);
-    c.invoke(iris::instructions::call(17_reg, src1));
+    c.invoke(iris::instructions::call(20_reg, src1));
     return verifyResult<iris::Word>(c.getIP(), src1) &&
-           verifyResult<iris::Word>(17_reg, 1, c);
+           verifyResult<iris::Word>(20_reg, 1, c);
 }
 
 bool testBranchRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, src1, 0, 0);
     c.setIP(0);
-    c.invoke(iris::instructions::branch(17_reg));
+    c.invoke(iris::instructions::branch(20_reg));
     return verifyResult<iris::Word>(c.getIP(), src1);
 }
 
 bool testBranchConditionalRegisterOperation(iris::Core& c, iris::Word src1, iris::Word cond, iris::Word expect) noexcept {
     setRegisters<decltype(src1)>(c, src1, cond, 0);
     c.setIP(0);
-    c.invoke(iris::instructions::branchConditional(18_reg, 17_reg));
+    c.invoke(iris::instructions::branchConditional(21_reg, 20_reg));
     return verifyResult<iris::Word>(c.getIP(), expect);
 }
 
 bool testBranchConditionalRegisterAndLinkOperation(iris::Core& c, iris::Word src1, iris::Word cond, iris::Word expect, iris::Word expectLink) noexcept {
     setRegisters<decltype(src1)>(c, src1, cond, 0);
     c.setIP(0);
-    c.invoke(iris::instructions::branchConditionalAndLink(17_reg, 18_reg, 19_reg));
+    c.invoke(iris::instructions::branchConditionalAndLink(20_reg, 21_reg, 22_reg));
     return verifyResult<iris::Word>(c.getIP(), expect) &&
-           verifyResult<iris::Word>(19_reg, expectLink, c);
+           verifyResult<iris::Word>(22_reg, expectLink, c);
 
 }
 
@@ -281,7 +281,7 @@ template<bool selection,
 bool testSelectOperation(iris::Core& c) noexcept {
     setRegisters<iris::Word>(c, selection ? 1 : 0, onTrue, onFalse);
     c.setIP(0);
-    c.invoke(iris::instructions::select(17_reg, 18_reg, 19_reg));
+    c.invoke(iris::instructions::select(20_reg, 21_reg, 22_reg));
     iris::Word expectation = 0;
     if constexpr (selection) {
         expectation = onTrue;
@@ -301,10 +301,10 @@ bool testBranchRelativeImmediateOperation(iris::Core& c, iris::Offset16 src1) no
 bool testBranchRelativeImmediateAndLinkOperation(iris::Core& c, iris::Offset16 src1) noexcept {
     setRegisters<iris::Word>(c, 0, 0, 0);
     c.setIP(0x20);
-    c.invoke(iris::instructions::call(17_reg, src1));
+    c.invoke(iris::instructions::call(20_reg, src1));
     auto check = 0x20 + src1;
     return verifyResult<iris::Word>(c.getIP(), check) &&
-           verifyResult<iris::Word>(17_reg, 0x21, c);
+           verifyResult<iris::Word>(20_reg, 0x21, c);
 }
 
 template<LogicalOperation op, bool testAllCombinations = true>
@@ -462,11 +462,11 @@ bool testCompareOperation(iris::Core& c) noexcept {
             auto cj = static_cast<K>(j);
             setRegisters<K>(c, 0, ci, cj);
             if constexpr (std::is_unsigned_v<K>) {
-                c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
+                c.invoke(iris::instructions::CompareOrdinal({20_reg, 21_reg, 22_reg}));
             } else {
-                c.invoke(iris::instructions::CompareInteger({17_reg, 18_reg, 19_reg}));
+                c.invoke(iris::instructions::CompareInteger({20_reg, 21_reg, 22_reg}));
             }
-            if (!performValidation(c.getRegisterValue<iris::Word>(17_reg), ci, cj)) {
+            if (!performValidation(c.getRegisterValue<iris::Word>(20_reg), ci, cj)) {
                 return false;
             }
         }
@@ -548,7 +548,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeCode(17_reg, 18_reg, 0));
+                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0));
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0), 0x89ABCDEF);
                 }, 
             },
@@ -556,7 +556,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeCode(17_reg, 18_reg, 0));
+                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0));
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0xFDED), 0x89ABCDEF);
                 }, 
             },
@@ -565,8 +565,8 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0, 0x89ABCDEF);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadCode(17_reg, 18_reg, 0));
-                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(18_reg);
+                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0));
+                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
             },
@@ -575,8 +575,8 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0xfded, 0x89ABCDEF);
                     setRegisters<iris::Word>(c, 0xfded, 0, 0);
-                    c.invoke(iris::instructions::loadCode(17_reg, 18_reg, 0));
-                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(18_reg);
+                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0));
+                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
             },
@@ -588,7 +588,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeData(17_reg, 18_reg, 0));
+                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0));
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0), 0xCDEF);
                 }, 
             },
@@ -596,7 +596,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeData(17_reg, 18_reg, 0));
+                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0));
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0xFDED), 0xCDEF);
                 }, 
             },
@@ -605,8 +605,8 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0, 0xCDEF);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadData(17_reg, 18_reg));
-                    return verifyResult<iris::Word>(18_reg, 0xCDEF, c);
+                    c.invoke(iris::instructions::loadData(20_reg, 21_reg));
+                    return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
             },
             { "Data cell read via instructions (non zero address)",
@@ -614,8 +614,8 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0xfded, 0xCDEF);
                     setRegisters<iris::Word>(c, 0xfded, 0, 0);
-                    c.invoke(iris::instructions::loadData(17_reg, 18_reg));
-                    return verifyResult<iris::Word>(18_reg, 0xCDEF, c);
+                    c.invoke(iris::instructions::loadData(20_reg, 21_reg));
+                    return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
             },
         },
@@ -631,7 +631,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 1, 0);
-                    c.invoke(iris::instructions::storeIO(17_reg, 18_reg));
+                    c.invoke(iris::instructions::storeIO(20_reg, 21_reg));
                     return verifyResult<iris::Word>(c.getTerminateCell(), 1) && verifyResult<bool>(c.getExecutingStatus(), false);
                 }
             },
@@ -640,8 +640,8 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.setTerminateCell(0xFDED);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadIO(17_reg, 18_reg, 0));
-                    return verifyResult<iris::Word>(18_reg, 0xFDED, c);
+                    c.invoke(iris::instructions::loadIO(20_reg, 21_reg, 0));
+                    return verifyResult<iris::Word>(21_reg, 0xFDED, c);
                }
             },
         },
