@@ -384,86 +384,79 @@ enum class CompareOperations {
 template<CompareOperations op,
     typename T,
     iris::DoubleWord outerStart = 0,
-    iris::DoubleWord outerEnd = 0x100,
+    iris::DoubleWord outerEnd = 0x1000,
     iris::DoubleWord innerStart = outerStart,
     iris::DoubleWord innerEnd = outerEnd>
 bool testCompareOperation(iris::Core& c) noexcept {
-    auto performValidation = [](auto outcome, auto a, auto b) {
-        using K = std::decay_t<decltype(outcome)>;
-        if constexpr (op == CompareOperations::Equals) {
-            if (a == b) {
-                if (!verifyResult<K>(outcome & 0b010, 0b010)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b010, 0)) {
-                    return false;
-                }
-            }
-        } else if constexpr (op == CompareOperations::NotEquals) {
-            if (a != b) {
-                if (!verifyResult<K>(outcome & 0b010, 0)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b010, 0b010)) {
-                    return false;
-                }
-            }
-        } else if constexpr (op == CompareOperations::LessThan) {
-            if (a < b) {
-                if (!verifyResult<K>(outcome & 0b100, 0b100)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b100, 0)) {
-                    return false;
-                }
-            }
-        } else if constexpr (op == CompareOperations::GreaterThan) {
-            if (a > b) {
-                if (!verifyResult<K>(outcome & 0b001, 0b001)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b001, 0)) {
-                    return false;
-                }
-            }
-        } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
-            if (a <= b) {
-                if (!verifyResult<K>(outcome & 0b001, 0)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b001, 0b001)) {
-                    return false;
-                }
-            }
-        } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
-            if (a >= b) {
-                if (!verifyResult<K>(outcome & 0b100, 0)) {
-                    return false;
-                }
-            } else {
-                if (!verifyResult<K>(outcome & 0b100, 0b100)) {
-                    return false;
-                }
-            }
-        } else {
-            static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
-        }
-        return true;
-    };
     using K = std::decay_t<T>;
     for (auto i = outerStart; i < outerEnd; ++i) {
-        auto ci = static_cast<K>(i);
+        auto a = static_cast<K>(i);
         for (auto j = innerStart; j < innerEnd; ++j) {
-            auto cj = static_cast<K>(j);
-            setRegisters<K>(c, 0, ci, cj);
+            auto b= static_cast<K>(j);
+            setRegisters<K>(c, 0, a, b);
             c.invoke(iris::instructions::compare<K>(20_reg, 21_reg, 22_reg));
-            if (!performValidation(c.getRegisterValue<K>(20_reg), ci, cj)) {
-                return false;
+            if constexpr (auto outcome = c.getRegisterValue<K>(20_reg); op == CompareOperations::Equals) {
+                if (a == b) {
+                    if (!verifyResult<K>(outcome & 0b010, 0b010)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b010, 0)) {
+                        return false;
+                    }
+                }
+            } else if constexpr (op == CompareOperations::NotEquals) {
+                if (a != b) {
+                    if (!verifyResult<K>(outcome & 0b010, 0)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b010, 0b010)) {
+                        return false;
+                    }
+                }
+            } else if constexpr (op == CompareOperations::LessThan) {
+                if (a < b) {
+                    if (!verifyResult<K>(outcome & 0b100, 0b100)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b100, 0)) {
+                        return false;
+                    }
+                }
+            } else if constexpr (op == CompareOperations::GreaterThan) {
+                if (a > b) {
+                    if (!verifyResult<K>(outcome & 0b001, 0b001)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b001, 0)) {
+                        return false;
+                    }
+                }
+            } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
+                if (a <= b) {
+                    if (!verifyResult<K>(outcome & 0b001, 0)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b001, 0b001)) {
+                        return false;
+                    }
+                }
+            } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
+                if (a >= b) {
+                    if (!verifyResult<K>(outcome & 0b100, 0)) {
+                        return false;
+                    }
+                } else {
+                    if (!verifyResult<K>(outcome & 0b100, 0b100)) {
+                        return false;
+                    }
+                }
+            } else {
+                static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
             }
         }
     }
