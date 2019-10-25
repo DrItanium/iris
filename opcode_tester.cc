@@ -461,9 +461,8 @@ bool testCompareOperation(iris::Core& c) noexcept {
         for (auto j = innerStart; j < innerEnd; ++j) {
             auto cj = static_cast<K>(j);
             setRegisters<K>(c, 0, ci, cj);
-            using O = std::conditional_t<std::is_signed_v<K>, iris::SignedWord, iris::Word>;
-            c.invoke(iris::instructions::compare<O>(20_reg, 21_reg, 22_reg));
-            if (!performValidation(c.getRegisterValue<iris::Word>(20_reg), ci, cj)) {
+            c.invoke(iris::instructions::compare<K>(20_reg, 21_reg, 22_reg));
+            if (!performValidation(c.getRegisterValue<K>(20_reg), ci, cj)) {
                 return false;
             }
         }
