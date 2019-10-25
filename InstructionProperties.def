@@ -102,6 +102,12 @@ DeclareProperty(BranchConditionalRegisterAndLink, UsesLinkRegister)
 PartOfClass(BranchConditionalRegisterAndLink, Conditional)
 DeclareProperty(BranchConditionalRegisterAndLink, IsBranchRegisterInstruction)
 
+GroupBranch(ConditionalRelativeRegisterAndLink)
+DeclareProperty(BranchConditionalRelativeRegisterAndLink, UsesLinkRegister)
+PartOfClass(BranchConditionalRelativeRegisterAndLink, Conditional)
+DeclareProperty(BranchConditionalRelativeRegisterAndLink, IsBranchRegisterInstruction)
+DeclareProperty(BranchConditionalRelativeRegisterAndLink, UsesRelativeOffset)
+
 GroupBranch(Select)
 PartOfClass(BranchSelect, Select)
 PartOfClass(BranchSelect, Conditional)

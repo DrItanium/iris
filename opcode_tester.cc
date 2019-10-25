@@ -377,62 +377,58 @@ template<CompareOperations op,
     iris::DoubleWord innerStart = outerStart,
     iris::DoubleWord innerEnd = outerEnd>
 bool testCompareOperation(iris::Core& c) noexcept {
-#if 0
-    constexpr auto HasSignedVersion = (op != CompareOperations::Equals &&
-                                       op != CompareOperations::NotEquals);
-    for (auto i = outerStart; i < outerEnd; ++i) {
-        for (auto j = innerStart; j < innerEnd; ++j) {
-            iris::Word result = false;
-            iris::Word ci = static_cast<iris::Word>(i);
-            iris::Word cj = static_cast<iris::Word>(j);
-            iris::Word mask = 0b111;
-            setRegisters<iris::Word>(c, 0, ci, cj);
-            c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
-            if constexpr (op == CompareOperations::Equals) {
-                result = 0b010;
-                mask = 0b010;
-            } else if constexpr (op == CompareOperations::LessThan) {
-                result = 0b100;
-                mask = 0b100;
-            } else if constexpr (op == CompareOperations::GreaterThan) {
-                result = 0b001;
-                mask = 0b001;
-            } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
-                result = 0b110;
-                mask = 0b110;
-            } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
-                result = 0b011;
-                mask = 0b011;
-            } else {
-                static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
-            }
-            if (!verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(17_reg) & mask, result, c)) {
+    auto performValidation = [](auto outcome) {
+        using K = std::decay_t<decltype(outcome)>;
+        if constexpr (op == CompareOperations::Equals) {
+            if (!verifyResult<K>(outcome & 0b010, 0b010)) {
                 return false;
             }
-            if constexpr (HasSignedVersion) {
-                result = false;
-                iris::SignedWord si = static_cast<iris::SignedWord>(i);
-                iris::SignedWord sj = static_cast<iris::SignedWord>(j);
-                setRegisters<iris::SignedWord>(c, 0, si, sj);
-                c.invoke(iris::instructions::CompareInteger({ 17_reg, 18_reg, 19_reg}));
-                if constexpr (op == CompareOperations::LessThan) {
-                    result = si < sj;
-                } else if constexpr (op == CompareOperations::GreaterThan) {
-                    result = si > sj;
-                } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
-                    result = si <= sj;
-                } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
-                    result = si >= sj;
-                } else {
-                    static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
-                }
-                if (!verifyResult<bool>(17_reg, result, c)) {
-                    return false;
-                }
+        } else if constexpr (op == CompareOperations::LessThan) {
+            if (!verifyResult<K>(outcome & 0b100, 0b100)) {
+                return false;
+            }
+        } else if constexpr (op == CompareOperations::GreaterThan) {
+            if (!verifyResult<K>(outcome & 0b001, 0b001)) {
+                return false;
+            }
+        } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
+            if (!verifyResult<K>(outcome & 0b100, 0b100) && 
+                    !verifyResult<K>(outcome & 0b010, 0b010)) {
+                return false;
+            }
+        } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
+            if (!verifyResult<K>(outcome & 0b001, 0b001) && 
+                    !verifyResult<K>(outcome & 0b010, 0b010)) {
+                return false;
+            }
+        } else if constexpr (op == CompareOperations::NotEquals) {
+            if (!verifyResult<K>(outcome & 0b001, 0b001) && 
+                    !verifyResult<K>(outcome & 0b100, 0b100)) {
+                return false;
+            }
+        } else {
+            static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
+        }
+        return true;
+    };
+    for (auto i = outerStart; i < outerEnd; ++i) {
+        auto ci = static_cast<iris::Word>(i);
+        auto si = static_cast<iris::SignedWord>(i);
+        for (auto j = innerStart; j < innerEnd; ++j) {
+            auto cj = static_cast<iris::Word>(j);
+            auto sj = static_cast<iris::SignedWord>(j);
+            setRegisters<iris::Word>(c, 0, ci, cj);
+            c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
+            if (!performValidation(c.getRegisterValue<iris::Word>(17_reg))) {
+                return false;
+            }
+            setRegisters<iris::SignedWord>(c, 0, si, sj);
+            c.invoke(iris::instructions::CompareInteger({17_reg, 18_reg, 19_reg}));
+            if (!performValidation(c.getRegisterValue<iris::SignedWord>(17_reg))) {
+                return false;
             }
         }
     }
-#endif
     return true;
 }
 
