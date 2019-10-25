@@ -53,11 +53,21 @@ bool executeTestSuite(const TestSuite& ts, iris::Core& c) noexcept {
     return true;
 }
 template<typename T>
-bool verifyResult(T got, T expected) noexcept {
-    if (got != expected) {
+bool verifyResult(T got, T expected, bool inverseExpectation = false) noexcept {
+    auto assertionFailed = false;
+    if (inverseExpectation) {
+        assertionFailed = (got == expected); 
+    } else {
+        assertionFailed = (got != expected);
+    }
+    if (assertionFailed) {
         std::cout << "\tAssertion Failed!" << std::endl;
         std::cout << "\tGot: " << std::hex << got << std::endl;
-        std::cout << "\tExpected: " << std::hex << expected << std::endl;
+        if (inverseExpectation) {
+            std::cout << "\tExpected: not " << std::hex << expected << std::endl;
+        } else {
+            std::cout << "\tExpected: " << std::hex << expected << std::endl;
+        }
         return false;
     } 
     return true;
@@ -372,59 +382,91 @@ enum class CompareOperations {
 };
 
 template<CompareOperations op,
+    typename T,
     iris::DoubleWord outerStart = 0,
     iris::DoubleWord outerEnd = 0x100,
     iris::DoubleWord innerStart = outerStart,
     iris::DoubleWord innerEnd = outerEnd>
 bool testCompareOperation(iris::Core& c) noexcept {
-    auto performValidation = [](auto outcome) {
+    auto performValidation = [](auto outcome, auto a, auto b) {
         using K = std::decay_t<decltype(outcome)>;
         if constexpr (op == CompareOperations::Equals) {
-            if (!verifyResult<K>(outcome & 0b010, 0b010)) {
-                return false;
-            }
-        } else if constexpr (op == CompareOperations::LessThan) {
-            if (!verifyResult<K>(outcome & 0b100, 0b100)) {
-                return false;
-            }
-        } else if constexpr (op == CompareOperations::GreaterThan) {
-            if (!verifyResult<K>(outcome & 0b001, 0b001)) {
-                return false;
-            }
-        } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
-            if (!verifyResult<K>(outcome & 0b100, 0b100) && 
-                    !verifyResult<K>(outcome & 0b010, 0b010)) {
-                return false;
-            }
-        } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
-            if (!verifyResult<K>(outcome & 0b001, 0b001) && 
-                    !verifyResult<K>(outcome & 0b010, 0b010)) {
-                return false;
+            if (a == b) {
+                if (!verifyResult<K>(outcome & 0b010, 0b010)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b010, 0)) {
+                    return false;
+                }
             }
         } else if constexpr (op == CompareOperations::NotEquals) {
-            if (!verifyResult<K>(outcome & 0b001, 0b001) && 
-                    !verifyResult<K>(outcome & 0b100, 0b100)) {
-                return false;
+            if (a != b) {
+                if (!verifyResult<K>(outcome & 0b010, 0)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b010, 0b010)) {
+                    return false;
+                }
+            }
+        } else if constexpr (op == CompareOperations::LessThan) {
+            if (a < b) {
+                if (!verifyResult<K>(outcome & 0b100, 0b100)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b100, 0)) {
+                    return false;
+                }
+            }
+        } else if constexpr (op == CompareOperations::GreaterThan) {
+            if (a > b) {
+                if (!verifyResult<K>(outcome & 0b001, 0b001)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b001, 0)) {
+                    return false;
+                }
+            }
+        } else if constexpr (op == CompareOperations::LessThanOrEqualTo) {
+            if (a <= b) {
+                if (!verifyResult<K>(outcome & 0b001, 0)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b001, 0b001)) {
+                    return false;
+                }
+            }
+        } else if constexpr (op == CompareOperations::GreaterThanOrEqualTo) {
+            if (a >= b) {
+                if (!verifyResult<K>(outcome & 0b100, 0)) {
+                    return false;
+                }
+            } else {
+                if (!verifyResult<K>(outcome & 0b100, 0b100)) {
+                    return false;
+                }
             }
         } else {
             static_assert(iris::false_v<decltype(op)>, "Unimplemented compare operation!");
         }
         return true;
     };
+    using K = std::decay_t<T>;
     for (auto i = outerStart; i < outerEnd; ++i) {
-        auto ci = static_cast<iris::Word>(i);
-        auto si = static_cast<iris::SignedWord>(i);
+        auto ci = static_cast<K>(i);
         for (auto j = innerStart; j < innerEnd; ++j) {
-            auto cj = static_cast<iris::Word>(j);
-            auto sj = static_cast<iris::SignedWord>(j);
-            setRegisters<iris::Word>(c, 0, ci, cj);
-            c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
-            if (!performValidation(c.getRegisterValue<iris::Word>(17_reg))) {
-                return false;
+            auto cj = static_cast<K>(j);
+            setRegisters<K>(c, 0, ci, cj);
+            if constexpr (std::is_unsigned_v<K>) {
+                c.invoke(iris::instructions::CompareOrdinal({17_reg, 18_reg, 19_reg}));
+            } else {
+                c.invoke(iris::instructions::CompareInteger({17_reg, 18_reg, 19_reg}));
             }
-            setRegisters<iris::SignedWord>(c, 0, si, sj);
-            c.invoke(iris::instructions::CompareInteger({17_reg, 18_reg, 19_reg}));
-            if (!performValidation(c.getRegisterValue<iris::SignedWord>(17_reg))) {
+            if (!performValidation(c.getRegisterValue<iris::Word>(17_reg), ci, cj)) {
                 return false;
             }
         }
@@ -470,13 +512,13 @@ TestSuites suites {
             { "Select (False)", testSelectOperation<false> },
         },
     },
-    { "Compare Operation Validation", {
-            { "Equals", testCompareOperation<CompareOperations::Equals>},
-            { "Not Equals", testCompareOperation<CompareOperations::NotEquals>},
-            { "Less Than Signed and Unsigned", testCompareOperation<CompareOperations::LessThan> },
-            { "Less Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::LessThanOrEqualTo>},
-            { "Greater Than Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThan> },
-            { "Greater Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThanOrEqualTo> },
+    { "Compare Ordinal Operation Validation", {
+            { "Equals", testCompareOperation<CompareOperations::Equals, iris::Word>},
+            { "Not Equals", testCompareOperation<CompareOperations::NotEquals, iris::Word>},
+            { "Less Than Signed and Unsigned", testCompareOperation<CompareOperations::LessThan, iris::Word> },
+            { "Less Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::Word>},
+            { "Greater Than Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThan, iris::Word> },
+            { "Greater Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::Word> },
         },
     },
     { "Logical Operation Validation", {
