@@ -56,10 +56,21 @@ namespace iris::instructions {
 #include "InstructionFormats.def"
 #undef X
     using AddressTypes = std::variant<RegisterIndex, Address>;
+    template<typename T>
+    constexpr auto compare(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept {
+        using K = std::decay_t<T>;
+        static_assert(std::is_integral_v<K>);
+        if constexpr (std::is_signed_v<K>) {
+            return CompareInteger({dest, src0, src1});
+        } else if constexpr (std::is_unsigned_v<K>) {
+            return CompareOrdinal({dest, src0, src1});
+        } else {
+            static_assert(iris::false_v<K>, "Bad compare type!");
+        }
+    }
     // single instruction aliases useful for ease of use
     constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return LogicalBitwiseAnd({targetRegister, targetRegister, 0_reg}); }
-    constexpr auto nop(RegisterIndex target = 0_reg) noexcept                                   { return LogicalBitwiseOr({target, target, 0_reg}); }
-    constexpr auto compareWithZero(RegisterIndex dest, RegisterIndex src) noexcept              { return CompareInteger({dest, src, 0_reg}); }
+    constexpr auto compareWithZero(RegisterIndex dest, RegisterIndex src) noexcept              { return compare<iris::SignedWord>(dest, src, 0_reg); }
     template<typename T>
     constexpr auto move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
