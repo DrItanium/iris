@@ -515,10 +515,19 @@ TestSuites suites {
     { "Compare Ordinal Operation Validation", {
             { "Equals", testCompareOperation<CompareOperations::Equals, iris::Word>},
             { "Not Equals", testCompareOperation<CompareOperations::NotEquals, iris::Word>},
-            { "Less Than Signed and Unsigned", testCompareOperation<CompareOperations::LessThan, iris::Word> },
-            { "Less Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::Word>},
-            { "Greater Than Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThan, iris::Word> },
-            { "Greater Than Or Equal To Signed and Unsigned", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::Word> },
+            { "Less Than", testCompareOperation<CompareOperations::LessThan, iris::Word> },
+            { "Less Than Or Equal", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::Word>},
+            { "Greater Than", testCompareOperation<CompareOperations::GreaterThan, iris::Word> },
+            { "Greater Than Or Equal", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::Word> },
+        },
+    },
+    { "Compare Integer Operation Validation", {
+            { "Equals", testCompareOperation<CompareOperations::Equals, iris::SignedWord>},
+            { "Not Equals", testCompareOperation<CompareOperations::NotEquals, iris::SignedWord>},
+            { "Less Than", testCompareOperation<CompareOperations::LessThan, iris::SignedWord> },
+            { "Less Than Or Equal", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::SignedWord>},
+            { "Greater Than", testCompareOperation<CompareOperations::GreaterThan, iris::SignedWord> },
+            { "Greater Than Or Equal", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::SignedWord> },
         },
     },
     { "Logical Operation Validation", {
