@@ -63,7 +63,6 @@
     Branch(RelativeImmediateAndLink, OneRegisterS16)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
-    Branch(Select, ThreeRegister)
 //-----------------------------------------------------------------------------
 // Compare
 //-----------------------------------------------------------------------------

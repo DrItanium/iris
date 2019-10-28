@@ -102,10 +102,6 @@ DeclareProperty(BranchConditionalRegisterAndLink, UsesLinkRegister)
 PartOfClass(BranchConditionalRegisterAndLink, Conditional)
 DeclareProperty(BranchConditionalRegisterAndLink, IsBranchRegisterInstruction)
 
-GroupBranch(Select)
-PartOfClass(BranchSelect, Select)
-PartOfClass(BranchSelect, Conditional)
-DeclareProperty(BranchSelect, IsBranchRegisterInstruction)
 //-----------------------------------------------------------------------------
 // Arithmetic 
 //-----------------------------------------------------------------------------

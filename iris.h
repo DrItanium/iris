@@ -163,16 +163,10 @@ class Core {
                     branchTo<O>(offset);
                 }
             } else if constexpr (IsBranchRegisterInstruction<K>) {
-                if constexpr (IsSelectOperation<K>) {
-                    // BranchSelect ConditionalRegister TrueAddress FalseAddress
-                    auto [ cond, onTrue, onFalse ] = s.arguments();
-                    branchTo(getRegisterValue(getRegisterValue<bool>(cond) ? onTrue : onFalse));
-                } else {
-                    auto [ dest, cond, link ] = s.arguments();
-                    if (getRegisterValue<bool>(cond)) {
-                        updateLinkRegister(link);
-                        branchTo(dest);
-                    }
+                auto [ dest, cond, link ] = s.arguments();
+                if (getRegisterValue<bool>(cond)) {
+                    updateLinkRegister(link);
+                    branchTo(dest);
                 }
             } else {
                 static_assert(false_v<T>, "Bad branch kind!");

@@ -87,7 +87,6 @@ namespace iris::instructions {
                                move(a, b),
                                move(b, temp));
     }
-    constexpr auto select(RegisterIndex cond, RegisterIndex then, RegisterIndex _else) noexcept { return BranchSelect({cond, then, _else}); }
     constexpr auto branchConditionalAndLink(RegisterIndex dest, RegisterIndex cond = 1_reg, RegisterIndex link = 0_reg) noexcept { return BranchConditionalRegisterAndLink({dest, cond, link }); }
     template<typename T>
     constexpr auto call(RegisterIndex link, T value) noexcept {
