@@ -54,6 +54,11 @@
     IO(LoadWithOffset, TwoRegisterU8)
     IO(StoreWithOffset, TwoRegisterU8)
 //-----------------------------------------------------------------------------
+// Compare
+//-----------------------------------------------------------------------------
+    X(CompareOrdinal, ThreeRegister)
+    X(CompareInteger, ThreeRegister)
+//-----------------------------------------------------------------------------
 // Branch
 //-----------------------------------------------------------------------------
     // all unconditional one way branches are redefined in terms of the conditional
@@ -63,13 +68,6 @@
     Branch(RelativeImmediateAndLink, OneRegisterS16)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
-//-----------------------------------------------------------------------------
-// Compare
-//-----------------------------------------------------------------------------
-    X(CompareOrdinal, ThreeRegister)
-    X(CompareInteger, ThreeRegister)
-//-----------------------------------------------------------------------------
-// Compare and Branch
 //-----------------------------------------------------------------------------
 
 
