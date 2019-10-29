@@ -36,9 +36,6 @@ namespace iris {
     constexpr EncodedInstruction majorOpcodeGroupIndex(EncodedInstruction input) noexcept {
         return input << 29;
     }
-    constexpr EncodedInstruction branchComparisonIndex(EncodedInstruction input) noexcept {
-        return input << 24;
-    }
     /**
      * The most significant three bits of an iris instruction contains the major opcode
      * group.
@@ -54,9 +51,18 @@ namespace iris {
         Unused2 =         majorOpcodeGroupIndex(0b111),
     };
     using MajorOpcodeGroupNumericType = std::underlying_type_t<MajorOpcodeGroup>;
-    // an idea taken from RISCV that zero should be an error, I think it may be overkill to consume 1/8th the
-    // encoding space on this however...
     static_assert(static_cast<MajorOpcodeGroupNumericType>(MajorOpcodeGroup::Unused2) == 0xE000'0000, "Encoding is broken!");
+    constexpr bool hasIntegerAndOrdinalForms(MajorOpcodeGroup group) noexcept {
+        return group == MajorOpcodeGroup::Arithmetic ||
+               group == MajorOpcodeGroup::Compare;
+    }
+    constexpr MajorOpcodeGroup getMajorOpcodeGroup(EncodedInstruction inst) noexcept {
+        return static_cast<MajorOpcodeGroup>(majorOpcodeGroupIndex(0b111) & inst);
+    }
+
+    constexpr EncodedInstruction branchComparisonIndex(EncodedInstruction input) noexcept {
+        return input << 24;
+    }
 
     enum class BranchComparisonKind : EncodedInstruction {
         Unordered = branchComparisonIndex(0b000),
@@ -71,6 +77,64 @@ namespace iris {
     using BranchComparisonKindNumericType = std::underlying_type_t<BranchComparisonKind>;
     static_assert(static_cast<BranchComparisonKindNumericType>(BranchComparisonKind::Ordered) == 0x0700'0000, "Branch encoding is broken!");
     
+    constexpr EncodedInstruction arithmeticOperationIndex(EncodedInstruction input) noexcept {
+        return input << 26;
+    }
+    enum class ArithmeticOperationKind : EncodedInstruction {
+        // an idea taken from RISCV that zero should be an error, I think it may be overkill to consume 1/8th the
+        // encoding space on this however...
+        Error = arithmeticOperationIndex(0b000),
+        Add = arithmeticOperationIndex(0b001),
+        Subtract = arithmeticOperationIndex(0b010),
+        Multiply = arithmeticOperationIndex(0b011),
+        Divide = arithmeticOperationIndex(0b100),
+        Remainder = arithmeticOperationIndex(0b101),
+        ShiftLeft = arithmeticOperationIndex(0b110),
+        ShiftRight = arithmeticOperationIndex(0b111),
+    };
+    using ArithmeticOperationKindNumericType = std::underlying_type_t<ArithmeticOperationKind>;
+    static_assert(static_cast<ArithmeticOperationKindNumericType>(ArithmeticOperationKind::ShiftRight) == 0x1C00'0000, "Arithmetic encoding is broken!");
+
+    constexpr ArithmeticOperationKind getArithmeticOperationKind(EncodedInstruction inst) noexcept {
+        return static_cast<ArithmeticOperationKind>(arithmeticOperationIndex(0b111) & inst);
+    }
+
+    enum class NumericKind {
+         Ordinal,
+         Integer,
+         Neither,
+    };
+
+    constexpr NumericKind determineNumericKind(ArithmeticOperationKind kind, EncodedInstruction enc) noexcept {
+        switch (kind) {
+            case ArithmeticOperationKind::Error:
+                return NumericKind::Neither;
+            default:
+                return ((enc & 0x0200'0000)) ? NumericKind::Integer : NumericKind::Ordinal;
+        }
+    }
+    constexpr NumericKind determineNumericKind(EncodedInstruction inst) noexcept {
+        switch (getMajorOpcodeGroup(inst)) {
+            case MajorOpcodeGroup::Arithmetic:
+                return determineNumericKind(getArithmeticOperationKind(inst), inst);
+            case MajorOpcodeGroup::Compare:
+                return ((inst & 0x1000'0000)) ? NumericKind::Integer : NumericKind::Ordinal;
+            default:
+                return NumericKind::Neither;
+        }
+    }
+
+    constexpr EncodedInstruction logicalOperationIndex(EncodedInstruction inst) noexcept {
+        return inst << 27;
+    }
+    enum class LogicalOperationKind : EncodedInstruction {
+        Not = logicalOperationIndex(0b00),
+        And = logicalOperationIndex(0b01),
+        Or = logicalOperationIndex(0b10),
+        Xor = logicalOperationIndex(0b11),
+    };
+    using LogicalOperationKindNumericType = std::underlying_type_t<LogicalOperationKind>;
+    static_assert(static_cast<LogicalOperationKindNumericType>(LogicalOperationKind::Xor) == 0x1800'0000, "Logical encoding is broken!");
 
     enum class Opcodes : UnsignedWord {
         Error = 0,
