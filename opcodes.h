@@ -33,22 +33,24 @@
 #include "types.h"
 
 namespace iris {
-
-    enum class Opcodes : UnsignedWord {
+    enum class Opcodes : EncodedInstruction {
         Error = 0,
-#define X(t, _, o) t = static_cast<UnsignedWord>(o) ,
+#define X(t, _, o) t = o ,
 #include "InstructionFormats.def"
 #undef X
-        Count,
     };
-    constexpr auto MaximumOpcodeCount = (0xFF + 1);
-    using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
-    static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
-    // forward declare the formats
     struct ErrorInstruction;
-#define X(t, f, o) struct t ## Instruction ; 
+    using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
+    // forward declare the formats and perform sanity checks
+#define X(name, __, o) \
+    static_assert(o < LargestOpcode, "Operation " #name " is out of encoding space!"); \
+    struct name  ## Instruction;
 #include "InstructionFormats.def"
 #undef X
+    constexpr auto LargestOpcode = 0xFF00'0000;
+    constexpr auto extractOpcode(EncodedInstruction inst) noexcept {
+        return LargestOpcode & inst;
+    }
 
 /**
  * The fields of an iris instruction are:

@@ -4,7 +4,7 @@
  */
 // error is just zero and is not part of a group
 // X(name, Format, opcode)
-#define Opcode(name, format, opcode) X(name, format, ((opcode) << 24))
+#define Opcode(name, format, opcode) X(name, format, (static_cast<EncodedInstruction>((opcode) << 24)))
 //-----------------------------------------------------------------------------
 // Arithmetic
 //-----------------------------------------------------------------------------
