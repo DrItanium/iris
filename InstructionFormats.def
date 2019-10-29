@@ -4,34 +4,9 @@
  */
 // error is just zero and is not part of a group
 // X(name, Format, opcode)
-#define Opcode(name, format, opcode) X(name, format, (opcode << 24))
-#define Instruction(group, op, Format) X(group ## op, Format)
-#define Logical(op, Format) Instruction(Logical, op, Format)
-#define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
-#define ArithmeticSigned(op, Format) Arithmetic(op ## Signed, Format)
-#define ArithmeticUnsigned(op, Format) Arithmetic(op ## Unsigned, Format)
-#define ArithmeticSignedUnsigned(op, Format) \
-    ArithmeticSigned(op, Format) \
-    ArithmeticUnsigned(op, Format)
-#define Memory(op, Format) Instruction(Memory, op, Format)
-#define Stack(op, Format) Memory(Stack ## op, Format)
-#define Data(op, Format) Memory(Data ## op, Format)
-#define Code(op, Format) Memory(Code ## op, Format)
-#define IO(op, Format) Memory(IO ## op, Format)
-#define Compare(op, Format) Instruction(Compare, op, Format)
-#define NormalCompare(op) Compare(op, ThreeRegister)
-#define NormalSignedCompare(op) NormalCompare(op ## Signed)
-#define NormalUnsignedCompare(op) NormalCompare(op ## Unsigned)
-#define NormalSignedUnsignedCompare(op) \
-        NormalSignedCompare(op) \
-        NormalUnsignedCompare(op)
-#define Branch(op, Format) Instruction(Branch, op, Format)
-#define GroupArithmetic 0b0000000
-#define GroupCompare    0b0010000
-#define GroupMemory     0b0100000
-#define GroupBranchImm  0b0110000
-#define GroupBranchReg  0b1000000
-#define GroupLogical    0b1010000
+#define Opcode(name, format, opcode) X(name, format, ((opcode) << 24))
+#define GroupBranchImm  0b01100000
+#define GroupBranchReg  0b10000000
 //-----------------------------------------------------------------------------
 // Arithmetic
 //-----------------------------------------------------------------------------
@@ -40,6 +15,7 @@
 // C = Major Opcode
 // K = Integer? else Ordinal
 // T = Operation
+#define GroupArithmetic   0b00000000
 #define OpcodeError       0b00000000
 #define OpcodeAdd         0b00000001
 #define OpcodeSubtract    0b00000010
@@ -51,55 +27,120 @@
 
 #define KindOrdinal       0b00000000
 #define KindInteger       0b00001000
-    Opcode(Error,           ZeroRegister,  GroupArithmetic | OpcodeError)
-    Opcode(AddOrdinal,      ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
-    Opcode(AddInteger,      ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
-    Opcode(SubtractOrdinal, ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
-    Opcode(SubtractInteger, ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
-    Opcode(MultiplyOrdinal, ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
-    Opcode(MultiplyInteger, ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
-    Opcode(DivideOrdinal,   ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
-    Opcode(DivideInteger,   ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
-    Opcode(RemainderOrdinal,   ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
-    Opcode(RemainderInteger,   ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
-    Opcode(ShiftLeftOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
-    Opcode(ShiftLeftInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
+    Opcode(Error,               ZeroRegister,  GroupArithmetic | OpcodeError)
+    Opcode(AddOrdinal,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
+    Opcode(AddInteger,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
+    Opcode(SubtractOrdinal,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
+    Opcode(SubtractInteger,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
+    Opcode(MultiplyOrdinal,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
+    Opcode(MultiplyInteger,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
+    Opcode(DivideOrdinal,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
+    Opcode(DivideInteger,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
+    Opcode(RemainderOrdinal,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
+    Opcode(RemainderInteger,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
+    Opcode(ShiftLeftOrdinal,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
+    Opcode(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
     Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
     Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
-    ArithmeticSignedUnsigned(Add, ThreeRegister)
-    ArithmeticSignedUnsigned(Subtract, ThreeRegister)
-    ArithmeticSignedUnsigned(Multiply, ThreeRegister)
-    ArithmeticSignedUnsigned(Divide, ThreeRegister)
-    ArithmeticSignedUnsigned(Remainder, ThreeRegister)
-    ArithmeticSignedUnsigned(ShiftLeft, ThreeRegister)
-    ArithmeticSignedUnsigned(ShiftRight, ThreeRegister)
+#undef KindOrdinal
+#undef KindInteger
+#undef GroupArithmetic
+#undef OpcodeAdd
+#undef OpcodeSubtract 
+#undef OpcodeMultiply 
+#undef OpcodeDivide 
+#undef OpcodeRemainder 
+#undef OpcodeShiftLeft 
+#undef OpcodeShiftRight 
 //-----------------------------------------------------------------------------
-// Logical
+// Bitwise 
 //-----------------------------------------------------------------------------
-    Logical(BitwiseNot, TwoRegister)
-    Logical(BitwiseAnd, ThreeRegister)
-    Logical(BitwiseOr, ThreeRegister)
-    Logical(BitwiseXor, ThreeRegister)
+// format is: 0b101,0,A,N,TT
+// where:
+// N: Not the result?
+// T: The operation
+// A: Imm16 argument
+#define GroupBitwise      0b10100000
+#define OpcodeNot         0b00000000
+#define OpcodeAnd         0b00000001
+#define OpcodeOr          0b00000010
+#define OpcodeXor         0b00000011
+#define NotTheResult      0b00000100
+#define ArgumentIsImm16   0b00001000
+    Opcode(BitwiseNot,    TwoRegister,      GroupBitwise | OpcodeNot)
+    Opcode(Move,          TwoRegister,      GroupBitwise | OpcodeNot | NotTheResult)
+    Opcode(LoadImmediate, OneRegisterU16,   GroupBitwise | OpcodeNot | NotTheResult | ArgumentIsImm16)
+    Opcode(BitwiseAnd,    ThreeRegister,    GroupBitwise | OpcodeAnd)
+    Opcode(BitwiseNand,   ThreeRegister,    GroupBitwise | OpcodeAnd | NotTheResult)
+    Opcode(BitwiseOr,     ThreeRegister,    GroupBitwise | OpcodeOr)
+    Opcode(BitwiseNor,    ThreeRegister,    GroupBitwise | OpcodeOr | NotTheResult)
+    Opcode(BitwiseXor,    ThreeRegister,    GroupBitwise | OpcodeXor)
+    Opcode(BitwiseXnor,   ThreeRegister,    GroupBitwise | OpcodeXor | NotTheResult)
+#undef GroupBitwise
+#undef OpcodeNot
+#undef OpcodeAnd
+#undef OpcodeOr
+#undef OpcodeXor
+#undef NotTheResult
+#undef ArgumentIsImm16
 //-----------------------------------------------------------------------------
 // Memory
 //-----------------------------------------------------------------------------
-    Memory(AssignRegisterImmediate, OneRegisterU16)
-    Stack(Push, TwoRegister)
-    Stack(Pop, TwoRegister)
-    Data(LoadWithOffset, TwoRegisterU8)
-    Data(StoreWithOffset, TwoRegisterU8)
-    Code(LoadWithOffset, TwoRegisterU8)
-    Code(StoreWithOffset, TwoRegisterU8)
-    IO(LoadWithOffset, TwoRegisterU8)
-    IO(StoreWithOffset, TwoRegisterU8)
+// format is: 0b010,L,A,SS
+// where 
+// L: Load? else Store
+// A: Arg1 Is Imm? else register + (offset imm)
+#define GroupMemory      0b010'0'0'0'00
+#define LoadOperation    0b000'0'1'0'00 
+#define StoreOperation   0b000'0'0'0'00 
+#define Arg1IsImm        0b000'0'0'1'00 
+#define Arg1IsRegister   0b000'0'0'0'00 
+#define SpaceCode        0b000'0'0'0'00
+#define SpaceData        0b000'0'0'0'01
+#define SpaceStack       0b000'0'0'0'10
+#define SpaceIO          0b000'0'0'0'11
+    Opcode(CodeLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceCode)
+    Opcode(CodeLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceCode)
+    Opcode(CodeStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceCode)
+    Opcode(CodeStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceCode)
+    Opcode(DataLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceData)
+    Opcode(DataLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceData)
+    Opcode(DataStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceData)
+    Opcode(DataStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceData)
+    Opcode(StackLoadWithOffset,           TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceStack)
+    Opcode(StackLoadFromImmediateAddress, OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceStack)
+    Opcode(StackStoreWithOffset,          TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceStack)
+    Opcode(StackStoreToImmediateAddress,  OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceStack)
+    Opcode(IOLoadWithOffset,              TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceIO)
+    Opcode(IOLoadFromImmediateAddress,    OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceIO)
+    Opcode(IOStoreWithOffset,             TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceIO)
+    Opcode(IOStoreToImmediateAddress,     OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceIO)
+#undef GroupMemory
+#undef LoadOperation
+#undef StoreOperation
+#undef Arg1IsImm
+#undef Arg1IsRegister
+#undef SpaceCode
+#undef SpaceData
+#undef SpaceStack
+#undef SpaceIO
 //-----------------------------------------------------------------------------
 // Compare
 //-----------------------------------------------------------------------------
-    X(CompareOrdinal, ThreeRegister)
-    X(CompareInteger, ThreeRegister)
+// Format is 0b001,0000,K
+// Where K is Integer? else Ordinal
+#define GroupCompare    0b00100000
+#define KindOrdinal     0b00000000
+#define KindInteger     0b00000001
+    Opcode(CompareOrdinal, ThreeRegister, GroupCompare | KindOrdinal)
+    Opcode(CompareInteger, ThreeRegister, GroupInteger | KindInteger)
+#undef GroupCompare
+#undef KindOrdinal
+#undef KindInteger
 //-----------------------------------------------------------------------------
 // Branch
 //-----------------------------------------------------------------------------
+
     // all unconditional one way branches are redefined in terms of the conditional
     // versions
     Branch(ConditionalImmediate, OneRegisterU16)
