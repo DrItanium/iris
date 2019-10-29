@@ -4,7 +4,7 @@
  */
 // error is just zero and is not part of a group
 // X(name, Format, opcode)
-#define Opcode(name, format, opcode) X(name, format, (static_cast<EncodedInstruction>((opcode) << 24)))
+#define Opcode(name, format, opcode) X(name, format, static_cast<EncodedInstruction>((opcode)))
 //-----------------------------------------------------------------------------
 // Arithmetic
 //-----------------------------------------------------------------------------
@@ -13,37 +13,21 @@
 // C = Major Opcode
 // K = Integer? else Ordinal
 // T = Operation
-#define OpcodeError       0b00000000
-#define OpcodeAdd         0b00000010
-#define OpcodeSubtract    0b00000100
-#define OpcodeMultiply    0b00000110
-#define OpcodeDivide      0b00001000
-#define OpcodeRemainder   0b00001010
-#define OpcodeShiftLeft   0b00001100
-#define OpcodeShiftRight  0b00001110
-
-    Opcode(Error,               ZeroRegister,  GroupArithmetic | OpcodeError)
-    Opcode(AddOrdinal,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
-    Opcode(AddInteger,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
-    Opcode(SubtractOrdinal,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
-    Opcode(SubtractInteger,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
-    Opcode(MultiplyOrdinal,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
-    Opcode(MultiplyInteger,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
-    Opcode(DivideOrdinal,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
-    Opcode(DivideInteger,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
-    Opcode(RemainderOrdinal,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
-    Opcode(RemainderInteger,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
-    Opcode(ShiftLeftOrdinal,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
-    Opcode(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
-    Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
-    Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
-#undef OpcodeAdd
-#undef OpcodeSubtract 
-#undef OpcodeMultiply 
-#undef OpcodeDivide 
-#undef OpcodeRemainder 
-#undef OpcodeShiftLeft 
-#undef OpcodeShiftRight 
+Opcode(Error,               ZeroRegister,  GroupArithmetic | OpcodeError)
+Opcode(AddOrdinal,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
+Opcode(AddInteger,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
+Opcode(SubtractOrdinal,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
+Opcode(SubtractInteger,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
+Opcode(MultiplyOrdinal,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
+Opcode(MultiplyInteger,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
+Opcode(DivideOrdinal,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
+Opcode(DivideInteger,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
+Opcode(RemainderOrdinal,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
+Opcode(RemainderInteger,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
+Opcode(ShiftLeftOrdinal,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
+Opcode(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
+Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
+Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
 //-----------------------------------------------------------------------------
 // Bitwise 
 //-----------------------------------------------------------------------------
@@ -52,27 +36,15 @@
 // N: Not the result?
 // T: The operation
 // A: Imm16 argument
-#define OpcodeNot         0b00000000
-#define OpcodeAnd         0b00000001
-#define OpcodeOr          0b00000010
-#define OpcodeXor         0b00000011
-#define NotTheResult      0b00000100
-#define ArgumentIsImm16   0b00001000
-    Opcode(BitwiseNot,    TwoRegister,      GroupBitwise | OpcodeNot)
-    Opcode(Move,          TwoRegister,      GroupBitwise | OpcodeNot | NotTheResult)
-    Opcode(LoadImmediate, OneRegisterU16,   GroupBitwise | OpcodeNot | NotTheResult | ArgumentIsImm16)
-    Opcode(BitwiseAnd,    ThreeRegister,    GroupBitwise | OpcodeAnd)
-    Opcode(BitwiseNand,   ThreeRegister,    GroupBitwise | OpcodeAnd | NotTheResult)
-    Opcode(BitwiseOr,     ThreeRegister,    GroupBitwise | OpcodeOr)
-    Opcode(BitwiseNor,    ThreeRegister,    GroupBitwise | OpcodeOr | NotTheResult)
-    Opcode(BitwiseXor,    ThreeRegister,    GroupBitwise | OpcodeXor)
-    Opcode(BitwiseXnor,   ThreeRegister,    GroupBitwise | OpcodeXor | NotTheResult)
-#undef OpcodeNot
-#undef OpcodeAnd
-#undef OpcodeOr
-#undef OpcodeXor
-#undef NotTheResult
-#undef ArgumentIsImm16
+Opcode(BitwiseNot,    TwoRegister,      GroupBitwise | OpcodeNot)
+Opcode(Move,          TwoRegister,      GroupBitwise | OpcodeNot | NotTheResult)
+Opcode(LoadImmediate, OneRegisterU16,   GroupBitwise | OpcodeNot | NotTheResult | ArgumentIsImm16)
+Opcode(BitwiseAnd,    ThreeRegister,    GroupBitwise | OpcodeAnd)
+Opcode(BitwiseNand,   ThreeRegister,    GroupBitwise | OpcodeAnd | NotTheResult)
+Opcode(BitwiseOr,     ThreeRegister,    GroupBitwise | OpcodeOr)
+Opcode(BitwiseNor,    ThreeRegister,    GroupBitwise | OpcodeOr | NotTheResult)
+Opcode(BitwiseXor,    ThreeRegister,    GroupBitwise | OpcodeXor)
+Opcode(BitwiseXnor,   ThreeRegister,    GroupBitwise | OpcodeXor | NotTheResult)
 //-----------------------------------------------------------------------------
 // Memory
 //-----------------------------------------------------------------------------

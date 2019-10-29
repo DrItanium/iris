@@ -39,8 +39,49 @@ namespace iris {
     constexpr EncodedInstruction GroupBranchImm = 0x6000'0000;
     constexpr EncodedInstruction GroupBranchReg = 0x8000'0000;
     constexpr EncodedInstruction GroupBitwise = 0xC000'0000;
+    constexpr EncodedInstruction GroupMask = 0xE000'0000;
+    template<EncodedInstruction group>
+    constexpr auto isOfGroup(EncodedInstruction enc) noexcept {
+        return (enc & GroupMask) == group;
+    }
+    constexpr auto isBitwiseInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBitwise>(enc); }
+    constexpr auto isArithmeticInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupArithmetic>(enc); }
+    constexpr auto isCompareInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupCompare>(enc); }
+    constexpr auto isMemoryInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupMemory>(enc); }
+    constexpr auto isBranchImmInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBranchImm>(enc); }
+    constexpr auto isBranchRegInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBranchReg>(enc); }
+    constexpr auto isBranchInstruction(EncodedInstruction enc) noexcept { return isBranchImmInstruction(enc) || isBranchRegInstruction(enc); }
+
+    template<EncodedInstruction enc>
+    constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsBranchInstruction = isBranchInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsBranchImmInstruction = isBranchImmInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsBranchRegInstruction = isBranchRegInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsCompareInstruction = isCompareInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
     constexpr EncodedInstruction KindOrdinal = 0x0000'0000;
     constexpr EncodedInstruction KindInteger = 0x0100'0000;
+    constexpr EncodedInstruction OpcodeError      = (0b00000000 << 24);
+    constexpr EncodedInstruction OpcodeAdd        = (0b00000010 << 24);
+    constexpr EncodedInstruction OpcodeSubtract   = (0b00000100 << 24);
+    constexpr EncodedInstruction OpcodeMultiply   = (0b00000110 << 24);
+    constexpr EncodedInstruction OpcodeDivide     = (0b00001000 << 24);
+    constexpr EncodedInstruction OpcodeRemainder  = (0b00001010 << 24);
+    constexpr EncodedInstruction OpcodeShiftLeft  = (0b00001100 << 24);
+    constexpr EncodedInstruction OpcodeShiftRight = (0b00001110 << 24);
+    constexpr EncodedInstruction OpcodeNot         = (0b00000000 << 24);
+    constexpr EncodedInstruction OpcodeAnd         = (0b00000001 << 24);
+    constexpr EncodedInstruction OpcodeOr          = (0b00000010 << 24);
+    constexpr EncodedInstruction OpcodeXor         = (0b00000011 << 24);
+    constexpr EncodedInstruction NotTheResult      = (0b00000100 << 24);
+    constexpr EncodedInstruction ArgumentIsImm16   = (0b00001000 << 24);
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,
