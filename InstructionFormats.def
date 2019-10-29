@@ -142,6 +142,7 @@
 // conditions. The difference is that iris does not have a single condition code
 // register. Instead one of the gprs is used for that purpose since there is a
 // generous number of registers provided.
+// never branch
 #define BranchIfUnordered       0b00000000
 #define BranchIfGreater         0b00000001
 #define BranchIfEqual           0b00000010
@@ -149,6 +150,7 @@
 #define BranchIfLess            0b00000100
 #define BranchIfNotEqual        0b00000101
 #define BranchIfLessOrEqual     0b00000110
+// always branch
 #define BranchIfOrdered         0b00000111
 //-----------------------------------------------------------------------------
 // Branch Immediate
@@ -156,9 +158,11 @@
 // Top level format is 0b011,C,xxxx
 // where 
 // C: Branch Conditional? else Link
+
 // if C is 1 then the format is: 0b011,1,R,YYY, this is known as the conditional immediate form
 // R: Relative? else Absolute
 // Y: Condition codes defined above
+
 // if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
 // R: Relative? else Absolute
 // there is not enough space in the encoding to allow conditional jump and link in a single instruction
@@ -167,30 +171,29 @@
 #define IsLink          0b00000000
 #define RelativeJump    0b00001000 
 #define AbsoluteJump    0b00000000 
-    Opcode(NeverBranchAbsoluteImmediate, OneRegisterS16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfUnordered)
-    Opcode(NeverBranchRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfUnordered)
-    Opcode(BranchGreaterAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreater)
-    Opcode(BranchGreaterRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreater)
-    Opcode(BranchEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfEqual)
-    Opcode(BranchEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfEqual)
-    Opcode(BranchGreaterOrEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreaterOrEqual)
-    Opcode(BranchGreaterOrEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreaterOrEqual)
-    Opcode(BranchLessAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLess)
-    Opcode(BranchLessRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLess)
-    Opcode(BranchNotEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfNotEqual)
-    Opcode(BranchNotEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfNotEqual)
-    Opcode(BranchLessOrEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLessOrEqual)
-    Opcode(BranchLessOrEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLessOrEqual)
-    Opcode(BranchUnconditionalAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfOrdered)
-    Opcode(BranchUnconditionalRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfOrdered)
-        
-    // all unconditional one way branches are redefined in terms of the conditional
-    // versions
-    Branch(ConditionalImmediate, OneRegisterU16)
-    Branch(ConditionalRelativeImmediate, OneRegisterS16)
-    Branch(RelativeImmediateAndLink, OneRegisterS16)
-    Branch(ImmediateAndLink, OneRegisterU16)
-    Branch(ConditionalRegisterAndLink, ThreeRegister)
+    // while these two opcodes are dumb, there may be a day where I can leverage this like the numerics architecture
+    // from i960 where branch if unordered will branch if an operation on reals yields an unordered number (NAN, etc)
+    Opcode(BranchIfUnorderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfUnordered)
+    Opcode(BranchIfUnorderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfUnordered)
+    Opcode(BranchIfGreaterToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreater)
+    Opcode(BranchIfGreaterToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreater)
+    Opcode(BranchIfEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfEqual)
+    Opcode(BranchIfEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfEqual)
+    Opcode(BranchIfGreaterOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreaterOrEqual)
+    Opcode(BranchIfGreaterOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreaterOrEqual)
+    Opcode(BranchIfLessToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLess)
+    Opcode(BranchIfLessToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLess)
+    Opcode(BranchIfNotEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfNotEqual)
+    Opcode(BranchIfNotEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfNotEqual)
+    Opcode(BranchIfLessOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLessOrEqual)
+    Opcode(BranchIfLessOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLessOrEqual)
+    // the hardcoded integer registers can be provided implicitly by the assembler
+    Opcode(BranchIfOrderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfOrdered)
+    Opcode(BranchIfOrderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfOrdered)
+
+    // Link operations
+    Opcode(BranchAbsoluteImmediateAndLink, OneRegisterU16, GroupBranchImm | IsLink | AbsoluteJump)
+    Opcode(BranchRelativeImmediateAndLink, OneRegisterS16, GroupBranchImm | IsLink | RelativeJump)
 #undef GroupBranchImm
 #undef IsConditional
 #undef IsLink
@@ -199,7 +202,39 @@
 //-----------------------------------------------------------------------------
 // Branch Register
 //-----------------------------------------------------------------------------
+// format is: 0b100,PP,YYY
+// P is a register action kind
+// 00 -> ConditionalBranchAndLink
+// 01 -> Select
+// 10 -> unused
+// 11 -> unused
+// Y is condition codes defined above
 #define GroupBranchReg  0b10000000
+#define IsConditionalBranchAndLink 0b00000000
+#define IsSelectOperation          0b00001000
+    // disabling link is a simple as binding the link register to a hardcoded register, this will cause the link to be ignored
+    Opcode(BranchIfUnorderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfUnordered)
+    Opcode(BranchIfGreaterToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreater)
+    Opcode(BranchIfEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfEqual)
+    Opcode(BranchIfGreaterOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreaterOrEqual)
+    Opcode(BranchIfLessToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLess)
+    Opcode(BranchIfNotEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfNotEqual)
+    Opcode(BranchIfLessOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLessOrEqual)
+    // this branch is used for unconditional branches
+    Opcode(BranchIfOrderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfOrdered)
+    // select operations
+    // always select the on false register
+    Opcode(SelectIfUnordered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfUnordered)
+    Opcode(SelectIfGreater, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreater)
+    Opcode(SelectIfEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfEqual)
+    Opcode(SelectIfGreaterOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreaterOrEqual)
+    Opcode(SelectIfLess, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLess)
+    Opcode(SelectIfNotEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfNotEqual)
+    Opcode(SelectIfLessOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLessOrEqual)
+    // always select the true register
+    Opcode(SelectIfOrdered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfOrdered)
+#undef IsConditionalBranchAndLink
+#undef IsSelectOperation
 #undef GroupBranchReg
 //-----------------------------------------------------------------------------
 #undef BranchIfUnordered       // 0b00000000
