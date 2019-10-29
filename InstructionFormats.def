@@ -13,18 +13,15 @@
 // C = Major Opcode
 // K = Integer? else Ordinal
 // T = Operation
-#define GroupArithmetic   0b00000000
 #define OpcodeError       0b00000000
-#define OpcodeAdd         0b00000001
-#define OpcodeSubtract    0b00000010
-#define OpcodeMultiply    0b00000011
-#define OpcodeDivide      0b00000100
-#define OpcodeRemainder   0b00000101
-#define OpcodeShiftLeft   0b00000110
-#define OpcodeShiftRight  0b00000111
+#define OpcodeAdd         0b00000010
+#define OpcodeSubtract    0b00000100
+#define OpcodeMultiply    0b00000110
+#define OpcodeDivide      0b00001000
+#define OpcodeRemainder   0b00001010
+#define OpcodeShiftLeft   0b00001100
+#define OpcodeShiftRight  0b00001110
 
-#define KindOrdinal       0b00000000
-#define KindInteger       0b00001000
     Opcode(Error,               ZeroRegister,  GroupArithmetic | OpcodeError)
     Opcode(AddOrdinal,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
     Opcode(AddInteger,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
@@ -40,9 +37,6 @@
     Opcode(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
     Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
     Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
-#undef KindOrdinal
-#undef KindInteger
-#undef GroupArithmetic
 #undef OpcodeAdd
 #undef OpcodeSubtract 
 #undef OpcodeMultiply 
@@ -58,7 +52,6 @@
 // N: Not the result?
 // T: The operation
 // A: Imm16 argument
-#define GroupBitwise      0b10100000
 #define OpcodeNot         0b00000000
 #define OpcodeAnd         0b00000001
 #define OpcodeOr          0b00000010
@@ -74,7 +67,6 @@
     Opcode(BitwiseNor,    ThreeRegister,    GroupBitwise | OpcodeOr | NotTheResult)
     Opcode(BitwiseXor,    ThreeRegister,    GroupBitwise | OpcodeXor)
     Opcode(BitwiseXnor,   ThreeRegister,    GroupBitwise | OpcodeXor | NotTheResult)
-#undef GroupBitwise
 #undef OpcodeNot
 #undef OpcodeAnd
 #undef OpcodeOr
@@ -88,7 +80,6 @@
 // where 
 // L: Load? else Store
 // A: Arg1 Is Imm? else register + (offset imm)
-#define GroupMemory      0b010'0'0'0'00
 #define LoadOperation    0b000'0'1'0'00 
 #define StoreOperation   0b000'0'0'0'00 
 #define Arg1IsImm        0b000'0'0'1'00 
@@ -113,7 +104,6 @@
     Opcode(IOLoadFromImmediateAddress,    OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceIO)
     Opcode(IOStoreWithOffset,             TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceIO)
     Opcode(IOStoreToImmediateAddress,     OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceIO)
-#undef GroupMemory
 #undef LoadOperation
 #undef StoreOperation
 #undef Arg1IsImm
@@ -127,14 +117,8 @@
 //-----------------------------------------------------------------------------
 // Format is 0b001,0000,K
 // Where K is Integer? else Ordinal
-#define GroupCompare    0b00100000
-#define KindOrdinal     0b00000000
-#define KindInteger     0b00000001
     Opcode(CompareOrdinal, ThreeRegister, GroupCompare | KindOrdinal)
     Opcode(CompareInteger, ThreeRegister, GroupInteger | KindInteger)
-#undef GroupCompare
-#undef KindOrdinal
-#undef KindInteger
 //-----------------------------------------------------------------------------
 // Branches
 //-----------------------------------------------------------------------------
@@ -166,7 +150,6 @@
 // if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
 // R: Relative? else Absolute
 // there is not enough space in the encoding to allow conditional jump and link in a single instruction
-#define GroupBranchImm  0b01100000
 #define IsConditional   0b00010000
 #define IsLink          0b00000000
 #define RelativeJump    0b00001000 
@@ -194,7 +177,6 @@
     // Link operations
     Opcode(BranchAbsoluteImmediateAndLink, OneRegisterU16, GroupBranchImm | IsLink | AbsoluteJump)
     Opcode(BranchRelativeImmediateAndLink, OneRegisterS16, GroupBranchImm | IsLink | RelativeJump)
-#undef GroupBranchImm
 #undef IsConditional
 #undef IsLink
 #undef RelativeJump
@@ -209,7 +191,6 @@
 // 10 -> unused
 // 11 -> unused
 // Y is condition codes defined above
-#define GroupBranchReg  0b10000000
 #define IsConditionalBranchAndLink 0b00000000
 #define IsSelectOperation          0b00001000
     // disabling link is a simple as binding the link register to a hardcoded register, this will cause the link to be ignored
@@ -235,7 +216,6 @@
     Opcode(SelectIfOrdered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfOrdered)
 #undef IsConditionalBranchAndLink
 #undef IsSelectOperation
-#undef GroupBranchReg
 //-----------------------------------------------------------------------------
 #undef BranchIfUnordered       // 0b00000000
 #undef BranchIfGreater         // 0b00000001

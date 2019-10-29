@@ -33,6 +33,14 @@
 #include "types.h"
 
 namespace iris {
+    constexpr EncodedInstruction GroupArithmetic = 0x0000'0000;
+    constexpr EncodedInstruction GroupCompare = 0x2000'0000;
+    constexpr EncodedInstruction GroupMemory = 0x4000'0000;
+    constexpr EncodedInstruction GroupBranchImm = 0x6000'0000;
+    constexpr EncodedInstruction GroupBranchReg = 0x8000'0000;
+    constexpr EncodedInstruction GroupBitwise = 0xC000'0000;
+    constexpr EncodedInstruction KindOrdinal = 0x0000'0000;
+    constexpr EncodedInstruction KindInteger = 0x0100'0000;
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,
