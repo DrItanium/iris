@@ -65,6 +65,7 @@ using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
 using Address = UnsignedWord;
 using Offset16 = SignedWord;
 using QuadOrdinal = uint64_t;
+using EncodedInstruction = UnsignedDoubleWord; 
 
 template<typename T>
 constexpr auto isDoubleWide = false;

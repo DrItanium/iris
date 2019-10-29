@@ -1,4 +1,6 @@
 /**
+ * @file 
+ * Description of all the opcodes that make up the programmer facing aspects of iris
  * @copyright 
  * iris
  * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
@@ -31,8 +33,44 @@
 #include "types.h"
 
 namespace iris {
+    constexpr EncodedInstruction majorOpcodeGroupIndex(EncodedInstruction input) noexcept {
+        return input << 29;
+    }
+    constexpr EncodedInstruction branchComparisonIndex(EncodedInstruction input) noexcept {
+        return input << 24;
+    }
+    /**
+     * The most significant three bits of an iris instruction contains the major opcode
+     * group.
+     */
+    enum class MajorOpcodeGroup : EncodedInstruction {
+        Arithmetic =      majorOpcodeGroupIndex(0b000),
+        Compare =         majorOpcodeGroupIndex(0b001),
+        Memory =          majorOpcodeGroupIndex(0b010),
+        BranchImmediate = majorOpcodeGroupIndex(0b011),
+        BranchRegister =  majorOpcodeGroupIndex(0b100),
+        Logical =         majorOpcodeGroupIndex(0b101),
+        Unused =          majorOpcodeGroupIndex(0b110),
+        Unused2 =         majorOpcodeGroupIndex(0b111),
+    };
+    using MajorOpcodeGroupNumericType = std::underlying_type_t<MajorOpcodeGroup>;
+    // an idea taken from RISCV that zero should be an error, I think it may be overkill to consume 1/8th the
+    // encoding space on this however...
+    static_assert(static_cast<MajorOpcodeGroupNumericType>(MajorOpcodeGroup::Unused2) == 0xE000'0000, "Encoding is broken!");
 
-
+    enum class BranchComparisonKind : EncodedInstruction {
+        Unordered = branchComparisonIndex(0b000),
+        Greater = branchComparisonIndex(0b001),
+        Equals = branchComparisonIndex(0b010),
+        GreaterAndEquals = branchComparisonIndex(0b011),
+        Less = branchComparisonIndex(0b100),
+        NotEquals = branchComparisonIndex(0b101),
+        LessOrEquals = branchComparisonIndex(0b110),
+        Ordered = branchComparisonIndex(0b111),
+    };
+    using BranchComparisonKindNumericType = std::underlying_type_t<BranchComparisonKind>;
+    static_assert(static_cast<BranchComparisonKindNumericType>(BranchComparisonKind::Ordered) == 0x0700'0000, "Branch encoding is broken!");
+    
 
     enum class Opcodes : UnsignedWord {
         Error = 0,
