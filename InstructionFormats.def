@@ -3,6 +3,8 @@
  * format. Update this file when adding new type information
  */
 // error is just zero and is not part of a group
+// X(name, Format, opcode)
+#define Opcode(name, format, opcode) X(name, format, (opcode << 24))
 #define Instruction(group, op, Format) X(group ## op, Format)
 #define Logical(op, Format) Instruction(Logical, op, Format)
 #define Arithmetic(op, Format) Instruction(Arithmetic, op, Format)
@@ -24,9 +26,46 @@
         NormalSignedCompare(op) \
         NormalUnsignedCompare(op)
 #define Branch(op, Format) Instruction(Branch, op, Format)
+#define GroupArithmetic 0b0000000
+#define GroupCompare    0b0010000
+#define GroupMemory     0b0100000
+#define GroupBranchImm  0b0110000
+#define GroupBranchReg  0b1000000
+#define GroupLogical    0b1010000
 //-----------------------------------------------------------------------------
 // Arithmetic
 //-----------------------------------------------------------------------------
+// Fields are: 0b000,0,K,TTT
+// Where:
+// C = Major Opcode
+// K = Integer? else Ordinal
+// T = Operation
+#define OpcodeError       0b00000000
+#define OpcodeAdd         0b00000001
+#define OpcodeSubtract    0b00000010
+#define OpcodeMultiply    0b00000011
+#define OpcodeDivide      0b00000100
+#define OpcodeRemainder   0b00000101
+#define OpcodeShiftLeft   0b00000110
+#define OpcodeShiftRight  0b00000111
+
+#define KindOrdinal       0b00000000
+#define KindInteger       0b00001000
+    Opcode(Error,           ZeroRegister,  GroupArithmetic | OpcodeError)
+    Opcode(AddOrdinal,      ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
+    Opcode(AddInteger,      ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
+    Opcode(SubtractOrdinal, ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
+    Opcode(SubtractInteger, ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
+    Opcode(MultiplyOrdinal, ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
+    Opcode(MultiplyInteger, ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
+    Opcode(DivideOrdinal,   ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
+    Opcode(DivideInteger,   ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
+    Opcode(RemainderOrdinal,   ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
+    Opcode(RemainderInteger,   ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
+    Opcode(ShiftLeftOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
+    Opcode(ShiftLeftInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
+    Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
+    Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
     ArithmeticSignedUnsigned(Add, ThreeRegister)
     ArithmeticSignedUnsigned(Subtract, ThreeRegister)
     ArithmeticSignedUnsigned(Multiply, ThreeRegister)
@@ -93,3 +132,4 @@
 #undef Memory
 #undef ArithmeticSignedUnsignedImmediate
 #undef Logical
+#undef Opcode
