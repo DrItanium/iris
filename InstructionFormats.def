@@ -5,8 +5,6 @@
 // error is just zero and is not part of a group
 // X(name, Format, opcode)
 #define Opcode(name, format, opcode) X(name, format, ((opcode) << 24))
-#define GroupBranchImm  0b01100000
-#define GroupBranchReg  0b10000000
 //-----------------------------------------------------------------------------
 // Arithmetic
 //-----------------------------------------------------------------------------
@@ -138,9 +136,54 @@
 #undef KindOrdinal
 #undef KindInteger
 //-----------------------------------------------------------------------------
-// Branch
+// Branches
 //-----------------------------------------------------------------------------
-
+// these code kinds and descriptions are taken from how the i960 works with 
+// conditions. The difference is that iris does not have a single condition code
+// register. Instead one of the gprs is used for that purpose since there is a
+// generous number of registers provided.
+#define BranchIfUnordered       0b00000000
+#define BranchIfGreater         0b00000001
+#define BranchIfEqual           0b00000010
+#define BranchIfGreaterOrEqual  0b00000011
+#define BranchIfLess            0b00000100
+#define BranchIfNotEqual        0b00000101
+#define BranchIfLessOrEqual     0b00000110
+#define BranchIfOrdered         0b00000111
+//-----------------------------------------------------------------------------
+// Branch Immediate
+//-----------------------------------------------------------------------------
+// Top level format is 0b011,C,xxxx
+// where 
+// C: Branch Conditional? else Link
+// if C is 1 then the format is: 0b011,1,R,YYY, this is known as the conditional immediate form
+// R: Relative? else Absolute
+// Y: Condition codes defined above
+// if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
+// R: Relative? else Absolute
+// there is not enough space in the encoding to allow conditional jump and link in a single instruction
+#define GroupBranchImm  0b01100000
+#define IsConditional   0b00010000
+#define IsLink          0b00000000
+#define RelativeJump    0b00001000 
+#define AbsoluteJump    0b00000000 
+    Opcode(NeverBranchAbsoluteImmediate, OneRegisterS16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfUnordered)
+    Opcode(NeverBranchRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfUnordered)
+    Opcode(BranchGreaterAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreater)
+    Opcode(BranchGreaterRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreater)
+    Opcode(BranchEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfEqual)
+    Opcode(BranchEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfEqual)
+    Opcode(BranchGreaterOrEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreaterOrEqual)
+    Opcode(BranchGreaterOrEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreaterOrEqual)
+    Opcode(BranchLessAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLess)
+    Opcode(BranchLessRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLess)
+    Opcode(BranchNotEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfNotEqual)
+    Opcode(BranchNotEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfNotEqual)
+    Opcode(BranchLessOrEqualAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLessOrEqual)
+    Opcode(BranchLessOrEqualRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLessOrEqual)
+    Opcode(BranchUnconditionalAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfOrdered)
+    Opcode(BranchUnconditionalRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfOrdered)
+        
     // all unconditional one way branches are redefined in terms of the conditional
     // versions
     Branch(ConditionalImmediate, OneRegisterU16)
@@ -148,29 +191,24 @@
     Branch(RelativeImmediateAndLink, OneRegisterS16)
     Branch(ImmediateAndLink, OneRegisterU16)
     Branch(ConditionalRegisterAndLink, ThreeRegister)
+#undef GroupBranchImm
+#undef IsConditional
+#undef IsLink
+#undef RelativeJump
+#undef AbsoluteJump
 //-----------------------------------------------------------------------------
+// Branch Register
+//-----------------------------------------------------------------------------
+#define GroupBranchReg  0b10000000
+#undef GroupBranchReg
+//-----------------------------------------------------------------------------
+#undef BranchIfUnordered       // 0b00000000
+#undef BranchIfGreater         // 0b00000001
+#undef BranchIfEqual           // 0b00000010
+#undef BranchIfGreaterOrEqual  // 0b00000011
+#undef BranchIfLess            // 0b00000100
+#undef BranchIfNotEqual        // 0b00000101
+#undef BranchIfLessOrEqual     // 0b00000110
+#undef BranchIfOrdered         // 0b00000111
 
-
-#undef NormalSignedCompare
-#undef NormalUnsignedCompare 
-#undef NormalCompare
-#undef NormalSignedUnsignedCompare
-
-#undef Compare
-#undef Instruction
-
-#undef ArithmeticSignedImmediate
-#undef ArithmeticUnsignedImmediate
-#undef Arithmetic
-#undef ArithmeticSigned
-#undef ArithmeticUnsigned
-#undef ArithmeticSignedUnsigned
-#undef Branch
-#undef Stack
-#undef Data
-#undef Code
-#undef IO
-#undef Memory
-#undef ArithmeticSignedUnsignedImmediate
-#undef Logical
 #undef Opcode
