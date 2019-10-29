@@ -36,7 +36,7 @@ namespace iris {
 
     enum class Opcodes : UnsignedWord {
         Error = 0,
-#define X(t, _) t ,
+#define X(t, _, o) t = static_cast<UnsignedWord>(o) ,
 #include "InstructionFormats.def"
 #undef X
         Count,
@@ -46,7 +46,7 @@ namespace iris {
     static_assert(static_cast<OpcodesNumericType>(Opcodes::Count) <= MaximumOpcodeCount, "Too many opcodes defined!");
     // forward declare the formats
     struct ErrorInstruction;
-#define X(t, f) struct t ## Instruction ; 
+#define X(t, f, o) struct t ## Instruction ; 
 #include "InstructionFormats.def"
 #undef X
 
@@ -545,7 +545,7 @@ struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
     using Parent::Parent;
 };
 // define the actual instruction kinds
-#define X(t, f) \
+#define X(t, f, o) \
     struct t ## Instruction final : public f ## Format < Opcodes :: t > { \
         static constexpr auto Opcode = Opcodes:: t ; \
         using Parent = f ## Format < Opcodes:: t > ; \
