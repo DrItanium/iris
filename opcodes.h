@@ -176,10 +176,10 @@ namespace iris {
     } \
     template<EncodedInstruction enc> \
     constexpr auto IsSpace ## op = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::SpaceMask, bits::Space ## op >;
-    X(Code, 0b0_opcode);
-    X(Data, 0b1_opcode);
+    X(Code,  0b00_opcode);
+    X(Data,  0b01_opcode);
     X(Stack, 0b10_opcode);
-    X(IO, 0b11_opcode);
+    X(IO,    0b11_opcode);
 #undef X
     namespace bits {
         //-----------------------------------------------------------------------------
@@ -203,6 +203,11 @@ namespace iris {
         constexpr auto BranchIfNotEqual       = 0b00000101_opcode;
         constexpr auto BranchIfLessOrEqual    = 0b00000110_opcode;
         constexpr auto BranchIfOrdered        = 0b00000111_opcode;
+        constexpr auto BranchIfMask           = BranchIfOrdered;
+    } // end namespace bits
+    template<EncodedInstruction enc>
+    constexpr auto BranchMask = (enc & bits::BranchIfMask);
+    namespace bits {
         //-----------------------------------------------------------------------------
         // Branch Immediate
         //-----------------------------------------------------------------------------
@@ -221,6 +226,16 @@ namespace iris {
         constexpr auto IsLink        = 0b00000000_opcode;
         constexpr auto RelativeJump  = 0b00001000_opcode;
         constexpr auto AbsoluteJump  = 0b00000000_opcode;
+    } // end namespace bits
+    template<EncodedInstruction enc>
+    constexpr auto IsRelativeJump = IsBranchImmInstruction<enc> && flagSet<bits::RelativeJump>(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsAbsoluteJump = IsBranchImmInstruction<enc> && flagClear<bits::RelativeJump>(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsLink = IsBranchImmInstruction<enc> && flagClear<bits::IsConditional>(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsConditional = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
+    namespace bits {
         //-----------------------------------------------------------------------------
         // Branch Register
         //-----------------------------------------------------------------------------
@@ -236,14 +251,6 @@ namespace iris {
         constexpr auto BranchRegisterOperationMask = 0b00011000_opcode;
         //-----------------------------------------------------------------------------
     } // end namespace flags
-    template<EncodedInstruction enc>
-        constexpr auto IsRelativeJump = IsBranchImmInstruction<enc> && flagSet<bits::RelativeJump>(enc);
-    template<EncodedInstruction enc>
-        constexpr auto IsAbsoluteJump = IsBranchImmInstruction<enc> && flagClear<bits::RelativeJump>(enc);
-    template<EncodedInstruction enc>
-        constexpr auto IsLink = IsBranchImmInstruction<enc> && flagClear<bits::IsConditional>(enc);
-    template<EncodedInstruction enc>
-        constexpr auto IsConditional = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,
