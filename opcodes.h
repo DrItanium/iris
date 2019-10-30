@@ -260,7 +260,6 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsSelectOperation = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsSelectOperation>;
     enum class Opcodes : EncodedInstruction {
-        Error = 0,
 #define X(t, _, o) t = o ,
 #include "InstructionFormats.def"
 #undef X
@@ -268,12 +267,12 @@ namespace iris {
     struct ErrorInstruction;
     using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
     // forward declare the formats and perform sanity checks
+    constexpr auto LargestOpcode = 0xFF00'0000;
 #define X(name, __, o) \
     static_assert(o < LargestOpcode, "Operation " #name " is out of encoding space!"); \
     struct name  ## Instruction;
 #include "InstructionFormats.def"
 #undef X
-    constexpr auto LargestOpcode = 0xFF00'0000;
     constexpr auto extractOpcode(EncodedInstruction inst) noexcept {
         return LargestOpcode & inst;
     }
@@ -470,128 +469,6 @@ namespace iris {
             DoubleWord _bits;
     };
 
-    template<Byte opcode>
-        class DispatchableInstruction {
-            private:
-                template<Byte mask>
-                    static constexpr bool CommonCompareBody = (opcode & mask) == mask;
-            public:
-                DispatchableInstruction() = delete;
-                ~DispatchableInstruction() = delete;
-                DispatchableInstruction(const DispatchableInstruction&) = delete;
-                DispatchableInstruction(DispatchableInstruction&&) = delete;
-                DispatchableInstruction operator=(const DispatchableInstruction&) = delete;
-                DispatchableInstruction operator=(DispatchableInstruction&&) = delete;
-            private:
-                constexpr static Byte MajorOpcode_Branch = 0b1000'0000;
-                constexpr static Byte ConditionalCode_NeverTake = MajorOpcode_Branch | 0b000;
-                constexpr static Byte ConditionalCode_GreaterThan = MajorOpcode_Branch | 0b001;
-                constexpr static Byte ConditionalCode_Equals = MajorOpcode_Branch | 0b010;
-                constexpr static Byte ConditionalCode_LessThan = MajorOpcode_Branch | 0b100;
-                constexpr static Byte ConditionalCode_LessThanOrEqual = ConditionalCode_LessThan | ConditionalCode_Equals;
-                constexpr static Byte ConditionalCode_GreaterThanOrEqual = ConditionalCode_GreaterThan | ConditionalCode_Equals;
-                constexpr static Byte ConditionalCode_Unconditional = ConditionalCode_GreaterThan | ConditionalCode_LessThan | ConditionalCode_Equals;
-                constexpr static Byte ConditionalCode_NotEquals = ConditionalCode_LessThan | ConditionalCode_GreaterThan;
-                constexpr static Byte BranchAction_TreatTargetAsRelative = MajorOpcode_Branch | 0b0'00'000;
-                constexpr static Byte BranchAction_TreatTargetAsAbsolute = MajorOpcode_Branch | 0b1'00'000;
-                constexpr static Byte BranchAction_RegisterForm = MajorOpcode_Branch | 0b0'0'000;
-                constexpr static Byte BranchAction_ImmediateForm = MajorOpcode_Branch | 0b1'0'000;
-            public:
-#define X(name, mask) \
-                static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
-                X(Branch, MajorOpcode_Branch);
-                // conditional codes
-                X(NeverTaken, ConditionalCode_NeverTake);
-                X(GreaterThan, ConditionalCode_GreaterThan);
-                X(LessThan, ConditionalCode_LessThan);
-                X(GreaterThanOrEqual, ConditionalCode_GreaterThanOrEqual);
-                X(LessThanOrEqual, ConditionalCode_LessThanOrEqual);
-                X(Unconditional, ConditionalCode_Unconditional);
-                X(NotEquals, ConditionalCode_NotEquals);
-                X(Equals, ConditionalCode_Equals);
-                X(RelativeAddress, BranchAction_TreatTargetAsRelative);
-                X(AbsoluteAddress, BranchAction_TreatTargetAsAbsolute);
-                X(RegisterForm, BranchAction_RegisterForm);
-                X(ImmediateForm, BranchAction_ImmediateForm);
-#undef X
-            private:
-                constexpr static Byte MajorOpcode_Common = 0b0000'0000;
-                constexpr static Byte Common_Error = MajorOpcode_Common | 0b00'0000;
-                constexpr static Byte Common_Arithmetic = MajorOpcode_Common | 0b01'0000;
-                constexpr static Byte TreatArithmeticOperationAsInteger = Common_Arithmetic | 0b0000;
-                constexpr static Byte TreatArithmeticOperationAsOrdinal = Common_Arithmetic | 0b1000;
-                constexpr static Byte ArithmeticOperation_Add           = Common_Arithmetic | 0b000;
-                constexpr static Byte ArithmeticOperation_Subtract      = Common_Arithmetic | 0b001;
-                constexpr static Byte ArithmeticOperation_Multiply      = Common_Arithmetic | 0b010;
-                constexpr static Byte ArithmeticOperation_Divide        = Common_Arithmetic | 0b011;
-                constexpr static Byte ArithmeticOperation_Remainder     = Common_Arithmetic | 0b100;
-                constexpr static Byte ArithmeticOperation_ShiftLeft     = Common_Arithmetic | 0b101;
-                constexpr static Byte ArithmeticOperation_ShiftRight    = Common_Arithmetic | 0b110;
-                constexpr static Byte Common_Bitwise = MajorOpcode_Common | 0b10'0000;
-                constexpr static Byte BitwiseOperation_Not = Common_Bitwise | 0b00;
-                constexpr static Byte BitwiseOperation_And = Common_Bitwise | 0b01;
-                constexpr static Byte BitwiseOperation_Or  = Common_Bitwise | 0b10;
-                constexpr static Byte BitwiseOperation_Xor = Common_Bitwise | 0b11;
-                constexpr static Byte Common_Compare = MajorOpcode_Common | 0b10'0100;
-                constexpr static Byte CompareOperation_Integer = Common_Compare | 0b0;
-                constexpr static Byte CompareOperation_Ordinal = Common_Compare | 0b1;
-            public:
-#define X(name, mask) \
-                static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
-                X(Common, MajorOpcode_Common);
-                X(Error, Common_Error);
-                X(Arithmetic, Common_Arithmetic);
-                X(Add, ArithmeticOperation_Add);
-                X(Subtract, ArithmeticOperation_Subtract);
-                X(Multiply, ArithmeticOperation_Multiply);
-                X(Divide, ArithmeticOperation_Divide);
-                X(Remainder, ArithmeticOperation_Remainder);
-                X(ShiftLeft, ArithmeticOperation_ShiftLeft);
-                X(ShiftRight, ArithmeticOperation_ShiftRight);
-                X(Bitwise, Common_Bitwise);
-                X(Not, BitwiseOperation_Not);
-                X(And, BitwiseOperation_And);
-                X(Or, BitwiseOperation_Or);
-                X(Xor, BitwiseOperation_Xor);
-                X(Compare, Common_Compare);
-#undef X
-                static constexpr auto IsShiftInstruction = IsShiftLeftInstruction || IsShiftRightInstruction;
-                static constexpr auto Src2CannotBeZero = IsDivideInstruction || IsRemainderInstruction;
-                static constexpr auto IsIntegerInstruction = (CommonCompareBody<CompareOperation_Integer> ||
-                        CommonCompareBody<TreatArithmeticOperationAsInteger>);
-                static constexpr auto IsOrdinalInstruction = (CommonCompareBody<CompareOperation_Ordinal> ||
-                        CommonCompareBody<TreatArithmeticOperationAsOrdinal>);
-            private:
-                constexpr static Byte MajorOpcode_Memory = 0b0100'0000;
-                constexpr static Byte MemoryManipulateKind = MajorOpcode_Memory | 0b00'0000;
-                constexpr static Byte MemoryLoadKind = MemoryManipulateKind | 0b00'1000;
-                constexpr static Byte MemoryStoreKind = MemoryManipulateKind | 0b00'0000;
-                constexpr static Byte MemoryManipulateCode = MemoryManipulateKind | 0b00;
-                constexpr static Byte MemoryManipulateData = MemoryManipulateKind | 0b01;
-                constexpr static Byte MemoryManipulateStack = MemoryManipulateKind | 0b10;
-                constexpr static Byte MemoryManipulateIO = MemoryManipulateKind | 0b11;
-                constexpr static Byte MemoryMiscKind = MajorOpcode_Memory | 0b00'1000;
-                constexpr static Byte AssignRegisterImmediate = MemoryMiscKind | 0b000;
-            public:
-#define X(name, mask) \
-                static constexpr auto Is ## name ## Instruction = CommonCompareBody<mask>
-                // common ops
-                // memory ops
-                X(Memory, MajorOpcode_Memory);
-                X(LoadStore, MemoryManipulateKind);
-                X(MiscMemory, MemoryMiscKind);
-                X(AssignRegister, AssignRegisterImmediate);
-                X(MemoryStore, MemoryStoreKind);
-                X(MemoryLoad, MemoryLoadKind);
-#undef X
-                static constexpr auto TargetsCodeSpace = CommonCompareBody<MemoryManipulateCode>;
-                static constexpr auto TargetsIOSpace = CommonCompareBody<MemoryManipulateIO>;
-                static constexpr auto TargetsStackSpace = CommonCompareBody<MemoryManipulateStack>;
-                static constexpr auto TargetsDataSpace = CommonCompareBody<MemoryManipulateData>;
-            private:
-                constexpr static Byte MajorOpcode_Unused = 0b1100'0000;
-        };
-
     template<Opcodes op>
         class ArgumentFormat {
             public:
@@ -603,87 +480,88 @@ namespace iris {
                 constexpr auto getRawValue() const noexcept { return RawValue; }
         };
     template<typename T, Opcodes op>
-        class ThreeArgumentsFormat : public ArgumentFormat<op> {
-            public:
-                using Parent = ArgumentFormat<op>;
-                explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1()), _third(inst.getArg2<T>()) { }
-                constexpr ThreeArgumentsFormat(RegisterIndex first, RegisterIndex second, T third) : _first(first), _second(second), _third(third) { }
-                constexpr auto getFirst() const noexcept { return _first; }
-                constexpr auto getSecond() const noexcept { return _second; }
-                constexpr auto getThird() const noexcept { return _third; }
-                constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
-                constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
-            private:
-                RegisterIndex _first;
-                RegisterIndex _second;
-                T _third;
-        };
+    class ThreeArgumentsFormat : public ArgumentFormat<op> {
+        public:
+            using Parent = ArgumentFormat<op>;
+            explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1()), _third(inst.getArg2<T>()) { }
+            constexpr ThreeArgumentsFormat(RegisterIndex first, RegisterIndex second, T third) : _first(first), _second(second), _third(third) { }
+            constexpr auto getFirst() const noexcept { return _first; }
+            constexpr auto getSecond() const noexcept { return _second; }
+            constexpr auto getThird() const noexcept { return _third; }
+            constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
+            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
+        private:
+            RegisterIndex _first;
+            RegisterIndex _second;
+            T _third;
+    };
     template<typename T, Opcodes op>
-        class TwoArgumentsFormat : public ArgumentFormat<op> {
-            public:
-                using Parent = ArgumentFormat<op>;
-                explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1<T>()) { }
-                constexpr TwoArgumentsFormat(RegisterIndex first, T second) : _first(first), _second(second) { }
-                constexpr auto getFirst() const noexcept { return _first; }
-                constexpr auto getSecond() const noexcept { return _second; }
-                constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
-                constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
-            private:
-                RegisterIndex _first;
-                T _second;
-        };
+    class TwoArgumentsFormat : public ArgumentFormat<op> {
+        public:
+            using Parent = ArgumentFormat<op>;
+            explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1<T>()) { }
+            constexpr TwoArgumentsFormat(RegisterIndex first, T second) : _first(first), _second(second) { }
+            constexpr auto getFirst() const noexcept { return _first; }
+            constexpr auto getSecond() const noexcept { return _second; }
+            constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
+            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
+        private:
+            RegisterIndex _first;
+            T _second;
+    };
     template<typename T, Opcodes op>
-        class OneArgumentFormat : public ArgumentFormat<op> {
-            public:
-                using Parent = ArgumentFormat<op>;
-                explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
-                constexpr OneArgumentFormat(T first) : _first(first) { }
-                constexpr auto getFirst() const noexcept { return _first; }
-                constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
-                constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
-            private:
-                T _first;
-        };
+    class OneArgumentFormat : public ArgumentFormat<op> {
+        public:
+            using Parent = ArgumentFormat<op>;
+            explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
+            constexpr OneArgumentFormat(T first) : _first(first) { }
+            constexpr auto getFirst() const noexcept { return _first; }
+            constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
+            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
+        private:
+            T _first;
+    };
     template<Opcodes op>
-        class ZeroArgumentFormat : public ArgumentFormat<op> { 
-            public:
-                using Parent = ArgumentFormat<op>;
-                using Parent::Parent;
-                constexpr explicit operator Instruction() const noexcept { return { this->getOpcode() }; }
-        };
+    class ZeroArgumentFormat : public ArgumentFormat<op> { 
+        public:
+            using Parent = ArgumentFormat<op>;
+            using Parent::Parent;
+            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode() }; }
+    };
     template<Opcodes op>
-        using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
+    using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
     template<Opcodes op>
-        using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, op>;
+    using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, op>;
     template<Opcodes op>
-        using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, op>;
+    using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, op>;
     template<Opcodes op>
-        using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
+    using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
     template<Opcodes op>
-        using OneRegisterU16Format = TwoArgumentsFormat<UnsignedWord, op>;
+    using OneRegisterU16Format = TwoArgumentsFormat<UnsignedWord, op>;
     template<Opcodes op>
-        using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
+    using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
     template<Opcodes op>
-        using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
+    using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
     template<Opcodes op>
-        using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
+    using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
     template<Opcodes op>
-        using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
+    using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
     template<Opcodes op>
-        using U16Format = OneArgumentFormat<UnsignedWord, op>;
+    using U16Format = OneArgumentFormat<UnsignedWord, op>;
     template<Opcodes op>
-        using S16Format = OneArgumentFormat<Offset16, op>;
+    using S16Format = OneArgumentFormat<Offset16, op>;
     template<Opcodes op>
-        using U8Format = OneArgumentFormat<Byte, op>;
+    using U8Format = OneArgumentFormat<Byte, op>;
     template<Opcodes op>
-        using S8Format = OneArgumentFormat<SignedByte, op>;
+    using S8Format = OneArgumentFormat<SignedByte, op>;
 
+#if 0
     template<typename T>
-        constexpr auto IsThreeArgumentFormat = std::is_base_of_v<ThreeRegisterFormat<T::Opcode>, T> ||
+    constexpr auto IsThreeArgumentFormat = std::is_base_of_v<ThreeRegisterFormat<T::Opcode>, T> ||
         std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T> ||
         std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>;
     template<typename T>
-        constexpr auto TreatArg2AsImmediate =  (IsThreeArgumentFormat<T> && 
+    constexpr auto TreatArg2AsImmediate =  (IsThreeArgumentFormat<T> && 
                 (std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T> || 
                  std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>)) ||
         (std::is_base_of_v<U8Format<T::Opcode>, T> ||
@@ -691,29 +569,28 @@ namespace iris {
 
 
     template<typename T>
-        constexpr auto UsesRelativeImmediateOffset = std::is_base_of_v<OneRegisterS16Format<T::Opcode>, T> || std::is_base_of_v<S16Format, T>;
+    constexpr auto UsesRelativeImmediateOffset = std::is_base_of_v<OneRegisterS16Format<T::Opcode>, T> || std::is_base_of_v<S16Format, T>;
 
     template<typename T>
-        constexpr auto UsesAbsoluteImmediatePosition = std::is_base_of_v<OneRegisterU16Format<T::Opcode>, T> || std::is_base_of_v<U16Format, T>;
+    constexpr auto UsesAbsoluteImmediatePosition = std::is_base_of_v<OneRegisterU16Format<T::Opcode>, T> || std::is_base_of_v<U16Format, T>;
 
     template<typename T>
-        constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>);
+    constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>);
 
     template<typename T>
-        constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>);
+    constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>);
 
     template<typename T>
-        constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
+    constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
 
     template<typename T>
-        constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
+    constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
 
     template<typename T>
-        constexpr auto MustBeIntegerOrOrdinalOperation = (IsOrdinalOperation<std::decay_t<T>> || IsIntegerOperation<std::decay_t<T>>);
+    constexpr auto MustBeIntegerOrOrdinalOperation = (IsOrdinalOperation<std::decay_t<T>> || IsIntegerOperation<std::decay_t<T>>);
 
     template<typename T, std::enable_if_t<MustBeIntegerOrOrdinalOperation<T>, int> = 0>
-        using DeterminedNumericType = std::conditional_t<IsOrdinalOperation<std::decay_t<T>>, UnsignedWord, SignedWord>;
-
+    using DeterminedNumericType = std::conditional_t<IsOrdinalOperation<std::decay_t<T>>, UnsignedWord, SignedWord>;
     template<typename T> constexpr auto IsStackOperation = false;
     template<typename T> constexpr auto IsCodeOperation = false;
     template<typename T> constexpr auto IsDataOperation = false;
@@ -766,12 +643,15 @@ namespace iris {
     template<typename T> constexpr auto IsConditionalOperation = false;
     template<typename T> constexpr auto IsErrorOperation = false;
     template<typename T> constexpr auto IsBranchRegisterInstruction = false;
+#endif
 
+#if 0
     struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
         static constexpr auto Opcode = Opcodes::Error; 
         using Parent = ZeroArgumentFormat<Opcodes::Error>;
         using Parent::Parent;
     };
+#endif
     // define the actual instruction kinds
 #define X(t, f, o) \
     struct t ## Instruction final : public f ## Format < Opcodes :: t > { \
@@ -781,10 +661,12 @@ namespace iris {
     };
 #include "InstructionFormats.def"
 #undef X
+#if 0
 #define DeclareProperty(op, prop) \
     template<> constexpr auto prop < op ## Instruction > = true; 
 #include "InstructionProperties.def"
 #undef DeclareProperty
+#endif
 
 
 } // end namespace iris
