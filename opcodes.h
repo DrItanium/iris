@@ -170,6 +170,10 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto ArgumentIsImm16 = (IsBitwiseInstruction<enc> && FlagSet<enc, bits::ArgumentIsImm16>) ||
                                      (IsMemoryInstruction<enc> && FlagSet<enc, bits::Arg1IsImm>);
+    template<EncodedInstruction enc>
+    constexpr auto IsLoadOperation = IsMemoryInstruction<enc> && FlagSet<enc, bits::LoadOperation>;
+    template<EncodedInstruction enc>
+    constexpr auto IsStoreOperation = IsMemoryInstruction<enc> && FlagClear<enc, bits::StoreOperation>;
 #define X(op, value) \
     namespace bits { \
         constexpr auto Space ## op = value; \
