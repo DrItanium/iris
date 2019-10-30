@@ -254,13 +254,13 @@ namespace iris {
         constexpr auto IsSelectOperation          =  0b00001000_opcode;
         constexpr auto BranchRegisterOperationMask = 0b00011000_opcode;
         //-----------------------------------------------------------------------------
-    } // end namespace flags
+    } // end namespace bits
     template<EncodedInstruction enc>
     constexpr auto IsConditionalBranchAndLink = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsConditionalBranchAndLink>;
     template<EncodedInstruction enc>
     constexpr auto IsSelectOperation = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsSelectOperation>;
     enum class Opcodes : EncodedInstruction {
-#define X(t, _, o) t = o ,
+#define X(t, o) t = o ,
 #include "InstructionFormats.def"
 #undef X
     };
@@ -268,7 +268,7 @@ namespace iris {
     using OpcodesNumericType = std::underlying_type_t<Opcodes>; 
     // forward declare the formats and perform sanity checks
     constexpr auto LargestOpcode = 0xFF00'0000;
-#define X(name, __, o) \
+#define X(name, o) \
     static_assert(o < LargestOpcode, "Operation " #name " is out of encoding space!"); \
     struct name  ## Instruction;
 #include "InstructionFormats.def"
@@ -324,17 +324,17 @@ namespace iris {
             explicit constexpr Instruction(DoubleWord bits = 0) noexcept : _bits(bits) { }
             explicit constexpr Instruction(Opcodes opcode) noexcept : _bits(static_cast<decltype(_bits)>(opcode)) { }
             template<typename T>
-                Instruction(Opcodes opcode, T arg0) noexcept : Instruction(opcode) {
-                    setArg0(arg0);
-                }
+            Instruction(Opcodes opcode, T arg0) noexcept : Instruction(opcode) {
+                setArg0(arg0);
+            }
             template<typename T0, typename T1>
-                Instruction(Opcodes opcode, T0 arg0, T1 arg1) noexcept : Instruction(opcode, arg0) {
-                    setArg1(arg1);
-                }
+            Instruction(Opcodes opcode, T0 arg0, T1 arg1) noexcept : Instruction(opcode, arg0) {
+                setArg1(arg1);
+            }
             template<typename T0, typename T1, typename T2>
-                Instruction(Opcodes opcode, T0 arg0, T1 arg1, T2 arg2) noexcept : Instruction(opcode, arg0, arg1) {
-                    setArg2(arg2);
-                }
+            Instruction(Opcodes opcode, T0 arg0, T1 arg1, T2 arg2) noexcept : Instruction(opcode, arg0, arg1) {
+                setArg2(arg2);
+            }
             constexpr Byte getLowestQuarter() const noexcept { 
                 return decodeBits<DoubleWord, Byte, 0xFF, 0>(_bits); 
             }
@@ -352,15 +352,15 @@ namespace iris {
             constexpr Byte getOpcodeIndex() const noexcept { return getLowestQuarter(); }
         private:
             template<typename T>
-                static constexpr auto IsU8 = std::is_same_v<std::decay_t<T>, UnsignedByte>;
+            static constexpr auto IsU8 = std::is_same_v<std::decay_t<T>, UnsignedByte>;
             template<typename T>
-                static constexpr auto IsS8 = std::is_same_v<std::decay_t<T>, SignedByte>;
+            static constexpr auto IsS8 = std::is_same_v<std::decay_t<T>, SignedByte>;
             template<typename T>
-                static constexpr auto IsImm8 = IsU8<T> || IsS8<T>;
+            static constexpr auto IsImm8 = IsU8<T> || IsS8<T>;
             template<typename T>
-                static constexpr auto IsImm16 = std::is_same_v<std::decay_t<T>, Address>;
+            static constexpr auto IsImm16 = std::is_same_v<std::decay_t<T>, Address>;
             template<typename T>
-                static constexpr auto IsS16 = std::is_same_v<std::decay_t<T>, Offset16>;
+            static constexpr auto IsS16 = std::is_same_v<std::decay_t<T>, Offset16>;
         public:
             template<typename T = RegisterIndex>
                 constexpr T getArg0() const noexcept { 
@@ -468,206 +468,6 @@ namespace iris {
         private:
             DoubleWord _bits;
     };
-
-    template<Opcodes op>
-        class ArgumentFormat {
-            public:
-                static constexpr OpcodesNumericType RawValue = static_cast<OpcodesNumericType>(op);
-                static constexpr auto TargetOpcode = op;
-                explicit constexpr ArgumentFormat(const Instruction&) { }
-                constexpr ArgumentFormat() = default;
-                constexpr auto getOpcode() const noexcept { return op; }
-                constexpr auto getRawValue() const noexcept { return RawValue; }
-        };
-    template<typename T, Opcodes op>
-    class ThreeArgumentsFormat : public ArgumentFormat<op> {
-        public:
-            using Parent = ArgumentFormat<op>;
-            explicit constexpr ThreeArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1()), _third(inst.getArg2<T>()) { }
-            constexpr ThreeArgumentsFormat(RegisterIndex first, RegisterIndex second, T third) : _first(first), _second(second), _third(third) { }
-            constexpr auto getFirst() const noexcept { return _first; }
-            constexpr auto getSecond() const noexcept { return _second; }
-            constexpr auto getThird() const noexcept { return _third; }
-            constexpr std::tuple<RegisterIndex, RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second, _third); }
-            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second, _third }; }
-        private:
-            RegisterIndex _first;
-            RegisterIndex _second;
-            T _third;
-    };
-    template<typename T, Opcodes op>
-    class TwoArgumentsFormat : public ArgumentFormat<op> {
-        public:
-            using Parent = ArgumentFormat<op>;
-            explicit constexpr TwoArgumentsFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0()), _second(inst.getArg1<T>()) { }
-            constexpr TwoArgumentsFormat(RegisterIndex first, T second) : _first(first), _second(second) { }
-            constexpr auto getFirst() const noexcept { return _first; }
-            constexpr auto getSecond() const noexcept { return _second; }
-            constexpr std::tuple<RegisterIndex, T> arguments() const noexcept { return std::make_tuple(_first, _second); }
-            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first, _second }; }
-        private:
-            RegisterIndex _first;
-            T _second;
-    };
-    template<typename T, Opcodes op>
-    class OneArgumentFormat : public ArgumentFormat<op> {
-        public:
-            using Parent = ArgumentFormat<op>;
-            explicit constexpr OneArgumentFormat(const Instruction& inst) : Parent(inst), _first(inst.getArg0<T>()) { }
-            constexpr OneArgumentFormat(T first) : _first(first) { }
-            constexpr auto getFirst() const noexcept { return _first; }
-            constexpr std::tuple<T> arguments() const noexcept { return std::make_tuple(_first); }
-            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode(), _first }; }
-        private:
-            T _first;
-    };
-    template<Opcodes op>
-    class ZeroArgumentFormat : public ArgumentFormat<op> { 
-        public:
-            using Parent = ArgumentFormat<op>;
-            using Parent::Parent;
-            constexpr explicit operator Instruction() const noexcept { return { this->getOpcode() }; }
-    };
-    template<Opcodes op>
-    using ThreeRegisterFormat = ThreeArgumentsFormat<RegisterIndex, op>;
-    template<Opcodes op>
-    using TwoRegisterU8Format = ThreeArgumentsFormat<Byte, op>;
-    template<Opcodes op>
-    using TwoRegisterS8Format = ThreeArgumentsFormat<SignedByte, op>;
-    template<Opcodes op>
-    using TwoRegisterFormat = TwoArgumentsFormat<RegisterIndex, op>;
-    template<Opcodes op>
-    using OneRegisterU16Format = TwoArgumentsFormat<UnsignedWord, op>;
-    template<Opcodes op>
-    using OneRegisterS16Format = TwoArgumentsFormat<SignedWord, op>;
-    template<Opcodes op>
-    using OneRegisterU8Format = TwoArgumentsFormat<Byte, op>;
-    template<Opcodes op>
-    using OneRegisterS8Format = TwoArgumentsFormat<SignedByte, op>;
-    template<Opcodes op>
-    using OneRegisterFormat = OneArgumentFormat<RegisterIndex, op>;
-    template<Opcodes op>
-    using U16Format = OneArgumentFormat<UnsignedWord, op>;
-    template<Opcodes op>
-    using S16Format = OneArgumentFormat<Offset16, op>;
-    template<Opcodes op>
-    using U8Format = OneArgumentFormat<Byte, op>;
-    template<Opcodes op>
-    using S8Format = OneArgumentFormat<SignedByte, op>;
-
-#if 0
-    template<typename T>
-    constexpr auto IsThreeArgumentFormat = std::is_base_of_v<ThreeRegisterFormat<T::Opcode>, T> ||
-        std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T> ||
-        std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>;
-    template<typename T>
-    constexpr auto TreatArg2AsImmediate =  (IsThreeArgumentFormat<T> && 
-                (std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T> || 
-                 std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>)) ||
-        (std::is_base_of_v<U8Format<T::Opcode>, T> ||
-         std::is_base_of_v<S8Format<T::Opcode>, T>);
-
-
-    template<typename T>
-    constexpr auto UsesRelativeImmediateOffset = std::is_base_of_v<OneRegisterS16Format<T::Opcode>, T> || std::is_base_of_v<S16Format, T>;
-
-    template<typename T>
-    constexpr auto UsesAbsoluteImmediatePosition = std::is_base_of_v<OneRegisterU16Format<T::Opcode>, T> || std::is_base_of_v<U16Format, T>;
-
-    template<typename T>
-    constexpr auto IsSignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterS8Format<T::Opcode>, T>);
-
-    template<typename T>
-    constexpr auto IsUnsignedImmediate8Operation = (TreatArg2AsImmediate<T> && std::is_base_of_v<TwoRegisterU8Format<T::Opcode>, T>);
-
-    template<typename T>
-    constexpr auto IsIntegerOperation = IsSignedImmediate8Operation<T>;
-
-    template<typename T>
-    constexpr auto IsOrdinalOperation = IsUnsignedImmediate8Operation<T>;
-
-    template<typename T>
-    constexpr auto MustBeIntegerOrOrdinalOperation = (IsOrdinalOperation<std::decay_t<T>> || IsIntegerOperation<std::decay_t<T>>);
-
-    template<typename T, std::enable_if_t<MustBeIntegerOrOrdinalOperation<T>, int> = 0>
-    using DeterminedNumericType = std::conditional_t<IsOrdinalOperation<std::decay_t<T>>, UnsignedWord, SignedWord>;
-    template<typename T> constexpr auto IsStackOperation = false;
-    template<typename T> constexpr auto IsCodeOperation = false;
-    template<typename T> constexpr auto IsDataOperation = false;
-    template<typename T> constexpr auto IsIOOperation = false;
-    template<typename T> constexpr auto IsBranchImmediateInstruction = false;
-    template<typename T> constexpr auto UsesRelativeOffset = false;
-    template<typename T> constexpr auto UsesLinkRegister = false;
-    template<typename T> constexpr auto Src2CannotBeZero = false;
-    template<typename T> constexpr auto IsDivideOperation = false;
-    template<typename T> constexpr auto IsRemainderOperation = false;
-    template<typename T> constexpr auto IsMemoryOperation = false;
-    template<typename T> constexpr auto IsBranchOperation = false;
-    template<typename T> constexpr auto IsArithmeticOperation = false;
-    template<typename T> constexpr auto IsCompareOperation = false;
-    template<typename T> constexpr auto IsAddOperation = false;
-    template<typename T> constexpr auto IsSubtractOperation = false;
-    template<typename T> constexpr auto IsMultiplyOperation = false;
-    template<typename T> constexpr auto IsShiftLeftOperation = false;
-    template<typename T> constexpr auto IsShiftRightOperation = false;
-    template<typename T> constexpr auto IsAddImmediateOperation = false;
-    template<typename T> constexpr auto IsSubtractImmediateOperation = false;
-    template<typename T> constexpr auto IsMultiplyImmediateOperation = false;
-    template<typename T> constexpr auto IsShiftLeftImmediateOperation = false;
-    template<typename T> constexpr auto IsShiftRightImmediateOperation = false;
-    template<typename T> constexpr auto IsLogicalOperation = false;
-    template<typename T> constexpr auto IsBitwiseOrOperation = false;
-    template<typename T> constexpr auto IsBitwiseNorOperation = false;
-    template<typename T> constexpr auto IsBitwiseAndOperation = false;
-    template<typename T> constexpr auto IsBitwiseNandOperation = false;
-    template<typename T> constexpr auto IsBitwiseNotOperation = false;
-    template<typename T> constexpr auto IsBitwiseXorOperation = false;
-    template<typename T> constexpr auto NotTheResult = false;
-    template<typename T> constexpr auto IsMaxOperation = false;
-    template<typename T> constexpr auto IsMinOperation = false;
-    template<typename T> constexpr auto IsGreaterThanOrEqualToOperation = false;
-    template<typename T> constexpr auto IsGreaterThanOperation = false;
-    template<typename T> constexpr auto IsLessThanOrEqualToOperation = false;
-    template<typename T> constexpr auto IsLessThanOperation = false;
-    template<typename T> constexpr auto IsEqualsOperation = false;
-    template<typename T> constexpr auto IsNotEqualsOperation = false;
-    template<typename T> constexpr auto IsGPRManipulatorOperation = false;
-    template<typename T> constexpr auto IsPopOperation = false;
-    template<typename T> constexpr auto IsPushOperation = false;
-    template<typename T> constexpr auto IsCopyRegisterOperation = false;
-    template<typename T> constexpr auto IsAssignRegisterImmediateOperation = false;
-    template<typename T> constexpr auto IsLoadOperation = false;
-    template<typename T> constexpr auto IsStoreOperation = false;
-    template<typename T> constexpr auto IsStoreImmediateOperation = false;
-    template<typename T> constexpr auto IsSelectOperation = false;
-    template<typename T> constexpr auto IsConditionalOperation = false;
-    template<typename T> constexpr auto IsErrorOperation = false;
-    template<typename T> constexpr auto IsBranchRegisterInstruction = false;
-#endif
-
-#if 0
-    struct ErrorInstruction final : public ZeroArgumentFormat<Opcodes::Error> {
-        static constexpr auto Opcode = Opcodes::Error; 
-        using Parent = ZeroArgumentFormat<Opcodes::Error>;
-        using Parent::Parent;
-    };
-#endif
-    // define the actual instruction kinds
-#define X(t, f, o) \
-    struct t ## Instruction final : public f ## Format < Opcodes :: t > { \
-        static constexpr auto Opcode = Opcodes:: t ; \
-        using Parent = f ## Format < Opcodes:: t > ; \
-        using Parent::Parent; \
-    };
-#include "InstructionFormats.def"
-#undef X
-#if 0
-#define DeclareProperty(op, prop) \
-    template<> constexpr auto prop < op ## Instruction > = true; 
-#include "InstructionProperties.def"
-#undef DeclareProperty
-#endif
-
 
 } // end namespace iris
 #endif // end IRIS_OPCODES_H__
