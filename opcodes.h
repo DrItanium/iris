@@ -251,6 +251,10 @@ namespace iris {
         constexpr auto BranchRegisterOperationMask = 0b00011000_opcode;
         //-----------------------------------------------------------------------------
     } // end namespace flags
+    template<EncodedInstruction enc>
+    constexpr auto IsConditionalBranchAndLink = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsConditionalBranchAndLink>;
+    template<EncodedInstruction enc>
+    constexpr auto IsSelectOperation = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsSelectOperation>;
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,
