@@ -33,13 +33,20 @@
 #include "types.h"
 
 namespace iris {
-    constexpr EncodedInstruction GroupArithmetic = 0x0000'0000;
-    constexpr EncodedInstruction GroupCompare = 0x2000'0000;
-    constexpr EncodedInstruction GroupMemory = 0x4000'0000;
-    constexpr EncodedInstruction GroupBranchImm = 0x6000'0000;
-    constexpr EncodedInstruction GroupBranchReg = 0x8000'0000;
-    constexpr EncodedInstruction GroupBitwise = 0xC000'0000;
-    constexpr EncodedInstruction GroupMask = 0xE000'0000;
+    constexpr EncodedInstruction operator "" _opcode(unsigned long long int conversion) noexcept { 
+        return static_cast<iris::EncodedInstruction>(conversion) << 24;
+    }
+    constexpr EncodedInstruction operator "" _group(unsigned long long int conversion) noexcept { 
+        return static_cast<iris::EncodedInstruction>(conversion) << 29;
+    }
+    constexpr auto GroupArithmetic = 0_group;
+    constexpr auto GroupCompare    = 1_group;
+    constexpr auto GroupMemory     = 2_group;
+    constexpr auto GroupBranchImm  = 3_group;
+    constexpr auto GroupBranchReg  = 4_group;
+    constexpr auto GroupBitwise    = 5_group;
+    constexpr auto GroupMask       = 7_group;
+    static_assert(GroupMask == 0xE000'0000);
     template<EncodedInstruction group>
     constexpr auto isOfGroup(EncodedInstruction enc) noexcept {
         return (enc & GroupMask) == group;
@@ -66,22 +73,105 @@ namespace iris {
     constexpr auto IsCompareInstruction = isCompareInstruction(enc);
     template<EncodedInstruction enc>
     constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
-    constexpr EncodedInstruction KindOrdinal = 0x0000'0000;
-    constexpr EncodedInstruction KindInteger = 0x0100'0000;
-    constexpr EncodedInstruction OpcodeError      = (0b00000000 << 24);
-    constexpr EncodedInstruction OpcodeAdd        = (0b00000010 << 24);
-    constexpr EncodedInstruction OpcodeSubtract   = (0b00000100 << 24);
-    constexpr EncodedInstruction OpcodeMultiply   = (0b00000110 << 24);
-    constexpr EncodedInstruction OpcodeDivide     = (0b00001000 << 24);
-    constexpr EncodedInstruction OpcodeRemainder  = (0b00001010 << 24);
-    constexpr EncodedInstruction OpcodeShiftLeft  = (0b00001100 << 24);
-    constexpr EncodedInstruction OpcodeShiftRight = (0b00001110 << 24);
-    constexpr EncodedInstruction OpcodeNot         = (0b00000000 << 24);
-    constexpr EncodedInstruction OpcodeAnd         = (0b00000001 << 24);
-    constexpr EncodedInstruction OpcodeOr          = (0b00000010 << 24);
-    constexpr EncodedInstruction OpcodeXor         = (0b00000011 << 24);
-    constexpr EncodedInstruction NotTheResult      = (0b00000100 << 24);
-    constexpr EncodedInstruction ArgumentIsImm16   = (0b00001000 << 24);
+//-----------------------------------------------------------------------------
+// Arithmetic
+//-----------------------------------------------------------------------------
+// Fields are: 0b000,0,K,TTT
+// Where:
+// C = Major Operation
+// K = Integer? else Ordinal
+// T = Operation
+    constexpr auto KindOrdinal            = 0b00000000_opcode;
+    constexpr auto KindInteger            = 0b00000001_opcode;
+    constexpr auto OperationError         = 0b00000000_opcode;
+    constexpr auto OperationAdd           = 0b00000010_opcode;
+    constexpr auto OperationSubtract      = 0b00000100_opcode;
+    constexpr auto OperationMultiply      = 0b00000110_opcode;
+    constexpr auto OperationDivide        = 0b00001000_opcode;
+    constexpr auto OperationRemainder     = 0b00001010_opcode;
+    constexpr auto OperationShiftLeft     = 0b00001100_opcode;
+    constexpr auto OperationShiftRight    = 0b00001110_opcode;
+//-----------------------------------------------------------------------------
+// Bitwise 
+//-----------------------------------------------------------------------------
+// format is: 0b101,0,A,N,TT
+// where:
+// N: Not the result?
+// T: The operation
+// A: Imm16 argument
+    constexpr auto OperationNot           = 0b00000000_opcode;
+    constexpr auto OperationAnd           = 0b00000001_opcode;
+    constexpr auto OperationOr            = 0b00000010_opcode;
+    constexpr auto OperationXor           = 0b00000011_opcode;
+    constexpr auto NotTheResult           = 0b00000100_opcode;
+    constexpr auto ArgumentIsImm16        = 0b00001000_opcode;
+//-----------------------------------------------------------------------------
+// Memory
+//-----------------------------------------------------------------------------
+// format is: 0b010,L,A,SS
+// where 
+// L: Load? else Store
+// A: Arg1 Is Imm? else register + (offset imm)
+    constexpr auto LoadOperation          = 0b00001000_opcode;
+    constexpr auto StoreOperation         = 0b00000000_opcode; 
+    constexpr auto Arg1IsImm              = 0b00000100_opcode; 
+    constexpr auto Arg1IsRegister         = 0b00000000_opcode; 
+    constexpr auto SpaceCode              = 0b00000000_opcode;
+    constexpr auto SpaceData              = 0b00000001_opcode;
+    constexpr auto SpaceStack             = 0b00000010_opcode;
+    constexpr auto SpaceIO                = 0b00000011_opcode;
+//-----------------------------------------------------------------------------
+// Compare
+//-----------------------------------------------------------------------------
+// Format is 0b001,0000,K
+// Where K is Integer? else Ordinal
+//-----------------------------------------------------------------------------
+// Branches
+//-----------------------------------------------------------------------------
+// these code kinds and descriptions are taken from how the i960 works with 
+// conditions. The difference is that iris does not have a single condition code
+// register. Instead one of the gprs is used for that purpose since there is a
+// generous number of registers provided.
+// never branch
+    constexpr auto BranchIfUnordered      = 0b00000000_opcode;
+    constexpr auto BranchIfGreater        = 0b00000001_opcode;
+    constexpr auto BranchIfEqual          = 0b00000010_opcode;
+    constexpr auto BranchIfGreaterOrEqual = 0b00000011_opcode;
+    constexpr auto BranchIfLess           = 0b00000100_opcode;
+    constexpr auto BranchIfNotEqual       = 0b00000101_opcode;
+    constexpr auto BranchIfLessOrEqual    = 0b00000110_opcode;
+    constexpr auto BranchIfOrdered        = 0b00000111_opcode;
+//-----------------------------------------------------------------------------
+// Branch Immediate
+//-----------------------------------------------------------------------------
+// Top level format is 0b011,C,xxxx
+// where 
+// C: Branch Conditional? else Link
+
+// if C is 1 then the format is: 0b011,1,R,YYY, this is known as the conditional immediate form
+// R: Relative? else Absolute
+// Y: Condition codes defined above
+
+// if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
+// R: Relative? else Absolute
+// there is not enough space in the encoding to allow conditional jump and link in a single instruction
+    constexpr auto IsConditional = 0b00010000_opcode;
+    constexpr auto IsLink        = 0b00000000_opcode;
+    constexpr auto RelativeJump  = 0b00001000_opcode;
+    constexpr auto AbsoluteJump  = 0b00000000_opcode;
+//-----------------------------------------------------------------------------
+// Branch Register
+//-----------------------------------------------------------------------------
+// format is: 0b100,PP,YYY
+// P is a register action kind
+// 00 -> ConditionalBranchAndLink
+// 01 -> Select
+// 10 -> unused
+// 11 -> unused
+// Y is condition codes defined above
+    constexpr auto IsConditionalBranchAndLink = 0b00000000_opcode;
+    constexpr auto IsSelectOperation          = 0b00001000_opcode;
+//-----------------------------------------------------------------------------
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,

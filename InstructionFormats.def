@@ -4,198 +4,92 @@
  */
 // error is just zero and is not part of a group
 // X(name, Format, opcode)
-#define Opcode(name, format, opcode) X(name, format, static_cast<EncodedInstruction>((opcode)))
-//-----------------------------------------------------------------------------
-// Arithmetic
-//-----------------------------------------------------------------------------
-// Fields are: 0b000,0,K,TTT
-// Where:
-// C = Major Opcode
-// K = Integer? else Ordinal
-// T = Operation
-Opcode(Error,               ZeroRegister,  GroupArithmetic | OpcodeError)
-Opcode(AddOrdinal,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindOrdinal)
-Opcode(AddInteger,          ThreeRegister, GroupArithmetic | OpcodeAdd | KindInteger)
-Opcode(SubtractOrdinal,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindOrdinal)
-Opcode(SubtractInteger,     ThreeRegister, GroupArithmetic | OpcodeSubtract | KindInteger)
-Opcode(MultiplyOrdinal,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindOrdinal)
-Opcode(MultiplyInteger,     ThreeRegister, GroupArithmetic | OpcodeMultiply | KindInteger)
-Opcode(DivideOrdinal,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindOrdinal)
-Opcode(DivideInteger,       ThreeRegister, GroupArithmetic | OpcodeDivide | KindInteger)
-Opcode(RemainderOrdinal,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindOrdinal)
-Opcode(RemainderInteger,    ThreeRegister, GroupArithmetic | OpcodeRemainder | KindInteger)
-Opcode(ShiftLeftOrdinal,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindOrdinal)
-Opcode(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OpcodeShiftLeft | KindInteger)
-Opcode(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindOrdinal)
-Opcode(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OpcodeShiftRight | KindInteger)
-//-----------------------------------------------------------------------------
-// Bitwise 
-//-----------------------------------------------------------------------------
-// format is: 0b101,0,A,N,TT
-// where:
-// N: Not the result?
-// T: The operation
-// A: Imm16 argument
-Opcode(BitwiseNot,    TwoRegister,      GroupBitwise | OpcodeNot)
-Opcode(Move,          TwoRegister,      GroupBitwise | OpcodeNot | NotTheResult)
-Opcode(LoadImmediate, OneRegisterU16,   GroupBitwise | OpcodeNot | NotTheResult | ArgumentIsImm16)
-Opcode(BitwiseAnd,    ThreeRegister,    GroupBitwise | OpcodeAnd)
-Opcode(BitwiseNand,   ThreeRegister,    GroupBitwise | OpcodeAnd | NotTheResult)
-Opcode(BitwiseOr,     ThreeRegister,    GroupBitwise | OpcodeOr)
-Opcode(BitwiseNor,    ThreeRegister,    GroupBitwise | OpcodeOr | NotTheResult)
-Opcode(BitwiseXor,    ThreeRegister,    GroupBitwise | OpcodeXor)
-Opcode(BitwiseXnor,   ThreeRegister,    GroupBitwise | OpcodeXor | NotTheResult)
-//-----------------------------------------------------------------------------
-// Memory
-//-----------------------------------------------------------------------------
-// format is: 0b010,L,A,SS
-// where 
-// L: Load? else Store
-// A: Arg1 Is Imm? else register + (offset imm)
-#define LoadOperation    0b000'0'1'0'00 
-#define StoreOperation   0b000'0'0'0'00 
-#define Arg1IsImm        0b000'0'0'1'00 
-#define Arg1IsRegister   0b000'0'0'0'00 
-#define SpaceCode        0b000'0'0'0'00
-#define SpaceData        0b000'0'0'0'01
-#define SpaceStack       0b000'0'0'0'10
-#define SpaceIO          0b000'0'0'0'11
-    Opcode(CodeLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceCode)
-    Opcode(CodeLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceCode)
-    Opcode(CodeStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceCode)
-    Opcode(CodeStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceCode)
-    Opcode(DataLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceData)
-    Opcode(DataLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceData)
-    Opcode(DataStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceData)
-    Opcode(DataStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceData)
-    Opcode(StackLoadWithOffset,           TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceStack)
-    Opcode(StackLoadFromImmediateAddress, OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceStack)
-    Opcode(StackStoreWithOffset,          TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceStack)
-    Opcode(StackStoreToImmediateAddress,  OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceStack)
-    Opcode(IOLoadWithOffset,              TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceIO)
-    Opcode(IOLoadFromImmediateAddress,    OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceIO)
-    Opcode(IOStoreWithOffset,             TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceIO)
-    Opcode(IOStoreToImmediateAddress,     OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceIO)
-#undef LoadOperation
-#undef StoreOperation
-#undef Arg1IsImm
-#undef Arg1IsRegister
-#undef SpaceCode
-#undef SpaceData
-#undef SpaceStack
-#undef SpaceIO
-//-----------------------------------------------------------------------------
-// Compare
-//-----------------------------------------------------------------------------
-// Format is 0b001,0000,K
-// Where K is Integer? else Ordinal
-    Opcode(CompareOrdinal, ThreeRegister, GroupCompare | KindOrdinal)
-    Opcode(CompareInteger, ThreeRegister, GroupInteger | KindInteger)
-//-----------------------------------------------------------------------------
-// Branches
-//-----------------------------------------------------------------------------
-// these code kinds and descriptions are taken from how the i960 works with 
-// conditions. The difference is that iris does not have a single condition code
-// register. Instead one of the gprs is used for that purpose since there is a
-// generous number of registers provided.
-// never branch
-#define BranchIfUnordered       0b00000000
-#define BranchIfGreater         0b00000001
-#define BranchIfEqual           0b00000010
-#define BranchIfGreaterOrEqual  0b00000011
-#define BranchIfLess            0b00000100
-#define BranchIfNotEqual        0b00000101
-#define BranchIfLessOrEqual     0b00000110
-// always branch
-#define BranchIfOrdered         0b00000111
-//-----------------------------------------------------------------------------
-// Branch Immediate
-//-----------------------------------------------------------------------------
-// Top level format is 0b011,C,xxxx
-// where 
-// C: Branch Conditional? else Link
+#define Operation(name, format, opcode) X(name, format, static_cast<EncodedInstruction>((opcode)))
 
-// if C is 1 then the format is: 0b011,1,R,YYY, this is known as the conditional immediate form
-// R: Relative? else Absolute
-// Y: Condition codes defined above
+Operation(Error,               ZeroRegister,  GroupArithmetic | OperationError)
+Operation(AddOrdinal,          ThreeRegister, GroupArithmetic | OperationAdd | KindOrdinal)
+Operation(AddInteger,          ThreeRegister, GroupArithmetic | OperationAdd | KindInteger)
+Operation(SubtractOrdinal,     ThreeRegister, GroupArithmetic | OperationSubtract | KindOrdinal)
+Operation(SubtractInteger,     ThreeRegister, GroupArithmetic | OperationSubtract | KindInteger)
+Operation(MultiplyOrdinal,     ThreeRegister, GroupArithmetic | OperationMultiply | KindOrdinal)
+Operation(MultiplyInteger,     ThreeRegister, GroupArithmetic | OperationMultiply | KindInteger)
+Operation(DivideOrdinal,       ThreeRegister, GroupArithmetic | OperationDivide | KindOrdinal)
+Operation(DivideInteger,       ThreeRegister, GroupArithmetic | OperationDivide | KindInteger)
+Operation(RemainderOrdinal,    ThreeRegister, GroupArithmetic | OperationRemainder | KindOrdinal)
+Operation(RemainderInteger,    ThreeRegister, GroupArithmetic | OperationRemainder | KindInteger)
+Operation(ShiftLeftOrdinal,    ThreeRegister, GroupArithmetic | OperationShiftLeft | KindOrdinal)
+Operation(ShiftLeftInteger,    ThreeRegister, GroupArithmetic | OperationShiftLeft | KindInteger)
+Operation(ShiftRightOrdinal,   ThreeRegister, GroupArithmetic | OperationShiftRight | KindOrdinal)
+Operation(ShiftRightInteger,   ThreeRegister, GroupArithmetic | OperationShiftRight | KindInteger)
+Operation(BitwiseNot,    TwoRegister,      GroupBitwise | OperationNot)
+Operation(Move,          TwoRegister,      GroupBitwise | OperationNot | NotTheResult)
+Operation(LoadImmediate, OneRegisterU16,   GroupBitwise | OperationNot | NotTheResult | ArgumentIsImm16)
+Operation(BitwiseAnd,    ThreeRegister,    GroupBitwise | OperationAnd)
+Operation(BitwiseNand,   ThreeRegister,    GroupBitwise | OperationAnd | NotTheResult)
+Operation(BitwiseOr,     ThreeRegister,    GroupBitwise | OperationOr)
+Operation(BitwiseNor,    ThreeRegister,    GroupBitwise | OperationOr | NotTheResult)
+Operation(BitwiseXor,    ThreeRegister,    GroupBitwise | OperationXor)
+Operation(BitwiseXnor,   ThreeRegister,    GroupBitwise | OperationXor | NotTheResult)
+Operation(CodeLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceCode)
+Operation(CodeLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceCode)
+Operation(CodeStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceCode)
+Operation(CodeStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceCode)
+Operation(DataLoadWithOffset,            TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceData)
+Operation(DataLoadFromImmediateAddress,  OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceData)
+Operation(DataStoreWithOffset,           TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceData)
+Operation(DataStoreToImmediateAddress,   OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceData)
+Operation(StackLoadWithOffset,           TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceStack)
+Operation(StackLoadFromImmediateAddress, OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceStack)
+Operation(StackStoreWithOffset,          TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceStack)
+Operation(StackStoreToImmediateAddress,  OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceStack)
+Operation(IOLoadWithOffset,              TwoRegisterU8,  GroupMemory | LoadOperation | Arg1IsRegister | SpaceIO)
+Operation(IOLoadFromImmediateAddress,    OneRegisterU16, GroupMemory | LoadOperation | Arg1IsImm      | SpaceIO)
+Operation(IOStoreWithOffset,             TwoRegisterU8,  GroupMemory | StoreOperation | Arg1IsRegister | SpaceIO)
+Operation(IOStoreToImmediateAddress,     OneRegisterU16, GroupMemory | StoreOperation | Arg1IsImm      | SpaceIO)
+Operation(CompareOrdinal, ThreeRegister, GroupCompare | KindOrdinal)
+Operation(CompareInteger, ThreeRegister, GroupInteger | KindInteger)
+// while these two opcodes are dumb, there may be a day where I can leverage this like the numerics architecture
+// from i960 where branch if unordered will branch if an operation on reals yields an unordered number (NAN, etc)
+Operation(BranchIfUnorderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfUnordered)
+Operation(BranchIfUnorderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfUnordered)
+Operation(BranchIfGreaterToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreater)
+Operation(BranchIfGreaterToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreater)
+Operation(BranchIfEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfEqual)
+Operation(BranchIfEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfEqual)
+Operation(BranchIfGreaterOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreaterOrEqual)
+Operation(BranchIfGreaterOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreaterOrEqual)
+Operation(BranchIfLessToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLess)
+Operation(BranchIfLessToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLess)
+Operation(BranchIfNotEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfNotEqual)
+Operation(BranchIfNotEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfNotEqual)
+Operation(BranchIfLessOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLessOrEqual)
+Operation(BranchIfLessOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLessOrEqual)
+// the hardcoded integer registers can be provided implicitly by the assembler
+Operation(BranchIfOrderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfOrdered)
+Operation(BranchIfOrderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfOrdered)
+// Link operations
+Operation(BranchAbsoluteImmediateAndLink, OneRegisterU16, GroupBranchImm | IsLink | AbsoluteJump)
+Operation(BranchRelativeImmediateAndLink, OneRegisterS16, GroupBranchImm | IsLink | RelativeJump)
+// disabling link is a simple as binding the link register to a hardcoded register, this will cause the link to be ignored
+Operation(BranchIfUnorderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfUnordered)
+Operation(BranchIfGreaterToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreater)
+Operation(BranchIfEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfEqual)
+Operation(BranchIfGreaterOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreaterOrEqual)
+Operation(BranchIfLessToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLess)
+Operation(BranchIfNotEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfNotEqual)
+Operation(BranchIfLessOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLessOrEqual)
+// this branch is used for unconditional branches
+Operation(BranchIfOrderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfOrdered)
+// select operations
+// always select the on false register
+Operation(SelectIfUnordered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfUnordered)
+Operation(SelectIfGreater, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreater)
+Operation(SelectIfEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfEqual)
+Operation(SelectIfGreaterOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreaterOrEqual)
+Operation(SelectIfLess, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLess)
+Operation(SelectIfNotEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfNotEqual)
+Operation(SelectIfLessOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLessOrEqual)
+// always select the true register
+Operation(SelectIfOrdered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfOrdered)
 
-// if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
-// R: Relative? else Absolute
-// there is not enough space in the encoding to allow conditional jump and link in a single instruction
-#define IsConditional   0b00010000
-#define IsLink          0b00000000
-#define RelativeJump    0b00001000 
-#define AbsoluteJump    0b00000000 
-    // while these two opcodes are dumb, there may be a day where I can leverage this like the numerics architecture
-    // from i960 where branch if unordered will branch if an operation on reals yields an unordered number (NAN, etc)
-    Opcode(BranchIfUnorderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfUnordered)
-    Opcode(BranchIfUnorderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfUnordered)
-    Opcode(BranchIfGreaterToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreater)
-    Opcode(BranchIfGreaterToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreater)
-    Opcode(BranchIfEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfEqual)
-    Opcode(BranchIfEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfEqual)
-    Opcode(BranchIfGreaterOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfGreaterOrEqual)
-    Opcode(BranchIfGreaterOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfGreaterOrEqual)
-    Opcode(BranchIfLessToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLess)
-    Opcode(BranchIfLessToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLess)
-    Opcode(BranchIfNotEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfNotEqual)
-    Opcode(BranchIfNotEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfNotEqual)
-    Opcode(BranchIfLessOrEqualToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfLessOrEqual)
-    Opcode(BranchIfLessOrEqualToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfLessOrEqual)
-    // the hardcoded integer registers can be provided implicitly by the assembler
-    Opcode(BranchIfOrderedToAbsoluteImmediate, OneRegisterU16, GroupBranchImm | IsConditional | AbsoluteJump | BranchIfOrdered)
-    Opcode(BranchIfOrderedToRelativeImmediate, OneRegisterS16, GroupBranchImm | IsConditional | RelativeJump | BranchIfOrdered)
-
-    // Link operations
-    Opcode(BranchAbsoluteImmediateAndLink, OneRegisterU16, GroupBranchImm | IsLink | AbsoluteJump)
-    Opcode(BranchRelativeImmediateAndLink, OneRegisterS16, GroupBranchImm | IsLink | RelativeJump)
-#undef IsConditional
-#undef IsLink
-#undef RelativeJump
-#undef AbsoluteJump
-//-----------------------------------------------------------------------------
-// Branch Register
-//-----------------------------------------------------------------------------
-// format is: 0b100,PP,YYY
-// P is a register action kind
-// 00 -> ConditionalBranchAndLink
-// 01 -> Select
-// 10 -> unused
-// 11 -> unused
-// Y is condition codes defined above
-#define IsConditionalBranchAndLink 0b00000000
-#define IsSelectOperation          0b00001000
-    // disabling link is a simple as binding the link register to a hardcoded register, this will cause the link to be ignored
-    Opcode(BranchIfUnorderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfUnordered)
-    Opcode(BranchIfGreaterToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreater)
-    Opcode(BranchIfEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfEqual)
-    Opcode(BranchIfGreaterOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfGreaterOrEqual)
-    Opcode(BranchIfLessToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLess)
-    Opcode(BranchIfNotEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfNotEqual)
-    Opcode(BranchIfLessOrEqualToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfLessOrEqual)
-    // this branch is used for unconditional branches
-    Opcode(BranchIfOrderedToRegisterAndLink, ThreeRegister, GroupBranchReg | IsConditionalBranchAndLink | BranchIfOrdered)
-    // select operations
-    // always select the on false register
-    Opcode(SelectIfUnordered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfUnordered)
-    Opcode(SelectIfGreater, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreater)
-    Opcode(SelectIfEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfEqual)
-    Opcode(SelectIfGreaterOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfGreaterOrEqual)
-    Opcode(SelectIfLess, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLess)
-    Opcode(SelectIfNotEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfNotEqual)
-    Opcode(SelectIfLessOrEqual, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfLessOrEqual)
-    // always select the true register
-    Opcode(SelectIfOrdered, ThreeRegister, GroupBranchReg | IsSelectOperation | BranchIfOrdered)
-#undef IsConditionalBranchAndLink
-#undef IsSelectOperation
-//-----------------------------------------------------------------------------
-#undef BranchIfUnordered       // 0b00000000
-#undef BranchIfGreater         // 0b00000001
-#undef BranchIfEqual           // 0b00000010
-#undef BranchIfGreaterOrEqual  // 0b00000011
-#undef BranchIfLess            // 0b00000100
-#undef BranchIfNotEqual        // 0b00000101
-#undef BranchIfLessOrEqual     // 0b00000110
-#undef BranchIfOrdered         // 0b00000111
-
-#undef Opcode
+#undef Operation
