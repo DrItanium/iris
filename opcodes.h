@@ -182,6 +182,7 @@ namespace iris {
     } // end namespace flags
     template<EncodedInstruction enc> 
     constexpr auto NotTheResult = IsBitwiseInstruction<enc> && FlagSet<enc, bits::NotTheResult>;
+    template<EncodedInstruction enc>
     enum class Opcodes : EncodedInstruction {
         Error = 0,
 #define X(t, _, o) t = o ,
