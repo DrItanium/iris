@@ -135,12 +135,6 @@ namespace iris {
 #undef X
     template<EncodedInstruction enc>
     constexpr auto Src2CannotBeZero = IsDivideOperation<enc> || IsRemainderOperation<enc>;
-    template<EncodedInstruction enc>
-    constexpr auto IsIntegerOperation = OperationCaresAboutSign<enc> && FlagSet<enc, bits::KindInteger>;
-    template<EncodedInstruction enc>
-    constexpr auto IsOrdinalOperation = OperationCaresAboutSign<enc> && FlagClear<enc, bits::KindInteger>;
-    template<EncodedInstruction enc, std::enable_if_t<OperationCaresAboutSign<enc>, int> = 0>
-    using DeterminedNumericType = std::conditional_t<IsIntegerOperation<enc>, Integer, std::conditional_t<IsOrdinalOperation<enc>, Ordinal, void>>;
     namespace bits {
         //-----------------------------------------------------------------------------
         // Bitwise 
@@ -256,7 +250,7 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsLink = IsBranchImmInstruction<enc> && flagClear<bits::IsConditional>(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsConditional = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
+    constexpr auto IsConditionalImmediate = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
     template<EncodedInstruction enc>
     constexpr auto UsesRelativeOffset = IsRelativeJump<enc>;
     namespace bits {
@@ -282,12 +276,18 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto UsesLinkRegister = IsLink<enc> || IsConditionalBranchAndLink<enc>;
     template<EncodedInstruction enc>
-    constexpr auto IsConditionalOperation = IsConditionalBranchAndLink<enc> || IsConditional<enc>;
+    constexpr auto IsConditionalOperation = IsConditionalBranchAndLink<enc> || IsConditionalImmediate<enc>;
+
+    template<EncodedInstruction enc>
+    constexpr auto IsIntegerOperation = (OperationCaresAboutSign<enc> && FlagSet<enc, bits::KindInteger>);
+    template<EncodedInstruction enc>
+    constexpr auto IsOrdinalOperation = (OperationCaresAboutSign<enc> && FlagClear<enc, bits::KindInteger>);
+    template<EncodedInstruction enc, std::enable_if_t<(OperationCaresAboutSign<enc>), int> = 0>
+    using DeterminedNumericType = std::conditional_t<IsIntegerOperation<enc>, Integer, std::conditional_t<IsOrdinalOperation<enc>, Ordinal, void>>;
     // forward declare the formats and perform sanity checks
     constexpr auto LargestOpcode = 0xFF00'0000;
 #define X(name, o) \
-    static_assert(o <= LargestOpcode, "Operation " #name " is out of encoding space!"); \
-    struct name  ## Instruction;
+    static_assert(o <= LargestOpcode, "Operation " #name " is out of encoding space!");
 #include "InstructionFormats.def"
 #undef X
     constexpr auto extractOpcode(EncodedInstruction inst) noexcept {

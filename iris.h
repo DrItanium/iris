@@ -147,24 +147,22 @@ class Core {
         void invoke(const Instruction& s) {
             /// @todo rewrite branch operations to use the new format
             if constexpr (IsBranchImmediateInstruction<T>) {
-#if 0
-                using O = std::conditional_t<UsesRelativeOffset<T>, Integer, Ordinal>;
-                auto link = s.getArg0();
                 auto offset = s.getImm16();
-                static_assert(std::is_same_v<O, decltype(offset)>);
-                static_assert(!(UsesLinkRegister<T> && IsConditionalOperation<T>), 
-                              "Impossible state, cannot have an immediate which is conditional and link at the same time!");
+                auto reg = s.getArg0();
                 auto performBranch = true;
                 if constexpr (IsConditionalOperation<T>) {
-                    performBranch = getRegisterValue<bool>(link);
-                } 
-                if (performBranch) {
-                    if constexpr (UsesLinkRegister<T>) { 
-                        updateLinkRegister(link);
-                    } 
-                    branchTo<O>(offset);
+                    performBranch = (getRegisterValue<Ordinal>(reg) & BranchMask<T>) != 0;
                 }
-#endif
+                if (performBranch) {
+                    if constexpr (UsesLinkRegister<T>) {
+                        updateLinkRegister(reg);
+                    }
+                    if constexpr (IsRelativeJump<T>) {
+                        branchTo<Integer>(offset);
+                    } else {
+                        branchTo<Ordinal>(offset);
+                    }
+                }
             } else if constexpr (IsBranchRegisterInstruction<T>) {
                 if constexpr (IsConditionalBranchAndLink<T>) {
                     // need to now extract the mask as we will and it with the 
