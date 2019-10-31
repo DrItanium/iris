@@ -82,7 +82,7 @@ class Core {
         }
 
         template<typename T>
-        DoubleWord loadCode(T addr, Address offset = 0) {
+        LongOrdinal loadCode(T addr, Address offset = 0) {
             return _code[extractAddress<T>(addr, offset)];
         }
 
@@ -108,7 +108,7 @@ class Core {
         }
         template<typename A, typename V>
         void storeCode(A address, V value, Address offset = 0) {
-            if constexpr (auto addr = extractAddress<A>(address, offset); std::is_same_v<V, DoubleWord>) {
+            if constexpr (auto addr = extractAddress<A>(address, offset); std::is_same_v<V, LongOrdinal>) {
                 _code[addr] = value;
             } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                 _code[addr] = getDoubleRegisterValue(value);
@@ -137,7 +137,7 @@ class Core {
                 _ip.put<Word>(addr);
             } else if constexpr (std::is_signed_v<T>) {
                 // this becomes relative offset
-                _ip.put<SignedWord>(addr + _ip.get<SignedWord>());
+                _ip.put<Integer>(addr + _ip.get<Integer>());
             } else {
                 static_assert(false_v<T>, "Bad branch to kind!");
             }
@@ -145,11 +145,12 @@ class Core {
         }
         template<EncodedInstruction T, std::enable_if_t<IsBranchInstruction<T>, int> = 0> 
         void invoke(const Instruction& s) {
+            /// @todo rewrite branch operations to use the new format
             if constexpr (IsBranchImmediateInstruction<T>) {
-                using O = std::conditional_t<UsesRelativeOffset<T>, SignedWord, UnsignedWord>;
+#if 0
+                using O = std::conditional_t<UsesRelativeOffset<T>, Integer, Ordinal>;
                 auto link = s.getArg0();
                 auto offset = s.getImm16();
-                auto [ link, offset] = s.arguments(); 
                 static_assert(std::is_same_v<O, decltype(offset)>);
                 static_assert(!(UsesLinkRegister<T> && IsConditionalOperation<T>), 
                               "Impossible state, cannot have an immediate which is conditional and link at the same time!");
@@ -163,19 +164,24 @@ class Core {
                     } 
                     branchTo<O>(offset);
                 }
+#endif
             } else if constexpr (IsBranchRegisterInstruction<T>) {
+#if 0
                 auto [ dest, cond, link ] = s.arguments();
                 if (getRegisterValue<bool>(cond)) {
                     updateLinkRegister(link);
                     branchTo(dest);
                 }
+#endif
             } else {
                 static_assert(false_v<T>, "Bad branch kind!");
             }
         }
 
-        template<typename T, std::enable_if_t<IsCompareOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
+        template<EncodedInstruction T, std::enable_if_t<IsCompareOperation<T>, int> = 0>
+        void invoke(const Instruction& s) {
+            /// @todo reimplement
+#if 0
             using K = std::decay_t<T>;
             static_assert(MustBeIntegerOrOrdinalOperation<K>);
             using D = DeterminedNumericType<K>;
@@ -195,6 +201,7 @@ class Core {
                 result = 0b001;
             }
             setRegisterValue(dest, result);
+#endif
         }
         template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& input) noexcept {
@@ -347,11 +354,11 @@ class Core {
             return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
         }
     public:
-        void invoke(DoubleWord bits);
+        void invoke(LongOrdinal bits);
     private:
         void incrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
             // it is impossible to actually do zero here!
-            if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
+            if (Ordinal actualCount = static_cast<Ordinal>(times) + 1; actualCount == 1) {
                 ++getDestinationRegister(idx);
             } else {
                 setRegisterValue(idx, getRegisterValue(idx) + actualCount);
@@ -359,7 +366,7 @@ class Core {
         }
         void decrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
             // it is impossible to actually do zero here!
-            if (UnsignedWord actualCount = static_cast<UnsignedWord>(times) + 1; actualCount == 1) {
+            if (Ordinal actualCount = static_cast<Ordinal>(times) + 1; actualCount == 1) {
                 --getDestinationRegister(idx);
             } else {
                 setRegisterValue(idx, getRegisterValue(idx) - actualCount);
@@ -370,7 +377,7 @@ class Core {
         void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
             getDoubleRegister(lower).put<T>(value);
         }
-        template<typename T = DoubleWord>
+        template<typename T = LongOrdinal>
         T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
             return getDoubleRegister(lower).get<T>();
         }

@@ -94,7 +94,7 @@ Core::readTerminateCell(Core& c) {
 }
 
 void 
-Core::invoke(DoubleWord ibits) {
+Core::invoke(LongOrdinal ibits) {
     switch (Instruction inst(ibits); inst.getOpcode()) {
 #define X(t, opcode) case opcode : \
         invoke<opcode>(inst); \

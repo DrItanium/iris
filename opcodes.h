@@ -76,6 +76,8 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsCompareInstruction = isCompareInstruction(enc);
     template<EncodedInstruction enc>
+    constexpr auto IsCompareOperation = IsCompareInstruction<enc>;
+    template<EncodedInstruction enc>
     constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
     template<EncodedInstruction mask>
     constexpr auto flagSet(EncodedInstruction enc) noexcept {
@@ -312,7 +314,7 @@ namespace iris {
             constexpr auto getImm8()  const noexcept { return _arg2; }
             constexpr auto getImm16() const noexcept { return (static_cast<Word>(_arg2) | (static_cast<Word>(_arg1) << 8)); } 
         public:
-            void setOpcode(UnsignedByte value) noexcept {
+            void setOpcode(HalfOrdinal value) noexcept {
                 setOpcode(static_cast<EncodedInstruction>(value) << 24);
             }
             void setOpcode(EncodedInstruction inst) noexcept { _opcode = inst; }
@@ -324,7 +326,7 @@ namespace iris {
             void setArg0(RegisterIndex value) noexcept { _arg0 = std::to_integer<Byte>(value); }
             void setArg1(RegisterIndex value) noexcept { _arg1 = std::to_integer<Byte>(value); }
             void setArg2(RegisterIndex value) noexcept { _arg2 = std::to_integer<Byte>(value); }
-            void setImm8(UnsignedByte value) noexcept { _arg2 = value; }
+            void setImm8(HalfOrdinal value) noexcept { _arg2 = value; }
         private:
             // break this into five different components
             EncodedInstruction _opcode;
