@@ -143,26 +143,25 @@ class Core {
             }
             _advanceIP = false;
         }
-        template<typename T, std::enable_if_t<IsBranchOperation<std::decay_t<T>>, int> = 0> 
-        void invoke(const T& s) {
-            using K = std::decay_t<T>;
-            if constexpr (IsBranchImmediateInstruction<K>) {
-                using O = std::conditional_t<UsesRelativeOffset<K>, SignedWord, UnsignedWord>;
+        template<EncodedInstruction T, std::enable_if_t<IsBranchInstruction<T>, int> = 0> 
+        void invoke(const Instruction& s) {
+            if constexpr (IsBranchImmediateInstruction<T>) {
+                using O = std::conditional_t<UsesRelativeOffset<T>, SignedWord, UnsignedWord>;
                 auto [ link, offset] = s.arguments(); 
                 static_assert(std::is_same_v<O, decltype(offset)>);
-                static_assert(!(UsesLinkRegister<K> && IsConditionalOperation<K>), 
+                static_assert(!(UsesLinkRegister<T> && IsConditionalOperation<T>), 
                               "Impossible state, cannot have an immediate which is conditional and link at the same time!");
                 auto performBranch = true;
-                if constexpr (IsConditionalOperation<K>) {
+                if constexpr (IsConditionalOperation<T>) {
                     performBranch = getRegisterValue<bool>(link);
                 } 
                 if (performBranch) {
-                    if constexpr (UsesLinkRegister<K>) { 
+                    if constexpr (UsesLinkRegister<T>) { 
                         updateLinkRegister(link);
                     } 
                     branchTo<O>(offset);
                 }
-            } else if constexpr (IsBranchRegisterInstruction<K>) {
+            } else if constexpr (IsBranchRegisterInstruction<T>) {
                 auto [ dest, cond, link ] = s.arguments();
                 if (getRegisterValue<bool>(cond)) {
                     updateLinkRegister(link);

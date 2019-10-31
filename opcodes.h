@@ -48,9 +48,9 @@ namespace iris {
     constexpr auto GroupMask       = 7_group;
     static_assert(GroupMask == 0xE000'0000);
     template<EncodedInstruction group>
-        constexpr auto isOfGroup(EncodedInstruction enc) noexcept {
-            return (enc & GroupMask) == group;
-        }
+    constexpr auto isOfGroup(EncodedInstruction enc) noexcept {
+        return (enc & GroupMask) == group;
+    }
     constexpr auto isBitwiseInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBitwise>(enc); }
     constexpr auto isArithmeticInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupArithmetic>(enc); }
     constexpr auto isCompareInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupCompare>(enc); }
@@ -60,37 +60,41 @@ namespace iris {
     constexpr auto isBranchInstruction(EncodedInstruction enc) noexcept { return isBranchImmInstruction(enc) || isBranchRegInstruction(enc); }
 
     template<EncodedInstruction enc>
-        constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
+    constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
     template<EncodedInstruction enc>
-        constexpr auto IsBranchInstruction = isBranchInstruction(enc);
+    constexpr auto IsBranchInstruction = isBranchInstruction(enc);
     template<EncodedInstruction enc>
-        constexpr auto IsBranchImmInstruction = isBranchImmInstruction(enc);
+    constexpr auto IsBranchImmInstruction = isBranchImmInstruction(enc);
     template<EncodedInstruction enc>
-        constexpr auto IsBranchRegInstruction = isBranchRegInstruction(enc);
+    constexpr auto IsBranchImmediateInstruction = IsBranchImmInstruction<enc>;
     template<EncodedInstruction enc>
-        constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
+    constexpr auto IsBranchRegInstruction = isBranchRegInstruction(enc);
     template<EncodedInstruction enc>
-        constexpr auto IsCompareInstruction = isCompareInstruction(enc);
+    constexpr auto IsBranchRegisterInstruction = IsBranchRegInstruction<enc>;
     template<EncodedInstruction enc>
-        constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
+    constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsCompareInstruction = isCompareInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
     template<EncodedInstruction mask>
-        constexpr auto flagSet(EncodedInstruction enc) noexcept {
-            return (enc & mask) != 0;
-        }
+    constexpr auto flagSet(EncodedInstruction enc) noexcept {
+        return (enc & mask) != 0;
+    }
     template<EncodedInstruction mask>
-        constexpr auto flagClear(EncodedInstruction enc) noexcept {
-            return (enc & mask) == 0;
-        }
+    constexpr auto flagClear(EncodedInstruction enc) noexcept {
+        return (enc & mask) == 0;
+    }
     template<EncodedInstruction quantity, EncodedInstruction mask>
-        constexpr auto fieldSetTo(EncodedInstruction enc) noexcept {
-            return (enc & mask) == quantity;
-        }
+    constexpr auto fieldSetTo(EncodedInstruction enc) noexcept {
+        return (enc & mask) == quantity;
+    }
     template<EncodedInstruction enc, EncodedInstruction mask>
-        constexpr auto FlagSet = flagSet<mask>(enc);
+    constexpr auto FlagSet = flagSet<mask>(enc);
     template<EncodedInstruction enc, EncodedInstruction mask>
-        constexpr auto FlagClear = flagClear<mask>(enc);
+    constexpr auto FlagClear = flagClear<mask>(enc);
     template<EncodedInstruction enc, EncodedInstruction mask, EncodedInstruction quantity>
-        constexpr auto FieldSetTo = fieldSetTo<quantity, mask>(enc);
+    constexpr auto FieldSetTo = fieldSetTo<quantity, mask>(enc);
     namespace bits {
         //-----------------------------------------------------------------------------
         // Arithmetic
@@ -179,7 +183,9 @@ namespace iris {
         constexpr auto Space ## op = value; \
     } \
     template<EncodedInstruction enc> \
-    constexpr auto IsSpace ## op = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::SpaceMask, bits::Space ## op >;
+    constexpr auto IsSpace ## op = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::SpaceMask, bits::Space ## op >; \
+    template<EncodedInstruction enc> \
+    constexpr auto Is ## op ## Operation = IsSpace ## op < enc > ;
     X(Code,  0b00_opcode);
     X(Data,  0b01_opcode);
     X(Stack, 0b10_opcode);
@@ -239,6 +245,8 @@ namespace iris {
     constexpr auto IsLink = IsBranchImmInstruction<enc> && flagClear<bits::IsConditional>(enc);
     template<EncodedInstruction enc>
     constexpr auto IsConditional = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
+    template<EncodedInstruction enc>
+    constexpr auto UsesRelativeOffset = IsRelativeJump<enc>;
     namespace bits {
         //-----------------------------------------------------------------------------
         // Branch Register
@@ -259,6 +267,10 @@ namespace iris {
     constexpr auto IsConditionalBranchAndLink = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsConditionalBranchAndLink>;
     template<EncodedInstruction enc>
     constexpr auto IsSelectOperation = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsSelectOperation>;
+    template<EncodedInstruction enc>
+    constexpr auto UsesLinkRegister = IsLink<enc> || IsConditionalBranchAndLink<enc>;
+    template<EncodedInstruction enc>
+    constexpr auto IsConditionalOperation = IsConditionalBranchAndLink<enc> || IsConditional<enc>;
     // forward declare the formats and perform sanity checks
     constexpr auto LargestOpcode = 0xFF00'0000;
 #define X(name, o) \
