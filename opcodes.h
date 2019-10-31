@@ -62,6 +62,8 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
     template<EncodedInstruction enc>
+    constexpr auto IsLogicalOperation = IsBitwiseInstruction<enc>;
+    template<EncodedInstruction enc>
     constexpr auto IsBranchInstruction = isBranchInstruction(enc);
     template<EncodedInstruction enc>
     constexpr auto IsBranchImmInstruction = isBranchImmInstruction(enc);
@@ -74,11 +76,15 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
     template<EncodedInstruction enc>
+    constexpr auto IsArithmeticOperation = IsArithmeticInstruction<enc>;
+    template<EncodedInstruction enc>
     constexpr auto IsCompareInstruction = isCompareInstruction(enc);
     template<EncodedInstruction enc>
     constexpr auto IsCompareOperation = IsCompareInstruction<enc>;
     template<EncodedInstruction enc>
     constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
+    template<EncodedInstruction enc>
+    constexpr auto IsMemoryOperation = IsMemoryInstruction<enc>;
     template<EncodedInstruction mask>
     constexpr auto flagSet(EncodedInstruction enc) noexcept {
         return (enc & mask) != 0;

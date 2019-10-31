@@ -203,8 +203,9 @@ class Core {
             setRegisterValue(dest, result);
 #endif
         }
-        template<typename T, std::enable_if_t<IsMemoryOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& input) noexcept {
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        void invoke(const Instruction& input) noexcept {
+#if 0
             using K = std::decay_t<T>;
             if constexpr (IsGPRManipulatorOperation<K>) {
                 if constexpr (IsCopyRegisterOperation<K>) {
@@ -273,10 +274,12 @@ class Core {
             } else {
                 static_assert(false_v<K>, "Unimplemented memory operation!");
             }
+#endif
         }
 
-        template<typename T, std::enable_if_t<IsArithmeticOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
+        template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
+        void invoke(const Instruction& s) {
+#if 0
             using K = std::decay_t<T>;
             static_assert(MustBeIntegerOrOrdinalOperation<K>);
             using D = DeterminedNumericType<K>;
@@ -315,9 +318,11 @@ class Core {
                 static_assert(false_v<K>, "Unimplemented arithmetic operation");
             }
             setRegisterValue<D>(dest, result);
+#endif
         }
-        template<typename T, std::enable_if_t<IsLogicalOperation<std::decay_t<T>>, int> = 0>
-        void invoke(const T& s) {
+        template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
+        void invoke(const Instruction& s) {
+#if 0
             using K = std::decay_t<T>;
             if constexpr (IsBitwiseNotOperation<K>) {
                 auto [ dest, src ] = s.arguments();
@@ -341,6 +346,7 @@ class Core {
                 }
                 setRegisterValue(dest, result);
             }
+#endif
         }
 
 
