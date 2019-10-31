@@ -147,6 +147,8 @@ class Core {
         void invoke(const Instruction& s) {
             if constexpr (IsBranchImmediateInstruction<T>) {
                 using O = std::conditional_t<UsesRelativeOffset<T>, SignedWord, UnsignedWord>;
+                auto link = s.getArg0();
+                auto offset = s.getImm16();
                 auto [ link, offset] = s.arguments(); 
                 static_assert(std::is_same_v<O, decltype(offset)>);
                 static_assert(!(UsesLinkRegister<T> && IsConditionalOperation<T>), 

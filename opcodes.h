@@ -310,7 +310,7 @@ namespace iris {
             constexpr auto getArg1()  const noexcept { return static_cast<RegisterIndex>(_arg1); }
             constexpr auto getArg2()  const noexcept { return static_cast<RegisterIndex>(_arg2); }
             constexpr auto getImm8()  const noexcept { return _arg2; }
-            constexpr auto getImm16() const noexcept { return static_cast<Word>(_arg2) | (static_cast<Word>(_arg1) << 8); } 
+            constexpr auto getImm16() const noexcept { return (static_cast<Word>(_arg2) | (static_cast<Word>(_arg1) << 8)); } 
         public:
             void setOpcode(UnsignedByte value) noexcept {
                 setOpcode(static_cast<EncodedInstruction>(value) << 24);

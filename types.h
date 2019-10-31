@@ -51,35 +51,24 @@ struct overloaded : Ts...
 
 template<typename ... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
-using UnsignedWord = uint16_t;
-using SignedWord = int16_t;
-using UnsignedDoubleWord = uint32_t;
-using SignedDoubleWord = int32_t;
-using Word = UnsignedWord;
-using DoubleWord = UnsignedDoubleWord;
-using UnsignedByte = uint8_t;
-using SignedByte = int8_t;
-using Byte = UnsignedByte;
+using Ordinal = uint16_t;
+using Integer = int16_t;
+using UnsignedWord = Ordinal;
+using SignedWord = Integer;
+using LongOrdinal = uint32_t;
+using LongInteger = int32_t;
+using UnsignedDoubleWord = LongOrdinal;
+using SignedDoubleWord = LongInteger;
+using Word = Ordinal;
+using DoubleWord = LongOrdinal;
+using HalfOrdinal = uint8_t;
+using HalfInteger = int8_t;
+using Byte = HalfOrdinal;
 using RegisterIndex = std::byte;
 using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
-using Address = UnsignedWord;
-using Offset16 = SignedWord;
-using QuadOrdinal = uint64_t;
-using EncodedInstruction = UnsignedDoubleWord; 
-
-template<typename T>
-constexpr auto isDoubleWide = false;
-template<typename T>
-constexpr auto isQuadWide = false;
-template<typename T>
-constexpr auto isRelativeOffset = false;
-
-template<> constexpr auto isDoubleWide<UnsignedDoubleWord> = true;
-template<> constexpr auto isDoubleWide<SignedDoubleWord> = true;
-template<> constexpr auto isQuadWide<QuadOrdinal> = true;
-
-template<> constexpr auto isRelativeOffset<SignedWord> = true;
-
+using Address = Ordinal;
+using Offset16 = Integer;
+using EncodedInstruction = LongOrdinal; 
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
@@ -97,23 +86,23 @@ constexpr T encodeBits(T input, R value) noexcept {
         return static_cast<T>((input & ~mask) | ((static_cast<T>(value)) & mask));
     }
 }
-constexpr UnsignedWord getUpperHalf(UnsignedDoubleWord word) noexcept {
-    return decodeBits<decltype(word), UnsignedWord, 0xFFFF'0000, 16>(word);
+constexpr Ordinal getUpperHalf(LongOrdinal word) noexcept {
+    return decodeBits<decltype(word), Ordinal, 0xFFFF'0000, 16>(word);
 }
-constexpr UnsignedWord getLowerHalf(UnsignedDoubleWord word) noexcept {
-    return decodeBits<decltype(word), UnsignedWord, 0x0000'FFFF, 0>(word);
+constexpr Ordinal getLowerHalf(LongOrdinal word) noexcept {
+    return decodeBits<decltype(word), Ordinal, 0x0000'FFFF, 0>(word);
 }
 
-constexpr UnsignedByte getUpperHalf(UnsignedWord word) noexcept {
-    return decodeBits<decltype(word), UnsignedByte, 0xFF00, 8>(word);
+constexpr HalfOrdinal getUpperHalf(Ordinal word) noexcept {
+    return decodeBits<decltype(word), HalfOrdinal, 0xFF00, 8>(word);
 }
-constexpr UnsignedByte getLowerHalf(UnsignedWord word) noexcept {
-    return decodeBits<decltype(word), UnsignedByte, 0x00FF, 0>(word);
+constexpr HalfOrdinal getLowerHalf(Ordinal word) noexcept {
+    return decodeBits<decltype(word), HalfOrdinal, 0x00FF, 0>(word);
 }
-constexpr UnsignedDoubleWord setUpperHalf(UnsignedDoubleWord word, UnsignedWord value) noexcept {
+constexpr LongOrdinal setUpperHalf(LongOrdinal word, Ordinal value) noexcept {
     return encodeBits<decltype(word), decltype(value), 0xFFFF'0000, 16>(word, value);
 }
-constexpr UnsignedDoubleWord setLowerHalf(UnsignedDoubleWord word, UnsignedWord value) noexcept {
+constexpr LongOrdinal setLowerHalf(LongOrdinal word, Ordinal value) noexcept {
     return encodeBits<decltype(word), decltype(value), 0x0000'FFFF, 0>(word, value);
 }
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
@@ -130,23 +119,25 @@ using MemoryBank = NumericalStorageBank<std::enable_if_t<std::is_integral_v<T>, 
  * Separate memory space that holds the instructions the iris core executes;
  * DoubleWords are stored in this location.
  */
-using CodeMemoryBank = MemoryBank<DoubleWord>;
+using CodeMemoryBank = MemoryBank<LongOrdinal>;
 
 /**
  * Location to store data values in an iris core; 2^16 words worth of storage
  * is provided by default.
  */
-using DataMemoryBank = MemoryBank<Word>;
+using DataMemoryBank = MemoryBank<Ordinal>;
 /**
  * Iris comes equipped with a full 2^16 words worth of stack space that is
  * accessed by separate instructions. It is only possible to do pushes and pops
  * to stack memory. However, the number of stack pointers is only limited by
  * the number of registers.
  */
-using StackMemoryBank = MemoryBank<Word>;
-
+using StackMemoryBank = MemoryBank<Ordinal>;
+constexpr LongOrdinal makeLongOrdinal(Ordinal lower, Ordinal upper) noexcept {
+    return static_cast<LongOrdinal>(lower) | (static_cast<LongOrdinal>(upper) << 16);
+}
 constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
-    return static_cast<DoubleWord>(lower) | (static_cast<DoubleWord>(upper) << 16);
+    return makeLongOrdinal(lower, upper);
 }
 
 template<typename T, typename A>
@@ -156,15 +147,15 @@ constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
 iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);
 constexpr iris::RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111110); }
-constexpr iris::SignedWord operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
-constexpr iris::SignedWord operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
-constexpr iris::SignedWord operator "" _s16(unsigned long long int conv) noexcept { return static_cast<iris::SignedWord>(conv); }
+constexpr iris::Integer operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
+constexpr iris::Integer operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
+constexpr iris::Integer operator "" _s16(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
 constexpr iris::Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<iris::Address>(conversion); }
-constexpr iris::UnsignedWord operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
-constexpr iris::UnsignedWord operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
-constexpr iris::UnsignedWord operator "" _u16(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedWord>(conversion); }
-constexpr iris::UnsignedDoubleWord operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::UnsignedDoubleWord>(conversion); }
-constexpr iris::SignedDoubleWord operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::SignedDoubleWord>(conversion); }
+constexpr iris::Ordinal operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
+constexpr iris::Ordinal operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
+constexpr iris::Ordinal operator "" _u16(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
+constexpr iris::LongOrdinal operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::LongOrdinal>(conversion); }
+constexpr iris::LongInteger operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::LongInteger>(conversion); }
 
 
 
