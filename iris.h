@@ -166,13 +166,22 @@ class Core {
                 }
 #endif
             } else if constexpr (IsBranchRegisterInstruction<T>) {
-#if 0
-                auto [ dest, cond, link ] = s.arguments();
-                if (getRegisterValue<bool>(cond)) {
-                    updateLinkRegister(link);
-                    branchTo(dest);
+                if constexpr (IsConditionalBranchAndLink<T>) {
+                    // need to now extract the mask as we will and it with the 
+                    // contents of cond (src1)
+                    auto mask = BranchMask<T>;
+                    if ((getRegisterValue<Ordinal>(s.getArg1()) & mask) != 0) {
+                        updateLinkRegister(s.getArg2());
+                        branchTo(s.getArg0());
+                    }
+                } else if constexpr (IsSelectOperation<T>) {
+                    // arg0 - condition
+                    // arg1 - onTrue
+                    // arg2 - onFalse
+                    branchTo(((getRegisterValue<Ordinal>(s.getArg0()) & BranchMask<T>) != 0) ?  s.getArg1() : s.getArg2());
+                } else {
+                    static_assert(false_v<T>, "Illegal branch register instruction");
                 }
-#endif
             } else {
                 static_assert(false_v<T>, "Bad branch kind!");
             }
