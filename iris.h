@@ -180,28 +180,17 @@ class Core {
 
         template<EncodedInstruction T, std::enable_if_t<IsCompareOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
-            /// @todo reimplement
-#if 0
-            using K = std::decay_t<T>;
-            static_assert(MustBeIntegerOrOrdinalOperation<K>);
-            using D = DeterminedNumericType<K>;
-            auto [ dest, rsrc1, rsrc2 ] = s.arguments();
-            D src2 = static_cast<D>(0);
+            using D = DeterminedNumericType<T>;
             iris::Word result = false;
-            if constexpr (TreatArg2AsImmediate<K>) {
-                src2 = static_cast<D>(rsrc2);
-            } else {
-                src2 = getRegisterValue(rsrc2);
-            }
-            if (auto src1 = getRegisterValue<D>(rsrc1); src1 < src2) {
+            if (auto src1 = getRegisterValue<D>(s.getArg1()),
+                     src2 = getRegisterValue<D>(s.getArg2()); src1 < src2) {
                 result = 0b100;
             } else if (src1 == src2) {
                 result = 0b010;
             } else {
                 result = 0b001;
             }
-            setRegisterValue(dest, result);
-#endif
+            setRegisterValue(s.getArg0(), result);
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
         void invoke(const Instruction& input) noexcept {

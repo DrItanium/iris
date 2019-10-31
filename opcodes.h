@@ -137,6 +137,8 @@ namespace iris {
     constexpr auto IsIntegerOperation = OperationCaresAboutSign<enc> && FlagSet<enc, bits::KindInteger>;
     template<EncodedInstruction enc>
     constexpr auto IsOrdinalOperation = OperationCaresAboutSign<enc> && FlagClear<enc, bits::KindInteger>;
+    template<EncodedInstruction enc, std::enable_if_t<OperationCaresAboutSign<enc>, int> = 0>
+    using DeterminedNumericType = std::conditional_t<IsIntegerOperation<enc>, Integer, std::conditional_t<IsOrdinalOperation<enc>, Ordinal, void>>;
     namespace bits {
         //-----------------------------------------------------------------------------
         // Bitwise 
