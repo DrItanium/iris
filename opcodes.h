@@ -134,6 +134,8 @@ namespace iris {
     X(ShiftRight, 0b00001110_opcode);
 #undef X
     template<EncodedInstruction enc>
+    constexpr auto Src2CannotBeZero = IsDivideOperation<enc> || IsRemainderOperation<enc>;
+    template<EncodedInstruction enc>
     constexpr auto IsIntegerOperation = OperationCaresAboutSign<enc> && FlagSet<enc, bits::KindInteger>;
     template<EncodedInstruction enc>
     constexpr auto IsOrdinalOperation = OperationCaresAboutSign<enc> && FlagClear<enc, bits::KindInteger>;

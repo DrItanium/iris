@@ -268,46 +268,35 @@ class Core {
 
         template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
-#if 0
-            using K = std::decay_t<T>;
-            static_assert(MustBeIntegerOrOrdinalOperation<K>);
-            using D = DeterminedNumericType<K>;
-            auto [ dest, rsrc1, rsrc2 ] = s.arguments();
-            D src2 = static_cast<D>(0);
-            D result = static_cast<D>(0);
-            if constexpr (TreatArg2AsImmediate<K>) {
-                src2 = static_cast<D>(rsrc2);
-            } else {
-                src2 = getRegisterValue(rsrc2);
-            }
-            if constexpr (Src2CannotBeZero<K>) {
+            using D = DeterminedNumericType<T>;
+            auto src2 = getRegisterValue<D>(s.getArg2());
+            if constexpr (Src2CannotBeZero<T>) {
                 if (src2 == 0) {
                     throw DivideByZeroException();
                 }
             }
-            if constexpr (auto src1 = getRegisterValue<D>(rsrc1); IsAddOperation<K>) {
+            auto result = static_cast<D>(0);
+            if constexpr (auto src1 = getRegisterValue<D>(s.getArg1()); IsAddOperation<T>) {
                 result = src1 + src2;
-            } else if constexpr (IsSubtractOperation<K>) {
+            } else if constexpr (IsSubtractOperation<T>) {
                 result = src1 - src2;
-            } else if constexpr (IsMultiplyOperation<K>) {
+            } else if constexpr (IsMultiplyOperation<T>) {
                 result = src1 * src2;
-            } else if constexpr (IsRemainderOperation<K>) {
+            } else if constexpr (IsRemainderOperation<T>) {
                 result = src1 % src2;
-            } else if constexpr (IsDivideOperation<K>) {
+            } else if constexpr (IsDivideOperation<T>) {
                 result = src1 / src2;
-            } else if constexpr (IsShiftLeftOperation<K>) {
+            } else if constexpr (IsShiftLeftOperation<T>) {
                 result = src1 << src2;
-            } else if constexpr (IsShiftRightOperation<K>) {
+            } else if constexpr (IsShiftRightOperation<T>) {
                 result = src1 >> src2;
-            } else if constexpr (IsMinOperation<K>) {
-                result = std::min(src1, src2);
-            } else if constexpr (IsMaxOperation<K>) {
-                result = std::max(src1, src2);
+            } else if constexpr (IsErrorOperation<T>) {
+                // Error is considered an arithmetic operation
+                throw ErrorInstructionException();
             } else {
-                static_assert(false_v<K>, "Unimplemented arithmetic operation");
+                static_assert(false_v<T>, "Unimplemented arithmetic operation");
             }
-            setRegisterValue<D>(dest, result);
-#endif
+            setRegisterValue<D>(s.getArg0(), result);
         }
         template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
