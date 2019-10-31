@@ -26,58 +26,6 @@
 #include "opcodes.h"
 
 namespace iris {
-void
-Instruction::setLowestQuarter(Byte value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0x00'00'00'FF, 0>(_bits, value);
-}
-void 
-Instruction::setLowerQuarter(Byte value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0x00'00'FF'00, 8>(_bits, value);
-}
-void 
-Instruction::setHigherQuarter(Byte value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0x00'FF'00'00, 16>(_bits, value);
-}
-void 
-Instruction::setHighestQuarter(Byte value) noexcept {
-    _bits = encodeBits<decltype(_bits), decltype(value), 0xFF'00'00'00, 24>(_bits, value);
-}
-void 
-Instruction::setLowerHalf(UnsignedWord value) noexcept {
-    _bits = iris::setLowerHalf(_bits, value);
-}
-void 
-Instruction::setUpperHalf(UnsignedWord value) noexcept {
-    _bits = iris::setUpperHalf(_bits, value);
-}
-void
-Instruction::setImm16(UnsignedWord value) noexcept {
-    setUpperHalf(value);
-}
-void
-Instruction::setImm8(UnsignedByte value) noexcept {
-    setHighestQuarter(value);
-}
-void
-Instruction::setArg0(RegisterIndex value) noexcept {
-    setLowerQuarter(static_cast<Byte>(value));
-}
-void
-Instruction::setArg1(RegisterIndex value) noexcept {
-    setHigherQuarter(static_cast<Byte>(value));
-}
-void
-Instruction::setArg2(RegisterIndex value) noexcept {
-    setHighestQuarter(static_cast<Byte>(value));
-}
-void
-Instruction::setOpcode(Opcodes opcode) noexcept {
-    setOpcode(static_cast<UnsignedByte>(opcode));
-}
-void
-Instruction::setOpcode(UnsignedByte value) noexcept {
-    setLowestQuarter(value);
-}
 
 
 } // end namespace iris
