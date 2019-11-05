@@ -39,6 +39,7 @@ namespace iris::instructions {
      * it possible to capture this.
      */
     using DelayedBits = std::function<Bits(size_t)>;
+#if 0
     class MultiInstructionExpression;
     /**
      * Encode an instruction while having parameter access to the expression that is meant to hold onto it
@@ -46,6 +47,7 @@ namespace iris::instructions {
     using ExternalDelayedBits = std::function<Bits(MultiInstructionExpression&, size_t)>;
     using ListContents = std::variant<Bits, DelayedBits, ExternalDelayedBits>;
     using List = std::vector<ListContents>;
+#endif
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class OrdinalOperation { };
     class IntegerOperation { };
@@ -305,6 +307,7 @@ namespace iris::instructions {
                                push(sp, a),
                                push(sp, b));
     }
+#if 0
     class MultiInstructionExpression {
         public:
             using Body = std::function<void(MultiInstructionExpression&)>;
@@ -443,5 +446,6 @@ namespace iris::instructions {
             List _instructions;
             std::list<size_t> _dataStack;
     };
+#endif
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__

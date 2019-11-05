@@ -30,6 +30,7 @@
 
 namespace iris::instructions {
 
+#if 0
 void
 MultiInstructionExpression::addInstruction(Bits b) {
     _instructions.emplace_back(b);
@@ -166,6 +167,7 @@ void
 MultiInstructionExpression::addInstruction(Body b) {
     b(*this);
 }
+#endif
 
 
 } // end namespace iris::instructions

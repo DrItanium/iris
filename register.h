@@ -29,19 +29,19 @@
 
 namespace iris {
 
-constexpr Word boolToWord(bool value) noexcept {
-    return value ? 0xFFFF : 0;
-}
 template<typename T = Word, T mask = 0xFFFF>
 class GenericRegister final {
     public:
+        static constexpr T boolToValue(bool value) noexcept {
+            return value ? mask : 0;
+        }
         static_assert(std::is_integral_v<T>);
         using SignedType = std::make_signed_t<T>;
         using UnsignedType = std::make_unsigned_t<T>;
         using RawType = T;
     public:
         explicit constexpr GenericRegister(Word value = 0) noexcept : _storage(value) { }
-        explicit constexpr GenericRegister(bool value) noexcept : _storage(boolToWord(value)) { }
+        explicit constexpr GenericRegister(bool value) noexcept : _storage(boolToValue(value)) { }
         constexpr GenericRegister(const GenericRegister& other) noexcept = delete;
         constexpr GenericRegister(GenericRegister&& other) noexcept = delete;
         ~GenericRegister() = default;
@@ -87,7 +87,7 @@ class GenericRegister final {
                 } else if constexpr (IsSameOrConvertible<K, SignedWord>) {
                     _storage._signedValue = value;
                 } else if constexpr (IsSameOrConvertible<K, bool>) {
-                    _storage._value = boolToWord(value);
+                    _storage._value = boolToValue(value);
                 } else {
                     static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
                 }
