@@ -51,9 +51,24 @@ namespace iris::instructions {
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class OrdinalOperation { };
     class IntegerOperation { };
-#define X(title, fmt) \
-    constexpr auto title ( const title ## Instruction & i) noexcept { \
-        return static_cast<Instruction>(i).getRawBits(); \
+    constexpr Instruction makeInstruction(EncodedInstruction opcode, Byte arg0, Byte arg1, Byte arg2) noexcept {
+        return {opcode, arg0, arg1, arg2}; 
+    }
+    constexpr Instruction makeInstruction(EncodedInstruction opcode, Byte arg0, Word imm) noexcept {
+        return {opcode, arg0, imm}; 
+    }
+#define X(title, opcode) \
+    constexpr auto title (Byte arg0, Byte arg1, Byte arg2) noexcept { \
+        return makeInstruction(static_cast<EncodedInstruction>((opcode)), arg0, arg1, arg2); \
+    } \
+    constexpr auto title (RegisterIndex arg0, RegisterIndex arg1, RegisterIndex arg2) noexcept { \
+        return title (std::to_integer<Byte>(arg0), std::to_integer<Byte>(arg1), std::to_integer<Byte>(arg2)); \
+    } \
+    constexpr auto title (Byte arg0, Word imm) noexcept { \
+        return makeInstruction(static_cast<EncodedInstruction>((opcode)), arg0, imm); \
+    } \
+    constexpr auto title (RegisterIndex arg0, Word imm) noexcept { \
+        return title(std::to_integer<Byte>(arg0), imm); \
     }
 #include "InstructionFormats.def"
 #undef X
@@ -63,23 +78,23 @@ namespace iris::instructions {
         using K = std::decay_t<T>;
         static_assert(std::is_integral_v<K>);
         if constexpr (std::is_signed_v<K>) {
-            return CompareInteger({dest, src0, src1});
+            return CompareInteger(dest, src0, src1);
         } else if constexpr (std::is_unsigned_v<K>) {
-            return CompareOrdinal({dest, src0, src1});
+            return CompareOrdinal(dest, src0, src1);
         } else {
             static_assert(iris::false_v<K>, "Bad compare type!");
         }
     }
     // single instruction aliases useful for ease of use
-    constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return LogicalBitwiseAnd({targetRegister, targetRegister, 0_reg}); }
+    constexpr auto zeroRegister(RegisterIndex targetRegister) noexcept                          { return Move(targetRegister, 0_reg, 0_reg); }
     constexpr auto compareWithZero(RegisterIndex dest, RegisterIndex src) noexcept              { return compare<iris::SignedWord>(dest, src, 0_reg); }
     template<typename T>
     constexpr auto move(RegisterIndex dest, T value) noexcept {
         using K = std::decay_t<T>;
         if constexpr (std::is_same_v<K, Address> || std::is_unsigned_v<K>) {
-            return MemoryAssignRegisterImmediate({dest, value});
+            return LoadImmediate(dest, value);
         } else if constexpr (std::is_same_v<K, RegisterIndex>) {
-            return LogicalBitwiseOr({dest, value, 0_reg});
+            return Move(dest, value, 0_reg);
         } else {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
@@ -131,9 +146,11 @@ namespace iris::instructions {
             static_assert(false_v<T>, "Bad kind to branch with!");
         }
     }
+#if 0
     constexpr auto push(RegisterIndex sp, RegisterIndex value) noexcept { return MemoryStackPush({sp, value}); }
     constexpr auto push(RegisterIndex sp, RegisterIndex temporary, Address value) noexcept { return std::make_tuple(move(temporary, value), push(sp, temporary)); }
     constexpr auto pop(RegisterIndex sp, RegisterIndex dest) noexcept { return MemoryStackPop({sp, dest}); }
+#endif
     constexpr auto storeData(RegisterIndex dest, RegisterIndex value, UnsignedByte offset) noexcept { return MemoryDataStoreWithOffset({dest, value, offset}); }
     constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, UnsignedByte offset) noexcept { return std::make_tuple(move(storage, value), storeData(dest, storage, offset)); }
     constexpr auto storeData(RegisterIndex dest, RegisterIndex value) noexcept { return storeData(dest, value, 0); }
@@ -288,6 +305,7 @@ namespace iris::instructions {
                                storeData(temporary, addr));
     }
     constexpr auto ret(RegisterIndex link) noexcept                                              { return branch(link); }
+#if 0
     constexpr auto swapStackTop(RegisterIndex sp, RegisterIndex t0, RegisterIndex t1) noexcept {
         return std::make_tuple(pop(sp, t0),
                                pop(sp, t1),
@@ -307,6 +325,7 @@ namespace iris::instructions {
                                push(sp, a),
                                push(sp, b));
     }
+#endif
 #if 0
     class MultiInstructionExpression {
         public:
