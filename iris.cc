@@ -55,16 +55,17 @@ Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept
 void
 Core::cycle() {
     // load an instruction from the current instruction pointer
-    invoke(loadCode(_ip.get()));
-    if (_advanceIP) {
-        ++_ip;
+    invoke(loadCode(this->getIP()));
+    if (shouldAdvanceIP()) {
+        advanceIP();
     }
-    _advanceIP = true;
+    allowAdvanceIP();
 }
 
 void
 Core::run() {
-    _executing = true;
+    resetExecutionStatus();
+    //_executing = true;
     do {
         try {
             cycle();
@@ -73,19 +74,20 @@ Core::run() {
         } catch (Exception& ex) {
             /// @todo implement logic to handle edge cases such as divide by zero and other such handling
         }
-    } while (_executing);
+    } while (getExecutingStatus());
 }
 
 
 void
 Core::terminateCycle() {
-    _executing = false;
+    stopExecution();
+    //_executing = false;
 }
 
 void
 Core::terminateCore(Core& c, Word code) {
     c.terminateCycle();
-    c._terminateCell = code;
+    c.setTerminateCell(code);
 }
 Word
 Core::readTerminateCell(Core& c) {

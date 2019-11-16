@@ -329,58 +329,58 @@ class Core {
         }
     public:
         void invoke(LongOrdinal bits);
-    private:
-        void incrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
-            // it is impossible to actually do zero here!
-            if (Ordinal actualCount = static_cast<Ordinal>(times) + 1; actualCount == 1) {
-                ++getDestinationRegister(idx);
-            } else {
-                setRegisterValue(idx, getRegisterValue(idx) + actualCount);
-            }
-        }
-        void decrementRegister(RegisterIndex idx, RegisterIndexNumericType times = 0) noexcept {
-            // it is impossible to actually do zero here!
-            if (Ordinal actualCount = static_cast<Ordinal>(times) + 1; actualCount == 1) {
-                --getDestinationRegister(idx);
-            } else {
-                setRegisterValue(idx, getRegisterValue(idx) - actualCount);
-            }
-        }
     public:
-        template<typename T>
-        void setDoubleRegisterValue(RegisterIndex lower, T value) noexcept {
-            getDoubleRegister(lower).put<T>(value);
+        virtual void putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept = 0;
+        virtual void putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept = 0;
+        virtual LongOrdinal retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept = 0;
+        virtual LongOrdinal retrieveDoubleRegister(RegisterIndex lower) const noexcept = 0;
+        virtual void putRegister(RegisterIndex lower, Ordinal value) noexcept = 0;
+        virtual void putRegister(RegisterIndex lower, Integer value) noexcept = 0;
+        void putRegister(RegisterIndex lower, bool value) noexcept {
+            putRegister(lower, static_cast<Ordinal>(value ? 0xFFFF : 0x0000));
         }
-        template<typename T = LongOrdinal>
-        T getDoubleRegisterValue(RegisterIndex lower) const noexcept {
-            return getDoubleRegister(lower).get<T>();
+        class RequestOrdinal { };
+        class RequestInteger { };
+        class RequestBoolean { };
+        virtual Ordinal retrieveRegister(RegisterIndex ind, RequestOrdinal) const noexcept = 0;
+        virtual Integer retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept = 0;
+        bool retrieveRegister(RegisterIndex ind, RequestBoolean) const noexcept { return retrieveRegister(ind, RequestOrdinal{}) != 0; }
+    public:
+        void setDoubleRegisterValue(RegisterIndex lower, LongOrdinal value) noexcept {
+            putDoubleRegister(lower, value);
+        }
+        LongOrdinal getDoubleRegisterValue(RegisterIndex lower) const noexcept {
+            return retrieveDoubleRegister(lower);
         }
     public:
         template<typename T>
         void setRegisterValue(RegisterIndex idx, T value) noexcept {
-            getDestinationRegister(idx).put(value);
+            putRegister(idx, value);
         }
-        template<typename T = Word>
+        template<typename T = Ordinal>
         T getRegisterValue(RegisterIndex idx) const noexcept {
-            return getSourceRegister(idx).get<T>();
-        }
-        template<typename T = Word>
-        T getRegisterValue(RegisterIndex idx, T offset) const noexcept {
-            return getRegisterValue<T>(idx) + offset;
+            return retrieveRegister(idx, 
+                    std::conditional_t<std::is_same_v<T, Integer>, RequestInteger,
+                    std::conditional_t<
+                    std::is_same_v<T, bool>,
+                    RequestBoolean,
+                    RequestOrdinal>> { });
         }
     public:
-        constexpr auto getTerminateCell() const noexcept { return _terminateCell; }
-        constexpr Word getIP() const noexcept { return _ip.get<Word>(); }
-        void setIP(Word value) noexcept { _ip.put(value); }
-        void resetExecutionStatus() noexcept { _executing = true; }
-        constexpr auto getExecutingStatus() const noexcept { return _executing; }
-        void setTerminateCell(Word value) noexcept { _terminateCell = value; }
+        virtual Ordinal getTerminateCell() const noexcept = 0;
+        virtual Ordinal getIP() const noexcept = 0;
+        virtual void setIP(Word value) noexcept = 0;
+        virtual void resetExecutionStatus() noexcept = 0;
+        virtual bool getExecutingStatus() const noexcept = 0;
+        virtual void setTerminateCell(Ordinal value) noexcept = 0;
+        virtual void stopExecution() noexcept = 0;
+    protected:
+        virtual void advanceIP() const noexcept = 0;
+        virtual void doNotAdvanceIP() noexcept = 0;
+        virtual void allowAdvanceIP() noexcept = 0;
+        virtual bool shouldAdvanceIP() noexcept = 0;
     private:
         RegisterBank _regs;
-        Register _ip;
-        bool _executing = false;
-        bool _advanceIP = true;
-        Word _terminateCell = 0;
 };
 
 

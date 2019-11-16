@@ -44,6 +44,12 @@ class InMemoryCore : public Core {
         void mapIntoIOSpace(Address, MMIOReadFunction);
         void mapIntoIOSpace(Address, MMIOWriteFunction);
         void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
+        Ordinal getTerminateCell() const noexcept override { return _terminateCell; }
+        Ordinal getIP() const noexcept override { return _ip.get<Word>(); }
+        void setIP(Ordinal value) noexcept override { _ip.put(value); }
+        void resetExecutionStatus() noexcept override { _executing = true; }
+        bool getExecutingStatus() const noexcept override { return _executing; }
+        void setTerminateCell(Ordinal value) noexcept override { _terminateCell = value; }
     protected:
         LongOrdinal loadFromCodeMemory(Address addr) override;
         Ordinal loadFromDataMemory(Address addr) override;
@@ -58,6 +64,10 @@ class InMemoryCore : public Core {
         DataMemoryBank _data;
         StackMemoryBank _stack;
         IOMemoryBank _io;
+        Register _ip;
+        bool _executing = false;
+        bool _advanceIP = true;
+        Word _terminateCell = 0;
 
 };
 } // end namespace iris
