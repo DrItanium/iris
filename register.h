@@ -25,9 +25,14 @@
  */
 #ifndef IRIS_REGISTER_H__
 #define IRIS_REGISTER_H__
+#include <type_traits>
 #include "types.h"
+#include "mem_bank.h"
+
 
 namespace iris {
+template<typename T, typename A>
+constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
 
 template<typename T = Word, T mask = 0xFFFF>
 class GenericRegister final {

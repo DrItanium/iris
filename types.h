@@ -26,10 +26,8 @@
 #ifndef IRIS_TYPES_H__
 #define IRIS_TYPES_H__
 #include <cstdint>
-#include <array>
 #include <type_traits>
 #include <cstddef>
-#include <sstream>
 
 namespace iris {
 
@@ -105,9 +103,6 @@ constexpr LongOrdinal setUpperHalf(LongOrdinal word, Ordinal value) noexcept {
 constexpr LongOrdinal setLowerHalf(LongOrdinal word, Ordinal value) noexcept {
     return encodeBits<decltype(word), decltype(value), 0x0000'FFFF, 0>(word, value);
 }
-constexpr auto MemoryBankElementCount = (0xFFFF + 1);
-template<typename T, size_t capacity>
-using NumericalStorageBank = std::array<T, capacity>;
 
 constexpr LongOrdinal makeLongOrdinal(Ordinal lower, Ordinal upper) noexcept {
     return static_cast<LongOrdinal>(lower) | (static_cast<LongOrdinal>(upper) << 16);
@@ -116,8 +111,6 @@ constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
     return makeLongOrdinal(lower, upper);
 }
 
-template<typename T, typename A>
-constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
 
 } // end namespace iris
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
