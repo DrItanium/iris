@@ -288,31 +288,31 @@ class Core {
         }
         template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
-#if 0
-            using K = std::decay_t<T>;
-            if constexpr (IsBitwiseNotOperation<K>) {
-                auto [ dest, src ] = s.arguments();
-                setRegisterValue(dest, ~getRegisterValue(src));
+            Ordinal computation = getRegisterValue(s.getArg1());
+            if constexpr (IsNotOperation<T>) {
+                if constexpr (ArgumentIsImm16<T>) {
+                    // load immediate and overwrite computation
+                    computation = s.getImm16();
+                } 
+                // perform the not
+                computation = ~computation;
+            } else if constexpr (auto p2 = getRegisterValue(s.getArg2()); IsAndOperation<T>) {
+                computation &= p2;
+            } else if constexpr (IsOrOperation<T>) {
+                computation |= p2;
+            } else if constexpr (IsXorOperation<T>) {
+                computation ^= p2;
             } else {
-                auto [ dest, src1, src2 ] = s.arguments();
-                auto first = getRegisterValue(src1);
-                auto second = getRegisterValue(src2);
-                Word result = 0;
-                if constexpr (IsBitwiseAndOperation<K>) {
-                    result = first & second;
-                } else if constexpr (IsBitwiseOrOperation<K>) {
-                    result = first | second;
-                } else if constexpr (IsBitwiseXorOperation<K>) {
-                    result = first ^ second;
-                } else {
-                    static_assert(false_v<K>, "Bad logical kind");
-                }
-                if constexpr (NotTheResult<K>) {
-                    result = ~result;
-                }
-                setRegisterValue(dest, result);
+                static_assert(false_v<T>, "Bad bitwise kind");
             }
-#endif
+            if constexpr (NotTheResult<T>) {
+                // in the case of move and load immediate, this will reinvert
+                // the bits back to what they should be, thus completing the
+                // transfer of immediate or register contents. Goofy but
+                // regular solution to this design
+                computation = ~computation;
+            }
+            setRegisterValue(s.getArg0(), computation);
         }
 
 
