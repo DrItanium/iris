@@ -200,77 +200,58 @@ class Core {
             setRegisterValue(s.getArg0(), result);
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
-        void invoke(const Instruction& input) noexcept {
-#if 0
-            using K = std::decay_t<T>;
-            if constexpr (IsGPRManipulatorOperation<K>) {
-                if constexpr (IsCopyRegisterOperation<K>) {
-                    if (auto [dest, src] = input.arguments(); dest != src) {
-                        setRegisterValue(dest, getRegisterValue(src));
-                    }
-                } else if constexpr (IsAssignRegisterImmediateOperation<K>) {
-                    auto [dest, imm16] = input.arguments();
-                    setRegisterValue(dest, imm16);
-                } else {
-                    static_assert(false_v<K>, "Unimplemented gpr manipulator");
-                }
-            } else if constexpr (IsStackOperation<K>) {
-                if constexpr (auto [sp, other] = input.arguments(); IsPopOperation<K>) {
-                    // so stack grows downward
-                    // pops grow towards 0xFFFF
-                    // StackPop StackPointerRegister DestinationRegister
-                    setRegisterValue(other, loadStack(sp));
-                    incrementRegister(sp); // sp should always point to the front
-                } else if constexpr (IsPushOperation<K>) {
-                    // stack grows downward
-                    // StackPush StackPointerRegister SourceRegister|Imm16
-                    decrementRegister(sp);
-                    storeStack(sp, other);
-                } else {
-                    static_assert(false_v<K>, "Unimplemented stack operation!");
-                }
-            } else if constexpr (IsDataOperation<K>) {
-                if constexpr (IsLoadOperation<K>) {
-                    auto [ loc, dest, offset ] = input.arguments();
-                    setRegisterValue(dest, loadData(loc, offset));
-                } else if constexpr (IsStoreOperation<K>) {
-                    auto [ dest, value, offset ] = input.arguments();
-                    storeData(dest, value, offset);
-                } else if constexpr (IsStoreImmediateOperation<K>) {
-                    auto [ addr, imm16 ] = input.arguments();
-                    storeData(addr, imm16);
-                } else {
-                    static_assert(false_v<K>, "Unimplemented stack operation!");
-                }
-            } else if constexpr (IsIOOperation<K>) {
-                if constexpr (IsLoadOperation<K>) {
-                    auto [ loc, dest, offset ] = input.arguments();
-                    setRegisterValue(dest, loadIO(loc, offset));
-                } else if constexpr (IsStoreOperation<K>) {
-                    auto [ dest, value, offset ] = input.arguments();
-                    storeIO(dest, value, offset);
-                } else if constexpr (IsStoreImmediateOperation<K>) {
-                    auto [ addr, imm16 ] = input.arguments();
-                    storeIO(addr, imm16);
-                } else {
-                    static_assert(false_v<K>, "Unimplemented stack operation!");
-                }
-            } else if constexpr (IsCodeOperation<K>) {
-                if constexpr (IsLoadOperation<K>) {
-                    // CodeLoad AddressRegister LowerRegister (implied UpperRegister = LowerRegister + 1)
-                    auto [addr, lower, offset] = input.arguments();
-                    setDoubleRegisterValue(lower, loadCode(addr, offset));
-                } else if constexpr (IsStoreOperation<K>) {
-                    // CodeStore AddressRegister <= LowerRegister (upper register implied)
-                    auto [addr, lower, offset ] = input.arguments();
-                    storeCode(addr, lower, offset);
-                } else {
-                    static_assert(false_v<K>, "Unimplemented code operation!");
-                }
+        void store(Address addr, RegisterIndex value) {
+            if constexpr (IsSpaceCode<T>) {
+                _code[addr] = getDoubleRegisterValue(value);
+            } else if constexpr (auto lower = getRegisterValue<Ordinal>(value); IsSpaceStack<T>) {
+                _stack[addr] = lower;
+            } else if constexpr (IsSpaceIO<T>) {
+                _io.store(addr, lower);
+            } else if constexpr (IsSpaceData<T>) {
+                _data[addr] = lower;
             } else {
-                static_assert(false_v<K>, "Unimplemented memory operation!");
+                static_assert(false_v<T>, "Unknown memory space!");
             }
-#endif
+        }
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        std::conditional_t<IsSpaceCode<T>, LongOrdinal, Ordinal> load(Address addr) {
+            if constexpr (IsSpaceCode<T>) {
+                return _code[addr];
+            } else if constexpr (IsSpaceStack<T>) {
+                return _stack[addr];
+            } else if constexpr (IsSpaceData<T>) {
+                return _data[addr];
+            } else if constexpr (IsSpaceIO<T>) {
+                return _io.load(addr);
+            } else {
+                static_assert(false_v<T>, "Unknown memory space!");
+            }
+        }
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        void invoke(const Instruction& input) {
+            if constexpr (!IsLoadOperation<T> && !IsStoreOperation<T>) {
+                static_assert(false_v<T>, "Unimplemented memory operation!");
+            } else {
+                Address address = 0;
+                if constexpr (!ArgumentIsImm16<T>) {
+                    auto offset = input.getImm8();
+                    address = getRegisterValue<Address>(input.getArg1()) + offset;
+                } else {
+                    address = input.getImm16();
+                }
+                if constexpr (IsStoreOperation<T>) {
+                    store<T>(address, input.getArg0());
+                } else if constexpr (IsLoadOperation<T>) {
+                    if constexpr (IsSpaceCode<T>) {
+                        setDoubleRegisterValue(input.getArg0(), load<T>(address));
+                    } else {
+                        setRegisterValue(input.getArg0(), load<T>(address));
+                    }
+                } else {
+                    // redundant but complete solution
+                    static_assert(false_v<T>, "Invalid memory operation kind! Should never get here!");
+                }
+            }
         }
 
         template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
