@@ -25,19 +25,6 @@
  */
 #ifndef IRIS_IRIS_H__
 #define IRIS_IRIS_H__
-#include <cstdint>
-#include <variant>
-#include <optional>
-#include <array>
-#include <iostream>
-#include <type_traits>
-#include <tuple>
-#include <cstddef>
-#include <string>
-#include <functional>
-#include <map>
-#include <exception>
-#include <sstream>
 #include "types.h"
 #include "exceptions.h"
 #include "register.h"

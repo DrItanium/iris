@@ -25,6 +25,7 @@
  */
 
 #include "iris.h"
+#include "mem_core.h"
 #include "opcodes.h"
 #include "encoding.h"
 #include <iostream>
