@@ -238,6 +238,7 @@ bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
     return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(20_reg), 0) &&
           verifyResult<iris::Word>(c.getRegisterValue(21_reg), src1);
 }
+#if 0
 
 bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
     c.setIP(0);
@@ -291,6 +292,7 @@ bool testBranchRelativeImmediateAndLinkOperation(iris::Core& c, iris::Offset16 s
     return verifyResult<iris::Word>(c.getIP(), check) &&
            verifyResult<iris::Word>(20_reg, 0x21, c);
 }
+#endif
 
 template<LogicalOperation op, bool testAllCombinations = true>
 bool testLogicalOperationKind(iris::Core& c) noexcept {
@@ -372,7 +374,7 @@ template<CompareOperations op,
     iris::DoubleWord outerEnd = 0x1000,
     iris::DoubleWord innerStart = outerStart,
     iris::DoubleWord innerEnd = outerEnd>
-bool testCompareOperation(iris::Core& c) noexcept {
+bool testCompareOperations(iris::Core& c) noexcept {
     using K = std::decay_t<T>;
     for (auto i = outerStart; i < outerEnd; ++i) {
         auto a = static_cast<K>(i);
@@ -472,25 +474,25 @@ TestSuites suites {
         },
 
     },
-    { "Branch Operation Validation", {
-            { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
-            { "Branch Absolute Immediate and Link", setupFunction<iris::Word>(testBranchImmediateAndLinkOperation, 0xFDED) },
-            { "Branch Relative Immediate", setupFunction<iris::SignedWord>(testBranchRelativeImmediateOperation, -1) },
-            { "Branch Relative Immediate and Link", setupFunction<iris::SignedWord>(testBranchRelativeImmediateAndLinkOperation, -1) },
-            { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
-            { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
-            { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
-            { "Branch Conditional Absolute Register And Link (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 1, 0xFDED, 1) },
-            { "Branch Conditional Absolute Register And Link (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 0, 0, 0) },
-        },
-    },
+    //{ "Branch Operation Validation", {
+    //        { "Branch Absolute Immediate", setupFunction<iris::Word>(testBranchImmediateOperation, 0xFDED) },
+    //        { "Branch Absolute Immediate and Link", setupFunction<iris::Word>(testBranchImmediateAndLinkOperation, 0xFDED) },
+    //        { "Branch Relative Immediate", setupFunction<iris::SignedWord>(testBranchRelativeImmediateOperation, -1) },
+    //        { "Branch Relative Immediate and Link", setupFunction<iris::SignedWord>(testBranchRelativeImmediateAndLinkOperation, -1) },
+    //        { "Branch Absolute Register", setupFunction<iris::Word>(testBranchRegisterOperation, 0xFDED) },
+    //        { "Branch Conditional Absolute Register (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 1, 0xFDED) },
+    //        { "Branch Conditional Absolute Register (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterOperation, 0xFDED, 0, 0) },
+    //        { "Branch Conditional Absolute Register And Link (Branch Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 1, 0xFDED, 1) },
+    //        { "Branch Conditional Absolute Register And Link (Branch Not Taken)", setupFunction<iris::Word>(testBranchConditionalRegisterAndLinkOperation, 0xFDED, 0, 0, 0) },
+    //    },
+    //},
     { "Compare Ordinal Operation Validation", {
-            { "Equals", testCompareOperation<CompareOperations::Equals, iris::Word>},
-            { "Not Equals", testCompareOperation<CompareOperations::NotEquals, iris::Word>},
-            { "Less Than", testCompareOperation<CompareOperations::LessThan, iris::Word> },
-            { "Less Than Or Equal", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::Word>},
-            { "Greater Than", testCompareOperation<CompareOperations::GreaterThan, iris::Word> },
-            { "Greater Than Or Equal", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::Word> },
+            { "Equals", testCompareOperation<CompareOperations::Equals, iris::Ordinal>},
+            { "Not Equals", testCompareOperation<CompareOperations::NotEquals, iris::Ordinal>},
+            { "Less Than", testCompareOperation<CompareOperations::LessThan, iris::Ordinal> },
+            { "Less Than Or Equal", testCompareOperation<CompareOperations::LessThanOrEqualTo, iris::Ordinal>},
+            { "Greater Than", testCompareOperation<CompareOperations::GreaterThan, iris::Ordinal> },
+            { "Greater Than Or Equal", testCompareOperation<CompareOperations::GreaterThanOrEqualTo, iris::Ordinal> },
         },
     },
     { "Compare Integer Operation Validation", {

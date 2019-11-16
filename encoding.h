@@ -190,28 +190,26 @@ namespace iris::instructions {
     constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower) noexcept { return loadCode(addr, lower, 0); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, Byte offset) noexcept { return CodeStoreWithOffset(addr, lower, offset); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower) noexcept { return storeCode(addr, lower, 0); }
-#if 0
     // arithmetic operations
-    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftLeftUnsigned({dest, src, 1_reg}); }
-    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftLeftSigned({dest, src, 1_reg}); }
+    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ShiftLeftOrdinal(dest, src, 1_reg); }
+    constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ShiftLeftInteger(dest, src, 1_reg); }
     constexpr auto twoTimes(RegisterIndex val, OrdinalOperation op) noexcept { return twoTimes(val, val, op); }
     constexpr auto twoTimes(RegisterIndex val, IntegerOperation op) noexcept { return twoTimes(val, val, op); }
-    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ArithmeticShiftRightUnsigned({dest, src, 1_reg}); }
-    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ArithmeticShiftRightSigned({dest, src, 1_reg}); }
+    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ShiftRightOrdinal(dest, src, 1_reg); }
+    constexpr auto twoDivide(RegisterIndex dest, RegisterIndex src, IntegerOperation) noexcept { return ShiftRightInteger(dest, src, 1_reg); }
     constexpr auto twoDivide(RegisterIndex val, OrdinalOperation op) noexcept { return twoDivide(val, val, op); }
     constexpr auto twoDivide(RegisterIndex val, IntegerOperation op) noexcept { return twoDivide(val, val, op); }
-    constexpr auto invert(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr auto BitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return BitwiseNot(dest, src, 0_reg); }
+    constexpr auto invert(RegisterIndex dest, RegisterIndex src) noexcept { return BitwiseNot(dest, src); }
     constexpr auto invert(RegisterIndex dest)  noexcept { return invert(dest, dest); }
-    constexpr auto square(RegisterIndex dest, RegisterIndex src)  noexcept { return ArithmeticMultiplySigned({dest, src, src}); }
+    constexpr auto square(RegisterIndex dest, RegisterIndex src)  noexcept { return MultiplyInteger(dest, src, src); }
     constexpr auto square(RegisterIndex dest) noexcept { return square(dest, dest); }
-    constexpr auto increment(RegisterIndex target)  noexcept { return ArithmeticAddUnsigned({target, target, 1_reg}); }
-    constexpr auto decrement(RegisterIndex target)  noexcept { return ArithmeticSubtractUnsigned({target, target, 1_reg}); }
 #define X(kind) \
     constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, RegisterIndex src2, OrdinalOperation) noexcept { \
-        return Arithmetic ## kind ## Unsigned({dest, src1, src2}); \
+        return kind ## Ordinal(dest, src1, src2); \
     } \
     constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src1, RegisterIndex src2, IntegerOperation) noexcept { \
-        return Arithmetic ## kind ## Signed({dest, src1, src2}); \
+        return kind ## Integer(dest, src1, src2); \
     } \
     constexpr auto op ## kind (RegisterIndex dest, RegisterIndex src, OrdinalOperation op) noexcept { \
         return op ## kind (dest, dest, src, op); \
@@ -301,27 +299,27 @@ namespace iris::instructions {
         return std::make_tuple(lessThanOrEqualToZero(cond, src0), select(cond, then, _else));
     }
 #endif
-    constexpr auto bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return LogicalBitwiseNot({dest, src}); }
+    constexpr auto bitwiseNot(RegisterIndex dest, RegisterIndex src) noexcept { return BitwiseNot(dest, src); }
     constexpr auto bitwiseNot(RegisterIndex src) noexcept { return bitwiseNot(src, src); }
-    constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseAnd({dest, src0, src1}); }
+    constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return BitwiseAnd(dest, src0, src1); }
     constexpr auto bitwiseAnd(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseAnd(dest, dest, src); }
-    constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseOr({dest, src0, src1}); }
+    constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return BitwiseOr(dest, src0, src1); }
     constexpr auto bitwiseOr(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseOr(dest, dest, src); }
-    constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return LogicalBitwiseXor({dest, src0, src1}); }
+    constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return BitwiseXor(dest, src0, src1); }
     constexpr auto bitwiseXor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseXor(dest, dest, src); }
-    constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseOr(dest, src0, src1), bitwiseNot(dest)); }
+    constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return BitwiseNor(dest, src0, src1); }
     constexpr auto bitwiseNor(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNor(dest, dest, src); }
-    constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return std::make_tuple(bitwiseAnd(dest, src0, src1), bitwiseNot(dest)); }
+    constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept { return BitwiseNand(dest, src0, src1); }
     constexpr auto bitwiseNand(RegisterIndex dest, RegisterIndex src) noexcept { return bitwiseNand(dest, dest, src); }
-    constexpr auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temp) noexcept { return std::make_tuple(square(temp, src), opMultiply(dest, src, temp, OrdinalOperation())); }
+    constexpr auto cube(RegisterIndex dest, RegisterIndex src, RegisterIndex temp) noexcept { return std::make_tuple(square(temp, src), MultiplyInteger(dest, src, temp)); } 
     /**
      * Compute quotient and remainder together
      */
-    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, OrdinalOperation op) noexcept {
-        return std::make_tuple(opDivide(quotient, numerator, denominator, op), opRemainder(remainder, numerator, denominator, op));
+    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, OrdinalOperation) noexcept {
+        return std::make_tuple(DivideOrdinal(quotient, numerator, denominator), RemainderOrdinal(remainder, numerator, denominator));
     }
-    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, IntegerOperation op) noexcept {
-        return std::make_tuple(opDivide(quotient, numerator, denominator, op), opRemainder(remainder, numerator, denominator, op));
+    constexpr auto getDivRemainder(RegisterIndex quotient, RegisterIndex remainder, RegisterIndex numerator, RegisterIndex denominator, IntegerOperation) noexcept {
+        return std::make_tuple(DivideInteger(quotient, numerator, denominator), RemainderInteger(remainder, numerator, denominator));
     }
     constexpr auto indirectLoadData(RegisterIndex dest, RegisterIndex addr, Byte offset = 0) noexcept {
         return std::make_tuple(loadData(dest, addr, offset), loadData(dest, dest));
@@ -330,7 +328,6 @@ namespace iris::instructions {
         return std::make_tuple(loadData(temporary, dest, offset),
                                storeData(temporary, addr));
     }
-#endif
     constexpr auto ret(RegisterIndex link) noexcept                                              { return branch(link); }
 #if 0
     constexpr auto swapStackTop(RegisterIndex sp, RegisterIndex t0, RegisterIndex t1) noexcept {
@@ -352,146 +349,6 @@ namespace iris::instructions {
                                push(sp, a),
                                push(sp, b));
     }
-#endif
-#if 0
-    class MultiInstructionExpression {
-        public:
-            using Body = std::function<void(MultiInstructionExpression&)>;
-        public:
-            MultiInstructionExpression() = default;
-            ~MultiInstructionExpression() = default;
-            MultiInstructionExpression(Bits);
-            MultiInstructionExpression(DelayedBits);
-            MultiInstructionExpression(ExternalDelayedBits);
-            MultiInstructionExpression(ComplexBinaryInstruction);
-            void addInstruction(Bits);
-            void addInstruction(DelayedBits);
-            void addInstruction(ExternalDelayedBits);
-            void addInstruction(MultiInstructionExpression&&);
-            void addInstruction(Body b);
-            template<typename ... Args>
-            void addInstructions(Args&& ... instructions) {
-                (addInstruction(std::forward<Args>(instructions)), ...);
-            }
-            template<typename Tuple, size_t... Is>
-            void addInstruction(Tuple&& t, std::index_sequence<Is...>) {
-                addInstructions(std::get<Is>(t)...);
-            }
-            auto size() const noexcept { return _instructions.size(); }
-            bool tooLarge() const noexcept { return size() > 0xFFFF; }
-            auto begin() { return _instructions.begin(); }
-            auto end() { return _instructions.end(); }
-            auto begin() const { return _instructions.cbegin(); }
-            auto end() const { return _instructions.cend(); }
-
-            /**
-             * Pop the most recent value off of the data stack
-             */
-            size_t dataPop(); 
-
-            /**
-             * Push a value onto the data stack
-             * @param value A size_t to be pushed onto the internal data stack
-             */
-            void dataPush(size_t value);
-            /**
-             * Push the current position onto the data stack
-             */
-            inline void mark() { dataPush(size()); }
-            /**
-             * Add the given delayed instruction to the expression and mark its
-             * position. Use resolve to cause the
-             * deferred function to be replaced with a final product. Failure to call
-             * resolve for each defer may lead to shenanigans and incorrect behavior.
-             * @param fn The function to install and 
-             */
-            void defer(DelayedBits fn);
-            /**
-             * Add the given delayed instruction to the expression and mark its
-             * position. Use resolve to cause the
-             * deferred function to be replaced with a final product. Failure to call
-             * resolve for each defer may lead to shenanigans and incorrect behavior.
-             * @param fn The function to install and 
-             */
-            void defer(ExternalDelayedBits fn);
-            /**
-             * Invoke the most recently deferred instruction and put the resultant 
-             * value in the place of the generator function. The position on the
-             * dataStack is also popped.
-             */
-            void resolve();
-            /**
-             * Register a desire to unconditionally jump forward relative to the 
-             * current position via defer; At some point forwardJumpTarget must 
-             * be called to complete the generation of the jump. 
-             */
-            void forwardJump();
-            /**
-             * Register a desire to conditionally jump forward relative to the
-             * current position via defer; At some point forwardJumpTarget must
-             * be called to complete the generation of the jump.
-             * @param cond The register that is used for the conditional evaluation
-             */
-            void conditionalForwardJump(RegisterIndex cond);
-            /**
-             * Mark the implied next instruction inserted as the target of the most recent
-             * forward jump request; Thus it must be done before the next instruction
-             * inserted.
-             */
-            void forwardJumpTarget();
-            /**
-             * Mark the position where a backward jump will jump to; Most likely this will
-             * be used for a loop of some kind where you jump back to the top.
-             */
-            void backwardJumpTarget();
-            /**
-             * Generate an unconditional jump instruction back to the most recent backwardJumpTarget.
-             */
-            void backwardJump();
-            /**
-             * Generate an conditional jump instruction back to the most recent backwardJumpTarget.
-             * @param cond The register to use for the index
-             */
-            void conditionalBackwardJump(RegisterIndex cond);
-
-            /**
-             * Swap the top two elements of the data stack.
-             * @throw Exception Too few elements to perform the swap with
-             */
-            void dataStackSwap();
-
-            /**
-             * Start an if condition statement
-             */
-            void ifComponent(RegisterIndex idx);
-            /**
-             * Complete the if statement jump after embedding an unconditional
-             * jump request first
-             */
-            void elseComponent();
-            /**
-             * Stop a conditional statement
-             */
-            void thenComponent();
-
-            void ifStatement(RegisterIndex cond, Body onTrue);
-            void ifStatement(RegisterIndex cond, Body onTrue, Body onFalse);
-            template<typename ... Args>
-            void unconditionalLoop(Args&& ... body) {
-                backwardJumpTarget();
-                addInstructions(std::forward<Args>(body)...);
-                backwardJump();
-            }
-            template<typename ... Args>
-            void conditionalLoop(RegisterIndex cond, Args&& ... body) {
-                backwardJumpTarget();
-                addInstructions(std::forward<Args>(body)...);
-                conditionalBackwardJump(cond);
-            }
-        private:
-            List _instructions;
-            std::list<size_t> _dataStack;
-    };
 #endif
 } // end namespace iris::instructions
 #endif // end IRIS_ENCODING_H__
