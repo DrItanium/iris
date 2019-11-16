@@ -44,19 +44,17 @@
 #include "register.h"
 #include "opcodes.h"
 namespace iris {
-
+/**
+ * A single iris machine, it is an abstract top level
+ */
 class Core {
     public:
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
     public:
         Core() noexcept;
-        ~Core() = default;
+        virtual ~Core() = default;
         void run();
-        void mapIntoIOSpace(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
-        void mapIntoIOSpace(Address, MMIOReadFunction);
-        void mapIntoIOSpace(Address, MMIOWriteFunction);
-        void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
         void terminateCycle();
     public: 
         template<typename A>
@@ -80,45 +78,62 @@ class Core {
                 static_assert(false_v<T>, "Bad value kind!");
             }
         }
-
+    protected:
+        virtual LongOrdinal loadFromCodeMemory(Address addr) = 0;
+        virtual Ordinal loadFromDataMemory(Address addr) = 0;
+        virtual Ordinal loadFromStackMemory(Address addr) = 0;
+        virtual Ordinal loadFromIOMemory(Address addr) = 0;
+        virtual void storeToCodeMemory(Address addr, LongOrdinal value) = 0;
+        virtual void storeToDataMemory(Address addr, Ordinal value) = 0;
+        virtual void storeToStackMemory(Address addr, Ordinal value) = 0;
+        virtual void storeToIOMemory(Address addr, Ordinal value) = 0;
+    public:
         template<typename T>
         LongOrdinal loadCode(T addr, Address offset = 0) {
-            return _code[extractAddress<T>(addr, offset)];
+            return loadFromCodeMemory(extractAddress<T>(addr, offset));
+            //return _code[extractAddress<T>(addr, offset)];
         }
 
         template<typename T>
         Word loadIO(T addr, Address offset = 0) {
-            return _io.load(extractAddress<T>(addr, offset));
+             return loadFromIOMemory(extractAddress<T>(addr, offset));
+            //return _io.load(extractAddress<T>(addr, offset));
         }
         template<typename T>
         Word loadStack(T addr, Address offset = 0) {
-            return _stack[extractAddress<T>(addr, offset)];
+            return loadFromStackMemory(extractAddress<T>(addr, offset));
+            //return _stack[extractAddress<T>(addr, offset)];
         }
         template<typename T>
         Word loadData(T addr, Address offset = 0) {
-            return _data[extractAddress<T>(addr, offset)];
+            return loadFromDataMemory(extractAddress<T>(addr, offset));
         }
         template<typename A, typename V>
         void storeStack(A address, V value, Address offset = 0) {
-            _stack[extractAddress<A>(address, offset)] = extractValue<V>(value);
+            storeToStackMemory(extractAddress<A>(address, offset), extractValue<V>(value));
+            //_stack[extractAddress<A>(address, offset)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeData(A address, V value, Address offset = 0) {
-            _data[extractAddress<A>(address, offset)] = extractValue<V>(value);
+            storeToDataMemory(extractAddress<A>(address, offset), extractValue<V>(value));
+            //_data[extractAddress<A>(address, offset)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeCode(A address, V value, Address offset = 0) {
             if constexpr (auto addr = extractAddress<A>(address, offset); std::is_same_v<V, LongOrdinal>) {
-                _code[addr] = value;
+                storeToCodeMemory(addr, value);
+                //_code[addr] = value;
             } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                _code[addr] = getDoubleRegisterValue(value);
+                storeToCodeMemory(addr, getDoubleRegisterValue(value));
+                //_code[addr] = getDoubleRegisterValue(value);
             } else {
                 static_assert(false_v<V>, "Bad value kind!");
             }
         }
         template<typename A, typename V>
         void storeIO(A address, V value, Address offset = 0) {
-            _io.store(extractAddress<A>(address, offset), extractValue<V>(value));
+            storeToIOMemory(extractAddress<A>(address, offset), extractValue<V>(value));
+            //_io.store(extractAddress<A>(address, offset), extractValue<V>(value));
         }
     private:
         template<typename T, std::enable_if_t<IsErrorOperation<std::decay_t<T>>, int> = 0>
@@ -201,13 +216,13 @@ class Core {
         template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
         void store(Address addr, RegisterIndex value) {
             if constexpr (IsSpaceCode<T>) {
-                _code[addr] = getDoubleRegisterValue(value);
+                storeCode(addr, value);
             } else if constexpr (auto lower = getRegisterValue<Ordinal>(value); IsSpaceStack<T>) {
-                _stack[addr] = lower;
+                storeStack(addr, lower);
             } else if constexpr (IsSpaceIO<T>) {
-                _io.store(addr, lower);
+                storeIO(addr, lower);
             } else if constexpr (IsSpaceData<T>) {
-                _data[addr] = lower;
+                storeData(addr, lower);
             } else {
                 static_assert(false_v<T>, "Unknown memory space!");
             }
@@ -215,13 +230,13 @@ class Core {
         template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
         decltype(auto) load(Address addr) {
             if constexpr (IsSpaceCode<T>) {
-                return _code[addr];
+                return loadCode(addr);
             } else if constexpr (IsSpaceStack<T>) {
-                return _stack[addr];
+                return loadStack(addr);
             } else if constexpr (IsSpaceData<T>) {
-                return _data[addr];
+                return loadData(addr);
             } else if constexpr (IsSpaceIO<T>) {
-                return _io.load(addr);
+                return loadIO(addr);
             } else {
                 static_assert(false_v<T>, "Unknown memory space!");
             }
@@ -376,14 +391,38 @@ class Core {
         void setTerminateCell(Word value) noexcept { _terminateCell = value; }
     private:
         RegisterBank _regs;
-        CodeMemoryBank _code;
-        DataMemoryBank _data;
-        StackMemoryBank _stack;
-        IOMemoryBank _io;
         Register _ip;
         bool _executing = false;
         bool _advanceIP = true;
         Word _terminateCell = 0;
+};
+
+/** 
+ * Use ram to denote the different memory spaces
+ */
+class InMemoryCore : public Core {
+    public:
+        InMemoryCore() noexcept;
+        ~InMemoryCore() override = default;
+        void mapIntoIOSpace(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
+        void mapIntoIOSpace(Address, MMIOReadFunction);
+        void mapIntoIOSpace(Address, MMIOWriteFunction);
+        void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
+    protected:
+        LongOrdinal loadFromCodeMemory(Address addr) override;
+        Ordinal loadFromDataMemory(Address addr) override;
+        Ordinal loadFromStackMemory(Address addr) override;
+        Ordinal loadFromIOMemory(Address addr) override;
+        void storeToCodeMemory(Address addr, LongOrdinal value) override;
+        void storeToDataMemory(Address addr, Ordinal value) override;
+        void storeToStackMemory(Address addr, Ordinal value) override;
+        void storeToIOMemory(Address addr, Ordinal value) override;
+    private:
+        CodeMemoryBank _code;
+        DataMemoryBank _data;
+        StackMemoryBank _stack;
+        IOMemoryBank _io;
+
 };
 
 } // end namespace iris

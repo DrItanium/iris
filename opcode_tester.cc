@@ -607,7 +607,7 @@ TestSuites suites {
     },
 };
 int main(int, char* []) {
-    iris::Core c;
+    iris::InMemoryCore c;
     for (const auto & suite : suites) {
         if (!executeTestSuite(suite, c)) {
             std::cout << "tests failed!" << std::endl;
