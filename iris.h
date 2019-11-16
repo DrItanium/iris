@@ -145,7 +145,6 @@ class Core {
         }
         template<EncodedInstruction T, std::enable_if_t<IsBranchInstruction<T>, int> = 0> 
         void invoke(const Instruction& s) {
-            /// @todo rewrite branch operations to use the new format
             if constexpr (IsBranchImmediateInstruction<T>) {
                 auto offset = s.getImm16();
                 auto reg = s.getArg0();
@@ -164,11 +163,11 @@ class Core {
                     }
                 }
             } else if constexpr (IsBranchRegisterInstruction<T>) {
-                if constexpr (IsConditionalBranchAndLink<T>) {
+                constexpr auto mask = BranchMask<T>;
+                if constexpr (auto pattern = getRegisterValue<Ordinal>(s.getArg1()); IsConditionalBranchAndLink<T>) {
                     // need to now extract the mask as we will and it with the 
                     // contents of cond (src1)
-                    auto mask = BranchMask<T>;
-                    if ((getRegisterValue<Ordinal>(s.getArg1()) & mask) != 0) {
+                    if ((pattern & mask) != 0) {
                         updateLinkRegister(s.getArg2());
                         branchTo(s.getArg0());
                     }
@@ -176,7 +175,7 @@ class Core {
                     // arg0 - condition
                     // arg1 - onTrue
                     // arg2 - onFalse
-                    branchTo(((getRegisterValue<Ordinal>(s.getArg0()) & BranchMask<T>) != 0) ?  s.getArg1() : s.getArg2());
+                    branchTo(((pattern & mask) != 0) ?  s.getArg1() : s.getArg2());
                 } else {
                     static_assert(false_v<T>, "Illegal branch register instruction");
                 }
@@ -256,35 +255,37 @@ class Core {
 
         template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
-            using D = DeterminedNumericType<T>;
-            auto src2 = getRegisterValue<D>(s.getArg2());
-            if constexpr (Src2CannotBeZero<T>) {
-                if (src2 == 0) {
-                    throw DivideByZeroException();
-                }
-            }
-            auto result = static_cast<D>(0);
-            if constexpr (auto src1 = getRegisterValue<D>(s.getArg1()); IsAddOperation<T>) {
-                result = src1 + src2;
-            } else if constexpr (IsSubtractOperation<T>) {
-                result = src1 - src2;
-            } else if constexpr (IsMultiplyOperation<T>) {
-                result = src1 * src2;
-            } else if constexpr (IsRemainderOperation<T>) {
-                result = src1 % src2;
-            } else if constexpr (IsDivideOperation<T>) {
-                result = src1 / src2;
-            } else if constexpr (IsShiftLeftOperation<T>) {
-                result = src1 << src2;
-            } else if constexpr (IsShiftRightOperation<T>) {
-                result = src1 >> src2;
-            } else if constexpr (IsErrorOperation<T>) {
+            if constexpr (IsErrorOperation<T>) {
                 // Error is considered an arithmetic operation
                 throw ErrorInstructionException();
             } else {
-                static_assert(false_v<T>, "Unimplemented arithmetic operation");
+                using D = DeterminedNumericType<T>;
+                auto src2 = getRegisterValue<D>(s.getArg2());
+                if constexpr (Src2CannotBeZero<T>) {
+                    if (src2 == 0) {
+                        throw DivideByZeroException();
+                    }
+                }
+                auto result = getRegisterValue<D>(s.getArg1());
+                if constexpr (IsAddOperation<T>) {
+                    result += src2;
+                } else if constexpr (IsSubtractOperation<T>) {
+                    result -= src2;
+                } else if constexpr (IsMultiplyOperation<T>) {
+                    result *= src2;
+                } else if constexpr (IsRemainderOperation<T>) {
+                    result %= src2;
+                } else if constexpr (IsDivideOperation<T>) {
+                    result /= src2;
+                } else if constexpr (IsShiftLeftOperation<T>) {
+                    result <<= src2;
+                } else if constexpr (IsShiftRightOperation<T>) {
+                    result >>= src2;
+                } else {
+                    static_assert(false_v<T>, "Unimplemented arithmetic operation");
+                }
+                setRegisterValue<D>(s.getArg0(), result);
             }
-            setRegisterValue<D>(s.getArg0(), result);
         }
         template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
