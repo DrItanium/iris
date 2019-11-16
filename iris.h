@@ -213,7 +213,7 @@ class Core {
             }
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
-        std::conditional_t<IsSpaceCode<T>, LongOrdinal, Ordinal> load(Address addr) {
+        decltype(auto) load(Address addr) {
             if constexpr (IsSpaceCode<T>) {
                 return _code[addr];
             } else if constexpr (IsSpaceStack<T>) {

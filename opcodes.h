@@ -183,7 +183,7 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsLoadOperation = IsMemoryInstruction<enc> && FlagSet<enc, bits::LoadOperation>;
     template<EncodedInstruction enc>
-    constexpr auto IsStoreOperation = IsMemoryInstruction<enc> && FlagClear<enc, bits::StoreOperation>;
+    constexpr auto IsStoreOperation = IsMemoryInstruction<enc> && FlagClear<enc, bits::LoadOperation>;
 #define X(op, value) \
     namespace bits { \
         constexpr auto Space ## op = value; \
@@ -316,6 +316,8 @@ namespace iris {
             constexpr Instruction(EncodedInstruction opcode, Byte arg0, Byte arg1, Byte arg2) noexcept : _opcode(opcode), _arg0(arg0), _arg1(arg1), _arg2(arg2) { }
             constexpr Instruction(EncodedInstruction opcode, Byte arg0, Word imm16) noexcept : Instruction(opcode, arg0, static_cast<Byte>(imm16 >> 8), static_cast<Byte>(imm16)) { }
             explicit constexpr Instruction(EncodedInstruction enc = 0) noexcept : Instruction(extractOpcode(enc), ((0x00FF0000 & enc) >> 16), static_cast<Word>(enc)) { }
+            constexpr Instruction(const Instruction& other) noexcept = default;
+
         public:
             constexpr auto getOpcode() const noexcept { return _opcode; }
             constexpr auto getArg0()  const noexcept { return static_cast<RegisterIndex>(_arg0); }
@@ -323,6 +325,9 @@ namespace iris {
             constexpr auto getArg2()  const noexcept { return static_cast<RegisterIndex>(_arg2); }
             constexpr auto getImm8()  const noexcept { return _arg2; }
             constexpr auto getImm16() const noexcept { return static_cast<Ordinal>((static_cast<Ordinal>(_arg2) | (static_cast<Ordinal>(_arg1) << 8))); } 
+            constexpr EncodedInstruction getEncodedInstruction() const noexcept {
+                return (_opcode) | (static_cast<EncodedInstruction>(_arg0) << 16) | static_cast<EncodedInstruction>(getImm16());
+            }
         public:
             void setOpcode(HalfOrdinal value) noexcept {
                 setOpcode(static_cast<EncodedInstruction>(value) << 24);

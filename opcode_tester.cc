@@ -134,7 +134,7 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
     using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
     setRegisters<K>(c, 0, src1, src2);
     K check = 0;
-    iris::instructions::Bits instruction = 0;
+    iris::Instruction instruction;
     bool expectDivideByZero = false;
     if constexpr (op == ArithmeticOperation::Add) {
         check = src1 + src2;
@@ -169,7 +169,7 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
         static_assert(iris::false_v<decltype(op)>, "Unimplemented arithmetic Operation");
     }
     try {
-        c.invoke(instruction);
+        c.invoke(instruction.getEncodedInstruction());
         return verifyResult<T>(20_reg, check, c);
     } catch (iris::DivideByZeroException&) {
         if (expectDivideByZero) {
@@ -191,21 +191,23 @@ template<LogicalOperation op>
 bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2 = 0) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, src2);
     iris::Word check = 0u;
+    iris::Instruction inst;
     if constexpr (op == LogicalOperation::Not) {
         check = ~src1;
-        c.invoke(iris::instructions::bitwiseNot(20_reg, 21_reg));
+        inst = iris::instructions::bitwiseNot(20_reg, 21_reg);
     } else if constexpr (op == LogicalOperation::And) {
         check = src1 & src2;
-        c.invoke(iris::instructions::bitwiseAnd(20_reg, 21_reg, 22_reg));
+        inst = iris::instructions::bitwiseAnd(20_reg, 21_reg, 22_reg);
     } else if constexpr (op == LogicalOperation::Or) {
         check = src1 | src2;
-        c.invoke(iris::instructions::bitwiseOr(20_reg, 21_reg, 22_reg));
+        inst = iris::instructions::bitwiseOr(20_reg, 21_reg, 22_reg);
     } else if constexpr (op == LogicalOperation::Xor) {
         check = src1 ^ src2;
-        c.invoke(iris::instructions::bitwiseXor(20_reg, 21_reg, 22_reg));
+        inst = iris::instructions::bitwiseXor(20_reg, 21_reg, 22_reg);
     } else {
         static_assert(iris::false_v<decltype(op)>, "Bad logical operation kind!");
     }
+    c.invoke(inst.getEncodedInstruction());
     return verifyResult<iris::Word>(20_reg, check, c);
 }
 
@@ -213,31 +215,16 @@ bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::Unsigned
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, src1, 0);
     auto check = src1;
-    c.invoke(iris::instructions::move(20_reg, 21_reg));
+    c.invoke(iris::instructions::move(20_reg, 21_reg).getEncodedInstruction());
     return verifyResult<iris::Word>(20_reg, check, c);
 }
 
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
     setRegisters<decltype(src1)>(c, 0, 0, 0);
-    c.invoke(iris::instructions::move(20_reg, src1));
+    c.invoke(iris::instructions::move(20_reg, src1).getEncodedInstruction());
     return verifyResult<iris::Word>(20_reg, src1, c);
 }
 
-bool testPushRegisterOperation(iris::Core& c, iris::Word src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, 0); // r17 is the stack pointer in this case
-    c.invoke(iris::instructions::push(20_reg, 21_reg));
-    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(20_reg), 0 - 1) &&
-          verifyResult<iris::Word>(c.loadStack<iris::Word>(c.getRegisterValue(20_reg)), src1);
-}
-
-bool testPopOperation(iris::Core& c, iris::Word src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, 0);
-    c.invoke(iris::instructions::push(20_reg, 21_reg));
-    c.setRegisterValue(21_reg, 0);
-    c.invoke(iris::instructions::pop(20_reg, 21_reg));
-    return verifyResult<iris::Word>(c.getRegisterValue<iris::Word>(20_reg), 0) &&
-          verifyResult<iris::Word>(c.getRegisterValue(21_reg), src1);
-}
 #if 0
 
 bool testBranchImmediateOperation(iris::Core& c, iris::Word src1) noexcept {
@@ -374,14 +361,14 @@ template<CompareOperations op,
     iris::DoubleWord outerEnd = 0x1000,
     iris::DoubleWord innerStart = outerStart,
     iris::DoubleWord innerEnd = outerEnd>
-bool testCompareOperations(iris::Core& c) noexcept {
+bool testCompareOperation(iris::Core& c) noexcept {
     using K = std::decay_t<T>;
     for (auto i = outerStart; i < outerEnd; ++i) {
         auto a = static_cast<K>(i);
         for (auto j = innerStart; j < innerEnd; ++j) {
             auto b= static_cast<K>(j);
             setRegisters<K>(c, 0, a, b);
-            c.invoke(iris::instructions::compare<K>(20_reg, 21_reg, 22_reg));
+            c.invoke(iris::instructions::compare<K>(20_reg, 21_reg, 22_reg).getEncodedInstruction());
             if constexpr (auto outcome = c.getRegisterValue<K>(20_reg); op == CompareOperations::Equals) {
                 if (a == b) {
                     if (!verifyResult<K>(outcome & 0b010, 0b010)) {
@@ -522,7 +509,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0), 0x89ABCDEF);
                 }, 
             },
@@ -530,7 +517,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0xFDED), 0x89ABCDEF);
                 }, 
             },
@@ -539,7 +526,7 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0, 0x89ABCDEF);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
@@ -549,7 +536,7 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0xfded, 0x89ABCDEF);
                     setRegisters<iris::Word>(c, 0xfded, 0, 0);
-                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
@@ -562,7 +549,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0), 0xCDEF);
                 }, 
             },
@@ -570,7 +557,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
-                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0xFDED), 0xCDEF);
                 }, 
             },
@@ -579,7 +566,7 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0, 0xCDEF);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadData(20_reg, 21_reg));
+                    c.invoke(iris::instructions::loadData(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
             },
@@ -588,7 +575,7 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0xfded, 0xCDEF);
                     setRegisters<iris::Word>(c, 0xfded, 0, 0);
-                    c.invoke(iris::instructions::loadData(20_reg, 21_reg));
+                    c.invoke(iris::instructions::loadData(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
             },
@@ -596,8 +583,6 @@ TestSuites suites {
     },
     { "Stack Space", {
             {"Write and readback from stack memory", stackTests},
-            { "Push Register onto stack", setupFunction<iris::Word>(testPushRegisterOperation, 0xFDED) },
-            { "Pop Register from stack", setupFunction<iris::Word>(testPopOperation, 0xFDED) },
         },
     },
     { "IO Space", {
@@ -605,7 +590,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     setRegisters<iris::Word>(c, 0, 1, 0);
-                    c.invoke(iris::instructions::storeIO(20_reg, 21_reg));
+                    c.invoke(iris::instructions::storeIO(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.getTerminateCell(), 1) && verifyResult<bool>(c.getExecutingStatus(), false);
                 }
             },
@@ -614,7 +599,7 @@ TestSuites suites {
                     c.resetExecutionStatus();
                     c.setTerminateCell(0xFDED);
                     setRegisters<iris::Word>(c, 0, 0, 0);
-                    c.invoke(iris::instructions::loadIO(20_reg, 21_reg, 0));
+                    c.invoke(iris::instructions::loadIO(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xFDED, c);
                }
             },

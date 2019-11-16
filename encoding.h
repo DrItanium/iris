@@ -32,22 +32,7 @@
 #include <list>
 #include <functional>
 namespace iris::instructions {
-    using Bits = UnsignedDoubleWord;
-    /**
-     * Encode an instruction with only its position to have access to. Most useful
-     * to functions that are a member of the MultiInstructionExpression. It makes
-     * it possible to capture this.
-     */
-    using DelayedBits = std::function<Bits(size_t)>;
-#if 0
-    class MultiInstructionExpression;
-    /**
-     * Encode an instruction while having parameter access to the expression that is meant to hold onto it
-     */
-    using ExternalDelayedBits = std::function<Bits(MultiInstructionExpression&, size_t)>;
-    using ListContents = std::variant<Bits, DelayedBits, ExternalDelayedBits>;
-    using List = std::vector<ListContents>;
-#endif
+    using Bits = iris::EncodedInstruction;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
     class OrdinalOperation { };
     class IntegerOperation { };
@@ -177,18 +162,18 @@ namespace iris::instructions {
     }
 
     /// @todo figure out how to do immediate push and pop
-    constexpr auto storeData(RegisterIndex dest, RegisterIndex value, Byte offset) noexcept { return DataStoreWithOffset(dest, value, offset); }
-    constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, Byte offset) noexcept { return std::make_tuple(move(storage, value), storeData(dest, storage, offset)); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex value, Byte offset) noexcept { return DataStoreWithOffset(value, dest, offset); }
+    constexpr auto storeData(RegisterIndex dest, RegisterIndex storage, Address value, Byte offset) noexcept { return std::make_tuple(move(storage, value), storeData(storage, dest, offset)); }
     constexpr auto storeData(RegisterIndex dest, RegisterIndex value) noexcept { return storeData(dest, value, 0); }
-    constexpr auto loadData(RegisterIndex addr, RegisterIndex value, Byte offset) noexcept { return DataLoadWithOffset(addr, value, offset); }
+    constexpr auto loadData(RegisterIndex addr, RegisterIndex value, Byte offset) noexcept { return DataLoadWithOffset(value, addr, offset); }
     constexpr auto loadData(RegisterIndex addr, RegisterIndex value) noexcept { return loadData(addr, value, 0); }
-    constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, Byte offset) noexcept { return IOStoreWithOffset(addr, value, offset); }
-    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage, Address value, Byte offset) noexcept { return std::make_tuple(move(storage, value), storeIO(addr, storage, offset)); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex value, Byte offset) noexcept { return IOStoreWithOffset(value, addr, offset); }
+    constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage, Address value, Byte offset) noexcept { return std::make_tuple(move(storage, value), storeIO(storage, addr, offset)); }
     constexpr auto storeIO(RegisterIndex addr, RegisterIndex storage) noexcept { return storeIO(addr, storage, 0); }
-    constexpr auto loadIO(RegisterIndex addr, RegisterIndex dest, Byte offset) noexcept { return IOLoadWithOffset(addr, dest, offset); }
-    constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower, Byte offset) noexcept { return CodeLoadWithOffset(addr, lower, offset); }
+    constexpr auto loadIO(RegisterIndex addr, RegisterIndex dest, Byte offset) noexcept { return IOLoadWithOffset(dest, addr, offset); }
+    constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower, Byte offset) noexcept { return CodeLoadWithOffset(lower, addr, offset); }
     constexpr auto loadCode(RegisterIndex addr, RegisterIndex lower) noexcept { return loadCode(addr, lower, 0); }
-    constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, Byte offset) noexcept { return CodeStoreWithOffset(addr, lower, offset); }
+    constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower, Byte offset) noexcept { return CodeStoreWithOffset(lower, addr, offset); }
     constexpr auto storeCode(RegisterIndex addr, RegisterIndex lower) noexcept { return storeCode(addr, lower, 0); }
     // arithmetic operations
     constexpr auto twoTimes(RegisterIndex dest, RegisterIndex src, OrdinalOperation) noexcept { return ShiftLeftOrdinal(dest, src, 1_reg); }
