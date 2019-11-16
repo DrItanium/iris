@@ -56,7 +56,7 @@ clean:
 encoding.o: encoding.cc encoding.h opcodes.h types.h \
  InstructionFormats.def exceptions.h
 exceptions.o: exceptions.cc exceptions.h types.h
-IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
+IODevices.o: IODevices.cc IODevices.h types.h exceptions.h mem_bank.h
 iris.o: iris.cc types.h iris.h exceptions.h register.h mem_bank.h \
  opcodes.h InstructionFormats.def
 mem_core.o: mem_core.cc types.h mem_core.h iris.h exceptions.h register.h \
