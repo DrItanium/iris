@@ -5,7 +5,8 @@ CORE_OBJS := iris.o \
 	register.o \
 	IODevices.o \
 	opcodes.o \
-	encoding.o
+	encoding.o \
+	mem_core.o
 	
 
 IRIS_ARCHIVE := libiris.a
@@ -51,15 +52,16 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
-IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
+
 encoding.o: encoding.cc encoding.h opcodes.h types.h \
- InstructionFormats.def InstructionProperties.def exceptions.h
+ InstructionFormats.def exceptions.h
 exceptions.o: exceptions.cc exceptions.h types.h
-iris.o: iris.cc iris.h types.h exceptions.h IODevices.h register.h \
- opcodes.h InstructionFormats.def InstructionProperties.def
-opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h IODevices.h \
- register.h opcodes.h InstructionFormats.def InstructionProperties.def \
- encoding.h
-opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def \
- InstructionProperties.def
+IODevices.o: IODevices.cc IODevices.h types.h exceptions.h
+iris.o: iris.cc types.h iris.h exceptions.h register.h opcodes.h \
+ InstructionFormats.def
+mem_core.o: mem_core.cc types.h mem_core.h iris.h exceptions.h register.h \
+ opcodes.h InstructionFormats.def IODevices.h
+opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def
+opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h register.h \
+ opcodes.h InstructionFormats.def encoding.h
 register.o: register.cc register.h types.h

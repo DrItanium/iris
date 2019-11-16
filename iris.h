@@ -40,7 +40,6 @@
 #include <sstream>
 #include "types.h"
 #include "exceptions.h"
-#include "IODevices.h"
 #include "register.h"
 #include "opcodes.h"
 namespace iris {
@@ -397,33 +396,6 @@ class Core {
         Word _terminateCell = 0;
 };
 
-/** 
- * Use ram to denote the different memory spaces
- */
-class InMemoryCore : public Core {
-    public:
-        InMemoryCore() noexcept;
-        ~InMemoryCore() override = default;
-        void mapIntoIOSpace(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
-        void mapIntoIOSpace(Address, MMIOReadFunction);
-        void mapIntoIOSpace(Address, MMIOWriteFunction);
-        void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
-    protected:
-        LongOrdinal loadFromCodeMemory(Address addr) override;
-        Ordinal loadFromDataMemory(Address addr) override;
-        Ordinal loadFromStackMemory(Address addr) override;
-        Ordinal loadFromIOMemory(Address addr) override;
-        void storeToCodeMemory(Address addr, LongOrdinal value) override;
-        void storeToDataMemory(Address addr, Ordinal value) override;
-        void storeToStackMemory(Address addr, Ordinal value) override;
-        void storeToIOMemory(Address addr, Ordinal value) override;
-    private:
-        CodeMemoryBank _code;
-        DataMemoryBank _data;
-        StackMemoryBank _stack;
-        IOMemoryBank _io;
-
-};
 
 } // end namespace iris
 

@@ -36,10 +36,6 @@ Core::Core() noexcept {
     }
 }
 
-InMemoryCore::InMemoryCore() noexcept : Core(), _io(*this) {
-    // basic io reservations the processor will reserve
-    _io.mapIntoMemory(0, Core::readTerminateCell, Core::terminateCore);
-}
 
 Register&
 Core::getDestinationRegister(RegisterIndex idx) noexcept {
@@ -109,61 +105,5 @@ Core::invoke(LongOrdinal ibits) {
     }
 }
 
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> tup) {
-    _io.mapIntoMemory(addr, tup);
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOReadFunction read) {
-    _io.mapIntoMemory(addr, read);
-
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOWriteFunction write) {
-    _io.mapIntoMemory(addr, write);
-
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOReadFunction read, MMIOWriteFunction write) {
-    _io.mapIntoMemory(addr, read, write);
-
-}
-
-LongOrdinal 
-InMemoryCore::loadFromCodeMemory(Address addr) {
-    return _code[addr];
-}
-Ordinal 
-InMemoryCore::loadFromDataMemory(Address addr) {
-    return _data[addr];
-}
-
-
-Ordinal 
-InMemoryCore::loadFromStackMemory(Address addr) {
-    return _stack[addr];
-}
-Ordinal 
-InMemoryCore::loadFromIOMemory(Address addr) {
-    return _io.load(addr);
-}
-void 
-InMemoryCore::storeToCodeMemory(Address addr, LongOrdinal value) {
-    _code[addr] = value;    
-}
-void 
-InMemoryCore::storeToDataMemory(Address addr, Ordinal value) {
-    _data[addr] = value;
-}
-
-void
-InMemoryCore::storeToStackMemory(Address addr, Ordinal value) {
-    _stack[addr] = value;
-}
-
-void 
-InMemoryCore::storeToIOMemory(Address addr, Ordinal value) {
-    _io.store(addr, value);
-}
 
 } // end namespace iris
