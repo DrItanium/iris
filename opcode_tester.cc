@@ -113,11 +113,21 @@ bool stackTests(iris::Core& c) {
     }
     return true;
 }
-template<typename T>
-void setRegisters(iris::Core& c, T r17, T r18, T r19) noexcept {
-    c.setRegisterValue<T>(20_reg, r17);
-    c.setRegisterValue<T>(21_reg, r18);
-    c.setRegisterValue<T>(22_reg, r19);
+void setRegisters(iris::Core& c, iris::Integer r17, iris::Integer r18, iris::Integer r19) noexcept {
+    c.setRegisterValue(20_reg, r17);
+    c.setRegisterValue(21_reg, r18);
+    c.setRegisterValue(22_reg, r19);
+}
+void setRegisters(iris::Core& c, iris::Ordinal r17, iris::Ordinal r18, iris::Ordinal r19) noexcept {
+    c.setRegisterValue(20_reg, r17);
+    c.setRegisterValue(21_reg, r18);
+    c.setRegisterValue(22_reg, r19);
+}
+void clearRegisters(iris::Core& c) noexcept {
+    constexpr iris::Ordinal zero = 0;
+    c.setRegisterValue(20_reg, zero);
+    c.setRegisterValue(21_reg, zero);
+    c.setRegisterValue(22_reg, zero);
 }
 enum class ArithmeticOperation {
     Add,
@@ -133,7 +143,7 @@ bool testArithmeticOperation(iris::Core& c, T src1, T src2) noexcept {
     using K = std::decay_t<T>;
     static_assert(std::is_integral_v<K>);
     using D = std::conditional_t<std::is_signed_v<K>, iris::instructions::IntegerOperation, iris::instructions::OrdinalOperation>;
-    setRegisters<K>(c, 0, src1, src2);
+    setRegisters(c, 0, src1, src2);
     K check = 0;
     iris::Instruction instruction;
     bool expectDivideByZero = false;
@@ -190,7 +200,7 @@ enum class LogicalOperation {
 
 template<LogicalOperation op>
 bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::UnsignedWord src2 = 0) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, src2);
+    setRegisters(c, 0, src1, src2);
     iris::Word check = 0u;
     iris::Instruction inst;
     if constexpr (op == LogicalOperation::Not) {
@@ -214,14 +224,14 @@ bool testLogicalOperation(iris::Core& c, iris::UnsignedWord src1, iris::Unsigned
 
 
 bool testCopyRegister(iris::Core& c, iris::Word src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, src1, 0);
+    setRegisters(c, 0, src1, 0);
     auto check = src1;
     c.invoke(iris::instructions::move(20_reg, 21_reg).getEncodedInstruction());
     return verifyResult<iris::Word>(20_reg, check, c);
 }
 
 bool testAssignRegister(iris::Core& c, iris::Word src1) noexcept {
-    setRegisters<decltype(src1)>(c, 0, 0, 0);
+    clearRegisters(c);
     c.invoke(iris::instructions::move(20_reg, src1).getEncodedInstruction());
     return verifyResult<iris::Word>(20_reg, src1, c);
 }
@@ -368,7 +378,7 @@ bool testCompareOperation(iris::Core& c) noexcept {
         auto a = static_cast<K>(i);
         for (auto j = innerStart; j < innerEnd; ++j) {
             auto b= static_cast<K>(j);
-            setRegisters<K>(c, 0, a, b);
+            setRegisters(c, 0, a, b);
             c.invoke(iris::instructions::compare<K>(20_reg, 21_reg, 22_reg).getEncodedInstruction());
             if constexpr (auto outcome = c.getRegisterValue<K>(20_reg); op == CompareOperations::Equals) {
                 if (a == b) {
@@ -509,7 +519,7 @@ TestSuites suites {
             { "Code Cell Write via instructions", 
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
-                    setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
+                    setRegisters(c, 0_u16, 0xCDEF_u16, 0x89AB_u16);
                     c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0), 0x89ABCDEF);
                 }, 
@@ -517,7 +527,7 @@ TestSuites suites {
             { "Code Cell Write via instructions (non zero address)", 
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
-                    setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
+                    setRegisters(c, 0xFDED_u16, 0xCDEF_u16, 0x89AB_u16);
                     c.invoke(iris::instructions::storeCode(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::DoubleWord>(c.loadCode<iris::Address>(0xFDED), 0x89ABCDEF);
                 }, 
@@ -526,9 +536,9 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0, 0x89ABCDEF);
-                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    clearRegisters(c);
                     c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0).getEncodedInstruction());
-                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
+                    auto dr = c.getDoubleRegisterValue(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
             },
@@ -536,9 +546,9 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     c.storeCode<iris::Address, iris::DoubleWord>(0xfded, 0x89ABCDEF);
-                    setRegisters<iris::Word>(c, 0xfded, 0, 0);
+                    setRegisters(c, 0xfded_u16, 0, 0);
                     c.invoke(iris::instructions::loadCode(20_reg, 21_reg, 0).getEncodedInstruction());
-                    auto dr = c.getDoubleRegisterValue<iris::DoubleWord>(21_reg);
+                    auto dr = c.getDoubleRegisterValue(21_reg);
                     return verifyResult<iris::DoubleWord>(dr, 0x89ABCDEF);
                 }, 
             },
@@ -549,7 +559,7 @@ TestSuites suites {
             { "Data cell write via instructions", 
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
-                    setRegisters<iris::Word>(c, 0, 0xCDEF, 0x89AB);
+                    setRegisters(c, 0, 0xCDEF_u16, 0x89AB_u16);
                     c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0), 0xCDEF);
                 }, 
@@ -557,7 +567,7 @@ TestSuites suites {
             { "Data cell write via instructions (non zero address)", 
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
-                    setRegisters<iris::Word>(c, 0xFDED, 0xCDEF, 0x89AB);
+                    setRegisters(c, 0xFDED_u16, 0xCDEF_u16, 0x89AB_u16);
                     c.invoke(iris::instructions::storeData(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.loadData<iris::Address>(0xFDED), 0xCDEF);
                 }, 
@@ -566,7 +576,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0, 0xCDEF);
-                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    clearRegisters(c);
                     c.invoke(iris::instructions::loadData(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
@@ -575,7 +585,7 @@ TestSuites suites {
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
                     c.storeData<iris::Address, iris::Word>(0xfded, 0xCDEF);
-                    setRegisters<iris::Word>(c, 0xfded, 0, 0);
+                    setRegisters(c, 0xfded_u16, 0_u16, 0_u16);
                     c.invoke(iris::instructions::loadData(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xCDEF, c);
                 }, 
@@ -590,7 +600,7 @@ TestSuites suites {
             { "Write to terminate cell!", 
                 [](iris::Core& c) {
                     c.resetExecutionStatus();
-                    setRegisters<iris::Word>(c, 0, 1, 0);
+                    setRegisters(c, 0_u16, 1_u16, 0_u16);
                     c.invoke(iris::instructions::storeIO(20_reg, 21_reg).getEncodedInstruction());
                     return verifyResult<iris::Word>(c.getTerminateCell(), 1) && verifyResult<bool>(c.getExecutingStatus(), false);
                 }
@@ -599,7 +609,7 @@ TestSuites suites {
                [](iris::Core& c) {
                     c.resetExecutionStatus();
                     c.setTerminateCell(0xFDED);
-                    setRegisters<iris::Word>(c, 0, 0, 0);
+                    clearRegisters(c);
                     c.invoke(iris::instructions::loadIO(20_reg, 21_reg, 0).getEncodedInstruction());
                     return verifyResult<iris::Word>(21_reg, 0xFDED, c);
                }
