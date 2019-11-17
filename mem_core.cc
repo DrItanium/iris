@@ -29,6 +29,10 @@
 
 namespace iris {
 InMemoryCore::InMemoryCore() noexcept : Core(), _io(*this) {
+    // 0-16 are hardwired in r0-r16 (first 17 registers)
+    for (int i = 0; i < 17; ++i) {
+        _regs[i].hardwireTo(i);
+    }
     // basic io reservations the processor will reserve
     _io.mapIntoMemory(0, Core::readTerminateCell, Core::terminateCore);
 }
@@ -87,6 +91,26 @@ InMemoryCore::storeToStackMemory(Address addr, Ordinal value) {
 void 
 InMemoryCore::storeToIOMemory(Address addr, Ordinal value) {
     _io.store(addr, value);
+}
+
+void
+InMemoryCore::putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept {
+    DoubleRegister::make(_regs, lower, upper).put(value);
+}
+
+void
+InMemoryCore::putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept {
+    DoubleRegister::make(_regs, lower).put(value);
+}
+
+LongOrdinal 
+InMemoryCore::retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
+    return DoubleRegister::make(_regs, lower, upper).get<LongOrdinal>();
+}
+
+LongOrdinal
+InMemoryCore::retrieveDoubleRegister(RegisterIndex lower) const noexcept {
+    return DoubleRegister::make(_regs, lower).get<LongOrdinal>();
 }
 
 } // end namespace iris

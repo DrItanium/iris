@@ -31,6 +31,7 @@
 #include "iris.h"
 #include "IODevices.h"
 #include "mem_bank.h"
+#include "register.h"
 
 namespace iris {
 /** 
@@ -50,6 +51,37 @@ class InMemoryCore : public Core {
         void resetExecutionStatus() noexcept override { _executing = true; }
         bool getExecutingStatus() const noexcept override { return _executing; }
         void setTerminateCell(Ordinal value) noexcept override { _terminateCell = value; }
+        void putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept override;
+        void putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept override;
+        LongOrdinal retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept override;
+        LongOrdinal retrieveDoubleRegister(RegisterIndex lower) const noexcept override;
+        void putRegister(RegisterIndex lower, Ordinal value) noexcept override {
+            _regs[std::to_integer<Byte>(lower)].put(value);
+        }
+        void putRegister(RegisterIndex lower, Integer value) noexcept override {
+            _regs[std::to_integer<Byte>(lower)].put(value);
+        }
+        Ordinal retrieveRegister(RegisterIndex ind, RequestOrdinal) const noexcept override {
+            return _regs[std::to_integer<Byte>(ind)].get<Ordinal>();
+        }
+        Integer retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept override {
+            return _regs[std::to_integer<Byte>(ind)].get<Ordinal>();
+        }
+        void setIP(Integer value) noexcept override { _ip.put(value); }
+        void stopExecution() noexcept override { _executing = false; }
+    protected:
+        void advanceIP() noexcept override {
+            ++_ip;
+        }
+        void doNotAdvanceIP() noexcept override {
+            _advanceIP = false;
+        }
+        void allowAdvanceIP() noexcept override {
+            _advanceIP = true;
+        }
+        bool shouldAdvanceIP() const noexcept override {
+            return _advanceIP;
+        }
     protected:
         LongOrdinal loadFromCodeMemory(Address addr) override;
         Ordinal loadFromDataMemory(Address addr) override;
@@ -59,7 +91,9 @@ class InMemoryCore : public Core {
         void storeToDataMemory(Address addr, Ordinal value) override;
         void storeToStackMemory(Address addr, Ordinal value) override;
         void storeToIOMemory(Address addr, Ordinal value) override;
+
     private:
+        RegisterBank _regs;
         CodeMemoryBank _code;
         DataMemoryBank _data;
         StackMemoryBank _stack;

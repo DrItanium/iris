@@ -382,12 +382,10 @@ class Core {
         virtual void setTerminateCell(Ordinal value) noexcept = 0;
         virtual void stopExecution() noexcept = 0;
     protected:
-        virtual void advanceIP() const noexcept = 0;
+        virtual void advanceIP() noexcept = 0;
         virtual void doNotAdvanceIP() noexcept = 0;
         virtual void allowAdvanceIP() noexcept = 0;
-        virtual bool shouldAdvanceIP() noexcept = 0;
-    private:
-        RegisterBank _regs;
+        virtual bool shouldAdvanceIP() const noexcept = 0;
 };
 
 

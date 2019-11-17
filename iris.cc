@@ -30,26 +30,9 @@
 namespace iris {
 
 Core::Core() noexcept {
-    // 0-16 are hardwired in r0-r16 (first 17 registers)
-    for (int i = 0; i < 17; ++i) {
-        _regs[i].hardwireTo(i);
-    }
 }
 
 
-Register&
-Core::getDestinationRegister(RegisterIndex idx) noexcept {
-    return _regs[static_cast<Byte>(idx)];
-}
-const Register&
-Core::getSourceRegister(RegisterIndex idx) const noexcept {
-    return _regs[static_cast<Byte>(idx)];
-}
-
-DoubleRegister
-Core::getDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
-    return DoubleRegister::make(_regs, lower, upper);
-}
 
 
 void
