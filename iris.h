@@ -128,21 +128,22 @@ class Core {
         }
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
-            setRegisterValue(index, _ip.get() + 1);
+            setRegisterValue(index, static_cast<Ordinal>(getIP()  + 1));
         }
         template<typename T>
         void branchTo(T addr) noexcept {
             if constexpr (std::is_same_v<T, RegisterIndex>) {
-                _ip.put<Word>(getRegisterValue<Word>(addr));
+                setIP(getRegisterValue<Ordinal>(addr));
+                //_ip.put<Word>(getRegisterValue<Word>(addr));
             } else if constexpr (std::is_unsigned_v<T>) {
-                _ip.put<Word>(addr);
+                setIP(static_cast<Ordinal>(addr));
             } else if constexpr (std::is_signed_v<T>) {
                 // this becomes relative offset
-                _ip.put<Integer>(addr + _ip.get<Integer>());
+                setIP(static_cast<Integer>(static_cast<Integer>(addr) + static_cast<Integer>(getIP())));
             } else {
                 static_assert(false_v<T>, "Bad branch to kind!");
             }
-            _advanceIP = false;
+            doNotAdvanceIP();
         }
         template<EncodedInstruction T, std::enable_if_t<IsBranchInstruction<T>, int> = 0> 
         void invoke(const Instruction& s) {
@@ -285,7 +286,7 @@ class Core {
                 } else {
                     static_assert(false_v<T>, "Unimplemented arithmetic operation");
                 }
-                setRegisterValue<D>(s.getArg0(), result);
+                this->setRegisterValue(s.getArg0(), static_cast<D>(result));
             }
         }
         template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
@@ -353,9 +354,14 @@ class Core {
             return retrieveDoubleRegister(lower);
         }
     public:
-        template<typename T>
-        void setRegisterValue(RegisterIndex idx, T value) noexcept {
+        void setRegisterValue(RegisterIndex idx, Integer value) noexcept {
             putRegister(idx, value);
+        }
+        void setRegisterValue(RegisterIndex idx, Ordinal value) noexcept {
+            putRegister(idx, value);
+        }
+        void setRegsiterValue(RegisterIndex idx, bool value) noexcept {
+            putRegister(idx, static_cast<Ordinal>(value ? 0xFFFF : 0x0000));
         }
         template<typename T = Ordinal>
         T getRegisterValue(RegisterIndex idx) const noexcept {
@@ -369,7 +375,8 @@ class Core {
     public:
         virtual Ordinal getTerminateCell() const noexcept = 0;
         virtual Ordinal getIP() const noexcept = 0;
-        virtual void setIP(Word value) noexcept = 0;
+        virtual void setIP(Ordinal value) noexcept = 0;
+        virtual void setIP(Integer value) noexcept = 0;
         virtual void resetExecutionStatus() noexcept = 0;
         virtual bool getExecutingStatus() const noexcept = 0;
         virtual void setTerminateCell(Ordinal value) noexcept = 0;
