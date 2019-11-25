@@ -26,7 +26,6 @@
 #ifndef IRIS_ENCODING_H__
 #define IRIS_ENCODING_H__
 #include "opcodes.h"
-#include "exceptions.h"
 namespace iris::instructions {
     using Bits = iris::EncodedInstruction;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
