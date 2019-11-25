@@ -77,18 +77,15 @@ class Core {
         template<typename T>
         LongOrdinal loadCode(T addr, Address offset = 0) {
             return loadFromCodeMemory(extractAddress<T>(addr, offset));
-            //return _code[extractAddress<T>(addr, offset)];
         }
 
         template<typename T>
         Word loadIO(T addr, Address offset = 0) {
              return loadFromIOMemory(extractAddress<T>(addr, offset));
-            //return _io.load(extractAddress<T>(addr, offset));
         }
         template<typename T>
         Word loadStack(T addr, Address offset = 0) {
             return loadFromStackMemory(extractAddress<T>(addr, offset));
-            //return _stack[extractAddress<T>(addr, offset)];
         }
         template<typename T>
         Word loadData(T addr, Address offset = 0) {
@@ -97,21 +94,17 @@ class Core {
         template<typename A, typename V>
         void storeStack(A address, V value, Address offset = 0) {
             storeToStackMemory(extractAddress<A>(address, offset), extractValue<V>(value));
-            //_stack[extractAddress<A>(address, offset)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeData(A address, V value, Address offset = 0) {
             storeToDataMemory(extractAddress<A>(address, offset), extractValue<V>(value));
-            //_data[extractAddress<A>(address, offset)] = extractValue<V>(value);
         }
         template<typename A, typename V>
         void storeCode(A address, V value, Address offset = 0) {
             if constexpr (auto addr = extractAddress<A>(address, offset); std::is_same_v<V, LongOrdinal>) {
                 storeToCodeMemory(addr, value);
-                //_code[addr] = value;
             } else if constexpr (std::is_same_v<V, RegisterIndex>) {
                 storeToCodeMemory(addr, getDoubleRegisterValue(value));
-                //_code[addr] = getDoubleRegisterValue(value);
             } else {
                 static_assert(false_v<V>, "Bad value kind!");
             }
@@ -134,7 +127,6 @@ class Core {
         void branchTo(T addr) noexcept {
             if constexpr (std::is_same_v<T, RegisterIndex>) {
                 setIP(getRegisterValue<Ordinal>(addr));
-                //_ip.put<Word>(getRegisterValue<Word>(addr));
             } else if constexpr (std::is_unsigned_v<T>) {
                 setIP(static_cast<Ordinal>(addr));
             } else if constexpr (std::is_signed_v<T>) {

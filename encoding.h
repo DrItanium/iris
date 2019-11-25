@@ -27,10 +27,6 @@
 #define IRIS_ENCODING_H__
 #include "opcodes.h"
 #include "exceptions.h"
-#include <variant>
-#include <vector>
-#include <list>
-#include <functional>
 namespace iris::instructions {
     using Bits = iris::EncodedInstruction;
     using ComplexBinaryInstruction = std::tuple<Bits, Bits>;
@@ -60,7 +56,6 @@ namespace iris::instructions {
     }
 #include "InstructionFormats.def"
 #undef X
-    using AddressTypes = std::variant<RegisterIndex, Address>;
     template<typename T>
     constexpr auto compare(RegisterIndex dest, RegisterIndex src0, RegisterIndex src1) noexcept {
         using K = std::decay_t<T>;
