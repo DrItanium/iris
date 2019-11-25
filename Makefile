@@ -59,14 +59,3 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
-exceptions.o: exceptions.cc exceptions.h types.h
-IODevices.o: IODevices.cc IODevices.h types.h exceptions.h mem_bank.h
-iris.o: iris.cc types.h iris.h exceptions.h register.h mem_bank.h \
- opcodes.h InstructionFormats.def
-mem_core.o: mem_core.cc types.h mem_core.h iris.h exceptions.h register.h \
- mem_bank.h opcodes.h InstructionFormats.def IODevices.h
-opcodes.o: opcodes.cc opcodes.h types.h InstructionFormats.def
-opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h register.h \
- mem_bank.h opcodes.h InstructionFormats.def mem_core.h IODevices.h \
- encoding.h
-register.o: register.cc register.h types.h mem_bank.h
