@@ -2,8 +2,7 @@ include config.mk
 
 CORE_OBJS := iris.o \
 	exceptions.o \
-	opcodes.o \
-	encoding.o 
+	opcodes.o
 
 SIM_OBJS := IODevices.o \
 	register.o \
@@ -60,9 +59,6 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
-
-encoding.o: encoding.cc encoding.h opcodes.h types.h \
- InstructionFormats.def exceptions.h
 exceptions.o: exceptions.cc exceptions.h types.h
 IODevices.o: IODevices.cc IODevices.h types.h exceptions.h mem_bank.h
 iris.o: iris.cc types.h iris.h exceptions.h register.h mem_bank.h \
