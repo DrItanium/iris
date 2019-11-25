@@ -63,8 +63,8 @@ mem_core.o: backends/memcore/mem_core.cc types.h \
  backends/memcore/mem_core.h iris.h types.h exceptions.h register.h \
  opcodes.h InstructionFormats.def backends/memcore/IODevices.h \
  exceptions.h mem_bank.h register.h opcodes.h
-exceptions.o: exceptions.cpp exceptions.h types.h
-iris.o: iris.cpp types.h iris.h exceptions.h register.h opcodes.h \
+exceptions.o: exceptions.cc exceptions.h types.h
+iris.o: iris.cc types.h iris.h exceptions.h register.h opcodes.h \
  InstructionFormats.def
 opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h register.h \
  opcodes.h InstructionFormats.def backends/memcore/mem_core.h iris.h \
