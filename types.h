@@ -70,19 +70,19 @@ using EncodedInstruction = LongOrdinal;
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
+    auto partial = (value & mask);
     if constexpr (shift != 0) {
-        return static_cast<R>((value & mask) >> shift);
-    } else {
-        return static_cast<R>((value & mask));
+        partial = partial >> shift;
     }
+    return static_cast<R>(partial);
 }
 template<typename T, typename R, T mask, T shift>
 constexpr T encodeBits(T input, R value) noexcept {
-    if constexpr (shift != 0)  {
-        return static_cast<T>((input & ~mask) | ((static_cast<T>(value) << shift) & mask));
-    } else {
-        return static_cast<T>((input & ~mask) | ((static_cast<T>(value)) & mask));
+    T component = static_cast<T>(value);
+    if constexpr (shift != 0) {
+        component <<= shift;
     }
+    return static_cast<T>((input & ~mask) | (component & mask));
 }
 constexpr Ordinal getUpperHalf(LongOrdinal word) noexcept {
     return decodeBits<decltype(word), Ordinal, 0xFFFF'0000, 16>(word);
