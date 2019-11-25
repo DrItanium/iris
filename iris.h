@@ -27,7 +27,6 @@
 #define IRIS_IRIS_H__
 #include "types.h"
 #include "exceptions.h"
-#include "register.h"
 #include "opcodes.h"
 namespace iris {
 /**

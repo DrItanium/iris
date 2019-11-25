@@ -27,9 +27,6 @@
  */
 #ifndef IRIS_OPCODES_H__
 #define IRIS_OPCODES_H__
-#include <variant>
-#include <optional>
-#include <tuple>
 #include "types.h"
 
 namespace iris {

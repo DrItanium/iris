@@ -4,9 +4,9 @@ CORE_OBJS := iris.o \
 	exceptions.o \
 	opcodes.o
 
-SIM_OBJS := IODevices.o \
-	register.o \
-	mem_core.o
+SIM_OBJS := backends/memcore/IODevices.o \
+	backends/memcore/register.o \
+	backends/memcore/mem_core.o
 	
 
 IRIS_ARCHIVE := libiris.a
