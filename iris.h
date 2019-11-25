@@ -27,7 +27,9 @@
 #define IRIS_IRIS_H__
 #include "types.h"
 #include "exceptions.h"
+#include "register.h"
 #include "opcodes.h"
+#include "mem_bank.h"
 namespace iris {
 /**
  * A single iris machine, it is an abstract top level
