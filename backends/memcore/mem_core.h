@@ -28,7 +28,7 @@
 #include <array>
 #include <functional>
 #include <map>
-#include "iris.h"
+#include <iris.h>
 #include "IODevices.h"
 #include "mem_bank.h"
 #include "register.h"
