@@ -41,7 +41,7 @@ flags = [
 '-x',
 'c++',
 '-I.',
-'-Imisc/PEGTL/include',
+'-Ilib/',
 '-std=c++17',
 ]
 
