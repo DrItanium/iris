@@ -39,4 +39,33 @@
 #   endif
 #endif
 
+constexpr bool platformIsAVR() noexcept {
+#ifdef __AVR__
+    return true;
+#else
+    return false;
+#endif
+}
+
+constexpr bool targetIsAtTiny85() noexcept {
+    if constexpr (platformIsAVR()) {
+#ifdef __AVR_ATtiny85__
+        return true;
+#else
+        return false;
+#endif
+    } else {
+        return false;
+    }
+}
+
+
+constexpr bool platformIsAmd64() noexcept {
+#ifdef __x86_64__
+    return true;
+#else
+    return false;
+#endif
+}
+
 #endif // end IRIS_PLATFORM_H__
