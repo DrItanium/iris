@@ -100,6 +100,17 @@ namespace std {
 
     /// @todo implement is_integral
     /// @todo implement is_floating_point
+   
+    template<typename T>
+    struct is_floating_point : std::integral_constant<
+                               bool,
+                               std::is_same<float, typename std::remove_cv<T>::type>::value ||
+                               std::is_same<double, typename std::remove_cv<T>::type>::value ||
+                               std::is_same<long double, typename std::remove_cv<T>::type>::value
+                               > { };
+
+    template<typename T>
+    inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
     
     template<typename T>
     struct is_array : std::false_type { };
