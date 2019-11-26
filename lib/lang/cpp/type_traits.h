@@ -276,6 +276,16 @@ namespace std {
     template<typename T>
     using remove_reference_t = typename remove_reference<T>::type;
 
+    /// @todo implement add_reference
+    
+    template<typename T> struct remove_pointer { using type = T; };
+    template<typename T> struct remove_pointer<T*> { using type = T; };
+    template<typename T> struct remove_pointer<T* const> { using type = T; };
+    template<typename T> struct remove_pointer<T* const volatile> { using type = T; };
+
+    template<typename T>
+    using remove_pointer_t = typename remove_pointer<T>::type;
+
 }
 #endif
 
