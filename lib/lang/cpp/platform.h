@@ -1,6 +1,6 @@
 /**
  * @file
- * cstdint interface
+ * platform detection routines
  * @copyright 
  * iris
  * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
@@ -26,15 +26,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IRIS_CSTDINT_H__
-#define IRIS_CSTDINT_H__
-#include "lang/cpp/platform.h"
-#ifdef __AVR__
-namespace std {
+#ifndef IRIS_PLATFORM_H__
+#define IRIS_PLATFORM_H__
+#ifndef __AVR__
+#define HAS_STL
+#endif // end ! defined(__AVR__)
 
-} // end namespace std
-#else
-#include <cstdint>
-#endif
-
-#endif // end IRIS_CSTDINT_H__
+#endif // end IRIS_PLATFORM_H__
