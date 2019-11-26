@@ -214,6 +214,60 @@ namespace std {
 
     template<typename T>
     inline constexpr bool is_reference_v = is_reference<T>::value;
+
+    /// @todo implement is_member_pointer
+    
+    template<typename T> struct is_const : std::false_type { };
+    template<typename T> struct is_const<const T> : std::true_type { };
+    template<typename T>
+    inline constexpr bool is_const_v = is_const<T>::value;
+    template<typename T> struct is_volatile : std::false_type { };
+    template<typename T> struct is_volatile<volatile T> : std::true_type { };
+    template<typename T>
+    inline constexpr bool is_volatile_v = is_volatile<T>::value;
+
+    /// @todo implement is_trivial
+    /// @todo implement is_trivially_copyable
+    /// @todo implement is_standard_layout 
+    /// @todo implement is_pod
+    /// @todo implement has_unique_object_representations
+    /// @todo implement is_empty
+    /// @todo implement is_polymorphic
+    /// @todo implement is_abstract
+    /// @todo implement is_final
+    /// @todo implement is_aggregate
+    /// @todo implement is_signed
+    /// @todo implement is_unsigned
+    /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
+    /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
+    /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
+    /// @todo implement is_move_constructible, is_trivially_move_constructible  and is_nothrow_move_constructible
+    /// @todo implement is_assignable, is_trivially_assignable  and is_nothrow_assignable
+    /// @todo implement is_copy_assignable, is_trivially_copy_assignable  and is_nothrow_copy_assignable
+    /// @todo implement is_move_assignable, is_trivially_move_assignable  and is_nothrow_move_assignable
+    /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
+    /// @todo implement has_virtual_destructor
+    /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
+    /// @todo implement alignment_of
+    /// @todo implement rank
+    /// @todo implement extent
+    /// @todo implement is_base_of
+    /// @todo implement is_convertible and is_nothrow_convertible
+    /// @todo implement is_layout_compatible
+    /// @todo implement is_invocable
+    /// @todo implement is_invocable_r
+    /// @todo implement is_nothrow_invocable
+    /// @todo implement is_nothrow_invocable_r
+    template<typename T> struct add_cv { using type = const volatile T; };
+    template<typename T> struct add_const { using type = const T; };
+    template<typename T> struct add_volatile { using type = volatile T; };
+
+    template<typename T> 
+    using add_cv_t = typename add_cv<T>::type;
+    template<typename T> 
+    using add_const_t = typename add_const<T>::type;
+    template<typename T> 
+    using add_volatile_t = typename add_volatile<T>::type;
 }
 #endif
 
