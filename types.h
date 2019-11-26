@@ -80,8 +80,8 @@ using Byte = HalfOrdinal;
 using RegisterIndex = std::byte;
 using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
 #else
-enum class RegisterIndex : uint8_t { };
-using RegisterIndexNumericType = uint8_t;
+enum class RegisterIndex : unsigned char { };
+using RegisterIndexNumericType = unsigned char;
 #endif
 using Address = Ordinal;
 using Offset16 = Integer;
@@ -132,9 +132,7 @@ constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
 
 
 } // end namespace iris
-#ifdef HAS_STL
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
-iris::RegisterIndex operator "" _reg(const char* str, std::size_t size);
 constexpr iris::RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111110); }
 constexpr iris::Integer operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
 constexpr iris::Integer operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
@@ -145,7 +143,6 @@ constexpr iris::Ordinal operator "" _imm16(unsigned long long int conversion) no
 constexpr iris::Ordinal operator "" _u16(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
 constexpr iris::LongOrdinal operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::LongOrdinal>(conversion); }
 constexpr iris::LongInteger operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::LongInteger>(conversion); }
-#endif
 
 
 
