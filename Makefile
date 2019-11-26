@@ -1,10 +1,10 @@
 include config.mk
 
-CORE_OBJS := iris.o \
-	exceptions.o
+CORE_OBJS := iris.o
 
 SIM_OBJS := backends/memcore/IODevices.o \
-	backends/memcore/mem_core.o
+	backends/memcore/mem_core.o \
+	backends/memcore/exceptions.o
 	
 
 IRIS_ARCHIVE := libiris.a
@@ -57,16 +57,17 @@ clean:
 
 # generated via g++ -MM -std=c++17 *.cc
 
+
 IODevices.o: backends/memcore/IODevices.cc backends/memcore/IODevices.h \
- types.h exceptions.h types.h mem_bank.h
+ types.h mem_bank.h types.h
+exceptions.o: backends/memcore/exceptions.cc \
+ backends/memcore/exceptions.h types.h
 mem_core.o: backends/memcore/mem_core.cc types.h \
- backends/memcore/mem_core.h iris.h types.h exceptions.h register.h \
- opcodes.h InstructionFormats.def backends/memcore/IODevices.h \
- exceptions.h mem_bank.h register.h opcodes.h
-exceptions.o: exceptions.cc exceptions.h types.h
-iris.o: iris.cc types.h iris.h exceptions.h register.h opcodes.h \
+ backends/memcore/mem_core.h iris.h types.h register.h mem_bank.h \
+ opcodes.h InstructionFormats.def backends/memcore/IODevices.h mem_bank.h \
+ register.h opcodes.h
+iris.o: iris.cc types.h iris.h register.h mem_bank.h opcodes.h \
  InstructionFormats.def
-opcode_tester.o: opcode_tester.cc iris.h types.h exceptions.h register.h \
+opcode_tester.o: opcode_tester.cc iris.h types.h register.h mem_bank.h \
  opcodes.h InstructionFormats.def backends/memcore/mem_core.h iris.h \
- backends/memcore/IODevices.h types.h exceptions.h mem_bank.h types.h \
- register.h encoding.h
+ backends/memcore/IODevices.h types.h mem_bank.h register.h encoding.h

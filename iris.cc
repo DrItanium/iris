@@ -48,15 +48,8 @@ Core::cycle() {
 void
 Core::run() {
     resetExecutionStatus();
-    //_executing = true;
     do {
-        try {
-            cycle();
-        } catch (DivideByZeroException& ex) {
-            /// @todo try to dispatch to an interrupt vector...
-        } catch (Exception& ex) {
-            /// @todo implement logic to handle edge cases such as divide by zero and other such handling
-        }
+        cycleHandler();
     } while (getExecutingStatus());
 }
 
@@ -64,7 +57,6 @@ Core::run() {
 void
 Core::terminateCycle() {
     stopExecution();
-    //_executing = false;
 }
 
 void
@@ -86,7 +78,7 @@ Core::invoke(LongOrdinal ibits) {
 #include "InstructionFormats.def"
 #undef X
         default:
-            throw BadOperationException();
+            raiseBadOperation();
     }
 }
 

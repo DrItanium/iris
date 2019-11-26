@@ -30,7 +30,7 @@
 #include <variant>
 #include <map>
 #include <types.h>
-#include <exceptions.h>
+#include "exceptions.h"
 #include "mem_bank.h"
 namespace iris {
 

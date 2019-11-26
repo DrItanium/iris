@@ -26,7 +26,6 @@
 #ifndef IRIS_IRIS_H__
 #define IRIS_IRIS_H__
 #include "types.h"
-#include "exceptions.h"
 #include "register.h"
 #include "opcodes.h"
 #include "mem_bank.h"
@@ -118,7 +117,7 @@ class Core {
     private:
         template<typename T, std::enable_if_t<IsErrorOperation<std::decay_t<T>>, int> = 0>
         void invoke(const T& s) {
-            throw ErrorInstructionException();
+            raiseErrorInstruction();
         }
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
@@ -247,18 +246,17 @@ class Core {
                 }
             }
         }
-
         template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
         void invoke(const Instruction& s) {
             if constexpr (IsErrorOperation<T>) {
                 // Error is considered an arithmetic operation
-                throw ErrorInstructionException();
+                raiseErrorInstruction();
             } else {
                 using D = DeterminedNumericType<T>;
                 auto src2 = getRegisterValue<D>(s.getArg2());
                 if constexpr (Src2CannotBeZero<T>) {
                     if (src2 == 0) {
-                        throw DivideByZeroException();
+                        raiseDivideByZero();
                     }
                 }
                 auto result = getRegisterValue<D>(s.getArg1());
@@ -312,7 +310,7 @@ class Core {
         }
 
 
-    private:
+    protected:
         void cycle();
     private:
         Register& getDestinationRegister(RegisterIndex idx) noexcept;
@@ -379,6 +377,14 @@ class Core {
         virtual void doNotAdvanceIP() noexcept = 0;
         virtual void allowAdvanceIP() noexcept = 0;
         virtual bool shouldAdvanceIP() const noexcept = 0;
+        virtual void raiseErrorInstruction() = 0;
+        virtual void raiseDivideByZero() = 0;
+        virtual void raiseBadOperation() = 0;
+        /**
+         * A wrapper around cycle which is responsible for 
+         * handling any special logic cases such as catching exceptions, etc.
+         */
+        virtual void cycleHandler() = 0;
 };
 
 

@@ -91,6 +91,10 @@ class InMemoryCore : public Core {
         void storeToDataMemory(Address addr, Ordinal value) override;
         void storeToStackMemory(Address addr, Ordinal value) override;
         void storeToIOMemory(Address addr, Ordinal value) override;
+        void raiseErrorInstruction() override;
+        void raiseDivideByZero() override;
+        void cycleHandler() override;
+        void raiseBadOperation() override;
 
     private:
         RegisterBank _regs;

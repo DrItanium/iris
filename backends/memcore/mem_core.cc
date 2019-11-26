@@ -113,4 +113,30 @@ InMemoryCore::retrieveDoubleRegister(RegisterIndex lower) const noexcept {
     return DoubleRegister::make(_regs, lower).get<LongOrdinal>();
 }
 
+void
+InMemoryCore::raiseDivideByZero() {
+    throw DivideByZeroException();
+}
+
+void
+InMemoryCore::raiseErrorInstruction() {
+    throw ErrorInstructionException();
+}
+
+void
+InMemoryCore::raiseBadOperation() {
+    throw BadOperationException();
+}
+
+void
+InMemoryCore::cycleHandler() {
+    try {
+        cycle();
+    } catch(DivideByZeroException& ex) {
+        /// @todo try to dispatch to an interrupt vector
+    } catch(Exception& ex) {
+        /// @todo implement logic to handle edge cases
+    }
+}
+
 } // end namespace iris
