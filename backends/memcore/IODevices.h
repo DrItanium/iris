@@ -45,6 +45,12 @@ struct MMIOEntry {
         virtual Word read(Core&) = 0;
 
 };
+class MMIOException : public Exception {
+    public:
+        template<typename ... Args>
+        MMIOException(Args&& ... args) noexcept : Exception("MMIOException: ", std::forward<Args>(args)...) { }
+        ~MMIOException() override = default;
+};
 struct LambdaMMIOEntry : public MMIOEntry {
     public:
         static void illegalWriteError(Core&, Word) {

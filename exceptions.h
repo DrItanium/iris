@@ -81,12 +81,6 @@ class MemoryStoreException : public Exception {
         MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward<Args>(args)...) { }
         ~MemoryStoreException() override = default;
 };
-class MMIOException : public Exception {
-    public:
-        template<typename ... Args>
-        MMIOException(Args&& ... args) noexcept : Exception("MMIOException: ", std::forward<Args>(args)...) { }
-        ~MMIOException() override = default;
-};
 } // end namespace iris
 
 #endif // end IRIS_EXCEPTIONS_H__
