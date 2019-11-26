@@ -99,7 +99,6 @@ namespace std {
     static_assert(!is_null_pointer_v<int>, "int is not supposed to be a null_pointer");
 
     /// @todo implement is_integral
-    /// @todo implement is_floating_point
    
     template<typename T>
     struct is_floating_point : std::integral_constant<
@@ -205,6 +204,16 @@ namespace std {
 
     /// @todo implement is_member_object_pointer
     /// @todo implement is_member_function_pointer
+    /// @todo implement is_fundamental
+    /// @todo implement is_arithmetic
+    /// @todo implement is_scalar
+    /// @todo implement is_compound
+    template<typename T> struct is_reference : std::false_type { };
+    template<typename T> struct is_reference<T&> : std::true_type { };
+    template<typename T> struct is_reference<T&&> : std::true_type { };
+
+    template<typename T>
+    inline constexpr bool is_reference_v = is_reference<T>::value;
 }
 #endif
 
