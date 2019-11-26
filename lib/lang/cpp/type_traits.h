@@ -179,6 +179,21 @@ namespace std {
     static_assert(std::is_pointer_v<int**>);
     static_assert(std::is_pointer_v<const int*>);
     static_assert(std::is_pointer_v<const int* const *>);
+
+    template<typename T> struct is_lvalue_reference : std::false_type { };
+    template<typename T> struct is_lvalue_reference<T&> : std::true_type { };
+
+    template<typename T>
+    inline constexpr bool is_lvalue_reference_v = is_lvalue_reference<T>::value;
+
+    template<typename T> struct is_rvalue_reference : std::false_type { };
+    template<typename T> struct is_rvalue_reference<T&&> : std::true_type { };
+
+    template<typename T>
+    inline constexpr bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
+
+    /// @todo implement is_member_object_pointer
+    /// @todo implement is_member_function_pointer
 }
 #endif
 
