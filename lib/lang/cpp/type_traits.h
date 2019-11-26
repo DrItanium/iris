@@ -26,14 +26,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IRIS_CSTDDEF_H__
-#define IRIS_CSTDDEF_H__
-#include "lang/cpp/platform.h"
+#ifndef IRIS_TYPE_TRAITS_H__
+#define IRIS_TYPE_TRAITS_H__
+#include <lang/cpp/platform.h>
 
 #ifdef HAS_STL
 #include <type_traits>
 #else
-#include "lang/cpp/cstddef.h"
+#include <lang/cpp/cstddef.h>
 namespace std {
     template<typename T, T v>
     struct integral_constant {
@@ -89,7 +89,27 @@ namespace std {
     template<typename T>
     inline constexpr bool is_null_pointer_v = std::is_null_pointer<T>::value;
 
+    static_assert(is_null_pointer_v<std::nullptr_t>, "nullptr is supposed to be a null_pointer");
+    static_assert(!is_null_pointer_v<int>, "int is not supposed to be a null_pointer");
+
+    /// @todo implement is_integral
+    /// @todo implement is_floating_point
+    
+    template<typename T>
+    struct is_array : std::false_type { };
+
+    template<typename T>
+    struct is_array<T[]> : std::true_type { };
+
+    template<typename T, std::size_t N>
+    struct is_array<T[N]> : std::true_type { };
+
+    template<typename T>
+    inline constexpr bool is_array_v = is_array<T>::value;
+    static_assert(!std::is_array_v<int>, "int is not an array!");
+    static_assert(std::is_array_v<int[]>, "int[] is an array!");
+    static_assert(std::is_array_v<int[3]>, "int[3] is an array!");
 }
 #endif
 
-#endif // end IRIS_CSTDDEF_H__
+#endif // end IRIS_TYPE_TRAITS_H__
