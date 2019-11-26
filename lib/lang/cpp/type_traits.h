@@ -346,6 +346,21 @@ namespace std {
         : conditional_t<bool(B1::value), conjunction<Bn...>, B1> { };
     template<typename... B>
     inline constexpr bool conjunction_v = conjunction<B...>::value;
+    
+    template<typename...> struct disjunction : std::false_type { };
+    template<typename B1> struct disjunction<B1> : B1 { };
+
+    template<typename B1, typename... Bn>
+    struct disjunction<B1, Bn...>
+        : conditional_t<bool(B1::value), disjunction<Bn...>, B1> { };
+    template<typename... B>
+    inline constexpr bool disjunction_v = disjunction<B...>::value;
+
+    template<typename T> struct negation : std::bool_constant<!bool(T::value)> { };
+
+    template<typename T>
+    inline constexpr bool negation_v = negation<T>::value;
+
 }
 #endif
 
