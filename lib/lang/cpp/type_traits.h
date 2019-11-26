@@ -328,6 +328,12 @@ namespace std {
 
 
     /// @todo implement common_type
+    /// @todo implement underlying_type
+    /// @todo implement result_of
+    /// @todo implement invoke_result
+    
+    template<typename...>
+    using void_t = void;
 }
 #endif
 
