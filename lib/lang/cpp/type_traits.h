@@ -166,6 +166,19 @@ namespace std {
     template<typename T>
     inline constexpr bool is_function_v = is_function<T>::value;
 
+    template<typename T> struct IsPointerHelper : std::false_type { }; 
+    template<typename T> struct IsPointerHelper<T*> : std::true_type { }; 
+    template<typename T> struct is_pointer : IsPointerHelper<typename std::remove_cv<T>::type> { };
+
+    template<typename T>
+    inline constexpr bool is_pointer_v = is_pointer<T>::value;
+
+    static_assert(!std::is_pointer_v<int>);
+    static_assert(!std::is_pointer_v<const int>);
+    static_assert(std::is_pointer_v<int*>);
+    static_assert(std::is_pointer_v<int**>);
+    static_assert(std::is_pointer_v<const int*>);
+    static_assert(std::is_pointer_v<const int* const *>);
 }
 #endif
 
