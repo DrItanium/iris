@@ -268,6 +268,14 @@ namespace std {
     using add_const_t = typename add_const<T>::type;
     template<typename T> 
     using add_volatile_t = typename add_volatile<T>::type;
+
+    template<typename T> struct remove_reference { using type = T; };
+    template<typename T> struct remove_reference<T&> { using type = T; };
+    template<typename T> struct remove_reference<T&&> { using type = T; };
+
+    template<typename T>
+    using remove_reference_t = typename remove_reference<T>::type;
+
 }
 #endif
 
