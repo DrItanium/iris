@@ -55,6 +55,9 @@ namespace std {
     template<typename T>
     struct is_same<T, T> : std::true_type { };
 
+    template<typename T, typename U>
+    inline constexpr bool is_same_v = std::is_same<T, U>::value;
+
 }
 #endif
 
