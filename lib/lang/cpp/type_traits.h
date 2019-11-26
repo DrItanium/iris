@@ -132,6 +132,7 @@ namespace std {
     struct is_function<R(Args......)> : std::true_type { };
 
 
+    // make the preprocessor generate all of this
 #define X(qual) \
     template<class R, class... Args> \
     struct is_function<R(Args...) qual > : std::true_type { }; \
@@ -140,7 +141,30 @@ namespace std {
     X(const);
     X(volatile);
     X(const volatile);
+    X(&);
+    X(const &);
+    X(volatile &);
+    X(const volatile &);
+    X(&&);
+    X(const &&);
+    X(volatile &&);
+    X(const volatile &&);
+    X(noexcept);
+    X(const noexcept);
+    X(volatile noexcept);
+    X(const volatile noexcept);
+    X(& noexcept);
+    X(const & noexcept);
+    X(volatile & noexcept);
+    X(const volatile & noexcept);
+    X(&& noexcept);
+    X(const && noexcept);
+    X(volatile && noexcept);
+    X(const volatile && noexcept);
 #undef X
+
+    template<typename T>
+    inline constexpr bool is_function_v = is_function<T>::value;
 
 }
 #endif
