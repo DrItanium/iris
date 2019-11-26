@@ -1,6 +1,7 @@
 /**
  * @file
- * type_traits interface
+ * type_traits interface based off of possible implementation sections at en.cppreference.com
+ * and influences from libstdc++ in other cases. 
  * @copyright 
  * iris
  * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
@@ -81,8 +82,13 @@ namespace std {
     template<typename T>
     struct is_void : std::is_same<void, typename std::remove_cv<T>::type> { };
 
+
+
     template<typename T>
     inline constexpr bool is_void_v = std::is_void<T>::value;
+
+    static_assert(is_void_v<void>);
+    static_assert(!is_void_v<int>);
 
     template<typename T>
     struct is_null_pointer : std::is_same<std::nullptr_t, std::remove_cv_t<T>> { };
@@ -109,6 +115,33 @@ namespace std {
     static_assert(!std::is_array_v<int>, "int is not an array!");
     static_assert(std::is_array_v<int[]>, "int[] is an array!");
     static_assert(std::is_array_v<int[3]>, "int[3] is an array!");
+
+    /// @todo implement is_enum
+    /// @todo implement is_union
+    /// @todo implement is_class
+    
+    // Implementation taken from https://en.cppreference.com/w/cpp/types/is_function
+    template<typename>
+    struct is_function : std::false_type { };
+
+    template<typename R, typename ... Args>
+    struct is_function<R(Args...)> : std::true_type { };
+
+    // specialization for variadic functions such as std::printf
+    template<typename R, typename ... Args>
+    struct is_function<R(Args......)> : std::true_type { };
+
+
+#define X(qual) \
+    template<class R, class... Args> \
+    struct is_function<R(Args...) qual > : std::true_type { }; \
+    template<class R, class... Args> \
+    struct is_function<R(Args......) qual > : std::true_type { }
+    X(const);
+    X(volatile);
+    X(const volatile);
+#undef X
+
 }
 #endif
 
