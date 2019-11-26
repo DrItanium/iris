@@ -32,4 +32,11 @@
 #define HAS_STL
 #endif // end ! defined(__AVR__)
 
+// So that YCM analyzes my implementation
+#ifdef YCM_VERIFY_WRAPPER_IMPL
+#   ifdef HAS_STL
+#      undef HAS_STL
+#   endif
+#endif
+
 #endif // end IRIS_PLATFORM_H__

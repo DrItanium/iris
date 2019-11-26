@@ -42,6 +42,7 @@ flags = [
 'c++',
 '-I.',
 '-Ilib/',
+'-DYCM_VERIFY_WRAPPER_IMPL',
 '-std=c++17',
 ]
 

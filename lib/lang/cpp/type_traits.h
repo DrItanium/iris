@@ -29,6 +29,7 @@
 #ifndef IRIS_CSTDDEF_H__
 #define IRIS_CSTDDEF_H__
 #include "lang/cpp/platform.h"
+
 #ifdef HAS_STL
 #include <type_traits>
 #else
