@@ -1,4 +1,6 @@
 /**
+ * @file
+ * cstddef interface
  * @copyright 
  * iris
  * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
@@ -23,3 +25,90 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef IRIS_CSTDDEF_H__
+#define IRIS_CSTDDEF_H__
+#include "lang/cpp/platform.h"
+#ifdef HAS_STL
+#include <cstddef>
+#else
+extern "C" {
+#include <stddef.h>
+}
+namespace std {
+    using nullptr_t = decltype(nullptr);
+    using ptrdiff_t = ::ptrdiff_t;
+    using size_t = ::size_t;
+    using max_align_t = ::max_align_t;
+
+    enum class byte : unsigned char { };
+
+    template<typename T> struct _ByteOperand { };
+#define X(ty) \
+    template<> struct _ByteOperand< ty > { using __Type = byte; }
+    X(bool);
+    X(char);
+    X(signed char);
+    X(unsigned char);
+    X(short);
+    X(unsigned short);
+    X(int);
+    X(unsigned int);
+    X(long);
+    X(unsigned long);
+    X(long long);
+    X(unsigned long long);
+#undef X
+    template<typename T>
+    using _ByteOperand_t = typename _ByteOperand<T>::__Type;
+
+    template<typename T>
+    constexpr _ByteOperand_t<T>& operator<<=(byte& b, T shift) noexcept {
+        b = byte(static_cast<unsigned char>(b) << shift);
+        return b;
+    }
+    template<typename T>
+    constexpr _ByteOperand_t<T> operator<<(byte b, T shift) noexcept {
+        return byte(static_cast<unsigned char>(b) << shift);
+    }
+    template<typename T>
+    constexpr _ByteOperand_t<T>& operator>>=(byte& b, T shift) noexcept {
+        b = byte(static_cast<unsigned char>(b) >> shift);
+        return b;
+    }
+    template<typename T>
+    constexpr _ByteOperand_t<T> operator>>(byte b, T shift) noexcept {
+        return byte(static_cast<unsigned char>(b) >> shift);
+    }
+
+    constexpr byte& operator|=(byte& l, byte r) noexcept {
+        l = byte(static_cast<unsigned char>(l) | static_cast<unsigned char>(r));
+        return l;
+    }
+    constexpr byte operator|(byte l, byte r) noexcept {
+        return byte(static_cast<unsigned char>(l) | static_cast<unsigned char>(r));
+    }
+    constexpr byte& operator&=(byte& l, byte r) noexcept {
+        l = byte(static_cast<unsigned char>(l) & static_cast<unsigned char>(r));
+        return l;
+    }
+    constexpr byte operator&(byte l, byte r) noexcept {
+        return byte(static_cast<unsigned char>(l) & static_cast<unsigned char>(r));
+    }
+    constexpr byte& operator^=(byte& l, byte r) noexcept {
+        l = byte(static_cast<unsigned char>(l) ^ static_cast<unsigned char>(r));
+        return l;
+    }
+    constexpr byte operator^(byte l, byte r) noexcept {
+        return byte(static_cast<unsigned char>(l) ^ static_cast<unsigned char>(r));
+    }
+    constexpr byte operator~(byte l) noexcept {
+        return byte(~static_cast<unsigned char>(l));
+    }
+    template<typename T>
+    constexpr T to_integer(byte b) noexcept {
+    }
+} // end namespace std
+#endif // end defined(HAS_STL)
+
+#endif // end IRIS_CSTDDEF_H__
