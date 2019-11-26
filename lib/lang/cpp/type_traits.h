@@ -207,6 +207,7 @@ namespace std {
     /// @todo implement is_fundamental
     /// @todo implement is_arithmetic
     /// @todo implement is_scalar
+    /// @todo implement is_object
     /// @todo implement is_compound
     template<typename T> struct is_reference : std::false_type { };
     template<typename T> struct is_reference<T&> : std::true_type { };
@@ -285,7 +286,30 @@ namespace std {
 
     template<typename T>
     using remove_pointer_t = typename remove_pointer<T>::type;
+    /// @todo implement add_pointer
+    /// @todo implement make_signed
+    /// @todo implement make_unsigned
+    template<typename T> struct remove_extent { using type = T; };
+    template<typename T> struct remove_extent<T[]> { using type = T; };
+    template<typename T, std::size_t N> struct remove_extent<T[N]> { using type = T; };
 
+    template<typename T>
+    using remove_extent_t = typename remove_extent<T>::type;
+
+    template<typename T> struct remove_all_extents { using type = T; };
+    template<typename T> struct remove_all_extents<T[]> { using type = typename remove_all_extents<T>::type; };
+    template<typename T, std::size_t N> struct remove_all_extents<T[N]> { using type = typename remove_all_extents<T>::type; };
+
+    template<typename T>
+    using remove_all_extents_t = typename remove_all_extents<T>::type;
+
+    /// @todo implement aligned_storage
+    /// @todo implement aligned_union
+    /// @todo implement decay
+    template<typename T> struct remove_cvref { using type = remove_cv_t<remove_reference_t<T>>; };
+
+    template<typename T>
+    using remove_cvref_t = typename remove_cvref<T>::type;
 }
 #endif
 
