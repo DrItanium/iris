@@ -33,6 +33,7 @@
 #ifdef HAS_STL
 #include <type_traits>
 #else
+#include "lang/cpp/cstddef.h"
 namespace std {
     template<typename T, T v>
     struct integral_constant {
@@ -79,6 +80,14 @@ namespace std {
 
     template<typename T>
     struct is_void : std::is_same<void, typename std::remove_cv<T>::type> { };
+
+    template<typename T>
+    inline constexpr bool is_void_v = std::is_void<T>::value;
+
+    template<typename T>
+    struct is_null_pointer : std::is_same<std::nullptr_t, std::remove_cv_t<T>> { };
+    template<typename T>
+    inline constexpr bool is_null_pointer_v = std::is_null_pointer<T>::value;
 
 }
 #endif
