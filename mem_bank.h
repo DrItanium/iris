@@ -25,11 +25,14 @@
  */
 #ifndef IRIS_MEMBANK_H__
 #define IRIS_MEMBANK_H__
-#include <array>
 #include "types.h"
+#ifdef HAS_STL
+#include <array>
+#endif
 namespace iris {
 
 constexpr auto MemoryBankElementCount = (0xFFFF + 1);
+#ifdef HAS_STL
 template<typename T, size_t capacity>
 using NumericalStorageBank = std::array<T, capacity>;
 /**
@@ -56,6 +59,7 @@ using DataMemoryBank = MemoryBank<Ordinal>;
  * the number of registers.
  */
 using StackMemoryBank = MemoryBank<Ordinal>;
+#endif
 } // end namespace iris
 
 #endif // end IRIS_MEMBANK_H__

@@ -25,7 +25,6 @@
  */
 #ifndef IRIS_REGISTER_H__
 #define IRIS_REGISTER_H__
-#include <type_traits>
 #include "types.h"
 #include "mem_bank.h"
 
@@ -109,13 +108,14 @@ class GenericRegister final {
             SignedType _signedValue;
         } _storage;
 };
-
 constexpr auto RegisterCount = (0xFF + 1);
+#ifdef HAS_STL
 template<typename T = Word, T mask = 0xFFFF>
 using GenericRegisterBank = NumericalStorageBank<GenericRegister<T, mask>, RegisterCount>;
 
 using RegisterBank = GenericRegisterBank<Word>;
 using Register = GenericRegister<Word>;
+#endif
 
 template<typename R>
 class GenericDoubleRegister final {
