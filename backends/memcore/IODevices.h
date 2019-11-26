@@ -51,6 +51,18 @@ class MMIOException : public Exception {
         MMIOException(Args&& ... args) noexcept : Exception("MMIOException: ", std::forward<Args>(args)...) { }
         ~MMIOException() override = default;
 };
+class MemoryLoadException : public Exception {
+    public:
+        template<typename ... Args>
+        MemoryLoadException(Args&& ... args) noexcept : Exception("MemoryLoadException: ", std::forward<Args>(args)...) { }
+        ~MemoryLoadException() override = default;
+};
+class MemoryStoreException : public Exception {
+    public:
+        template<typename ... Args>
+        MemoryStoreException(Args&& ... args) noexcept : Exception("MemoryStoreException: ", std::forward<Args>(args)...) { }
+        ~MemoryStoreException() override = default;
+};
 struct LambdaMMIOEntry : public MMIOEntry {
     public:
         static void illegalWriteError(Core&, Word) {
