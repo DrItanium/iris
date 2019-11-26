@@ -28,6 +28,7 @@
 #include "types.h"
 #ifdef HAS_STL
 #include <array>
+#include <type_traits>
 #endif
 namespace iris {
 
