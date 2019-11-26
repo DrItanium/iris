@@ -45,7 +45,7 @@ $(IRIS_TESTER): $(IRIS_ARCHIVE) $(IRIS_SIM_ARCHIVE) $(IRIS_TESTER_OBJS)
 
 .cc.o :
 	@echo CXX $<
-	@${CXX} -I. ${CXXFLAGS} -c $< -o $@
+	@${CXX} -I. -Ilib ${CXXFLAGS} -c $< -o $@
 
 clean: 
 	@echo Cleaning...
