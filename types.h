@@ -27,23 +27,6 @@
 #define IRIS_TYPES_H__
 #include "lang/cpp/cstdint.h"
 #include "lang/cpp/cstddef.h"
-#ifdef __AVR__
-extern "C" {
-    #include <stdint.h>
-    #include <stddef.h>
-}
-#else
-#include <cstdint>
-#include <type_traits>
-#include <cstddef>
-#define HAS_STL
-#endif
-
-#ifndef HAS_STL
-namespace std {
-    using size_t = ::size_t;
-}
-#endif
 
 namespace iris {
 
@@ -78,13 +61,8 @@ using DoubleWord = LongOrdinal;
 using HalfOrdinal = uint8_t;
 using HalfInteger = int8_t;
 using Byte = HalfOrdinal;
-#ifdef HAS_STL
 using RegisterIndex = std::byte;
 using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
-#else
-enum class RegisterIndex : unsigned char { };
-using RegisterIndexNumericType = unsigned char;
-#endif
 using Address = Ordinal;
 using Offset16 = Integer;
 using EncodedInstruction = LongOrdinal; 
