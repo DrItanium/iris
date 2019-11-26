@@ -326,6 +326,9 @@ namespace std {
     template<typename T, typename F>
     struct conditional<false, T, F> { using type = F; };
 
+    template<bool B, typename T, typename F>
+    using conditional_t = typename conditional<B,T,F>::type;
+
 
     /// @todo implement common_type
     /// @todo implement underlying_type
@@ -334,6 +337,15 @@ namespace std {
     
     template<typename...>
     using void_t = void;
+
+    template<typename...> struct conjunction : std::true_type { };
+    template<typename B1> struct conjunction<B1> : B1 { };
+
+    template<typename B1, typename... Bn>
+    struct conjunction<B1, Bn...>
+        : conditional_t<bool(B1::value), conjunction<Bn...>, B1> { };
+    template<typename... B>
+    inline constexpr bool conjunction_v = conjunction<B...>::value;
 }
 #endif
 
