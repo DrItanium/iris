@@ -25,6 +25,8 @@
  */
 #ifndef IRIS_TYPES_H__
 #define IRIS_TYPES_H__
+#include "lang/cpp/cstdint.h"
+#include "lang/cpp/cstddef.h"
 #ifdef __AVR__
 extern "C" {
     #include <stdint.h>
