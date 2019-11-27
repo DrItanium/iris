@@ -535,6 +535,15 @@ namespace std {
                                     >::type>::type;
 
     };
+    template<typename T>
+    using decay_t = typename decay<T>::type;
+    static_assert(is_same_v<decay_t<const int>, int>);
+    static_assert(is_same_v<decay_t<const volatile int>, int>);
+    static_assert(is_same_v<decay_t<const volatile int>, int>);
+    static_assert(is_same_v<decay_t<const volatile int&>, int>);
+    static_assert(is_same_v<decay_t<const volatile int&&>, int>);
+    static_assert(is_same_v<decay_t<int[2]>, int*>);
+    static_assert(is_same_v<decay_t<int(int)>, int(*)(int)>);
 }
 #endif
 
