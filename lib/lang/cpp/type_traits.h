@@ -537,6 +537,17 @@ namespace std {
     template<typename T> inline constexpr bool is_signed_v = is_signed<T>::value;
     template<typename T> struct is_unsigned : bool_constant<is_arithmetic_v<T> && !is_signed_v<T>> { };
     template<typename T> inline constexpr bool is_unsigned_v = is_unsigned<T>::value;
+
+    namespace details {
+        template<typename T, bool = is_enum<T>::value> struct UnderlyingType { using type = __underlying_type(T); };
+        template<typename T> struct UnderlyingType<T, false> { };
+
+    } // end namespace details
+
+    template<typename T> struct underlying_type : details::UnderlyingType<T> { };
+    template<typename T>
+    using underlying_type_t = typename underlying_type<T>::type;
+
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
