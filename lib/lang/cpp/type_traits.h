@@ -566,11 +566,16 @@ namespace std {
         template<>           struct MakeSigned<unsigned long long> { using type = signed long long; };
     } // end namespace details
 
+    template<typename T>
+    struct has_unique_object_representations : public bool_constant<__has_unique_object_representations(remove_cv_t<remove_all_extents_t<T>>)> { };
+
+    template<typename T>
+    inline constexpr bool has_unique_object_representations_v = has_unique_object_representations<T>::value;
+
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
     /// @todo implement make_unsigned
-    /// @todo implement has_unique_object_representations
     /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
     /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
     /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
