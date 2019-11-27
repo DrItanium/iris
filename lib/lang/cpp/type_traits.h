@@ -287,33 +287,6 @@ namespace std {
     template<typename T>
     inline constexpr bool is_volatile_v = is_volatile<T>::value;
 
-    /// @todo implement is_trivial
-    /// @todo implement is_trivially_copyable
-    /// @todo implement is_standard_layout 
-    /// @todo implement has_unique_object_representations
-    /// @todo implement is_empty
-    /// @todo implement is_polymorphic
-    /// @todo implement is_abstract
-    /// @todo implement is_final
-    /// @todo implement is_aggregate
-    /// @todo implement is_signed
-    /// @todo implement is_unsigned
-    /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
-    /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
-    /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
-    /// @todo implement is_move_constructible, is_trivially_move_constructible  and is_nothrow_move_constructible
-    /// @todo implement is_assignable, is_trivially_assignable  and is_nothrow_assignable
-    /// @todo implement is_copy_assignable, is_trivially_copy_assignable  and is_nothrow_copy_assignable
-    /// @todo implement is_move_assignable, is_trivially_move_assignable  and is_nothrow_move_assignable
-    /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
-    /// @todo implement has_virtual_destructor
-    /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement is_convertible and is_nothrow_convertible
-    /// @todo implement is_layout_compatible
-    /// @todo implement is_invocable
-    /// @todo implement is_invocable_r
-    /// @todo implement is_nothrow_invocable
-    /// @todo implement is_nothrow_invocable_r
     template<typename T> struct add_cv { using type = const volatile T; };
     template<typename T> struct add_const { using type = const T; };
     template<typename T> struct add_volatile { using type = volatile T; };
@@ -340,8 +313,6 @@ namespace std {
 
     template<typename T>
     using remove_pointer_t = typename remove_pointer<T>::type;
-    /// @todo implement make_signed
-    /// @todo implement make_unsigned
     template<typename T> struct remove_extent { using type = T; };
     template<typename T> struct remove_extent<T[]> { using type = T; };
     template<typename T, std::size_t N> struct remove_extent<T[N]> { using type = T; };
@@ -356,8 +327,6 @@ namespace std {
     template<typename T>
     using remove_all_extents_t = typename remove_all_extents<T>::type;
 
-    /// @todo implement aligned_storage
-    /// @todo implement aligned_union
     template<typename T> struct remove_cvref { using type = remove_cv_t<remove_reference_t<T>>; };
 
     template<typename T>
@@ -382,9 +351,6 @@ namespace std {
     using conditional_t = typename conditional<B,T,F>::type;
 
 
-    /// @todo implement common_type
-    /// @todo implement underlying_type
-    /// @todo implement invoke_result
     
     template<typename...>
     using void_t = void;
@@ -544,6 +510,41 @@ namespace std {
     static_assert(is_same_v<decay_t<const volatile int&&>, int>);
     static_assert(is_same_v<decay_t<int[2]>, int*>);
     static_assert(is_same_v<decay_t<int(int)>, int(*)(int)>);
+
+    /// @todo implement aligned_storage
+    /// @todo implement aligned_union
+    /// @todo implement make_signed
+    /// @todo implement make_unsigned
+    /// @todo implement is_trivial
+    /// @todo implement is_trivially_copyable
+    /// @todo implement is_standard_layout 
+    /// @todo implement has_unique_object_representations
+    /// @todo implement is_empty
+    /// @todo implement is_polymorphic
+    /// @todo implement is_abstract
+    /// @todo implement is_final
+    /// @todo implement is_aggregate
+    /// @todo implement is_signed
+    /// @todo implement is_unsigned
+    /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
+    /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
+    /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
+    /// @todo implement is_move_constructible, is_trivially_move_constructible  and is_nothrow_move_constructible
+    /// @todo implement is_assignable, is_trivially_assignable  and is_nothrow_assignable
+    /// @todo implement is_copy_assignable, is_trivially_copy_assignable  and is_nothrow_copy_assignable
+    /// @todo implement is_move_assignable, is_trivially_move_assignable  and is_nothrow_move_assignable
+    /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
+    /// @todo implement has_virtual_destructor
+    /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
+    /// @todo implement is_convertible and is_nothrow_convertible
+    /// @todo implement is_layout_compatible
+    /// @todo implement is_invocable
+    /// @todo implement is_invocable_r
+    /// @todo implement is_nothrow_invocable
+    /// @todo implement is_nothrow_invocable_r
+    /// @todo implement common_type
+    /// @todo implement underlying_type
+    /// @todo implement invoke_result
 }
 #endif
 
