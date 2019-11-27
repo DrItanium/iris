@@ -230,11 +230,25 @@ namespace std {
     template<typename T>
     inline constexpr bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
 
-    /// @todo implement is_fundamental
-    /// @todo implement is_arithmetic
+
+    template<typename T> struct is_arithmetic : std::integral_constant<bool, std::is_integral<T>::value || std::is_floating_point<T>::value> { };
+
+    template<typename T>
+    inline constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
+
+    template<typename T> struct is_fundamental : std::integral_constant<bool, is_arithmetic_v<T> || is_void_v<T> || is_same<nullptr_t, typename remove_cv<T>::type>::value > { };
+
+    template<typename T>
+    inline constexpr bool is_fundamental_v = is_fundamental<T>::value;
+
+
+    template<typename T>
+    struct is_compound : std::integral_constant<bool, !is_fundamental_v<T>> { };
+
+    template<typename T>
+    inline constexpr bool is_compound_v = is_compound<T>::value;
     /// @todo implement is_scalar
     /// @todo implement is_object
-    /// @todo implement is_compound
     template<typename T> struct is_reference : std::false_type { };
     template<typename T> struct is_reference<T&> : std::true_type { };
     template<typename T> struct is_reference<T&&> : std::true_type { };
