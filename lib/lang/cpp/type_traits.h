@@ -308,7 +308,6 @@ namespace std {
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement has_virtual_destructor
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement alignment_of
     /// @todo implement rank
     /// @todo implement extent
     /// @todo implement is_base_of
@@ -435,6 +434,13 @@ namespace std {
 
     template<typename T>
     inline constexpr bool is_object_v = is_object<T>::value;
+
+    template<typename T>
+    struct alignment_of : integral_constant<std::size_t, alignof(T)> { };
+
+    template<typename T>
+    inline constexpr std::size_t alignment_of_v = alignment_of<T>::value;
+
 
 }
 #endif
