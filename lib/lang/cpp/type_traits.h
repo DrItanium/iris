@@ -575,22 +575,27 @@ namespace std {
     template<typename T> struct has_virtual_destructor : bool_constant<__has_virtual_destructor(T)> { };
     template<typename T> inline constexpr bool has_virtual_destructor_v = has_virtual_destructor<T>::value;
 
-    template<typename T, typename ... Args>
-    struct is_constructible : bool_constant<__is_constructible(T, Args...)> { };
-
-    template<typename T, typename ... Args>
-    inline constexpr bool is_constructible_v = is_constructible<T>::value;
+    template<typename T, typename ... Args> struct is_constructible : bool_constant<__is_constructible(T, Args...)> { };
+    template<typename T, typename ... Args> inline constexpr bool is_constructible_v = is_constructible<T>::value;
+    template<typename T> struct is_default_constructible : is_constructible<T>::type { };
+    template<typename T> inline constexpr bool is_default_constructible_v = is_default_constructible<T>::value;
+    template<typename T> struct is_copy_constructible : is_constructible<T, const T&>::type { };
+    template<typename T> inline constexpr bool is_copy_constructible_v = is_copy_constructible<T>::value;
+    template<typename T> struct is_move_constructible : is_constructible<T, T&&>::type { };
+    template<typename T> inline constexpr bool is_move_constructible_v = is_move_constructible<T>::value;
+    template<typename T, typename U> struct is_assignable : bool_constant<__is_assignable(T, U)> { };
+    template<typename T, typename U> inline constexpr bool is_assignable_v = is_assignable<T, U>::value;
 
 
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
     /// @todo implement make_unsigned
-    /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
-    /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
-    /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
-    /// @todo implement is_move_constructible, is_trivially_move_constructible  and is_nothrow_move_constructible
-    /// @todo implement is_assignable, is_trivially_assignable  and is_nothrow_assignable
+    /// @todo implement is_trivially_constructible  and is_nothrow_constructible
+    /// @todo implement is_trivially_default_constructible, is_nothrow_default_constructible
+    /// @todo implement is_trivially_copy_constructible  and is_nothrow_copy_constructible
+    /// @todo implement is_trivially_move_constructible  and is_nothrow_move_constructible
+    /// @todo implement is_trivially_assignable  and is_nothrow_assignable
     /// @todo implement is_copy_assignable, is_trivially_copy_assignable  and is_nothrow_copy_assignable
     /// @todo implement is_move_assignable, is_trivially_move_assignable  and is_nothrow_move_assignable
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
