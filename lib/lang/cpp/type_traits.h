@@ -548,6 +548,24 @@ namespace std {
     template<typename T>
     using underlying_type_t = typename underlying_type<T>::type;
 
+
+    namespace details {
+        template<typename T> struct MakeUnsigned            { using type = T; };
+        template<>           struct MakeUnsigned<char>      { using type = unsigned char; };
+        template<>           struct MakeUnsigned<short>     { using type = unsigned short; };
+        template<>           struct MakeUnsigned<int>       { using type = unsigned int; };
+        template<>           struct MakeUnsigned<long>      { using type = unsigned long; };
+        template<>           struct MakeUnsigned<long long> { using type = unsigned long long; };
+
+        template<typename T> struct MakeSigned                     { using type = T; };
+        template<>           struct MakeSigned<unsigned char>      { using type = signed char; };
+        template<>           struct MakeSigned<char>               { using type = signed char; };
+        template<>           struct MakeSigned<unsigned short>     { using type = signed short; };
+        template<>           struct MakeSigned<unsigned int>       { using type = signed int; };
+        template<>           struct MakeSigned<unsigned long>      { using type = signed long; };
+        template<>           struct MakeSigned<unsigned long long> { using type = signed long long; };
+    } // end namespace details
+
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
