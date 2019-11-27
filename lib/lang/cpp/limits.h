@@ -34,6 +34,19 @@
 #include <limits>
 #else
 namespace std {
+    enum float_round_style {
+        round_indeterminate       = -1,
+        round_toward_zero         =  0,
+        round_to_nearest          =  1,
+        round_toward_infinity     =  2,
+        round_toward_neg_infinity =  3,
+    };
+
+    enum float_denorm_style {
+        denorm_indeterminate = -1,
+        denorm_absent        =  0,
+        denorm_present       =  1,
+    };
     template<typename T> 
     class numeric_limits {
         public:
@@ -53,20 +66,29 @@ namespace std {
             static constexpr int radix = 0;
             static constexpr T epsilon() noexcept { return T(); }
             static constexpr T round_error() noexcept { return T(); }
-            /// @todo continue here
-    };
-    enum float_round_style {
-        round_indeterminate       = -1,
-        round_toward_zero         =  0,
-        round_to_nearest          =  1,
-        round_toward_infinity     =  2,
-        round_toward_neg_infinity =  3,
-    };
 
-    enum float_denorm_style {
-        denorm_indeterminate = -1,
-        denorm_absent        =  0,
-        denorm_present       =  1,
+            static constexpr int min_exponent = 0;
+            static constexpr int min_exponent10 = 0;
+            static constexpr int max_exponent = 0;
+            static constexpr int max_exponent10 = 0;
+
+            static constexpr bool has_infinity = false;
+            static constexpr bool has_quiet_NaN = false;
+            static constexpr bool has_signaling_NaN = false;
+            static constexpr float_denorm_style has_denom = denorm_absent;
+            static constexpr bool has_denom_loss = false;
+            static constexpr T infinity() noexcept { return T(); }
+            static constexpr T quiet_NaN() noexcept { return T(); }
+            static constexpr T signaling_NaN() noexcept { return T(); }
+            static constexpr T denorm_min() noexcept { return T(); }
+
+            static constexpr bool is_iec559 = false;
+            static constexpr bool is_bounded = false;
+            static constexpr bool is_modulo = false;
+
+            static constexpr bool traps = false;
+            static constexpr bool tinyness_before = false;
+            static constexpr float_round_style round_style = round_toward_zero;
     };
 
 } // end namespace std
