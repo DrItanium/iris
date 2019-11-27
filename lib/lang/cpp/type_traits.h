@@ -247,8 +247,7 @@ namespace std {
 
     template<typename T>
     inline constexpr bool is_compound_v = is_compound<T>::value;
-    /// @todo implement is_scalar
-    /// @todo implement is_object
+
     template<typename T> struct is_reference : std::false_type { };
     template<typename T> struct is_reference<T&> : std::true_type { };
     template<typename T> struct is_reference<T&&> : std::true_type { };
@@ -421,6 +420,22 @@ namespace std {
 
     template<typename T>
     inline constexpr bool negation_v = negation<T>::value;
+
+    template<typename T>
+    struct is_scalar : std::integral_constant<bool, 
+    is_arithmetic_v<T> || is_enum_v<T> 
+                       || is_pointer_v<T>
+                       || is_member_pointer_v<T>
+                       || is_null_pointer_v<T>> { };
+
+    template<typename T>
+    inline constexpr bool is_scalar_v = is_scalar<T>::value;
+
+    template<typename T>
+    struct is_object : std::integral_constant<bool, is_scalar_v<T> || is_array_v<T> || is_union_v<T> || is_class_v<T>> { };
+
+    template<typename T>
+    inline constexpr bool is_object_v = is_object<T>::value;
 
 }
 #endif
