@@ -525,12 +525,22 @@ namespace std {
 #undef X
     template<typename T> struct is_aggregate : bool_constant<__is_aggregate(remove_cv_t<T>)> { };
     template<typename T> inline constexpr bool is_aggregate_v = is_aggregate<T>::value;
+    namespace details {
+        template<typename T, bool = is_arithmetic<T>::value>
+        struct IsSigned : false_type { };
+
+        template<typename T>
+        struct IsSigned<T, true> : integral_constant<bool, T(-1) < T(0)> { };
+
+    } // end namespace details
+    template<typename T> struct is_signed : details::IsSigned<T>::type { };
+    template<typename T>
+    inline constexpr bool is_signed_v = is_signed<T>::value;
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
     /// @todo implement make_unsigned
     /// @todo implement has_unique_object_representations
-    /// @todo implement is_signed
     /// @todo implement is_unsigned
     /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
     /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
