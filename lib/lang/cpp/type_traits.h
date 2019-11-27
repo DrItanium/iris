@@ -570,7 +570,6 @@ namespace std {
     /// @todo implement is_nothrow_invocable
     /// @todo implement is_nothrow_invocable_r
     /// @todo implement common_type
-    /// @todo implement underlying_type
     /// @todo implement invoke_result
 }
 #endif
