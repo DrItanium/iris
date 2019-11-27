@@ -534,14 +534,14 @@ namespace std {
 
     } // end namespace details
     template<typename T> struct is_signed : details::IsSigned<T>::type { };
-    template<typename T>
-    inline constexpr bool is_signed_v = is_signed<T>::value;
+    template<typename T> inline constexpr bool is_signed_v = is_signed<T>::value;
+    template<typename T> struct is_unsigned : bool_constant<is_arithmetic_v<T> && !is_signed_v<T>> { };
+    template<typename T> inline constexpr bool is_unsigned_v = is_unsigned<T>::value;
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
     /// @todo implement make_unsigned
     /// @todo implement has_unique_object_representations
-    /// @todo implement is_unsigned
     /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
     /// @todo implement is_default_constructible, is_trivially_default_constructible, is_nothrow_default_constructible
     /// @todo implement is_copy_constructible, is_trivially_copy_constructible  and is_nothrow_copy_constructible
