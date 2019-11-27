@@ -290,7 +290,6 @@ namespace std {
     /// @todo implement is_trivial
     /// @todo implement is_trivially_copyable
     /// @todo implement is_standard_layout 
-    /// @todo implement is_pod
     /// @todo implement has_unique_object_representations
     /// @todo implement is_empty
     /// @todo implement is_polymorphic
