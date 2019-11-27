@@ -308,7 +308,6 @@ namespace std {
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement has_virtual_destructor
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement is_base_of
     /// @todo implement is_convertible and is_nothrow_convertible
     /// @todo implement is_layout_compatible
     /// @todo implement is_invocable
@@ -333,7 +332,6 @@ namespace std {
     template<typename T>
     using remove_reference_t = typename remove_reference<T>::type;
 
-    /// @todo implement add_reference
     
     template<typename T> struct remove_pointer { using type = T; };
     template<typename T> struct remove_pointer<T*> { using type = T; };
@@ -491,6 +489,26 @@ namespace std {
     struct is_base_of : conditional_t<is_class_v<Base> && is_class_v<Derived>,
                                       details::__IsBaseOf2<Base, Derived>,
                                       false_type> { };
+
+    template<typename Base, typename Derived>
+    inline constexpr bool is_base_of_v = is_base_of<Base, Derived>::value;
+
+    namespace details {
+        template<typename T> struct TypeIdentity { using type = T; }; 
+
+        template<typename T> auto tryAddLValueReference(int) -> TypeIdentity<T&>;
+        template<typename T> auto tryAddLValueReference(...) -> TypeIdentity<T>;
+        template<typename T> auto tryAddRValueReference(int) -> TypeIdentity<T&&>;
+        template<typename T> auto tryAddRValueReference(...) -> TypeIdentity<T>;
+    } // end namespace details
+
+    template<typename T> struct add_lvalue_reference : decltype(details::tryAddLValueReference<T>(0)) { };
+    template<typename T> struct add_rvalue_reference : decltype(details::tryAddRValueReference<T>(0)) { };
+
+    template<typename T> 
+    using add_lvalue_reference_t = typename add_lvalue_reference<T>::type;
+    template<typename T> 
+    using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
 
 }
 #endif
