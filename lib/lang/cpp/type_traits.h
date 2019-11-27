@@ -230,8 +230,6 @@ namespace std {
     template<typename T>
     inline constexpr bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
 
-    /// @todo implement is_member_object_pointer
-    /// @todo implement is_member_function_pointer
     /// @todo implement is_fundamental
     /// @todo implement is_arithmetic
     /// @todo implement is_scalar
@@ -253,7 +251,20 @@ namespace std {
     template<typename T>
     inline constexpr bool is_member_pointer_v = is_member_pointer<T>::value;
 
+    template<typename T> struct _IsMemberFunctionPointerHelper : std::false_type { }; 
+    template<typename T, class U> struct _IsMemberFunctionPointerHelper<T U::*> : std::is_function<T> { }; 
 
+    template<typename T>
+    struct is_member_function_pointer : _IsMemberFunctionPointerHelper<std::remove_cv_t<T>> { };
+
+    template<typename T>
+    inline constexpr bool is_member_function_pointer_v = is_member_function_pointer<T>::value;
+
+    template<typename T>
+    struct is_member_object_pointer : std::integral_constant<bool, std::is_member_pointer<T>::value && !std::is_member_function_pointer<T>::value> { };
+
+    template<typename T>
+    inline constexpr bool is_member_object_pointer_v = is_member_object_pointer<T>::value;
     template<typename T> struct is_const : std::false_type { };
     template<typename T> struct is_const<const T> : std::true_type { };
     template<typename T>
