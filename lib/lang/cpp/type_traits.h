@@ -340,7 +340,6 @@ namespace std {
 
     template<typename T>
     using remove_pointer_t = typename remove_pointer<T>::type;
-    /// @todo implement add_pointer
     /// @todo implement make_signed
     /// @todo implement make_unsigned
     template<typename T> struct remove_extent { using type = T; };
@@ -359,7 +358,6 @@ namespace std {
 
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
-    /// @todo implement decay
     template<typename T> struct remove_cvref { using type = remove_cv_t<remove_reference_t<T>>; };
 
     template<typename T>
@@ -386,7 +384,6 @@ namespace std {
 
     /// @todo implement common_type
     /// @todo implement underlying_type
-    /// @todo implement result_of
     /// @todo implement invoke_result
     
     template<typename...>
@@ -510,6 +507,34 @@ namespace std {
     template<typename T> 
     using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
 
+
+    namespace details {
+        template<typename T>
+        auto tryAddPointer(int) -> TypeIdentity<typename std::remove_reference<T>::type*>;
+        template<typename T>
+        auto tryAddPointer(...) -> TypeIdentity<T>;
+    } // end namespace details
+    template<typename T>
+    struct add_pointer : decltype(details::tryAddPointer<T>(0)) { };
+
+    template<typename T>
+    using add_pointer_t = typename add_pointer<T>::type;
+
+    template<typename T>
+    struct decay {
+        private:
+            using U = typename remove_reference<T>::type;
+        public:
+            using type = typename conditional<
+                            is_array_v<U>,
+                            typename remove_extent<U>::type*,
+                            typename conditional<
+                                is_function_v<U>,
+                                typename add_pointer<U>::type,
+                                typename remove_cv<U>::type
+                                    >::type>::type;
+
+    };
 }
 #endif
 
