@@ -98,7 +98,31 @@ namespace std {
     static_assert(is_null_pointer_v<std::nullptr_t>, "nullptr is supposed to be a null_pointer");
     static_assert(!is_null_pointer_v<int>, "int is not supposed to be a null_pointer");
 
-    /// @todo implement is_integral
+    template<typename T> struct _IsIntegral : std::false_type { };
+#define X(type) \
+    template<> struct _IsIntegral< type > : std::true_type { }
+    X(bool);
+    X(char);
+    X(signed char);
+    X(unsigned char);
+    X(short);
+    X(unsigned short);
+    X(int);
+    X(unsigned int);
+    X(long);
+    X(unsigned long);
+    X(long long);
+    X(unsigned long long);
+    X(float);
+    X(double);
+    X(long double);
+#undef X
+    template<typename T>
+    struct is_integral : public _IsIntegral<typename remove_cv<T>::type>::type { };
+
+    template<typename T>
+    inline constexpr bool is_integral_v = is_integral<T>::value;
+
    
     template<typename T>
     struct is_floating_point : std::integral_constant<
