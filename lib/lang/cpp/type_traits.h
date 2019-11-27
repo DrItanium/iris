@@ -308,7 +308,6 @@ namespace std {
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement has_virtual_destructor
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement extent
     /// @todo implement is_base_of
     /// @todo implement is_convertible and is_nothrow_convertible
     /// @todo implement is_layout_compatible
@@ -468,6 +467,30 @@ namespace std {
     static_assert(extent_v<int[3][4], 2> == 0);
     static_assert(extent_v<int[]> == 0);
 
+    // declval implementation
+    template<typename T, typename U = T&&> U __declval(int);
+    template<typename T> T __declval(long);
+    template<typename T> auto declval() noexcept -> decltype(__declval<T>(0));
+
+    namespace details {
+        template<typename B> std::true_type isBaseOfTestFunction(const volatile B*);
+        template<typename B> std::false_type isBaseOfTestFunction(const volatile void*);
+
+        template<typename B, typename D>
+        using __IsBaseOf = decltype(isBaseOfTestFunction<B>(std::declval<D*>()));
+
+        template<typename B, typename D, typename = void>
+        struct __IsBaseOf2 : std::true_type { };
+        template<typename B, typename D>
+        struct __IsBaseOf2<B, D, std::void_t<__IsBaseOf<B, D>>> : __IsBaseOf<B, D> { };
+
+
+    } // end namespace details
+
+    template<typename Base, typename Derived>
+    struct is_base_of : conditional_t<is_class_v<Base> && is_class_v<Derived>,
+                                      details::__IsBaseOf2<Base, Derived>,
+                                      false_type> { };
 
 }
 #endif
