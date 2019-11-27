@@ -118,7 +118,7 @@ namespace std {
     X(long double);
 #undef X
     template<typename T>
-    struct is_integral : public _IsIntegral<typename remove_cv<T>::type>::type { };
+    struct is_integral : _IsIntegral<typename remove_cv<T>::type>::type { };
 
     template<typename T>
     inline constexpr bool is_integral_v = is_integral<T>::value;
@@ -150,10 +150,14 @@ namespace std {
     static_assert(std::is_array_v<int[]>, "int[] is an array!");
     static_assert(std::is_array_v<int[3]>, "int[3] is an array!");
 
-    /// @todo implement is_enum
-    /// @todo implement is_union
-    /// @todo implement is_class
-    
+    // adding support for is_enum,is_union, and is_class requires using gcc builtins
+    template<typename T> struct is_enum : integral_constant<bool, __is_enum(T)> { };
+    template<typename T> inline constexpr bool is_enum_v = is_enum<T>::value; 
+    template<typename T> struct is_union : integral_constant<bool, __is_union(T)> { };
+    template<typename T> inline constexpr bool is_union_v = is_union<T>::value; 
+    template<typename T> struct is_class : integral_constant<bool, __is_class(T)> { };
+    template<typename T> inline constexpr bool is_class_v = is_class<T>::value; 
+
     // Implementation taken from https://en.cppreference.com/w/cpp/types/is_function
     template<typename>
     struct is_function : std::false_type { };
@@ -240,8 +244,16 @@ namespace std {
     template<typename T>
     inline constexpr bool is_reference_v = is_reference<T>::value;
 
-    /// @todo implement is_member_pointer
-    
+    template<typename T> struct _IsMemberPointerHelper: std::false_type { };
+    template<typename T, typename U> struct _IsMemberPointerHelper <T U::*> : std::true_type { };
+
+    template<typename T>
+    struct is_member_pointer : _IsMemberPointerHelper<typename std::remove_cv<T>::type> { };
+
+    template<typename T>
+    inline constexpr bool is_member_pointer_v = is_member_pointer<T>::value;
+
+
     template<typename T> struct is_const : std::false_type { };
     template<typename T> struct is_const<const T> : std::true_type { };
     template<typename T>
