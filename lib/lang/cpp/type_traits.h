@@ -308,7 +308,6 @@ namespace std {
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement has_virtual_destructor
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement rank
     /// @todo implement extent
     /// @todo implement is_base_of
     /// @todo implement is_convertible and is_nothrow_convertible
@@ -440,6 +439,13 @@ namespace std {
 
     template<typename T>
     inline constexpr std::size_t alignment_of_v = alignment_of<T>::value;
+
+    template<typename T> struct rank : integral_constant<std::size_t, 0> { };
+    template<typename T> struct rank<T[]> : integral_constant<std::size_t, rank<T>::value + 1> { };
+    template<typename T, std::size_t N> struct rank<T[N]> : integral_constant<std::size_t, rank<T>::value + 1> { };
+
+    template<typename T>
+    inline constexpr std::size_t rank_v = rank<T>::value;
 
 
 }
