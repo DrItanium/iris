@@ -510,20 +510,26 @@ namespace std {
     static_assert(is_same_v<decay_t<const volatile int&&>, int>);
     static_assert(is_same_v<decay_t<int[2]>, int*>);
     static_assert(is_same_v<decay_t<int(int)>, int(*)(int)>);
-
+#define X(kind) \
+    template<typename T> struct is_ ## kind : integral_constant<bool, __is_ ## kind (T) > { }; \
+    template<typename T> inline constexpr bool is_ ## kind ## _v = is_ ## kind <T> :: value
+    X(empty);
+    X(polymorphic);
+    X(abstract);
+    X(literal_type);
+    X(trivially_copyable);
+    X(trivial);
+    X(standard_layout);
+    X(final);
+    X(pod);
+#undef X
+    template<typename T> struct is_aggregate : bool_constant<__is_aggregate(remove_cv_t<T>)> { };
+    template<typename T> inline constexpr bool is_aggregate_v = is_aggregate<T>::value;
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
     /// @todo implement make_unsigned
-    /// @todo implement is_trivial
-    /// @todo implement is_trivially_copyable
-    /// @todo implement is_standard_layout 
     /// @todo implement has_unique_object_representations
-    /// @todo implement is_empty
-    /// @todo implement is_polymorphic
-    /// @todo implement is_abstract
-    /// @todo implement is_final
-    /// @todo implement is_aggregate
     /// @todo implement is_signed
     /// @todo implement is_unsigned
     /// @todo implement is_constructible, is_trivially_constructible  and is_nothrow_constructible
