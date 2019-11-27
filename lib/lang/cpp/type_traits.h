@@ -575,6 +575,13 @@ namespace std {
     template<typename T> struct has_virtual_destructor : bool_constant<__has_virtual_destructor(T)> { };
     template<typename T> inline constexpr bool has_virtual_destructor_v = has_virtual_destructor<T>::value;
 
+    template<typename T, typename ... Args>
+    struct is_constructible : bool_constant<__is_constructible(T, Args...)> { };
+
+    template<typename T, typename ... Args>
+    inline constexpr bool is_constructible_v = is_constructible<T>::value;
+
+
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
@@ -589,7 +596,6 @@ namespace std {
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
     /// @todo implement is_convertible and is_nothrow_convertible
-    /// @todo implement is_layout_compatible
     /// @todo implement is_invocable
     /// @todo implement is_invocable_r
     /// @todo implement is_nothrow_invocable
