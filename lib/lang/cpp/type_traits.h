@@ -447,6 +447,27 @@ namespace std {
     template<typename T>
     inline constexpr std::size_t rank_v = rank<T>::value;
 
+    static_assert(rank_v<int> == 0);
+    static_assert(rank_v<int[]> == 1);
+    static_assert(rank_v<int[9]> == 1);
+    static_assert(rank_v<int[9][9]> == 2);
+    static_assert(rank_v<int[][9][9]> == 3);
+
+    template<typename T, unsigned N = 0> struct extent : integral_constant<std::size_t, 0> { };
+    template<typename T> struct extent<T[], 0> : integral_constant<std::size_t, 0> { };
+    template<typename T, unsigned N> struct extent<T[], N> : extent<T, N-1> { };
+    template<typename T, std::size_t I> struct extent<T[I], 0> : integral_constant<std::size_t, I> { };
+    template<typename T, std::size_t I, unsigned N> struct extent<T[I], N> : extent<T, N-1> { };
+
+    template<typename T, unsigned N = 0>
+    inline constexpr std::size_t extent_v = extent<T, N>::value;
+
+    static_assert(extent_v<int[3]> == 3);
+    static_assert(extent_v<int[3][4], 0> == 3);
+    static_assert(extent_v<int[3][4], 1> == 4);
+    static_assert(extent_v<int[3][4], 2> == 0);
+    static_assert(extent_v<int[]> == 0);
+
 
 }
 #endif
