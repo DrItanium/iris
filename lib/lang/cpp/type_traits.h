@@ -635,6 +635,9 @@ namespace std {
 
     template<typename From, typename To>
     struct is_convertible : public details::IsConvertible<From, To>::type { };
+
+    template<typename From, typename To>
+    inline constexpr bool is_convertible_v = is_convertible<From, To>::value;
 }
 #endif
 

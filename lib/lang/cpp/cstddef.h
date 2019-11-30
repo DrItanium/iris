@@ -107,6 +107,7 @@ namespace std {
     }
     template<typename T>
     constexpr T to_integer(byte b) noexcept {
+        return T(b);
     }
 } // end namespace std
 #endif // end defined(HAS_STL)
