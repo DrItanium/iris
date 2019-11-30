@@ -549,22 +549,6 @@ namespace std {
     using underlying_type_t = typename underlying_type<T>::type;
 
 
-    namespace details {
-        template<typename T> struct MakeUnsigned            { using type = T; };
-        template<>           struct MakeUnsigned<char>      { using type = unsigned char; };
-        template<>           struct MakeUnsigned<short>     { using type = unsigned short; };
-        template<>           struct MakeUnsigned<int>       { using type = unsigned int; };
-        template<>           struct MakeUnsigned<long>      { using type = unsigned long; };
-        template<>           struct MakeUnsigned<long long> { using type = unsigned long long; };
-
-        template<typename T> struct MakeSigned                     { using type = T; };
-        template<>           struct MakeSigned<unsigned char>      { using type = signed char; };
-        template<>           struct MakeSigned<char>               { using type = signed char; };
-        template<>           struct MakeSigned<unsigned short>     { using type = signed short; };
-        template<>           struct MakeSigned<unsigned int>       { using type = signed int; };
-        template<>           struct MakeSigned<unsigned long>      { using type = signed long; };
-        template<>           struct MakeSigned<unsigned long long> { using type = signed long long; };
-    } // end namespace details
 
     template<typename T>
     struct has_unique_object_representations : public bool_constant<__has_unique_object_representations(remove_cv_t<remove_all_extents_t<T>>)> { };
@@ -585,8 +569,6 @@ namespace std {
     template<typename T> inline constexpr bool is_move_constructible_v = is_move_constructible<T>::value;
     template<typename T, typename U> struct is_assignable : bool_constant<__is_assignable(T, U)> { };
     template<typename T, typename U> inline constexpr bool is_assignable_v = is_assignable<T, U>::value;
-
-
     /// @todo implement aligned_storage
     /// @todo implement aligned_union
     /// @todo implement make_signed
@@ -607,6 +589,52 @@ namespace std {
     /// @todo implement is_nothrow_invocable_r
     /// @todo implement common_type
     /// @todo implement invoke_result
+    namespace details {
+        template<typename T> struct MakeUnsigned              { using type = T; };
+        template<>           struct MakeUnsigned<char>        { using type = unsigned char; };
+        template<>           struct MakeUnsigned<signed char> { using type = unsigned char; };
+        template<>           struct MakeUnsigned<short>       { using type = unsigned short; };
+        template<>           struct MakeUnsigned<int>         { using type = unsigned int; };
+        template<>           struct MakeUnsigned<long>        { using type = unsigned long; };
+        template<>           struct MakeUnsigned<long long>   { using type = unsigned long long; };
+        /// @todo implement support for enums
+
+        template<typename T> struct MakeSigned                     { using type = T; };
+        template<>           struct MakeSigned<unsigned char>      { using type = signed char; };
+        template<>           struct MakeSigned<char>               { using type = signed char; };
+        template<>           struct MakeSigned<unsigned short>     { using type = signed short; };
+        template<>           struct MakeSigned<unsigned int>       { using type = signed int; };
+        template<>           struct MakeSigned<unsigned long>      { using type = signed long; };
+        template<>           struct MakeSigned<unsigned long long> { using type = signed long long; };
+        /// @todo implement support for enums
+    } // end namespace details
+    namespace details {
+        template<typename From, typename To, 
+            bool = is_void_v<From> ||
+                   is_function_v<To> ||
+                   is_array_v<To>> 
+        struct IsConvertible {
+            using type = typename is_void<To>::type;
+        };
+
+        template<typename From, typename To>
+        struct IsConvertible<From, To, false> {
+            private:
+                template<typename To1>
+                static void TestAux(To1) noexcept;
+
+                template<typename From1, typename To1, typename = decltype(TestAux<To1>(std::declval<From1>()))>
+                static true_type Test(int);
+
+                template<typename, typename>
+                static false_type Test(...);
+            public:
+                using type = decltype(Test<From, To>(0));
+        };
+    } // end namespace details
+
+    template<typename From, typename To>
+    struct is_convertible : public details::IsConvertible<From, To>::type { };
 }
 #endif
 

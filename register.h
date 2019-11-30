@@ -33,16 +33,14 @@ namespace iris {
 template<typename T, typename A>
 constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
 
-template<typename T = Word, T mask = 0xFFFF>
 class GenericRegister final {
     public:
-        static constexpr T boolToValue(bool value) noexcept {
+        static inline constexpr Ordinal mask = 0xFFFF;
+        static constexpr Ordinal boolToValue(bool value) noexcept {
             return value ? mask : 0;
         }
-        static_assert(std::is_integral_v<T>);
-        using SignedType = std::make_signed_t<T>;
-        using UnsignedType = std::make_unsigned_t<T>;
-        using RawType = T;
+        using SignedType = Integer;
+        using UnsignedType = Ordinal;
     public:
         explicit constexpr GenericRegister(Word value = 0) noexcept : _storage(value) { }
         explicit constexpr GenericRegister(bool value) noexcept : _storage(boolToValue(value)) { }
