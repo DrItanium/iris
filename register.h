@@ -33,7 +33,7 @@ namespace iris {
 template<typename T, typename A>
 constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible_v<T, A>;
 
-class GenericRegister final {
+class Register final {
     public:
         static inline constexpr Ordinal mask = 0xFFFF;
         static constexpr Ordinal boolToValue(bool value) noexcept {
@@ -42,20 +42,20 @@ class GenericRegister final {
         using SignedType = Integer;
         using UnsignedType = Ordinal;
     public:
-        explicit constexpr GenericRegister(Word value = 0) noexcept : _storage(value) { }
-        explicit constexpr GenericRegister(bool value) noexcept : _storage(boolToValue(value)) { }
-        constexpr GenericRegister(const GenericRegister& other) noexcept = delete;
-        constexpr GenericRegister(GenericRegister&& other) noexcept = delete;
-        ~GenericRegister() = default;
-        GenericRegister& operator=(const GenericRegister& other) noexcept = delete;
-        GenericRegister& operator=(GenericRegister&& other) noexcept = delete;
-        constexpr GenericRegister& operator++() noexcept {
+        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
+        explicit constexpr Register(bool value) noexcept : _storage(boolToValue(value)) { }
+        constexpr Register(const Register& other) noexcept = delete;
+        constexpr Register(Register&& other) noexcept = delete;
+        ~Register() = default;
+        Register& operator=(const Register& other) noexcept = delete;
+        Register& operator=(Register&& other) noexcept = delete;
+        constexpr Register& operator++() noexcept {
             if (!_hardwired) {
                 ++_storage._value;
             }
             return *this;
         }
-        constexpr GenericRegister& operator--() noexcept {
+        constexpr Register& operator--() noexcept {
             if (!_hardwired) {
                 --_storage._value;
             }
@@ -77,7 +77,7 @@ class GenericRegister final {
             } else if constexpr (std::is_same_v<K, bool>) {
                 return _storage._value != 0;
             } else {
-                static_assert(false_v<T>, "Illegal type requested!");
+                static_assert(false_v<Z>, "Illegal type requested!");
             }
         }
         template<typename Z>
@@ -91,7 +91,7 @@ class GenericRegister final {
                 } else if constexpr (IsSameOrConvertible<K, bool>) {
                     _storage._value = boolToValue(value);
                 } else {
-                    static_assert(false_v<T>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
+                    static_assert(false_v<Z>, "Cannot assign (or convert) from provided type to Word or SignedWord!");
                 }
             }
         }
@@ -108,16 +108,13 @@ class GenericRegister final {
 };
 constexpr auto RegisterCount = (0xFF + 1);
 #ifdef HAS_STL
-template<typename T = Word, T mask = 0xFFFF>
-using GenericRegisterBank = NumericalStorageBank<GenericRegister<T, mask>, RegisterCount>;
-
-using RegisterBank = GenericRegisterBank<Word>;
-using Register = GenericRegister<Word>;
+using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 #endif
 
 template<typename R>
 class GenericDoubleRegister final {
     public:
+#ifdef HAS_STL
         static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
             if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
                 return {reg[std::to_integer<Byte>(a)],
@@ -142,6 +139,7 @@ class GenericDoubleRegister final {
         static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a) noexcept {
             return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
         }
+#endif
     public:
         constexpr GenericDoubleRegister(R& lower, R& upper) : _lower(lower), _upper(upper) { }
         constexpr GenericDoubleRegister(const R& lower, const R& upper) : _lower(const_cast<R&>(lower)), _upper(const_cast<R&>(upper)) { }
