@@ -582,7 +582,7 @@ namespace std {
     /// @todo implement is_move_assignable, is_trivially_move_assignable  and is_nothrow_move_assignable
     /// @todo implement is_destructible, is_trivially_destructible  and is_nothrow_destructible
     /// @todo implement is_swappable, is_swappable_with, is_nothrow_swappable_with, is_nothrow_swappable
-    /// @todo implement is_convertible and is_nothrow_convertible
+    /// @todo implement is_nothrow_convertible
     /// @todo implement is_invocable
     /// @todo implement is_invocable_r
     /// @todo implement is_nothrow_invocable
