@@ -356,20 +356,20 @@ namespace std {
     using void_t = void;
 
     template<typename...> struct conjunction : std::true_type { };
-    template<typename B1> struct conjunction<B1> : B1 { };
+    template<typename B> struct conjunction<B> : B { };
 
-    template<typename B1, typename... Bn>
-    struct conjunction<B1, Bn...>
-        : conditional_t<bool(B1::value), conjunction<Bn...>, B1> { };
+    template<typename B, typename... Bn>
+    struct conjunction<B, Bn...>
+        : conditional_t<bool(B::value), conjunction<Bn...>, B> { };
     template<typename... B>
     inline constexpr bool conjunction_v = conjunction<B...>::value;
     
     template<typename...> struct disjunction : std::false_type { };
-    template<typename B1> struct disjunction<B1> : B1 { };
+    template<typename B> struct disjunction<B> : B { };
 
-    template<typename B1, typename... Bn>
-    struct disjunction<B1, Bn...>
-        : conditional_t<bool(B1::value), disjunction<Bn...>, B1> { };
+    template<typename B, typename... Bn>
+    struct disjunction<B, Bn...>
+        : conditional_t<bool(B::value), disjunction<Bn...>, B> { };
     template<typename... B>
     inline constexpr bool disjunction_v = disjunction<B...>::value;
 
