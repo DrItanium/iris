@@ -38,8 +38,8 @@ class ArduinoCore : public Core {
 
         Ordinal getTerminateCell() const noexcept override { return _terminateCell; }
         Ordinal getIP() const noexcept override { return _ip; }
-        void setIP(Ordinal value) noexcept override { _ip = value; }
-        void setIP(Integer value) noexcept override { _ip = value; }
+        void setIP(Ordinal value) noexcept override { _ip.put(value); }
+        void setIP(Integer value) noexcept override { _ip.put(value); }
         void resetExecutionStatus() noexcept override { _executing = true; }
         bool getExecutingStatus() const noexcept override { return _executing; }
         void setTerminateCell(Ordinal value) noexcept override { _terminateCell = value; }
@@ -71,8 +71,13 @@ class ArduinoCore : public Core {
         void cycleHandler() override;
         void raiseBadOperation() override;
     private:
+        constexpr bool registerIsHardwired(RegisterIndex ind) const noexcept { return std::to_integer<iris::RegisterIndexNumericType>(ind) < 17; }
+        constexpr RegisterIndexNumericType computeRegisterOffset(RegisterIndex ind) const noexcept { return std::to_integer<RegisterIndexNumericType>(ind) - 17; }
+    private:
+        static constexpr auto ExternalRegisterCount = 256;
+        Register _regs[ExternalRegisterCount];
         Ordinal _terminateCell = 0;
-        Ordinal _ip = 0;
+        Register _ip;
         bool _executing = false;
         bool _advanceIP = true;
 };

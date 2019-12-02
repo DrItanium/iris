@@ -25,7 +25,36 @@
  */
 
 #include "arduino_core.h"
+#include "Arduino.h"
 
 namespace iris {
+ArduinoCore::ArduinoCore() noexcept {
+    for (Ordinal i = 0; i < 256; ++i) {
+        // setup the storage constants
+        if (i < 17) {
+            _regs[i].hardwireTo(i);
+        }
+    }
+}
+
+void
+ArduinoCore::putRegister(RegisterIndex ind, Ordinal value) noexcept {
+    _regs[std::to_integer<RegisterIndexNumericType>(ind)].put(value);
+}
+
+void
+ArduinoCore::putRegister(RegisterIndex ind, Integer value) noexcept {
+    _regs[std::to_integer<RegisterIndexNumericType>(ind)].put(value);
+}
+
+Ordinal
+ArduinoCore::retrieveRegister(RegisterIndex ind, RequestOrdinal) const noexcept {
+    return _regs[std::to_integer<RegisterIndexNumericType>(ind)].get<Ordinal>();
+}
+
+Integer
+ArduinoCore::retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept {
+    return _regs[std::to_integer<RegisterIndexNumericType>(ind)].get<Integer>();
+}
 
 }

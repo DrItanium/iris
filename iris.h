@@ -312,13 +312,6 @@ class Core {
 
     protected:
         void cycle();
-    private:
-        Register& getDestinationRegister(RegisterIndex idx) noexcept;
-        const Register& getSourceRegister(RegisterIndex idx) const noexcept;
-        DoubleRegister getDoubleRegister(RegisterIndex start, RegisterIndex next) const noexcept;
-        inline DoubleRegister getDoubleRegister(RegisterIndex start) const noexcept {
-            return getDoubleRegister(start, static_cast<RegisterIndex>(static_cast<Byte>(start) + 1));
-        }
     public:
         void invoke(LongOrdinal bits);
     public:
