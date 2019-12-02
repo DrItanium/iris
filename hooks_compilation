@@ -1,0 +1,1 @@
+avr-gcc -I.  -Ilib -c -mmcu=atmega328p -DF_CPU=16000000UL -I ~/.arduino15/packages/arduino/hardware/avr/1.8.1/cores/arduino/ -I ~/.arduino15/packages/arduino/hardware/avr/1.8.1/variants/standard ~/.arduino15/packages/arduino/hardware/avr/1.8.1/cores/arduino/hooks.c -Os
