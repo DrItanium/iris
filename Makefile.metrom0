@@ -1,0 +1,56 @@
+include config.metrom0express.mk
+
+CORE_OBJS := iris.o
+
+BACKEND_OBJS := backends/arduino/arduino_core.o
+
+IRIS_ARCHIVE := libiris.a
+IRIS_BACKEND_ARCHIVE := libiris_memcore.a
+
+IRIS_TESTER_OBJS := opcode_tester.o
+
+IRIS_TESTER := iris_test
+
+OBJS := $(CORE_OBJS) \
+		$(BACKEND_OBJS)
+PROGS := $(IRIS_ARCHIVE) \
+		 $(IRIS_SIM_ARCHIVE)
+
+
+all: options $(PROGS)
+
+options:
+	@echo Build Options
+	@echo ------------------
+	@echo CXXFLAGS = ${CXXFLAGS}
+	@echo LDFLAGS = ${LDFLAGS}
+	@echo ------------------
+
+$(IRIS_ARCHIVE): $(CORE_OBJS)
+	@echo AR ${IRIS_ARCHIVE}
+	@${AR} rcs ${IRIS_ARCHIVE} ${CORE_OBJS}
+
+$(IRIS_BACKEND_ARCHIVE): $(BACKEND_OBJS)
+	@echo AR ${IRIS_BACKEND_ARCHIVE}
+	@${AR} rcs ${IRIS_BACKEND_ARCHIVE} ${BACKEND_OBJS}
+
+.cc.o :
+	@echo CXX $<
+	@${CXX} -I. -Ilib ${CXXFLAGS} -c $< -o $@
+
+clean: 
+	@echo Cleaning...
+	@rm -f ${OBJS} ${PROGS}
+
+
+
+.PHONY: options
+
+# generated via g++ -MM -std=c++17 *.cc
+
+
+arduino_core.o: backends/arduino/arduino_core.cc \
+ backends/arduino/arduino_core.h \
+ types.h iris.h register.h
+iris.o: iris.cc types.h iris.h register.h mem_bank.h opcodes.h \
+ InstructionFormats.def

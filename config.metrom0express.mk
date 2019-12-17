@@ -22,8 +22,16 @@ LD_FLAGS := -Wl,--cref \
 	-Wl,--unresolved-symbols=report-all \
 	-Wl,--warn-common \
 	-Wl,--warn-section-align
+ARDUINO_ROOT := ${HOME}/.arduino15/
+ADAFRUIT_VERSION := 1.5.7
+ATMEL_CMSIS_VERSION := 1.2.0
+CMSIS_ATMEL_SAMD_ROOT := ${ARDUINO_ROOT}/packages/arduino/tools/CMSIS-Atmel/${ATMEL_CMSIS_VERSION}
+ADAFRUIT_SAMD_ROOT := ${ARDUINO_ROOT}/packages/adafruit/hardware/samd/${ADAFRUIT_VERSION}
+INCLUDES := -I${ADAFRUIT_SAMD_ROOT}/variants/metro_m0 \
+			-I${ADAFRUIT_SAMD_ROOT}/cores/arduino \
+			-I${CMSIS_ATMEL_SAMD_ROOT}/CMSIS/Device/ATMEL
 
 GENFLAGS := -Wall -Wextra -std=gnu++17 ${ARM_FLAGS}
 OPTIMIZATION_FLAGS := -Os
-CXXFLAGS := ${GENFLAGS} ${OPTIMIZATION_FLAGS} ${DEBUGGING_FLAGS}
+CXXFLAGS := ${GENFLAGS} ${OPTIMIZATION_FLAGS} ${DEBUGGING_FLAGS} ${INCLUDES}
 LDFLAGS := ${LIBS} ${OPTIMIZATION_FLAGS} ${ARM_FLAGS}
