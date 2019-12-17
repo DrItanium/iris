@@ -208,8 +208,6 @@ constexpr iris::RegisterIndex framValueRegisterUpperIndex{23};
 constexpr iris::RegisterIndex framReadbackRegisterLowerIndex{24};
 constexpr iris::RegisterIndex framReadbackRegisterUpperIndex{25};
 constexpr iris::RegisterIndex numBytesRegisterIndex{4};
-uint32_t framAddress = 0;
-uint32_t framValue = 0;
 
 void failure() noexcept {
     while(true) {
@@ -258,12 +256,16 @@ void loop() {
     tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
     tft.setCursor(0, 0);
     tft.print("AD: ");
-    tft.print(framAddress, HEX);
+    tft.print(core.getRegisterValue<iris::Ordinal>(framAddressRegisterIndex), HEX);
     tft.setCursor(0, 10);
     tft.print("VA: ");
-    tft.print(framValue, HEX);
-    core.storeCode<iris::Address, iris::LongOrdinal>(framAddress, framValue);
-    core.setDoubleRegisterValue(framReadbackRegisterLowerIndex, core.loadCode<iris::Address>(framAddress));
+    tft.print(core.getDoubleRegisterValue(framValueRegisterLowerIndex), HEX);
+    core.storeCode<iris::Address, iris::LongOrdinal>(
+            core.getRegisterValue<iris::Ordinal>(framAddressRegisterIndex),
+            core.getDoubleRegisterValue(framValueRegisterLowerIndex));
+    core.setDoubleRegisterValue(framReadbackRegisterLowerIndex, 
+            core.loadCode<iris::Address>(
+                core.getRegisterValue<iris::Ordinal>(framAddressRegisterIndex)));
     tft.setCursor(0, 20);
     tft.print("RB: ");
     tft.print(core.getDoubleRegisterValue(framReadbackRegisterLowerIndex), HEX);
@@ -272,16 +274,15 @@ void loop() {
     tft.print(core.getRegisterValue<iris::Ordinal>(numBytesRegisterIndex), HEX);
     tft.setCursor(0, 40);
     tft.print("STATUS: ");
-    if (core.getDoubleRegisterValue(framReadbackRegisterLowerIndex) != framValue) {
+    if (core.getDoubleRegisterValue(framReadbackRegisterLowerIndex) != core.getDoubleRegisterValue(framValueRegisterLowerIndex)) {
         tft.print("FAIL!");
         failure();
     } else {
         tft.print("OK");
     }
+    core.setRegisterValue(framAddressRegisterIndex,
+            iris::Ordinal(core.getRegisterValue<iris::Ordinal>(framAddressRegisterIndex) + 1));
+    core.setDoubleRegisterValue(framValueRegisterLowerIndex, random(0x1FFFFFF));
 
-    framAddress++;
-    framAddress &= (0xFFFF);  
-
-    framValue = random(0x1FFFFFF);  
     delay(5);
 }
