@@ -29,12 +29,12 @@
 
 #ifndef IRIS_TYPE_TRAITS_H__
 #define IRIS_TYPE_TRAITS_H__
-#include <lang/cpp/platform.h>
+#include "platform.h"
 
 #ifdef HAS_STL
 #include <type_traits>
 #else
-#include <lang/cpp/cstddef.h>
+#include "cstddef.h"
 namespace std {
     template<typename T, T v>
     struct integral_constant {

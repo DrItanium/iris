@@ -28,7 +28,7 @@
 
 #ifndef IRIS_CSTDINT_H__
 #define IRIS_CSTDINT_H__
-#include "lang/cpp/platform.h"
+#include "platform.h"
 #ifdef HAS_STL
 #include <cstdint>
 #else

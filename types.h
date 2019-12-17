@@ -25,9 +25,9 @@
  */
 #ifndef IRIS_TYPES_H__
 #define IRIS_TYPES_H__
-#include "lang/cpp/cstdint.h"
-#include "lang/cpp/cstddef.h"
-#include "lang/cpp/type_traits.h"
+#include "cstdint.h"
+#include "cstddef.h"
+#include "type_traits.h"
 
 namespace iris {
 
