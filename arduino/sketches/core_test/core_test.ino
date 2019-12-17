@@ -19,6 +19,9 @@ Adafruit_TFTShield18 ss;
 Adafruit_ST7735 tft(TFT_CS, TFT_DC, TFT_RST);
 constexpr auto LowerFRAM = 5;
 constexpr auto UpperFRAM = 6;
+constexpr auto CodeSectionEnable = 5;
+constexpr auto DataSectionEnable = 6;
+constexpr auto StackSectionEnable = 6;
 template<int pin>
 using CableSelectHolder = bonuspin::DigitalPinHolder<pin, LOW, HIGH>;
 // FM25V20A FRAM CHIPS 
@@ -148,7 +151,7 @@ constexpr auto max64BitAddress = max8BitAddress >> 3;
 namespace iris {
 LongOrdinal 
 ArduinoCore::loadFromCodeMemory(Address addr) {
-    return 0;
+    return fram::read32<CodeSectionEnable>(addr);
 }
 Ordinal 
 ArduinoCore::loadFromDataMemory(Address addr) {
@@ -164,6 +167,7 @@ ArduinoCore::loadFromIOMemory(Address addr) {
 }
 void 
 ArduinoCore::storeToCodeMemory(Address addr, LongOrdinal value) {
+    fram::writeFram<CodeSectionEnable>(addr, value);
 }
 
 void 
@@ -198,7 +202,22 @@ ArduinoCore::cycleHandler() {
 }
 
 } // end namespace iris
+constexpr iris::RegisterIndex framAddressRegisterIndex{20};
+constexpr iris::RegisterIndex framValueRegisterLowerIndex{22};
+constexpr iris::RegisterIndex framValueRegisterUpperIndex{23};
+constexpr iris::RegisterIndex framReadbackRegisterLowerIndex{24};
+constexpr iris::RegisterIndex framReadbackRegisterUpperIndex{25};
+constexpr iris::RegisterIndex numBytesRegisterIndex{4};
+uint32_t framAddress = 0;
+uint32_t framValue = 0;
+uint32_t readback = 0;
+//uint8_t numBytes = 4;
 void setup() {
+    core.setRegisterValue(framAddressRegisterIndex,       iris::Ordinal(0));
+    core.setRegisterValue(framValueRegisterLowerIndex,    iris::Ordinal(0));
+    core.setRegisterValue(framValueRegisterUpperIndex,    iris::Ordinal(0));
+    core.setRegisterValue(framReadbackRegisterLowerIndex, iris::Ordinal(0));
+    core.setRegisterValue(framReadbackRegisterUpperIndex, iris::Ordinal(0));
     Serial.begin(9600);
     pinMode(TFT_CS, OUTPUT);
     digitalWrite(TFT_CS, HIGH);
@@ -232,10 +251,6 @@ void setup() {
     tft.fillScreen(ST77XX_BLACK);
 }
 
-uint32_t framAddress = 0;
-uint32_t framValue = 0;
-uint32_t readback = 0;
-uint8_t numBytes = 4;
 
 void loop() {
     tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
@@ -245,7 +260,9 @@ void loop() {
     tft.setCursor(0, 10);
     tft.print("VA: ");
     tft.print(framValue, HEX);
-    auto localAddress = framAddress & 0xFFFF; // most significant bit must be clipped
+    core.storeCode<iris::Address, iris::LongOrdinal>(framAddress, framValue);
+    readback = core.loadCode<iris::Address>(framAddress);
+#if 0
     if (framAddress & 0x10000) {
         fram::writeFram<UpperFRAM>(localAddress, framValue);
         readback = fram::read32<UpperFRAM>(localAddress);
@@ -253,12 +270,13 @@ void loop() {
         fram::writeFram<LowerFRAM>(localAddress, framValue);
         readback = fram::read32<LowerFRAM>(localAddress);
     }
+#endif
     tft.setCursor(0, 20);
     tft.print("RB: ");
     tft.print(readback, HEX);
     tft.setCursor(0, 30);
     tft.print("WD: ");
-    tft.print(numBytes);
+    tft.print(core.getRegisterValue<iris::Ordinal>(numBytesRegisterIndex), HEX);
     tft.setCursor(0, 40);
     tft.print("STATUS: ");
     if (readback != framValue) {
@@ -269,8 +287,8 @@ void loop() {
     }
 
     framAddress++;
-    framAddress &= (0x7FFFF >> 2);  
+    framAddress &= (0xFFFF);  
 
     framValue = random(0x1FFFFFF);  
-    delay(10);
+    delay(5);
 }
