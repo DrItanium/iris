@@ -10,7 +10,7 @@ SIM_OBJS := backends/memcore/IODevices.o \
 IRIS_ARCHIVE := libiris.a
 IRIS_SIM_ARCHIVE := libiris_memcore.a
 
-IRIS_TESTER_OBJS := opcode_tester.o
+IRIS_TESTER_OBJS := cmd/opcode_tester.o
 
 IRIS_TESTER := iris_test
 
@@ -68,6 +68,6 @@ mem_core.o: backends/memcore/mem_core.cc types.h \
  register.h opcodes.h
 iris.o: iris.cc types.h iris.h register.h mem_bank.h opcodes.h \
  InstructionFormats.def
-opcode_tester.o: opcode_tester.cc iris.h types.h register.h mem_bank.h \
+opcode_tester.o: cmd/opcode_tester.cc iris.h types.h register.h mem_bank.h \
  opcodes.h InstructionFormats.def backends/memcore/mem_core.h iris.h \
  backends/memcore/IODevices.h types.h mem_bank.h register.h encoding.h
