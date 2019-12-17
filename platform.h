@@ -28,9 +28,28 @@
 
 #ifndef IRIS_PLATFORM_H__
 #define IRIS_PLATFORM_H__
-#ifndef __AVR__
+#ifdef __AVR__
+#define TARGET_AVR
+#endif
+#ifdef __arm__
+#define TARGET_ARM
+#endif
+
+#ifdef ARDUINO
+#define ARDUINO_ENABLED
+#endif
+
+#if defined(TARGET_ARM) && defined(ARDUINO_ENABLED)
+#define TARGET_ARM_ARDUINO
+#endif 
+
+
+
+#ifndef TARGET_AVR
+#ifndef TARGET_ARM_ARDUINO
 #define HAS_STL
-#endif // end ! defined(__AVR__)
+#endif
+#endif
 
 // So that YCM analyzes my implementation
 #ifdef YCM_VERIFY_WRAPPER_IMPL
@@ -39,8 +58,16 @@
 #   endif
 #endif
 
+constexpr bool platformIsArduino() noexcept {
+#ifdef ARDUINO_ENABLED
+    return true;
+#else
+    return false;
+#endif
+}
+
 constexpr bool platformIsAVR() noexcept {
-#ifdef __AVR__
+#ifdef TARGET_AVR
     return true;
 #else
     return false;
@@ -59,6 +86,13 @@ constexpr bool targetIsAtTiny85() noexcept {
     }
 }
 
+constexpr bool targetIsArm() noexcept {
+#ifdef TARGET_ARM
+    return true;
+#else 
+    return false;
+#endif
+}
 
 constexpr bool platformIsAmd64() noexcept {
 #ifdef __x86_64__

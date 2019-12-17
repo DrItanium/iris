@@ -28,7 +28,7 @@
 
 #ifndef IRIS_LIMITS_H__
 #define IRIS_LIMITS_H__
-#include <lang/cpp/platform.h>
+#include "platform.h"
 
 #ifdef HAS_STL
 #include <limits>
