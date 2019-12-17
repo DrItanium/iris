@@ -59,8 +59,9 @@ uint8_t read8(uint32_t address) {
 template<int enablePin>
 uint16_t read16(uint32_t address) {
   CableSelectHolder<enablePin> reader;
-  sendOpcode(Opcodes::READ);
+  sendOpcode(Opcodes::FSTRD);
   transferAddress(address << 1);
+  SPI.transfer(0x00); // send a dummy byte
   auto lower = static_cast<uint16_t>(SPI.transfer(0x00));
   auto upper = static_cast<uint16_t>(SPI.transfer(0x00)) << 8;
   return lower | upper;
@@ -68,8 +69,10 @@ uint16_t read16(uint32_t address) {
 template<int enablePin>
 uint32_t read32(uint32_t address) {
   CableSelectHolder<enablePin> reader;
-  sendOpcode(Opcodes::READ);
+  sendOpcode(Opcodes::FSTRD);
+  //sendOpcode(Opcodes::READ);
   transferAddress(address << 2);
+  SPI.transfer(0x00); // transfer a dummy byte first
   auto lowest = static_cast<uint32_t>(SPI.transfer(0x00));
   auto lower = static_cast<uint32_t>(SPI.transfer(0x00)) << 8;
   auto higher = static_cast<uint32_t>(SPI.transfer(0x00)) << 16;
@@ -80,8 +83,10 @@ uint32_t read32(uint32_t address) {
 template<int enablePin>
 uint64_t read64(uint64_t address) {
   CableSelectHolder<enablePin> reader;
-  sendOpcode(Opcodes::READ);
+  //sendOpcode(Opcodes::READ);
+  sendOpcode(Opcodes::FSTRD);
   transferAddress(address << 3);
+  SPI.transfer(0x00); // dummy byte
   auto a = static_cast<uint64_t>(SPI.transfer(0x00));
   auto b = static_cast<uint64_t>(SPI.transfer(0x00)) << 8;
   auto c = static_cast<uint64_t>(SPI.transfer(0x00)) << 16;
@@ -207,6 +212,7 @@ constexpr iris::RegisterIndex framValueRegisterLowerIndex{22};
 constexpr iris::RegisterIndex framValueRegisterUpperIndex{23};
 constexpr iris::RegisterIndex framReadbackRegisterLowerIndex{24};
 constexpr iris::RegisterIndex framReadbackRegisterUpperIndex{25};
+constexpr iris::RegisterIndex framCompareStorage{26};
 constexpr iris::RegisterIndex numBytesRegisterIndex{4};
 
 void failure() noexcept {
@@ -223,6 +229,7 @@ void setup() {
     core.setRegisterValue(framValueRegisterUpperIndex,    iris::Ordinal(0));
     core.setRegisterValue(framReadbackRegisterLowerIndex, iris::Ordinal(0));
     core.setRegisterValue(framReadbackRegisterUpperIndex, iris::Ordinal(0));
+    core.setRegisterValue(framCompareStorage, iris::Ordinal(0));
     Serial.begin(9600);
     pinMode(TFT_CS, OUTPUT);
     digitalWrite(TFT_CS, HIGH);
@@ -274,7 +281,10 @@ void loop() {
     tft.print(core.getRegisterValue<iris::Ordinal>(numBytesRegisterIndex), HEX);
     tft.setCursor(0, 40);
     tft.print("STATUS: ");
-    if (core.getDoubleRegisterValue(framReadbackRegisterLowerIndex) != core.getDoubleRegisterValue(framValueRegisterLowerIndex)) {
+    core.setRegisterValue(framCompareStorage,
+        core.getDoubleRegisterValue(framReadbackRegisterLowerIndex) !=
+        core.getDoubleRegisterValue(framValueRegisterLowerIndex));
+    if (core.getRegisterValue<bool>(framCompareStorage)) {
         tft.print("FAIL!");
         failure();
     } else {
@@ -284,5 +294,5 @@ void loop() {
             iris::Ordinal(core.getRegisterValue<iris::Ordinal>(framAddressRegisterIndex) + 1));
     core.setDoubleRegisterValue(framValueRegisterLowerIndex, random(0x1FFFFFF));
 
-    delay(5);
+    delay(1);
 }

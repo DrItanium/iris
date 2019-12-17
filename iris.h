@@ -344,7 +344,7 @@ class Core {
         void setRegisterValue(RegisterIndex idx, Ordinal value) noexcept {
             putRegister(idx, value);
         }
-        void setRegsiterValue(RegisterIndex idx, bool value) noexcept {
+        void setRegisterValue(RegisterIndex idx, bool value) noexcept {
             putRegister(idx, static_cast<Ordinal>(value ? 0xFFFF : 0x0000));
         }
         template<typename T = Ordinal>
