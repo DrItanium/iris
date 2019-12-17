@@ -57,4 +57,53 @@ ArduinoCore::retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept 
     return _regs[std::to_integer<RegisterIndexNumericType>(ind)].get<Integer>();
 }
 
+LongOrdinal
+ArduinoCore::retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
+    auto lv = static_cast<LongOrdinal>(retrieveRegister(lower, RequestOrdinal{}));
+    auto uv = static_cast<LongOrdinal>(retrieveRegister(upper, RequestOrdinal{})) << 16;
+    return lv | uv;
+}
+LongOrdinal
+ArduinoCore::retrieveDoubleRegister(RegisterIndex lower) const noexcept {
+    return retrieveDoubleRegister(lower, static_cast<RegisterIndex>(std::to_integer<RegisterIndexNumericType>(lower) + 1));
+}
+
+void
+ArduinoCore::putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept {
+    putRegister(lower, static_cast<Ordinal>(value));
+    putRegister(upper, static_cast<Ordinal>(value >> 16));
+}
+
+void
+ArduinoCore::putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept {
+    putDoubleRegister(lower, static_cast<RegisterIndex>(std::to_integer<RegisterIndexNumericType>(lower) + 1), value);
+}
+
+void
+ArduinoCore::raiseDivideByZero() {
+    throw DivideByZeroException();
+}
+
+void
+ArduinoCore::raiseErrorInstruction() {
+    throw ErrorInstructionException();
+}
+
+void
+ArduinoCore::raiseBadOperation() {
+    throw BadOperationException();
+}
+
+void 
+ArduinoCore::cycleHandler() {
+    try {
+        cycle();
+    } catch(DivideByZeroException& ex) {
+        /// @todo try to dispatch to an interrupt vector
+    } catch(Exception& ex) {
+        /// @todo implement logic to handle edge cases
+    }
+}
+
+
 }
