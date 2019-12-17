@@ -1,4 +1,5 @@
 # extracted from adafruit arduino package files
+F_CPU_VALUE := 48000000L
 CXX := arm-unknown-linux-gnueabi-g++
 LD := ${CXX}
 MCU_KIND := cortex-m0plus
@@ -7,7 +8,8 @@ ARM_FLAGS := -mcpu=${MCU_KIND} \
 	-D__SAMD21G18A__ \
 	-DARDUINO_SAMD_ZERO \
 	-DARM_MATH_CM0PLUS \
-	-DADAFRUIT_METRO_M0_EXPRESS
+	-DADAFRUIT_METRO_M0_EXPRESS \
+	-DF_CPU=${F_CPU_VALUE}
 FFLAGS := -ffunction-sections \
 	-fdata-sections \
 	-fno-threadsafe-statics \
@@ -29,7 +31,8 @@ CMSIS_ATMEL_SAMD_ROOT := ${ARDUINO_ROOT}/packages/arduino/tools/CMSIS-Atmel/${AT
 ADAFRUIT_SAMD_ROOT := ${ARDUINO_ROOT}/packages/adafruit/hardware/samd/${ADAFRUIT_VERSION}
 INCLUDES := -I${ADAFRUIT_SAMD_ROOT}/variants/metro_m0 \
 			-I${ADAFRUIT_SAMD_ROOT}/cores/arduino \
-			-I${CMSIS_ATMEL_SAMD_ROOT}/CMSIS/Device/ATMEL
+			-I${CMSIS_ATMEL_SAMD_ROOT}/CMSIS/Device/ATMEL \
+			-I${ADAFRUIT_SAMD_ROOT}/bootloaders/mzero/Bootloader_D21/src/ASF/thirdparty/CMSIS/Include
 
 GENFLAGS := -Wall -Wextra -std=gnu++17 ${ARM_FLAGS}
 OPTIMIZATION_FLAGS := -Os
