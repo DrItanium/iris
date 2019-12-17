@@ -1,3 +1,6 @@
+// Currently targeting the Adafruit Grand Central M4 as I want more built in pins
+// Previously targeted the Adafruit Metro M0 Express but it is slow
+// Also have run on teh Adafruit Metro M4 Express which is fast but not enough pins
 #include <SPI.h>
 #include <SD.h>
 #include <Adafruit_GFX.h>
