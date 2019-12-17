@@ -79,31 +79,6 @@ ArduinoCore::putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept 
     putDoubleRegister(lower, static_cast<RegisterIndex>(std::to_integer<RegisterIndexNumericType>(lower) + 1), value);
 }
 
-void
-ArduinoCore::raiseDivideByZero() {
-    throw DivideByZeroException();
-}
-
-void
-ArduinoCore::raiseErrorInstruction() {
-    throw ErrorInstructionException();
-}
-
-void
-ArduinoCore::raiseBadOperation() {
-    throw BadOperationException();
-}
-
-void 
-ArduinoCore::cycleHandler() {
-    try {
-        cycle();
-    } catch(DivideByZeroException& ex) {
-        /// @todo try to dispatch to an interrupt vector
-    } catch(Exception& ex) {
-        /// @todo implement logic to handle edge cases
-    }
-}
 
 
 }

@@ -190,6 +190,13 @@ void
 ArduinoCore::raiseBadOperation() {
 }
 
+void 
+ArduinoCore::cycleHandler() {
+    // @todo figure out how to handle bad operations, divide by zero, error
+    // instructions etc.
+    cycle();
+}
+
 } // end namespace iris
 void setup() {
     Serial.begin(9600);
