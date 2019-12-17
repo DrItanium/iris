@@ -210,8 +210,15 @@ constexpr iris::RegisterIndex framReadbackRegisterUpperIndex{25};
 constexpr iris::RegisterIndex numBytesRegisterIndex{4};
 uint32_t framAddress = 0;
 uint32_t framValue = 0;
-uint32_t readback = 0;
-//uint8_t numBytes = 4;
+
+void failure() noexcept {
+    while(true) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(1000);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(1000);
+    }
+}
 void setup() {
     core.setRegisterValue(framAddressRegisterIndex,       iris::Ordinal(0));
     core.setRegisterValue(framValueRegisterLowerIndex,    iris::Ordinal(0));
@@ -232,12 +239,7 @@ void setup() {
 
     if (!ss.begin()) {
         Serial.println("seesaw could not be initialized");
-        while(true) {
-            digitalWrite(LED_BUILTIN, HIGH);
-            delay(1000);
-            digitalWrite(LED_BUILTIN, LOW);
-            delay(1000);
-        }
+        failure();
     }
     ss.setBacklight(TFTSHIELD_BACKLIGHT_OFF);
 
@@ -261,27 +263,18 @@ void loop() {
     tft.print("VA: ");
     tft.print(framValue, HEX);
     core.storeCode<iris::Address, iris::LongOrdinal>(framAddress, framValue);
-    readback = core.loadCode<iris::Address>(framAddress);
-#if 0
-    if (framAddress & 0x10000) {
-        fram::writeFram<UpperFRAM>(localAddress, framValue);
-        readback = fram::read32<UpperFRAM>(localAddress);
-    } else {
-        fram::writeFram<LowerFRAM>(localAddress, framValue);
-        readback = fram::read32<LowerFRAM>(localAddress);
-    }
-#endif
+    core.setDoubleRegisterValue(framReadbackRegisterLowerIndex, core.loadCode<iris::Address>(framAddress));
     tft.setCursor(0, 20);
     tft.print("RB: ");
-    tft.print(readback, HEX);
+    tft.print(core.getDoubleRegisterValue(framReadbackRegisterLowerIndex), HEX);
     tft.setCursor(0, 30);
     tft.print("WD: ");
     tft.print(core.getRegisterValue<iris::Ordinal>(numBytesRegisterIndex), HEX);
     tft.setCursor(0, 40);
     tft.print("STATUS: ");
-    if (readback != framValue) {
+    if (core.getDoubleRegisterValue(framReadbackRegisterLowerIndex) != framValue) {
         tft.print("FAIL!");
-        while(true);
+        failure();
     } else {
         tft.print("OK");
     }
