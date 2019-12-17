@@ -46,9 +46,7 @@
 
 
 #ifndef TARGET_AVR
-#ifndef TARGET_ARM_ARDUINO
 #define HAS_STL
-#endif
 #endif
 
 // So that YCM analyzes my implementation
@@ -57,6 +55,10 @@
 #      undef HAS_STL
 #   endif
 #endif
+
+#if defined(TARGET_ARM) && defined(ARDUINO_ENABLED) 
+#define CUSTOM_NEW_IMPL_REQUIRED
+#endif 
 
 constexpr bool platformIsArduino() noexcept {
 #ifdef ARDUINO_ENABLED
