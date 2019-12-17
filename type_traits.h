@@ -558,7 +558,7 @@ namespace std {
 
     template<typename T> struct has_virtual_destructor : bool_constant<__has_virtual_destructor(T)> { };
     template<typename T> inline constexpr bool has_virtual_destructor_v = has_virtual_destructor<T>::value;
-
+#if 0
     template<typename T, typename ... Args> struct is_constructible : bool_constant<__is_constructible(T, Args...)> { };
     template<typename T, typename ... Args> inline constexpr bool is_constructible_v = is_constructible<T>::value;
     template<typename T> struct is_default_constructible : is_constructible<T>::type { };
@@ -589,6 +589,7 @@ namespace std {
     /// @todo implement is_nothrow_invocable_r
     /// @todo implement common_type
     /// @todo implement invoke_result
+#endif
     namespace details {
         template<typename T> struct MakeUnsigned              { using type = T; };
         template<>           struct MakeUnsigned<char>        { using type = unsigned char; };
