@@ -17,11 +17,15 @@ constexpr auto SD_CS = 4;
 constexpr auto TFT_CS = 10;
 constexpr auto TFT_DC = 8;
 constexpr auto TFT_RST = -1;
-constexpr auto LowerFRAM = 5;
-constexpr auto UpperFRAM = 6;
-constexpr auto CodeSectionEnable = 5;
-constexpr auto DataSectionEnable = 6;
-constexpr auto StackSectionEnable = 6;
+constexpr auto LowerFRAM = 22;
+constexpr auto UpperFRAM = 24;
+constexpr auto MiscFRAM = 26;
+constexpr auto BIOSFlash = 28;
+constexpr auto CodeSectionEnable = LowerFRAM;
+constexpr auto DataSectionEnable = UpperFRAM;
+constexpr auto StackSectionEnable = UpperFRAM;
+constexpr auto RegisterSectionEnable = MiscFRAM;
+constexpr auto BIOSFlashEnable = BIOSFlash;
 template<int pin>
 using CableSelectHolder = bonuspin::DigitalPinHolder<pin, LOW, HIGH>;
 iris::ArduinoCore core;
@@ -221,7 +225,6 @@ void setup() {
     core.setRegisterValue(framReadbackRegisterLowerIndex, iris::Ordinal(0));
     core.setRegisterValue(framReadbackRegisterUpperIndex, iris::Ordinal(0));
     core.setRegisterValue(framCompareStorage, iris::Ordinal(0));
-    Serial.begin(9600);
     pinMode(TFT_CS, OUTPUT);
     digitalWrite(TFT_CS, HIGH);
     pinMode(SD_CS, OUTPUT);
@@ -234,7 +237,6 @@ void setup() {
     digitalWrite(LED_BUILTIN, LOW);
 
     if (!ss.begin()) {
-        Serial.println("seesaw could not be initialized");
         failure();
     }
     ss.setBacklight(TFTSHIELD_BACKLIGHT_OFF);
