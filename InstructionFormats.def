@@ -65,7 +65,7 @@
 // and ordinal forms. This comes from the very elegantly designed i960
 // processor. 
 // The bits of arithmetic instructions are as follows:
-// 0b000,0,K,TTT
+// 0b000,0,TTT,K
 // where K is the operation kind with the following legend:
 //  k == 0 -> Treat sources as ordinals
 //  k == 1 -> Treat sources as integers
@@ -205,37 +205,71 @@ Operation(BitwiseXnor,                               GroupBitwise    | bits::Ope
 //        signed imm8 when C is clear
 //        register with signed contents when C is set
 
-Operation(LoadWordWithImmediateOffset,          GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadWordWithImmediateOffsetAndUpdate, GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadWordWithRegisterOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
-Operation(LoadWordWithRegisterOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
-Operation(LoadHalfWithImmediateOffset,          GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadHalfWithImmediateOffsetAndUpdate, GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadHalfWithRegisterOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
-Operation(LoadHalfWithRegisterOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
-Operation(LoadByteWithImmediateOffset,          GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadByteWithImmediateOffsetAndUpdate, GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
-Operation(LoadByteWithRegisterOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
-Operation(LoadByteWithRegisterOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadWordWithImmediateOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadWordWithImmediateOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadWordWithRegisterOffset,            GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadWordWithRegisterOffsetAndUpdate,   GroupMemory | bits::LoadOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadHalfWithImmediateOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadHalfWithImmediateOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadHalfWithRegisterOffset,            GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadHalfWithRegisterOffsetAndUpdate,   GroupMemory | bits::LoadOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadByteWithImmediateOffset,           GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadByteWithImmediateOffsetAndUpdate,  GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(LoadByteWithRegisterOffset,            GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadByteWithRegisterOffsetAndUpdate,   GroupMemory | bits::LoadOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreWordWithImmediateOffset,          GroupMemory | bits::StoreOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreWordWithImmediateOffsetAndUpdate, GroupMemory | bits::StoreOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreWordWithRegisterOffset,           GroupMemory | bits::StoreOperation | bits::MemoryWidthWord | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreWordWithRegisterOffsetAndUpdate,  GroupMemory | bits::StoreOperation | bits::MemoryWidthWord | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreHalfWithImmediateOffset,          GroupMemory | bits::StoreOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreHalfWithImmediateOffsetAndUpdate, GroupMemory | bits::StoreOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreHalfWithRegisterOffset,           GroupMemory | bits::StoreOperation | bits::MemoryWidthHalf | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreHalfWithRegisterOffsetAndUpdate,  GroupMemory | bits::StoreOperation | bits::MemoryWidthHalf | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreByteWithImmediateOffset,          GroupMemory | bits::StoreOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreByteWithImmediateOffsetAndUpdate, GroupMemory | bits::StoreOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsSignedImm8)
+Operation(StoreByteWithRegisterOffset,           GroupMemory | bits::StoreOperation | bits::MemoryWidthByte | bits::DoNotUpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(StoreByteWithRegisterOffsetAndUpdate,  GroupMemory | bits::StoreOperation | bits::MemoryWidthByte | bits::UpdateSource | bits::TreatArg2AsRegisterIndex)
+Operation(LoadImmediate16,                       GroupMemory | bits::LoadOperation | bits::MemoryWidthImmediate16 | bits::DoNotShiftImmediateBy16)
+Operation(LoadImmediateShifted16,                GroupMemory | bits::LoadOperation | bits::MemoryWidthImmediate16 | bits::ShiftImmediateBy16)
 
-//Operation(LoadImmediateShifted16,                    GroupMemory
-//Operation(CodeLoadWithOffset,                        GroupMemory     | bits::LoadOperation  | bits::Arg1IsRegister  | bits::SpaceCode) 
-//Operation(CodeLoadFromImmediateAddress,              GroupMemory     | bits::LoadOperation  | bits::Arg1IsImm       | bits::SpaceCode)
-//Operation(CodeStoreWithOffset,                       GroupMemory     | bits::StoreOperation | bits::Arg1IsRegister  | bits::SpaceCode)
-//Operation(CodeStoreToImmediateAddress,               GroupMemory     | bits::StoreOperation | bits::Arg1IsImm       | bits::SpaceCode)
-//Operation(DataLoadWithOffset,                        GroupMemory     | bits::LoadOperation  | bits::Arg1IsRegister  | bits::SpaceData)
-//Operation(DataLoadFromImmediateAddress,              GroupMemory     | bits::LoadOperation  | bits::Arg1IsImm       | bits::SpaceData)
-//Operation(DataStoreWithOffset,                       GroupMemory     | bits::StoreOperation | bits::Arg1IsRegister  | bits::SpaceData)
-//Operation(DataStoreToImmediateAddress,               GroupMemory     | bits::StoreOperation | bits::Arg1IsImm       | bits::SpaceData)
-//Operation(StackLoadWithOffset,                       GroupMemory     | bits::LoadOperation  | bits::Arg1IsRegister  | bits::SpaceStack)
-//Operation(StackLoadFromImmediateAddress,             GroupMemory     | bits::LoadOperation  | bits::Arg1IsImm       | bits::SpaceStack)
-//Operation(StackStoreWithOffset,                      GroupMemory     | bits::StoreOperation | bits::Arg1IsRegister  | bits::SpaceStack)
-//Operation(StackStoreToImmediateAddress,              GroupMemory     | bits::StoreOperation | bits::Arg1IsImm       | bits::SpaceStack)
-//Operation(IOLoadWithOffset,                          GroupMemory     | bits::LoadOperation  | bits::Arg1IsRegister  | bits::SpaceIO)
-//Operation(IOLoadFromImmediateAddress,                GroupMemory     | bits::LoadOperation  | bits::Arg1IsImm       | bits::SpaceIO)
-//Operation(IOStoreWithOffset,                         GroupMemory     | bits::StoreOperation | bits::Arg1IsRegister  | bits::SpaceIO)
-//Operation(IOStoreToImmediateAddress,                 GroupMemory     | bits::StoreOperation | bits::Arg1IsImm       | bits::SpaceIO)
 //-------------------------------------------------------------------------------------------------
+// Compare operations are pretty straight forward, 
+// the act exactly like the i960 versions of these instructions but store the conditional result
+// in the destination register instead of custom conditional bits
+// The form is as follows:
+// 0b001,0000,K
+// where K denotes Compare Ordinal if clear
+//                 Compare Integer if set
+// The result of the compare is a three bit code stored in the lowest 3 bits of the destination register
+//
+// The algorithm is as follows:
+/*
+   if (reg[src1] < reg[src2]) {
+        reg[dest] = 0b100
+   } else if (reg[src1] == reg[src2]) {
+        reg[dest] = 0b010
+   } else {
+        reg[dest] = 0b001 
+   }
+*/
+// This implies that the bit pattern is as follows:
+// 0bLEG
+// Where L means less than
+//       E means equal to
+//       G means greater than
+// thus we can extrapolate all of the different relations by masking off the 3 bit pattern as follows:
+/*
+   0b000 -> is unordered (useful when dealing with floating point but in integer only it means never branch)
+   0b001 -> is greater than
+   0b010 -> is equal
+   0b011 -> is greater than or equal
+   0b100 -> is less than
+   0b101 -> is not equal
+   0b110 -> is less than or equal
+   0b111 -> is ordered (always branch :D)
+*/
+// with all of these "masks" we can always extrapolate the correct information as needed
+// these instructions are both three register forms
 Operation(CompareOrdinal,                            GroupCompare    | bits::KindOrdinal)
 Operation(CompareInteger,                            GroupCompare    | bits::KindInteger)
 //-------------------------------------------------------------------------------------------------
