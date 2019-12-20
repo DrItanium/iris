@@ -5,20 +5,112 @@
 // error is just zero and is not part of a group
 // X(name, opcode)
 #define Operation(name, opcode) X(name, (static_cast<EncodedInstruction>((opcode))))
+//-------------------------------------------------------------------------------------------------
+// Iris instructions are 32-bits wide and are carved up into four separate
+// sections as follows:
+// [0,  7] Argument2/Source2/Immediate8
+// [8, 15] Argument1/Source1
+// [16,23] Argument0/Destination
+// [24,31] Opcode
+// 
+// With this design we can also merge Source2 and Source1 together to make a
+// 16-bit immediate as well so we add this as well to the design:
+// [0, 16] Immediate16
 
+// Thus there are really a handful of forms with offshoots being degenerate
+// cases. The forms are:
+// 1) Three Register
+// 1a) Two Register (Argument2 is 0)
+// 1b) Two Register plus Imm8 (Argument2 does not refer to a register index)
+// 2) One Register plus Imm16
+// 2a) One Register (Imm16 is zero)
+// 2b) Zero Register / Zero Argument (Argument0 and Imm16 are zero)
+// 3) Imm24 (unused but theoretically possible)
+//
+// The rest of this file will describe the instructions and forms. Here are
+// some other terms that may help if you are not familiar with them:
+// 
+// 1) Ordinal - Unsigned number
+// 2) Integer - Signed number
+//-------------------------------------------------------------------------------------------------
+// The 8-bit opcode is divided generically into two parts:
+// 0bMMMXXXXX
+// where 0bMMM is the major opcode kind. There are a total of 8 major opcode
+// groups with not all of the groups currently in use. The XXXXX portion is
+// defined by the group to describe actions to perform under that major kind.
+//
+// The groups are:
+// 0b000XXXXX - Arithmetic
+// 0b001XXXXX - Compare
+// 0b010XXXXX - Memory
+// 0b011XXXXX - Branch Immediate
+// 0b100XXXXX - Branch Register
+// 0b101XXXXX - Bitwise
+// 0b110XXXXX - Reserved for future use
+// 0b111XXXXX - Reserved for future use
+//-------------------------------------------------------------------------------------------------
+// Arithmetic
+// Arithmetic operations consist of:
+// - Error
+// - Add
+// - Subtract
+// - Multiply
+// - Divide
+// - Remainder
+// - Shift Left
+// - Shift Right
+//
+// With the exception of Error, the other arithmetic operations have integer
+// and ordinal forms. This comes from the very elegantly designed i960
+// processor.  
+//-------------------------------------------------------------------------------------------------
+/**
+  * This is to make sure that a zero instruction is considered to be an error
+  */
 Operation(Error,                                     GroupArithmetic | bits::OperationError)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = reg[src1] + reg[src2}
+  */
 Operation(AddOrdinal,                                GroupArithmetic | bits::OperationAdd | bits::KindOrdinal)
 Operation(AddInteger,                                GroupArithmetic | bits::OperationAdd | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = reg[src1] - reg[src2]
+  */
 Operation(SubtractOrdinal,                           GroupArithmetic | bits::OperationSubtract | bits::KindOrdinal)
 Operation(SubtractInteger,                           GroupArithmetic | bits::OperationSubtract | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = reg[src1] * reg[src2]
+  */
 Operation(MultiplyOrdinal,                           GroupArithmetic | bits::OperationMultiply | bits::KindOrdinal)
 Operation(MultiplyInteger,                           GroupArithmetic | bits::OperationMultiply | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = reg[src1] / reg[src2]
+  * NOTE: Will error if reg[src2] is zero
+  */
 Operation(DivideOrdinal,                             GroupArithmetic | bits::OperationDivide | bits::KindOrdinal)
 Operation(DivideInteger,                             GroupArithmetic | bits::OperationDivide | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = reg[src1] % reg[src2]
+  * NOTE: Will error if reg[src2] is zero
+  */
 Operation(RemainderOrdinal,                          GroupArithmetic | bits::OperationRemainder | bits::KindOrdinal)
 Operation(RemainderInteger,                          GroupArithmetic | bits::OperationRemainder | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = (reg[src2] > 31) ? (reg[src1] << reg[src2]) : 0
+  */
+
 Operation(ShiftLeftOrdinal,                          GroupArithmetic | bits::OperationShiftLeft | bits::KindOrdinal)
 Operation(ShiftLeftInteger,                          GroupArithmetic | bits::OperationShiftLeft | bits::KindInteger)
+/**
+  * Form: Three Register
+  * Logic: reg[dest] = (reg[src2] > 31) ? (reg[src1] >> reg[src2]) : 0
+  */
 Operation(ShiftRightOrdinal,                         GroupArithmetic | bits::OperationShiftRight | bits::KindOrdinal)
 Operation(ShiftRightInteger,                         GroupArithmetic | bits::OperationShiftRight | bits::KindInteger)
 //-------------------------------------------------------------------------------------------------
