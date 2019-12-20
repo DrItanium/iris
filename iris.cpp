@@ -57,13 +57,16 @@ void
 Core::run() {
     resetExecutionStatus();
     do {
-        invoke(load<EncodedInstruction>(this->getIP()));
         cycleHandler();
-        if (shouldAdvanceIP()) {
-            advanceIP();
-        }
-        allowAdvanceIP();
     } while (getExecutingStatus());
+}
+void 
+Core::cycle() {
+    invoke(load<EncodedInstruction>(this->getIP()));
+    if (shouldAdvanceIP()) {
+        advanceIP();
+    }
+    allowAdvanceIP();
 }
 
 

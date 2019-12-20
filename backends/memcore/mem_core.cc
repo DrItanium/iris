@@ -28,89 +28,12 @@
 #include "opcodes.h"
 
 namespace iris {
-InMemoryCore::InMemoryCore() noexcept : Core(), _io(*this) {
+InMemoryCore::InMemoryCore() noexcept : Core() {
     // 0-16 are hardwired in r0-r16 (first 17 registers)
     for (int i = 0; i < 17; ++i) {
         _regs[i].hardwireTo(i);
     }
     // basic io reservations the processor will reserve
-    _io.mapIntoMemory(0, Core::readTerminateCell, Core::terminateCore);
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, std::tuple<MMIOReadFunction, MMIOWriteFunction> tup) {
-    _io.mapIntoMemory(addr, tup);
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOReadFunction read) {
-    _io.mapIntoMemory(addr, read);
-
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOWriteFunction write) {
-    _io.mapIntoMemory(addr, write);
-
-}
-void 
-InMemoryCore::mapIntoIOSpace(Address addr, MMIOReadFunction read, MMIOWriteFunction write) {
-    _io.mapIntoMemory(addr, read, write);
-
-}
-
-LongOrdinal 
-InMemoryCore::loadFromCodeMemory(Address addr) {
-    return _code[addr];
-}
-Ordinal 
-InMemoryCore::loadFromDataMemory(Address addr) {
-    return _data[addr];
-}
-
-
-Ordinal 
-InMemoryCore::loadFromStackMemory(Address addr) {
-    return _stack[addr];
-}
-Ordinal 
-InMemoryCore::loadFromIOMemory(Address addr) {
-    return _io.load(addr);
-}
-void 
-InMemoryCore::storeToCodeMemory(Address addr, LongOrdinal value) {
-    _code[addr] = value;    
-}
-void 
-InMemoryCore::storeToDataMemory(Address addr, Ordinal value) {
-    _data[addr] = value;
-}
-
-void
-InMemoryCore::storeToStackMemory(Address addr, Ordinal value) {
-    _stack[addr] = value;
-}
-
-void 
-InMemoryCore::storeToIOMemory(Address addr, Ordinal value) {
-    _io.store(addr, value);
-}
-
-void
-InMemoryCore::putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept {
-    DoubleRegister::make(_regs, lower, upper).put(value);
-}
-
-void
-InMemoryCore::putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept {
-    DoubleRegister::make(_regs, lower).put(value);
-}
-
-LongOrdinal 
-InMemoryCore::retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept {
-    return DoubleRegister::make(_regs, lower, upper).get<LongOrdinal>();
-}
-
-LongOrdinal
-InMemoryCore::retrieveDoubleRegister(RegisterIndex lower) const noexcept {
-    return DoubleRegister::make(_regs, lower).get<LongOrdinal>();
 }
 
 void
@@ -138,5 +61,70 @@ InMemoryCore::cycleHandler() {
         /// @todo implement logic to handle edge cases
     }
 }
+
+std::optional<InMemoryCore::TrackedMemoryMappedDevice>
+InMemoryCore::findDevice(Address address) noexcept {
+    for (auto& device : _memoryMap) {
+        if (device->isMapped() && device->respondsTo(address)) {
+            return device;
+        }
+    }
+    return std::nullopt;
+}
+Ordinal
+InMemoryCore::loadFromMemory(Address address) noexcept {
+    auto actualAddress = computeOrdinalAddress(address);
+    if (auto device = findDevice(actualAddress); device) {
+        return (*device)->loadFull(actualAddress);
+    } else {
+        return 0;
+    }
+}
+QuarterOrdinal
+InMemoryCore::loadQuarterFromMemory(Address address) noexcept {
+    auto actualAddress = computeHalfAddress(address);
+    if (auto device = findDevice(actualAddress); device) {
+        return (*device)->loadHalf(actualAddress);
+    } else {
+        return 0;
+    }
+}
+
+HalfOrdinal
+InMemoryCore::loadHalfFromMemory(Address address) noexcept {
+    if (auto device = findDevice(address); device) {
+        return (*device)->loadQuarter(address);
+    } else {
+        return 0;
+    }
+}
+
+void 
+InMemoryCore::storeToMemory(Address address, Ordinal value) noexcept {
+    auto computedAddress = computeOrdinalAddress(address);
+    if (auto device = findDevice(computedAddress); device) {
+        (*device)->store(computedAddress, value);
+    }
+}
+
+void 
+InMemoryCore::storeToMemory(Address address, HalfOrdinal value) noexcept {
+    auto computedAddress = computeHalfAddress(address);
+    if (auto device = findDevice(computedAddress); device) {
+        (*device)->store(computedAddress, value);
+    }
+}
+
+void 
+InMemoryCore::storeToMemory(Address address, QuarterOrdinal value) noexcept {
+    if (auto device = findDevice(address); device) {
+        (*device)->store(address, value);
+    }
+}
+
+// void InMemoryCore::storeToMemory(Address address, HalfOrdinal value) noexcept override;
+// void InMemoryCore::storeToMemory(Address address, QuarterOrdinal value) noexcept override;
+
+
 
 } // end namespace iris

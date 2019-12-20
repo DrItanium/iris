@@ -28,23 +28,42 @@
 #include <array>
 #include <functional>
 #include <map>
+#include <memory>
+#include <list>
 #include <iris.h>
+#include <optional>
 #include "IODevices.h"
 #include "mem_bank.h"
 #include "register.h"
 
 namespace iris {
+class MemoryMappedDevice {
+    public:
+        MemoryMappedDevice() = default;
+        virtual ~MemoryMappedDevice() = default;
+        virtual bool respondsTo(Address address) const noexcept = 0;
+        virtual Ordinal loadFull(Address address) noexcept = 0;
+        virtual QuarterOrdinal loadQuarter(Address address) noexcept = 0;
+        virtual HalfOrdinal loadHalf(Address address) noexcept = 0;
+    public:
+        virtual void store(Address address, Ordinal value) noexcept = 0;
+        virtual void storeHalf(Address address, HalfOrdinal value) noexcept = 0;
+        virtual void storeQuarter(Address address, QuarterOrdinal value) noexcept = 0;
+        constexpr bool isMapped() const noexcept { return _mapped; }
+        void map() noexcept { _mapped = true; }
+        void unmap() noexcept { _mapped = false; }
+    private:
+        bool _mapped = false;
+};
 /** 
  * Use ram to denote the different memory spaces
  */
 class InMemoryCore : public Core {
     public:
+        using TrackedMemoryMappedDevice = std::shared_ptr<MemoryMappedDevice>;
+    public:
         InMemoryCore() noexcept;
         ~InMemoryCore() override = default;
-        void mapIntoIOSpace(Address, std::tuple<MMIOReadFunction, MMIOWriteFunction>);
-        void mapIntoIOSpace(Address, MMIOReadFunction);
-        void mapIntoIOSpace(Address, MMIOWriteFunction);
-        void mapIntoIOSpace(Address, MMIOReadFunction, MMIOWriteFunction);
         Ordinal getTerminateCell() const noexcept override { return _terminateCell; }
         Ordinal getIP() const noexcept override { return _ip.get<Word>(); }
         void setIP(Ordinal value) noexcept override { _ip.put(value); }
@@ -78,17 +97,32 @@ class InMemoryCore : public Core {
         bool shouldAdvanceIP() const noexcept override {
             return _advanceIP;
         }
+    private:
+        std::optional<TrackedMemoryMappedDevice> findDevice(Address address) noexcept;
+        static constexpr Address computeOrdinalAddress(Address addr) noexcept {
+            Address mask = ~0b11;
+            return addr & mask;
+        }
+        static constexpr Address computeHalfAddress(Address addr) noexcept {
+            Address mask = ~0b1;
+            return addr & mask;
+        }
     protected:
-
         void raiseErrorInstruction() override;
         void raiseDivideByZero() override;
         void cycleHandler() override;
         void raiseBadOperation() override;
+        Ordinal loadFromMemory(Address address) noexcept override;
+        QuarterOrdinal loadQuarterFromMemory(Address address) noexcept override;
+        HalfOrdinal loadHalfFromMemory(Address address) noexcept override;
+        void storeToMemory(Address address, Ordinal value) noexcept override;
+        void storeToMemory(Address address, HalfOrdinal value) noexcept override;
+        void storeToMemory(Address address, QuarterOrdinal value) noexcept override;
 
     private:
         RegisterBank _regs;
-        NumericalStorageBank<uint8_t, 1048576> _memory; // 1 megabyte
         Register _ip;
+        std::list<TrackedMemoryMappedDevice> _memoryMap;
         bool _executing = false;
         bool _advanceIP = true;
         Word _terminateCell = 0;

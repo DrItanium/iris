@@ -44,6 +44,8 @@ class Core {
         void terminateCycle();
     protected:
         virtual Ordinal loadFromMemory(Address address) noexcept = 0;
+        virtual QuarterOrdinal loadQuarterFromMemory(Address address) noexcept = 0;
+        virtual HalfOrdinal loadHalfFromMemory(Address address) noexcept = 0;
         virtual void storeToMemory(Address address, Ordinal value) noexcept = 0;
         virtual void storeToMemory(Address address, HalfOrdinal value) noexcept = 0;
         virtual void storeToMemory(Address address, QuarterOrdinal value) noexcept = 0;
@@ -260,6 +262,8 @@ class Core {
         }
 
 
+    protected:
+        void cycle();
     public:
         void invoke(EncodedInstruction bits);
     public:
