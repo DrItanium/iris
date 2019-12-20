@@ -32,8 +32,8 @@
 #include <list>
 #include <iris.h>
 #include <optional>
-#include "IODevices.h"
 #include "mem_bank.h"
+#include "exceptions.h"
 #include "register.h"
 
 namespace iris {
