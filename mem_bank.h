@@ -39,25 +39,8 @@ using NumericalStorageBank = std::array<T, capacity>;
  * @tparam T the type of each memory bank cell
  */
 template<typename T>
-using MemoryBank = NumericalStorageBank<std::enable_if_t<std::is_integral_v<T>, T>, MemoryBankElementCount>;
-/**
- * Separate memory space that holds the instructions the iris core executes;
- * DoubleWords are stored in this location.
- */
-using CodeMemoryBank = MemoryBank<LongOrdinal>;
+using MemoryBank = NumericalStorageBank<uint8_t, MemoryBankElementCount>;
 
-/**
- * Location to store data values in an iris core; 2^16 words worth of storage
- * is provided by default.
- */
-using DataMemoryBank = MemoryBank<Ordinal>;
-/**
- * Iris comes equipped with a full 2^16 words worth of stack space that is
- * accessed by separate instructions. It is only possible to do pushes and pops
- * to stack memory. However, the number of stack pointers is only limited by
- * the number of registers.
- */
-using StackMemoryBank = MemoryBank<Ordinal>;
 } // end namespace iris
 
 #endif // end IRIS_MEMBANK_H__

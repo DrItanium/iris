@@ -165,7 +165,7 @@ namespace iris {
     constexpr auto bitwiseOperationIs(EncodedInstruction enc) noexcept {
         return getBitwiseOperation(enc) == compare;
     }
-    template<EncodedInstruction enc> constexpr auto IsErrorOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationError>;
+    template<EncodedInstruction enc> constexpr auto IsErrorOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationError>(enc);
     template<EncodedInstruction enc> constexpr auto IsAddOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationAdd>(enc);
     template<EncodedInstruction enc> constexpr auto IsSubtractOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationSubtract>(enc);
     template<EncodedInstruction enc> constexpr auto IsMultiplyOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationMultiply>(enc);
@@ -205,9 +205,9 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto BranchMask = (enc & bits::BranchIfMask);
     template<EncodedInstruction enc>
-    constexpr auto IsImmediateBranch = IsBranchInstruction<enc> && flagClear<bits::RegisterBranch>;
+    constexpr auto IsImmediateBranch = IsBranchInstruction<enc> && flagClear<bits::RegisterBranch>(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsRegisterBranch = IsBranchInstruction<enc> && flagSet<bits::RegisterBranch>;
+    constexpr auto IsRegisterBranch = IsBranchInstruction<enc> && flagSet<bits::RegisterBranch>(enc);
     template<EncodedInstruction enc>
     constexpr auto IsLink = IsBranchInstruction<enc> && flagClear<bits::IsConditional>(enc);
     template<EncodedInstruction enc>

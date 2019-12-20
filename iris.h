@@ -162,11 +162,12 @@ class Core {
             putRegister(s.getArg0(), result);
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
-        void store(Address addr, RegisterIndex value) {
+        void store(Address, RegisterIndex) {
             /// @todo finish this
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
-        decltype(auto) load(Address addr) {
+        decltype(auto) load(Address) {
+            return static_cast<Ordinal>(0);
             /// @todo finish this
         }
         template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
@@ -227,23 +228,27 @@ class Core {
         }
         template<EncodedInstruction T, std::enable_if_t<IsBitwiseInstruction<T>, int> = 0>
         void invoke(const Instruction& s) {
-            Ordinal computation = getRegisterValue(s.getArg1());
+            Ordinal computation = 0u;
+            Ordinal p2 = 0u;
+            if constexpr (ArgumentIsImm16<T>) {
+                // destructive version of the operation
+                computation = s.getImm16();
+                p2 = getRegisterValue(s.getArg0());
+            } else {
+                computation = getRegisterValue(s.getArg1());
+                p2 = getRegisterValue(s.getArg2());
+
+            }
             if constexpr (IsNotOperation<T>) {
-                if constexpr (ArgumentIsImm16<T>) {
-                    // load immediate and overwrite computation
-                    computation = s.getImm16();
-                } 
                 // perform the not
                 computation = ~computation;
-            } else if constexpr (auto p2 = getRegisterValue(s.getArg2()); IsAndOperation<T>) {
+            } else if constexpr (IsAndOperation<T>) {
                 computation &= p2;
             } else if constexpr (IsOrOperation<T>) {
                 computation |= p2;
             } else if constexpr (IsXorOperation<T>) {
                 computation ^= p2;
-            } else {
-                static_assert(false_v<T>, "Bad bitwise kind");
-            }
+            } 
             if constexpr (NotTheResult<T>) {
                 // in the case of move and load immediate, this will reinvert
                 // the bits back to what they should be, thus completing the
@@ -276,7 +281,7 @@ class Core {
         void setRegisterValue(RegisterIndex ind, T value) noexcept { 
             putRegister(ind, value); 
         }
-        template<typename T>
+        template<typename T = Ordinal>
         T getRegisterValue(RegisterIndex ind) noexcept {
             return retrieveRegister(ind, RequestType<T> { });
         }
