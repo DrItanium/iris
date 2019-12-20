@@ -39,9 +39,8 @@ namespace iris {
     constexpr auto GroupArithmetic = 0_group;
     constexpr auto GroupCompare    = 1_group;
     constexpr auto GroupMemory     = 2_group;
-    constexpr auto GroupBitwise    = 5_group;
-    constexpr auto GroupBranchImm  = 6_group;
-    constexpr auto GroupBranchReg  = 7_group;
+    constexpr auto GroupBranch     = 3_group;
+    constexpr auto GroupBitwise    = 4_group;
     constexpr auto GroupMask       = 7_group;
     static_assert(GroupMask == 0xE000'0000);
     template<EncodedInstruction group>
@@ -52,9 +51,7 @@ namespace iris {
     constexpr auto isArithmeticInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupArithmetic>(enc); }
     constexpr auto isCompareInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupCompare>(enc); }
     constexpr auto isMemoryInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupMemory>(enc); }
-    constexpr auto isBranchImmInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBranchImm>(enc); }
-    constexpr auto isBranchRegInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBranchReg>(enc); }
-    constexpr auto isBranchInstruction(EncodedInstruction enc) noexcept { return isBranchImmInstruction(enc) || isBranchRegInstruction(enc); }
+    constexpr auto isBranchInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBranch>(enc); }
 
     template<EncodedInstruction enc>
     constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
@@ -62,14 +59,6 @@ namespace iris {
     constexpr auto IsLogicalOperation = IsBitwiseInstruction<enc>;
     template<EncodedInstruction enc>
     constexpr auto IsBranchInstruction = isBranchInstruction(enc);
-    template<EncodedInstruction enc>
-    constexpr auto IsBranchImmInstruction = isBranchImmInstruction(enc);
-    template<EncodedInstruction enc>
-    constexpr auto IsBranchImmediateInstruction = IsBranchImmInstruction<enc>;
-    template<EncodedInstruction enc>
-    constexpr auto IsBranchRegInstruction = isBranchRegInstruction(enc);
-    template<EncodedInstruction enc>
-    constexpr auto IsBranchRegisterInstruction = IsBranchRegInstruction<enc>;
     template<EncodedInstruction enc>
     constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
     template<EncodedInstruction enc>

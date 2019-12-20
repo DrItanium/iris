@@ -300,19 +300,51 @@ Operation(CompareInteger,                            GroupCompare    | bits::Kin
 */
 // When C is clear the form is (link immediate):
 // 0b01100000
-// there is only one instruction in this format
+// there is only one instruction in this format.
+// When Y is set then we get the following form:
+// 0b0111PFFF
+// Where FFF is the conditional mask to use in the same form as above:
+/*
+   0b000 -> is unordered (useful when dealing with floating point but in integer only it means never branch)
+   0b001 -> is greater than
+   0b010 -> is equal
+   0b011 -> is greater than or equal
+   0b100 -> is less than
+   0b101 -> is not equal
+   0b110 -> is less than or equal
+   0b111 -> is ordered (always branch :D)
+*/
+
+// Where P is:
+// ConditionalBranchAndLink on clear
+// Select on set
+//
+// Since IRIS has so many hardwired registers, it is possible to describe all branch register in terms of these two
+// operations. Select is provided as a convience to make describing if then else conditions in a single instruction
+
+// The format of the conditional branch and link is 
+// arg0: branch destination
+// arg1: cond (set this to a hardwired register to force a jump if desired or zero if not :D)
+// arg2: link register (set this to a hardwired register to prevent the write from taking place)
+
+
+// the format of the select operation is as follows:
+// arg0: condition (can do some interesting things with the hardwired registers if so desired)
+// arg1: address to jump to when condition is met
+// arg2: address to jump to when condition is not met
+
 
 
 //-------------------------------------------------------------------------------------------------
-Operation(BranchIfUnorderedImmediate,      GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfUnordered)
-Operation(BranchIfGreaterImmediate,        GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfGreater)
-Operation(BranchIfEqualImmediate,          GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfEqual)
-Operation(BranchIfGreaterOrEqualImmediate, GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfGreaterOrEqual)
-Operation(BranchIfLessImmediate,           GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfLess)
-Operation(BranchIfNotEqualImmediate,       GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfNotEqual)
-Operation(BranchIfLessOrEqualImmediate,    GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfLessOrEqual)
-Operation(BranchIfOrderedImmediate,        GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfOrdered)
-Operation(BranchImmediateAndLink,          GroupBranch | bits::ImmediateBranch | bits::IsLink)
+Operation(BranchIfUnorderedImmediate,                GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfUnordered)
+Operation(BranchIfGreaterImmediate,                  GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfGreater)
+Operation(BranchIfEqualImmediate,                    GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfEqual)
+Operation(BranchIfGreaterOrEqualImmediate,           GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfGreaterOrEqual)
+Operation(BranchIfLessImmediate,                     GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfLess)
+Operation(BranchIfNotEqualImmediate,                 GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfNotEqual)
+Operation(BranchIfLessOrEqualImmediate,              GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfLessOrEqual)
+Operation(BranchIfOrderedImmediate,                  GroupBranch | bits::ImmediateBranch | bits::IsConditional | bits::BranchIfOrdered)
+Operation(BranchImmediateAndLink,                    GroupBranch | bits::ImmediateBranch | bits::IsLink)
 Operation(BranchIfUnorderedToRegisterAndLink,        GroupBranch | bits::RegisterBranch | bits::IsConditionalBranchAndLink | bits::BranchIfUnordered)
 Operation(BranchIfGreaterToRegisterAndLink,          GroupBranch | bits::RegisterBranch | bits::IsConditionalBranchAndLink | bits::BranchIfGreater)
 Operation(BranchIfEqualToRegisterAndLink,            GroupBranch | bits::RegisterBranch | bits::IsConditionalBranchAndLink | bits::BranchIfEqual)
