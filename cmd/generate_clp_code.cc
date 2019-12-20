@@ -1,9 +1,9 @@
 /**
- * @file
- * platform detection routines
+ * @file 
+ * Generate the clp library file from opcode data
  * @copyright 
  * iris
- * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
+ * Copyright (c) 2013-2020, Joshua Scoggins and Contributors
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -26,82 +26,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IRIS_PLATFORM_H__
-#define IRIS_PLATFORM_H__
-#ifdef __AVR__
-#define TARGET_AVR
-#endif
-#ifdef __arm__
-#define TARGET_ARM
-#endif
-
-#ifdef ARDUINO
-#define ARDUINO_ENABLED
-#endif
-
-#if defined(TARGET_ARM) && defined(ARDUINO_ENABLED)
-#define TARGET_ARM_ARDUINO
-#endif 
+#include "opcodes.h"
+#include "register.h"
+#include <iostream>
 
 
-
-#ifndef TARGET_AVR
-#define HAS_STL
-#endif
-
-// So that YCM analyzes my implementation
-#ifdef YCM_VERIFY_WRAPPER_IMPL
-#   ifdef HAS_STL
-#      undef HAS_STL
-#   endif
-#endif
-
-#if defined(TARGET_ARM) && defined(ARDUINO_ENABLED) 
-#define CUSTOM_NEW_IMPL_REQUIRED
-#endif 
-
-constexpr bool platformIsArduino() noexcept {
-#ifdef ARDUINO_ENABLED
-    return true;
-#else
-    return false;
-#endif
+int main(int, char**) {
+    for (int i = 0; i < iris::
+    return 0;
 }
-
-constexpr bool platformIsAVR() noexcept {
-#ifdef TARGET_AVR
-    return true;
-#else
-    return false;
-#endif
-}
-
-constexpr bool targetIsAtTiny85() noexcept {
-    if constexpr (platformIsAVR()) {
-#ifdef __AVR_ATtiny85__
-        return true;
-#else
-        return false;
-#endif
-    } else {
-        return false;
-    }
-}
-
-constexpr bool targetIsArm() noexcept {
-#ifdef TARGET_ARM
-    return true;
-#else 
-    return false;
-#endif
-}
-
-constexpr bool platformIsAmd64() noexcept {
-#ifdef __x86_64__
-    return true;
-#else
-    return false;
-#endif
-}
-
-#endif // end IRIS_PLATFORM_H__

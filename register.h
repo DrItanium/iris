@@ -107,9 +107,6 @@ class Register final {
         } _storage;
 };
 constexpr auto RegisterCount = (0xFF + 1);
-#ifdef HAS_STL
-using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
-#endif
 
 template<typename R>
 class GenericDoubleRegister final {
