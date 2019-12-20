@@ -287,7 +287,7 @@ Operation(CompareInteger,                            GroupCompare    | bits::Kin
 // where you currently are. This is not that much of a problem to be honest.
 // When C is set the form is:
 //  0b01101FFF
-//  where FFF is the conditional kind as described as follows (same as the compre format...duh):
+//  where FFF is the conditional kind as described as follows (same as the compare format...duh):
 /*
    0b000 -> is unordered (useful when dealing with floating point but in integer only it means never branch)
    0b001 -> is greater than

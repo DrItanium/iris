@@ -98,9 +98,9 @@ namespace iris {
         // C = Major Operation
         // K = Integer? else Ordinal
         // T = Operation
-        constexpr auto KindOrdinal             = 0b00000000_opcode;
-        constexpr auto KindInteger             = 0b00000001_opcode;
-        constexpr auto ArithmeticOperationMask = 0b00001110_opcode;
+        constexpr auto KindOrdinal             = 0b000'0'000'0_opcode;
+        constexpr auto KindInteger             = 0b000'0'000'1_opcode;
+        constexpr auto ArithmeticOperationMask = 0b000'0'111'0_opcode;
     } // end namespace bits
     template<EncodedInstruction enc>
     constexpr auto OperationCaresAboutSign = (IsArithmeticInstruction<enc> || IsCompareInstruction<enc>);
@@ -130,7 +130,7 @@ namespace iris {
         // N: Not the result?
         // T: The operation
         // A: Imm16 argument
-        constexpr auto BitwiseOperationMask   = 0b00000011_opcode;
+        constexpr auto BitwiseOperationMask   = 0b000'000'11_opcode;
     }
 #define X(op, value) \
     namespace bits { \
@@ -138,14 +138,14 @@ namespace iris {
     } \
     template<EncodedInstruction enc> \
     constexpr auto Is ## op ## Operation = IsBitwiseInstruction<enc> && FieldSetTo<enc, bits::BitwiseOperationMask, bits::Operation ## op>; 
-    X(Not           , 0b00000000_opcode);
-    X(And           , 0b00000001_opcode);
-    X(Or            , 0b00000010_opcode);
-    X(Xor           , 0b00000011_opcode);
+    X(Not           , 0b000'0'00'00_opcode);
+    X(And           , 0b000'0'00'01_opcode);
+    X(Or            , 0b000'0'00'10_opcode);
+    X(Xor           , 0b000'0'00'11_opcode);
 #undef X
     namespace bits {
-        constexpr auto NotTheResult           = 0b00000100_opcode;
-        constexpr auto ArgumentIsImm16        = 0b00001000_opcode;
+        constexpr auto NotTheResult           = 0b000'0'0'1'00_opcode;
+        constexpr auto ArgumentIsImm16        = 0b000'0'1'0'00_opcode;
     } // end namespace bits
     template<EncodedInstruction enc>
     constexpr auto NotTheResult = IsBitwiseInstruction<enc> && FlagSet<enc, bits::NotTheResult>;
@@ -212,58 +212,33 @@ namespace iris {
     constexpr auto BranchMask = (enc & bits::BranchIfMask);
     namespace bits {
         //-----------------------------------------------------------------------------
-        // Branch Immediate
+        // Branch
         //-----------------------------------------------------------------------------
-        // Top level format is 0b011,C,xxxx
-        // where 
-        // C: Branch Conditional? else Link
-
-        // if C is 1 then the format is: 0b011,1,R,YYY, this is known as the conditional immediate form
-        // R: Relative? else Absolute
-        // Y: Condition codes defined above
-
-        // if C is 0 then the format is: 0b011,0,R,000, this is known as the link immediate form
-        // R: Relative? else Absolute
-        // there is not enough space in the encoding to allow conditional jump and link in a single instruction
-        constexpr auto IsConditional = 0b00010000_opcode;
-        constexpr auto IsLink        = 0b00000000_opcode;
-        constexpr auto RelativeJump  = 0b00001000_opcode;
-        constexpr auto AbsoluteJump  = 0b00000000_opcode;
+        constexpr auto ImmediateBranch             = 0b000'0'0'000_opcode;
+        constexpr auto RegisterBranch              = 0b000'1'0'000_opcode;
+        constexpr auto IsConditional               = 0b000'0'1'000_opcode;
+        constexpr auto IsLink                      = 0b000'0'0'000_opcode;
+        constexpr auto IsConditionalBranchAndLink  = 0b000'0'0'000_opcode;
+        constexpr auto IsSelectOperation           = 0b000'0'1'000_opcode;
     } // end namespace bits
     template<EncodedInstruction enc>
-    constexpr auto IsRelativeJump = IsBranchImmInstruction<enc> && flagSet<bits::RelativeJump>(enc);
+    constexpr auto IsImmediateBranch = IsBranchInstruction<enc> && flagClear<bits::RegisterBranch>;
     template<EncodedInstruction enc>
-    constexpr auto IsAbsoluteJump = IsBranchImmInstruction<enc> && flagClear<bits::RelativeJump>(enc);
+    constexpr auto IsRegisterBranch = IsBranchInstruction<enc> && flagSet<bits::RegisterBranch>;
     template<EncodedInstruction enc>
-    constexpr auto IsLink = IsBranchImmInstruction<enc> && flagClear<bits::IsConditional>(enc);
+    constexpr auto IsLink = IsBranchInstruction<enc> && flagClear<bits::IsConditional>(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsConditionalImmediate = IsBranchImmInstruction<enc> && flagSet<bits::IsConditional>(enc);
+    constexpr auto IsConditionalImmediate = IsBranchInstruction<enc> && flagSet<bits::IsConditional>(enc);
     template<EncodedInstruction enc>
-    constexpr auto UsesRelativeOffset = IsRelativeJump<enc>;
-    namespace bits {
-        //-----------------------------------------------------------------------------
-        // Branch Register
-        //-----------------------------------------------------------------------------
-        // format is: 0b100,PP,YYY
-        // P is a register action kind
-        // 00 -> ConditionalBranchAndLink
-        // 01 -> Select
-        // 10 -> unused
-        // 11 -> unused
-        // Y is condition codes defined above
-        constexpr auto IsConditionalBranchAndLink =  0b00000000_opcode;
-        constexpr auto IsSelectOperation          =  0b00001000_opcode;
-        constexpr auto BranchRegisterOperationMask = 0b00011000_opcode;
-        //-----------------------------------------------------------------------------
-    } // end namespace bits
+    constexpr auto IsConditionalBranchAndLink = IsBranchInstruction<enc> && flagClear<bits::IsSelectOperation>(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsConditionalBranchAndLink = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsConditionalBranchAndLink>;
-    template<EncodedInstruction enc>
-    constexpr auto IsSelectOperation = IsBranchRegInstruction<enc> && FieldSetTo<enc, bits::BranchRegisterOperationMask, bits::IsSelectOperation>;
+    constexpr auto IsSelectOperation = IsBranchInstruction<enc> && flagSet<bits::IsSelectOperation>(enc);
     template<EncodedInstruction enc>
     constexpr auto UsesLinkRegister = IsLink<enc> || IsConditionalBranchAndLink<enc>;
     template<EncodedInstruction enc>
-    constexpr auto IsConditionalOperation = IsConditionalBranchAndLink<enc> || IsConditionalImmediate<enc>;
+    constexpr auto IsConditionalOperation = IsConditionalBranchAndLink<enc> || 
+                                            IsConditionalImmediate<enc> ||
+                                            IsSelectOperation<enc>;
 
     template<EncodedInstruction enc>
     constexpr auto IsIntegerOperation = (OperationCaresAboutSign<enc> && FlagSet<enc, bits::KindInteger>);
