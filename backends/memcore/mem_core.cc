@@ -62,10 +62,10 @@ InMemoryCore::cycleHandler() {
     }
 }
 
-std::optional<InMemoryCore::TrackedMemoryMappedDevice>
+std::optional<CaptiveMemoryMappedDevice>
 InMemoryCore::findDevice(Address address) noexcept {
     for (auto& device : _memoryMap) {
-        if (device->isMapped() && device->respondsTo(address)) {
+        if (device.respondsTo(address)) {
             return device;
         }
     }
@@ -75,7 +75,7 @@ Ordinal
 InMemoryCore::loadFromMemory(Address address) noexcept {
     auto actualAddress = computeOrdinalAddress(address);
     if (auto device = findDevice(actualAddress); device) {
-        return (*device)->loadFull(actualAddress);
+        return device->loadFull(actualAddress);
     } else {
         return 0;
     }
@@ -84,7 +84,7 @@ QuarterOrdinal
 InMemoryCore::loadQuarterFromMemory(Address address) noexcept {
     auto actualAddress = computeHalfAddress(address);
     if (auto device = findDevice(actualAddress); device) {
-        return (*device)->loadHalf(actualAddress);
+        return device->loadHalf(actualAddress);
     } else {
         return 0;
     }
@@ -93,7 +93,7 @@ InMemoryCore::loadQuarterFromMemory(Address address) noexcept {
 HalfOrdinal
 InMemoryCore::loadHalfFromMemory(Address address) noexcept {
     if (auto device = findDevice(address); device) {
-        return (*device)->loadQuarter(address);
+        return device->loadQuarter(address);
     } else {
         return 0;
     }
@@ -103,7 +103,7 @@ void
 InMemoryCore::storeToMemory(Address address, Ordinal value) noexcept {
     auto computedAddress = computeOrdinalAddress(address);
     if (auto device = findDevice(computedAddress); device) {
-        (*device)->store(computedAddress, value);
+        device->store(computedAddress, value);
     }
 }
 
@@ -111,20 +111,21 @@ void
 InMemoryCore::storeToMemory(Address address, HalfOrdinal value) noexcept {
     auto computedAddress = computeHalfAddress(address);
     if (auto device = findDevice(computedAddress); device) {
-        (*device)->store(computedAddress, value);
+        device->storeHalf(computedAddress, value);
     }
 }
 
 void 
 InMemoryCore::storeToMemory(Address address, QuarterOrdinal value) noexcept {
     if (auto device = findDevice(address); device) {
-        (*device)->store(address, value);
+        device->storeQuarter(address, value);
     }
 }
 
-// void InMemoryCore::storeToMemory(Address address, HalfOrdinal value) noexcept override;
-// void InMemoryCore::storeToMemory(Address address, QuarterOrdinal value) noexcept override;
-
-
+void 
+InMemoryCore::mapDevice(MemoryMappedDevice::Ptr device) noexcept {
+    _memoryMap.emplace_front(device);
+    _memoryMap.front().map();
+}
 
 } // end namespace iris

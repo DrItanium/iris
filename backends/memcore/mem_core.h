@@ -39,28 +39,55 @@
 namespace iris {
 class MemoryMappedDevice {
     public:
+        using Ptr = std::shared_ptr<MemoryMappedDevice>;
+    public:
         MemoryMappedDevice() = default;
         virtual ~MemoryMappedDevice() = default;
         virtual bool respondsTo(Address address) const noexcept = 0;
         virtual Ordinal loadFull(Address address) noexcept = 0;
         virtual QuarterOrdinal loadQuarter(Address address) noexcept = 0;
         virtual HalfOrdinal loadHalf(Address address) noexcept = 0;
-    public:
         virtual void store(Address address, Ordinal value) noexcept = 0;
         virtual void storeHalf(Address address, HalfOrdinal value) noexcept = 0;
         virtual void storeQuarter(Address address, QuarterOrdinal value) noexcept = 0;
+};
+class CaptiveMemoryMappedDevice : public MemoryMappedDevice {
+    public:
+        CaptiveMemoryMappedDevice(const MemoryMappedDevice::Ptr& captive) : _captive(captive) { }
+        ~CaptiveMemoryMappedDevice() override = default;
         constexpr bool isMapped() const noexcept { return _mapped; }
         void map() noexcept { _mapped = true; }
         void unmap() noexcept { _mapped = false; }
+        bool respondsTo(Address a) const noexcept override { 
+            return _mapped && _captive->respondsTo(a); 
+        }
+        Ordinal loadFull(Address address) noexcept override { 
+            return _captive->loadFull(address); 
+        }
+        QuarterOrdinal loadQuarter(Address address) noexcept override { 
+            return _captive->loadQuarter(address); 
+        }
+        HalfOrdinal loadHalf(Address address) noexcept override { 
+            return _captive->loadHalf(address); 
+        }
+        void store(Address address, Ordinal value) noexcept override {
+            return _captive->store(address, value);
+        }
+        void storeQuarter(Address address, QuarterOrdinal value) noexcept override {
+            return _captive->storeQuarter(address, value);
+        }
+        void storeHalf(Address address, HalfOrdinal value) noexcept override {
+            return _captive->storeHalf(address, value);
+        }
     private:
         bool _mapped = false;
+        MemoryMappedDevice::Ptr _captive;
+
 };
 /** 
  * Use ram to denote the different memory spaces
  */
 class InMemoryCore : public Core {
-    public:
-        using TrackedMemoryMappedDevice = std::shared_ptr<MemoryMappedDevice>;
     public:
         InMemoryCore() noexcept;
         ~InMemoryCore() override = default;
@@ -76,14 +103,21 @@ class InMemoryCore : public Core {
         void putRegister(RegisterIndex lower, Integer value) noexcept override {
             _regs[std::to_integer<Byte>(lower)].put(value);
         }
+        void putRegister(RegisterIndex lower, bool value) noexcept override {
+            _regs[std::to_integer<Byte>(lower)].put(value);
+        }
         Ordinal retrieveRegister(RegisterIndex ind, RequestOrdinal) const noexcept override {
             return _regs[std::to_integer<Byte>(ind)].get<Ordinal>();
         }
         Integer retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept override {
-            return _regs[std::to_integer<Byte>(ind)].get<Ordinal>();
+            return _regs[std::to_integer<Byte>(ind)].get<Integer>();
+        }
+        bool retrieveRegister(RegisterIndex ind, RequestBoolean) const noexcept override {
+            return _regs[std::to_integer<Byte>(ind)].get<bool>();
         }
         void setIP(Integer value) noexcept override { _ip.put(value); }
         void stopExecution() noexcept override { _executing = false; }
+        void mapDevice(MemoryMappedDevice::Ptr device) noexcept;
     protected:
         void advanceIP() noexcept override {
             ++_ip;
@@ -98,7 +132,7 @@ class InMemoryCore : public Core {
             return _advanceIP;
         }
     private:
-        std::optional<TrackedMemoryMappedDevice> findDevice(Address address) noexcept;
+        std::optional<CaptiveMemoryMappedDevice> findDevice(Address address) noexcept;
         static constexpr Address computeOrdinalAddress(Address addr) noexcept {
             Address mask = ~0b11;
             return addr & mask;
@@ -122,7 +156,7 @@ class InMemoryCore : public Core {
     private:
         RegisterBank _regs;
         Register _ip;
-        std::list<TrackedMemoryMappedDevice> _memoryMap;
+        std::list<CaptiveMemoryMappedDevice> _memoryMap;
         bool _executing = false;
         bool _advanceIP = true;
         Word _terminateCell = 0;
