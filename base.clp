@@ -76,3 +76,40 @@
   (bitwise-and (bitwise-and ?first 
                             ?second)
                ?third))
+(defmethod MAIN::arg0-position
+  ((?value INTEGER))
+  (left-shift (bitwise-and ?value
+                           255)
+              16))
+(defmethod MAIN::arg1-position
+  ((?value INTEGER))
+  (left-shift (bitwise-and ?value
+                           255)
+              8))
+(defmethod MAIN::arg0-position
+  ((?value INTEGER))
+  (bitwise-and ?value
+               255))
+
+(defmethod MAIN::make-32bit
+  ((?value INTEGER))
+  (bitwise-and ?value 
+               4294967295)) 
+
+(defmethod MAIN::encode-instruction
+ ((?opcode INTEGER)
+  (?arg0 INTEGER)
+  (?arg1 INTEGER)
+  (?arg2 INTEGER))
+ (make-32bit (bitwise-or ?opcode
+                         (arg0-position ?arg0)
+                         (arg1-position ?arg1)
+                         (arg2-position ?arg2))))
+(defmethod MAIN::encode-instruction
+ ((?opcode INTEGER)
+  (?arg0 INTEGER)
+  (?imm16 INTEGER))
+ (make-32bit (bitwise-or ?opcode
+                         (arg0-position ?arg0)
+                         (bitwise-and 65535
+                                      ?imm16))))
