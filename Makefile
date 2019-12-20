@@ -2,8 +2,7 @@ include config.mk
 
 CORE_OBJS := iris.o
 
-SIM_OBJS := backends/memcore/IODevices.o \
-	backends/memcore/mem_core.o \
+SIM_OBJS := backends/memcore/mem_core.o \
 	backends/memcore/exceptions.o
 	
 
@@ -66,16 +65,14 @@ clean:
 # generated via g++ -MM -std=c++17 *.cc
 
 
-IODevices.o: backends/memcore/IODevices.cc backends/memcore/IODevices.h \
- types.h mem_bank.h types.h
 exceptions.o: backends/memcore/exceptions.cc \
  backends/memcore/exceptions.h types.h
 mem_core.o: backends/memcore/mem_core.cc types.h \
  backends/memcore/mem_core.h iris.h types.h register.h mem_bank.h \
- opcodes.h InstructionFormats.def backends/memcore/IODevices.h mem_bank.h \
+ opcodes.h InstructionFormats.def mem_bank.h \
  register.h opcodes.h
 iris.o: iris.cpp types.h iris.h register.h mem_bank.h opcodes.h \
  InstructionFormats.def
 opcode_tester.o: cmd/opcode_tester.cc iris.h types.h register.h mem_bank.h \
  opcodes.h InstructionFormats.def backends/memcore/mem_core.h iris.h \
- backends/memcore/IODevices.h types.h mem_bank.h register.h encoding.h
+ types.h mem_bank.h register.h encoding.h
