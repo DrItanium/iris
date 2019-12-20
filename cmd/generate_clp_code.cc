@@ -50,7 +50,7 @@ Generator floating(T v) noexcept {
 }
 
 template<typename ... Args>
-Generator makeList(Args&& ... args) noexcept {
+Generator expression(Args&& ... args) noexcept {
     return [args...](auto& out) { 
         out << "(";
         (std::invoke(args, out), ...);
@@ -59,9 +59,9 @@ Generator makeList(Args&& ... args) noexcept {
 }
 Generator 
 pair(Generator first, Generator second) noexcept {
-    return makeList(first, second);
+    return expression(first, second);
 }
-Generator makeList() noexcept { 
+Generator expression() noexcept { 
     return [](auto& out) noexcept { out << "() " << std::endl; }; 
 }
 Generator 
@@ -76,9 +76,9 @@ globalDeclaration(const std::string& name, const std::string& value) noexcept {
 template<typename ... Args>
 Generator
 defglobal(const std::string& moduleName, Args&& ... decls) noexcept {
-    return makeList(symbol("defglobal"),
-                    symbol(moduleName),
-                    decls...);
+    return expression(symbol("defglobal"),
+            symbol(moduleName),
+            decls...);
 }
 Generator nil() noexcept {
     return [](auto&) { };
@@ -89,18 +89,29 @@ Generator newline() noexcept {
 template<typename ... Args>
 Generator
 defmethod(const std::string& name, Generator args, Args&& ... body) noexcept {
-    return makeList(symbol("deffmethod"), symbol(name), newline(),
-                    args, newline(),
-                    std::forward<Args>(body)...);
+    return expression(symbol("defmethod"), symbol(name), newline(),
+            args, newline(),
+            std::forward<Args>(body)...);
 }
+template<typename ... Rest>
+Generator
+methodArgument(Generator name, Generator first, Rest&& ... rest) noexcept {
+    return expression(name, first, std::forward<Rest>(rest)...);
+}
+
+Generator
+methodArgument(Generator name) noexcept {
+    return name;
+}
+
 template<typename ... Args>
 Generator
 deffunction(const std::string& name, const std::string& description, Generator args, Args&&... body) noexcept {
-    return makeList(symbol("deffunction"),
-                    symbol(name), newline(),
-                    description.empty() ? nil() : string(description), newline(),
-                    args, newline(),
-                    std::forward<Args>(body)...);
+    return expression(symbol("deffunction"),
+            symbol(name), newline(),
+            description.empty() ? nil() : string(description), newline(),
+            args, newline(),
+            std::forward<Args>(body)...);
 }
 
 template<typename ... Args>
@@ -109,7 +120,7 @@ deffunction(const std::string& name, Generator args, Args&& ... body) noexcept {
     return deffunction(name, "", args, std::forward<Args>(body)...);
 }
 
-            
+
 template<typename ... Args>
 Generator
 commentedLines(Args&& ... args) noexcept {
@@ -119,14 +130,14 @@ commentedLines(Args&& ... args) noexcept {
 template<typename ... Args>
 Generator
 createMultifield(Args&& ... args) noexcept {
-    return makeList(symbol("create$"), std::forward<Args>(args)...);
+    return expression(symbol("create$"), std::forward<Args>(args)...);
 }
 
 template<typename ... Args>
 Generator
 doFunction(const std::string& operation, Args&& ... args) noexcept {
-    return makeList(symbol(operation),
-                    std::forward<Args>(args)...);
+    return expression(symbol(operation),
+            std::forward<Args>(args)...);
 }
 
 int main(int, char**) {
@@ -163,44 +174,127 @@ int main(int, char**) {
     auto arg0Var = variable("arg0");
     auto arg1Var = variable("arg1");
     auto arg2Var = variable("arg2");
+    auto imm16Var = variable("imm16");
+    auto intType = symbol("INTEGER");
     deffunction("MAIN::arg0-position",
-                "Move 8-bit quantity into arg0 position",
-                makeList(arg0Var),
-                doFunction("bitwise-and", 
-                    integer(0x00FF'0000), 
-                    doFunction("left-shift",
-                        arg0Var,
-                        integer(16))))(std::cout);
+            "Move 8-bit quantity into arg0 position",
+            expression(arg0Var),
+            doFunction("bitwise-and", 
+                integer(0x00FF'0000), 
+                doFunction("left-shift",
+                    arg0Var,
+                    integer(16))))(std::cout);
     newline()(std::cout);
     deffunction("MAIN::arg1-position",
-                "Move 8-bit quantity into arg1 position",
-                makeList(arg1Var),
-                doFunction("bitwise-and", 
-                    integer(0x0000'FF00), 
-                    doFunction("left-shift",
-                        arg1Var,
-                        integer(8))))(std::cout);
+            "Move 8-bit quantity into arg1 position",
+            expression(arg1Var),
+            doFunction("bitwise-and", 
+                integer(0x0000'FF00), 
+                doFunction("left-shift",
+                    arg1Var,
+                    integer(8))))(std::cout);
     newline()(std::cout);
     deffunction("MAIN::arg2-position",
-                "Move 8-bit quantity into arg1 position",
-                makeList(arg1Var),
-                doFunction("bitwise-and", 
-                    integer(0x0000'00FF), 
-                    arg1Var))(std::cout);
+            "Move 8-bit quantity into arg1 position",
+            expression(arg1Var),
+            doFunction("bitwise-and", 
+                integer(0x0000'00FF), 
+                arg1Var))(std::cout);
     newline()(std::cout);
-    deffunction("MAIN::encode-instruction",
-            makeList(opcodeVar, 
-                arg0Var, 
-                arg1Var, 
-                arg2Var),
-            doFunction("bitwise-or", 
+    auto first = variable("first"),
+         second = variable("second"),
+         third = variable("third"),
+         fourth = variable("fourth"),
+         rest = multifieldVariable("rest");
+    defmethod("MAIN::bitwise-or", 
+            expression(methodArgument(first, intType),
+                       methodArgument(second, intType), 
+                       methodArgument(third, intType),
+                       methodArgument(fourth, intType)),
+            doFunction("bitwise-or",
+                doFunction("bitwise-or", first, second),
+                doFunction("bitwise-or", third, fourth)))(std::cout);
+    newline()(std::cout);
+    defmethod("MAIN::bitwise-or", 
+            expression(methodArgument(first, intType),
+                       methodArgument(second, intType), 
+                       methodArgument(third, intType)),
+            doFunction("bitwise-or",
+                doFunction("bitwise-or", first, second),
+                third))(std::cout);
+    newline()(std::cout);
+
+    defmethod("MAIN::bitwise-or",
+              expression(methodArgument(first, intType),
+                         methodArgument(second, intType),
+                         rest),
+              doFunction("bitwise-or",
                 doFunction("bitwise-or", 
-                    doFunction("arg0-position", arg0Var),
-                    doFunction("bitwise-or",
-                        doFunction("arg1-position", arg1Var),
-                        doFunction("arg2-position", arg2Var))),
-                opcodeVar))(std::cout);
+                    first, 
+                    second),
+                doFunction("expand$", rest)));
     newline()(std::cout);
- 
+
+    defmethod("MAIN::bitwise-and", 
+            expression(methodArgument(first, intType),
+                       methodArgument(second, intType), 
+                       methodArgument(third, intType),
+                       methodArgument(fourth, intType)),
+            doFunction("bitwise-and",
+                doFunction("bitwise-and", first, second),
+                doFunction("bitwise-and", third, fourth)))(std::cout);
+    newline()(std::cout);
+    defmethod("MAIN::bitwise-and", 
+            expression(methodArgument(first, intType),
+                       methodArgument(second, intType), 
+                       methodArgument(third, intType)),
+            doFunction("bitwise-and",
+                doFunction("bitwise-and", first, second),
+                third))(std::cout);
+    newline()(std::cout);
+
+    defmethod("MAIN::bitwise-and",
+              expression(methodArgument(first, intType),
+                         methodArgument(second, intType),
+                         rest),
+              doFunction("bitwise-and",
+                doFunction("bitwise-and", 
+                    first, 
+                    second),
+                doFunction("expand$", rest)));
+    newline()(std::cout);
+
+    deffunction("MAIN::make32-bits",
+            "Make sure that the integer value is 32-bits wide",
+            expression(first),
+            doFunction("bitwise-and", 
+                first,
+                integer(0xFFFF'FFFF)))(std::cout);
+    newline()(std::cout);
+    defmethod("MAIN::encode-instruction", 
+            expression(methodArgument(opcodeVar, intType),
+                methodArgument(arg0Var, intType),
+                methodArgument(arg1Var, intType),
+                methodArgument(arg2Var, intType)),
+            doFunction("make32-bits",
+                doFunction("bitwise-or", 
+                    opcodeVar,
+                    doFunction("arg0-position", arg0Var),
+                    doFunction("arg1-position", arg1Var),
+                    doFunction("arg2-position", arg2Var))))(std::cout);
+    newline()(std::cout);
+    defmethod("MAIN::encode-instruction", 
+            expression(methodArgument(opcodeVar, intType),
+                methodArgument(arg0Var, intType),
+                methodArgument(imm16Var, intType)),
+            doFunction("make32-bits",
+                doFunction("bitwise-or",
+                    opcodeVar,
+                    doFunction("arg0-position", arg0Var),
+                    doFunction("bitwise-and", 
+                        integer(0x0000'FFFF),
+                        imm16Var))))(std::cout);
+    newline()(std::cout);
+
     return 0;
 }
