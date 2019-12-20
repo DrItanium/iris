@@ -158,16 +158,29 @@ namespace iris {
     constexpr auto arithmeticOperationIs(EncodedInstruction enc) noexcept {
         return getArithmeticOperation(enc) == compare;
     }
-    constexpr auto isDivideOperation(EncodedInstruction enc) noexcept {
-        return arithmeticOperationIs<bits::OperationDivide>(enc);
+    constexpr auto getBitwiseOperation(EncodedInstruction enc) noexcept {
+        return extractField<bits::BitwiseOperationMask>(enc);
     }
-    constexpr auto isRemainderOperation(EncodedInstruction enc) noexcept {
-        return arithmeticOperationIs<bits::OperationRemainder>(enc);
+    template<EncodedInstruction compare>
+    constexpr auto bitwiseOperationIs(EncodedInstruction enc) noexcept {
+        return getBitwiseOperation(enc) == compare;
     }
+    template<EncodedInstruction enc> constexpr auto IsErrorOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationError>;
+    template<EncodedInstruction enc> constexpr auto IsAddOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationAdd>(enc);
+    template<EncodedInstruction enc> constexpr auto IsSubtractOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationSubtract>(enc);
+    template<EncodedInstruction enc> constexpr auto IsMultiplyOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationMultiply>(enc);
+    template<EncodedInstruction enc> constexpr auto IsDivideOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationDivide>(enc);
+    template<EncodedInstruction enc> constexpr auto IsRemainderOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationRemainder>(enc);
+    template<EncodedInstruction enc> constexpr auto IsShiftLeftOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationShiftLeft>(enc);
+    template<EncodedInstruction enc> constexpr auto IsShiftRightOperation = IsArithmeticInstruction<enc> && arithmeticOperationIs<bits::OperationShiftRight>(enc);
+    template<EncodedInstruction enc> constexpr auto IsNotOperation = IsBitwiseInstruction<enc> && arithmeticOperationIs<bits::OperationNot>(enc);
+    template<EncodedInstruction enc> constexpr auto IsAndOperation = IsBitwiseInstruction<enc> && arithmeticOperationIs<bits::OperationAnd>(enc);
+    template<EncodedInstruction enc> constexpr auto IsOrOperation = IsBitwiseInstruction<enc> && arithmeticOperationIs<bits::OperationOr>(enc);
+    template<EncodedInstruction enc> constexpr auto IsXorOperation = IsBitwiseInstruction<enc> && arithmeticOperationIs<bits::OperationXor>(enc);
     template<EncodedInstruction enc>
     constexpr auto OperationCaresAboutSign = (IsArithmeticInstruction<enc> || IsCompareInstruction<enc>);
     template<EncodedInstruction enc>
-    constexpr auto Src2CannotBeZero = isDivideOperation(enc) || isRemainderOperation(enc);
+    constexpr auto Src2CannotBeZero = IsDivideOperation<enc> || IsRemainderOperation<enc>;
     template<EncodedInstruction enc>
     constexpr auto NotTheResult = IsBitwiseInstruction<enc> && FlagSet<enc, bits::NotTheResult>;
     template<EncodedInstruction enc>

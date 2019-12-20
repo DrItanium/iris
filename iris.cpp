@@ -54,20 +54,15 @@ Core::storeToMemory(Address address, QuarterInteger value) noexcept {
     storeToMemory(address, conv.output);
 }
 void
-Core::cycle() {
-    // load an instruction from the current instruction pointer
-    invoke(loadCode(this->getIP()));
-    if (shouldAdvanceIP()) {
-        advanceIP();
-    }
-    allowAdvanceIP();
-}
-
-void
 Core::run() {
     resetExecutionStatus();
     do {
+        invoke(load<EncodedInstruction>(this->getIP()));
         cycleHandler();
+        if (shouldAdvanceIP()) {
+            advanceIP();
+        }
+        allowAdvanceIP();
     } while (getExecutingStatus());
 }
 

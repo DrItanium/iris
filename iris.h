@@ -42,28 +42,6 @@ class Core {
         virtual ~Core() = default;
         void run();
         void terminateCycle();
-    public: 
-        template<typename A>
-        Address extractAddress(A address, Address offset = 0) noexcept {
-            if constexpr (std::is_same_v<A, Address>) {
-                return address + offset;
-            } else if constexpr (std::is_same_v<A, RegisterIndex>) {
-                return getRegisterValue(address) + offset;
-            } else {
-                static_assert(false_v<A>, "Bad address kind!");
-            }
-        }
-
-        template<typename T>
-        Word extractValue(T value) noexcept {
-            if constexpr (std::is_same_v<T, Word>) {
-                return value;
-            } else if constexpr (std::is_same_v<T, RegisterIndex>) {
-                return getRegisterValue<Word>(value);
-            } else {
-                static_assert(false_v<T>, "Bad value kind!");
-            }
-        }
     protected:
         virtual Ordinal loadFromMemory(Address address) noexcept = 0;
         virtual void storeToMemory(Address address, Ordinal value) noexcept = 0;
@@ -112,12 +90,16 @@ class Core {
         }
 
         inline void updateLinkRegister(RegisterIndex index) noexcept {
-            setRegisterValue(index, static_cast<Ordinal>(getIP()  + 1));
+            putRegister(index, (((getIP() >> 2) + 1) << 2));
         }
+        void branchTo(QuarterInteger offset) noexcept;
+        void branchTo(HalfInteger offset) noexcept;
+        void branchTo(Address exact) noexcept;
+        void branchTo(RegisterIndex exact) noexcept;
         template<typename T>
         void branchTo(T addr) noexcept {
             if constexpr (std::is_same_v<T, RegisterIndex>) {
-                setIP(getRegisterValue<Ordinal>(addr));
+                setIP(retrieveRegister(addr, RequestOrdinal{}));
             } else if constexpr (std::is_unsigned_v<T>) {
                 setIP(static_cast<Ordinal>(addr));
             } else if constexpr (std::is_signed_v<T>) {
@@ -130,7 +112,7 @@ class Core {
         }
         template<EncodedInstruction T, std::enable_if_t<IsBranchInstruction<T>, int> = 0> 
         void invoke(const Instruction& s) {
-            if constexpr (IsBranchImmediateInstruction<T>) {
+            if constexpr (IsImmediateBranch<T>) {
                 auto offset = s.getImm16();
                 auto reg = s.getArg0();
                 auto performBranch = true;
@@ -141,13 +123,9 @@ class Core {
                     if constexpr (UsesLinkRegister<T>) {
                         updateLinkRegister(reg);
                     }
-                    if constexpr (IsRelativeJump<T>) {
-                        branchTo<Integer>(offset);
-                    } else {
-                        branchTo<Ordinal>(offset);
-                    }
+                    branchTo(static_cast<HalfInteger>(offset));
                 }
-            } else if constexpr (IsBranchRegisterInstruction<T>) {
+            } else if constexpr (IsRegisterBranch<T>) {
                 constexpr auto mask = BranchMask<T>;
                 if constexpr (auto pattern = getRegisterValue<Ordinal>(s.getArg1()); IsConditionalBranchAndLink<T>) {
                     // need to now extract the mask as we will and it with the 
@@ -169,7 +147,7 @@ class Core {
             }
         }
 
-        template<EncodedInstruction T, std::enable_if_t<IsCompareOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsCompareInstruction<T>, int> = 0>
         void invoke(const Instruction& s) {
             using D = DeterminedNumericType<T>;
             iris::Word result = false;
@@ -181,37 +159,17 @@ class Core {
             } else {
                 result = 0b001;
             }
-            setRegisterValue(s.getArg0(), result);
+            putRegister(s.getArg0(), result);
         }
-        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
         void store(Address addr, RegisterIndex value) {
-            if constexpr (IsSpaceCode<T>) {
-                storeCode(addr, value);
-            } else if constexpr (auto lower = getRegisterValue<Ordinal>(value); IsSpaceStack<T>) {
-                storeStack(addr, lower);
-            } else if constexpr (IsSpaceIO<T>) {
-                storeIO(addr, lower);
-            } else if constexpr (IsSpaceData<T>) {
-                storeData(addr, lower);
-            } else {
-                static_assert(false_v<T>, "Unknown memory space!");
-            }
+            /// @todo finish this
         }
-        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
         decltype(auto) load(Address addr) {
-            if constexpr (IsSpaceCode<T>) {
-                return loadCode(addr);
-            } else if constexpr (IsSpaceStack<T>) {
-                return loadStack(addr);
-            } else if constexpr (IsSpaceData<T>) {
-                return loadData(addr);
-            } else if constexpr (IsSpaceIO<T>) {
-                return loadIO(addr);
-            } else {
-                static_assert(false_v<T>, "Unknown memory space!");
-            }
+            /// @todo finish this
         }
-        template<EncodedInstruction T, std::enable_if_t<IsMemoryOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsMemoryInstruction<T>, int> = 0>
         void invoke(const Instruction& input) {
             if constexpr (!IsLoadOperation<T> && !IsStoreOperation<T>) {
                 static_assert(false_v<T>, "Unimplemented memory operation!");
@@ -226,18 +184,14 @@ class Core {
                 if constexpr (IsStoreOperation<T>) {
                     store<T>(address, input.getArg0());
                 } else if constexpr (IsLoadOperation<T>) {
-                    if constexpr (IsSpaceCode<T>) {
-                        setDoubleRegisterValue(input.getArg0(), load<T>(address));
-                    } else {
-                        setRegisterValue(input.getArg0(), load<T>(address));
-                    }
+                    setRegisterValue(input.getArg0(), load<T>(address));
                 } else {
                     // redundant but complete solution
                     static_assert(false_v<T>, "Invalid memory operation kind! Should never get here!");
                 }
             }
         }
-        template<EncodedInstruction T, std::enable_if_t<IsArithmeticOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsArithmeticInstruction<T>, int> = 0>
         void invoke(const Instruction& s) {
             if constexpr (IsErrorOperation<T>) {
                 // Error is considered an arithmetic operation
@@ -271,7 +225,7 @@ class Core {
                 this->setRegisterValue(s.getArg0(), static_cast<D>(result));
             }
         }
-        template<EncodedInstruction T, std::enable_if_t<IsLogicalOperation<T>, int> = 0>
+        template<EncodedInstruction T, std::enable_if_t<IsBitwiseInstruction<T>, int> = 0>
         void invoke(const Instruction& s) {
             Ordinal computation = getRegisterValue(s.getArg1());
             if constexpr (IsNotOperation<T>) {
@@ -301,40 +255,30 @@ class Core {
         }
 
 
-    protected:
-        void cycle();
     public:
         void invoke(EncodedInstruction bits);
     public:
         virtual void putRegister(RegisterIndex lower, Ordinal value) noexcept = 0;
         virtual void putRegister(RegisterIndex lower, Integer value) noexcept = 0;
-        void putRegister(RegisterIndex lower, bool value) noexcept {
-            putRegister(lower, static_cast<Ordinal>(value ? 0xFFFF : 0x0000));
-        }
+        virtual void putRegister(RegisterIndex lower, bool value) noexcept = 0;
         class RequestOrdinal { };
         class RequestInteger { };
         class RequestBoolean { };
+        template<typename T>
+        using RequestType = std::conditional_t<
+        std::is_same_v<std::decay_t<T>, Integer>, RequestInteger,
+            std::conditional_t<std::is_same_v<T, bool>, RequestBoolean, RequestOrdinal>>;
         virtual Ordinal retrieveRegister(RegisterIndex ind, RequestOrdinal) const noexcept = 0;
         virtual Integer retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept = 0;
-        bool retrieveRegister(RegisterIndex ind, RequestBoolean) const noexcept { return retrieveRegister(ind, RequestOrdinal{}) != 0; }
+        virtual bool retrieveRegister(RegisterIndex ind, RequestBoolean) const noexcept = 0;
     public:
-        void setRegisterValue(RegisterIndex idx, Integer value) noexcept {
-            putRegister(idx, value);
+        template<typename T>
+        void setRegisterValue(RegisterIndex ind, T value) noexcept { 
+            putRegister(ind, value); 
         }
-        void setRegisterValue(RegisterIndex idx, Ordinal value) noexcept {
-            putRegister(idx, value);
-        }
-        void setRegisterValue(RegisterIndex idx, bool value) noexcept {
-            putRegister(idx, static_cast<Ordinal>(value ? 0xFFFF : 0x0000));
-        }
-        template<typename T = Ordinal>
-        T getRegisterValue(RegisterIndex idx) const noexcept {
-            return retrieveRegister(idx, 
-                    std::conditional_t<std::is_same_v<T, Integer>, RequestInteger,
-                    std::conditional_t<
-                    std::is_same_v<T, bool>,
-                    RequestBoolean,
-                    RequestOrdinal>> { });
+        template<typename T>
+        T getRegisterValue(RegisterIndex ind) noexcept {
+            return retrieveRegister(ind, RequestType<T> { });
         }
     public:
         virtual Ordinal getTerminateCell() const noexcept = 0;
