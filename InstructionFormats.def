@@ -24,7 +24,7 @@ Operation(ShiftRightInteger,                         GroupArithmetic | bits::Ope
 //-------------------------------------------------------------------------------------------------
 Operation(BitwiseNot,                                GroupBitwise    | bits::OperationNot)
 Operation(Move,                                      GroupBitwise    | bits::OperationNot | bits::NotTheResult)
-Operation(LoadImmediate,                             GroupBitwise    | bits::OperationNot | bits::NotTheResult | bits::ArgumentIsImm16)
+Operation(LoadImmediate16,                           GroupBitwise    | bits::OperationNot | bits::NotTheResult | bits::ArgumentIsImm16)
 Operation(BitwiseAnd,                                GroupBitwise    | bits::OperationAnd)
 Operation(BitwiseNand,                               GroupBitwise    | bits::OperationAnd | bits::NotTheResult)
 Operation(BitwiseOr,                                 GroupBitwise    | bits::OperationOr)

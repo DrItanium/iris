@@ -1,0 +1,9 @@
+Instruction Descriptions
+========================
+
+Iris is a 32-bit architecture with 256 general purpose registers, the lower 17
+registers [0,16] are hardwired to their respective index to reduce the need for
+immediate forms for many instructions
+
+
+

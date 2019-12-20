@@ -164,10 +164,11 @@ namespace iris {
         //-----------------------------------------------------------------------------
         // Memory
         //-----------------------------------------------------------------------------
-        // format is: 0b010,L,A,SS
+        // format is: 0b010,L,A,XX
         // where 
         // L: Load? else Store
         // A: Arg1 Is Imm? else register + (offset imm)
+        // XX: bits with special meaning depending on load or store
         constexpr auto LoadOperation          = 0b00001000_opcode;
         constexpr auto StoreOperation         = 0b00000000_opcode; 
         constexpr auto Arg1IsImm              = 0b00000100_opcode; 

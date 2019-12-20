@@ -1,4 +1,6 @@
 /**
+ * @file
+ * Types for the 32-bit iris risc architecture
  * @copyright 
  * iris
  * Copyright (c) 2013-2019, Joshua Scoggins and Contributors
@@ -49,24 +51,21 @@ struct overloaded : Ts...
 
 template<typename ... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
-using Ordinal = uint16_t;
-using Integer = int16_t;
+using Ordinal = uint32_t;
+using Integer = int32_t;
 using UnsignedWord = Ordinal;
 using SignedWord = Integer;
-using LongOrdinal = uint32_t;
-using LongInteger = int32_t;
-using UnsignedDoubleWord = LongOrdinal;
-using SignedDoubleWord = LongInteger;
 using Word = Ordinal;
-using DoubleWord = LongOrdinal;
-using HalfOrdinal = uint8_t;
-using HalfInteger = int8_t;
-using Byte = HalfOrdinal;
+using HalfOrdinal = uint16_t;
+using HalfInteger = int16_t;
+using QuarterOrdinal = uint8_t;
+using QuarterInteger = int8_t;
+using Byte = QuarterOrdinal;
 using RegisterIndex = std::byte;
 using RegisterIndexNumericType = std::underlying_type_t<RegisterIndex>;
 using Address = Ordinal;
 using Offset16 = Integer;
-using EncodedInstruction = LongOrdinal; 
+using EncodedInstruction = Ordinal; 
 
 template<typename T, typename R, T mask, T shift>
 constexpr R decodeBits(T value) noexcept {
@@ -84,31 +83,12 @@ constexpr T encodeBits(T input, R value) noexcept {
     }
     return static_cast<T>((input & ~mask) | (component & mask));
 }
-constexpr Ordinal getUpperHalf(LongOrdinal word) noexcept {
-    return decodeBits<decltype(word), Ordinal, 0xFFFF'0000, 16>(word);
-}
-constexpr Ordinal getLowerHalf(LongOrdinal word) noexcept {
-    return decodeBits<decltype(word), Ordinal, 0x0000'FFFF, 0>(word);
-}
 
-constexpr HalfOrdinal getUpperHalf(Ordinal word) noexcept {
+constexpr QuarterOrdinal getUpperHalf(Ordinal word) noexcept {
     return decodeBits<decltype(word), HalfOrdinal, 0xFF00, 8>(word);
 }
-constexpr HalfOrdinal getLowerHalf(Ordinal word) noexcept {
+constexpr QuarterOrdinal getLowerHalf(Ordinal word) noexcept {
     return decodeBits<decltype(word), HalfOrdinal, 0x00FF, 0>(word);
-}
-constexpr LongOrdinal setUpperHalf(LongOrdinal word, Ordinal value) noexcept {
-    return encodeBits<decltype(word), decltype(value), 0xFFFF'0000, 16>(word, value);
-}
-constexpr LongOrdinal setLowerHalf(LongOrdinal word, Ordinal value) noexcept {
-    return encodeBits<decltype(word), decltype(value), 0x0000'FFFF, 0>(word, value);
-}
-
-constexpr LongOrdinal makeLongOrdinal(Ordinal lower, Ordinal upper) noexcept {
-    return static_cast<LongOrdinal>(lower) | (static_cast<LongOrdinal>(upper) << 16);
-}
-constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
-    return makeLongOrdinal(lower, upper);
 }
 
 constexpr auto RegisterCount = (0xFF + 1);
@@ -116,16 +96,9 @@ constexpr auto RegisterCount = (0xFF + 1);
 
 } // end namespace iris
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
-constexpr iris::RegisterIndex operator "" _dreg(unsigned long long int conversion) noexcept { return static_cast<iris::RegisterIndex>(conversion) & static_cast<iris::RegisterIndex>(0b1111110); }
-constexpr iris::Integer operator "" _sw(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
-constexpr iris::Integer operator "" _simm16(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
-constexpr iris::Integer operator "" _s16(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
+constexpr iris::Integer operator "" _int(unsigned long long int conv) noexcept { return static_cast<iris::Integer>(conv); }
 constexpr iris::Address operator "" _addr(unsigned long long int conversion) noexcept { return static_cast<iris::Address>(conversion); }
-constexpr iris::Ordinal operator "" _uw(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
-constexpr iris::Ordinal operator "" _imm16(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
-constexpr iris::Ordinal operator "" _u16(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
-constexpr iris::LongOrdinal operator "" _udw(unsigned long long int conversion) noexcept { return static_cast<iris::LongOrdinal>(conversion); }
-constexpr iris::LongInteger operator "" _sdw(unsigned long long int conversion) noexcept { return static_cast<iris::LongInteger>(conversion); }
+constexpr iris::Ordinal operator "" _ord(unsigned long long int conversion) noexcept { return static_cast<iris::Ordinal>(conversion); }
 
 
 
