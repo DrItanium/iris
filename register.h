@@ -106,12 +106,12 @@ class Register final {
             SignedType _signedValue;
         } _storage;
 };
-constexpr auto RegisterCount = (0xFF + 1);
+
+using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 
 template<typename R>
 class GenericDoubleRegister final {
     public:
-#ifdef HAS_STL
         static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
             if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
                 return {reg[std::to_integer<Byte>(a)],
@@ -136,7 +136,6 @@ class GenericDoubleRegister final {
         static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a) noexcept {
             return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
         }
-#endif
     public:
         constexpr GenericDoubleRegister(R& lower, R& upper) : _lower(lower), _upper(upper) { }
         constexpr GenericDoubleRegister(const R& lower, const R& upper) : _lower(const_cast<R&>(lower)), _upper(const_cast<R&>(upper)) { }

@@ -11,15 +11,19 @@ IRIS_ARCHIVE := libiris.a
 IRIS_SIM_ARCHIVE := libiris_memcore.a
 
 IRIS_TESTER_OBJS := cmd/opcode_tester.o
+IRIS_CLP_GEN_CMD_OBJS := cmd/generate_clp_code.o
 
 IRIS_TESTER := iris_test
+IRIS_CLP_GEN_CMD := iris_generate_clp_code
 
 OBJS := $(CORE_OBJS) \
 		$(IRIS_TESTER_OBJS) \
-		$(SIM_OBJS)
+		$(SIM_OBJS) \
+		$(IRIS_CLP_GEN_CMD_OBJS)
 PROGS := $(IRIS_ARCHIVE) \
 	     $(IRIS_TESTER) \
-		 $(IRIS_SIM_ARCHIVE)
+		 $(IRIS_SIM_ARCHIVE) \
+		 $(IRIS_CLP_GEN_CMD)
 
 
 all: options $(PROGS)
@@ -42,6 +46,10 @@ $(IRIS_SIM_ARCHIVE): $(SIM_OBJS)
 $(IRIS_TESTER): $(IRIS_ARCHIVE) $(IRIS_SIM_ARCHIVE) $(IRIS_TESTER_OBJS)
 	@echo LD $@
 	@${CXX} -o ${IRIS_TESTER} ${LDFLAGS} ${IRIS_TESTER_OBJS} ${IRIS_ARCHIVE} ${IRIS_SIM_ARCHIVE}
+
+$(IRIS_CLP_GEN_CMD): $(IRIS_CLP_GEN_CMD_OBJS)
+	@echo LD $@
+	@${CXX} -o ${IRIS_CLP_GEN_CMD} ${LDFLAGS} ${IRIS_CLP_GEN_CMD_OBJS}
 
 .cc.o :
 	@echo CXX $<

@@ -111,6 +111,8 @@ constexpr iris::DoubleWord makeDoubleWord(Word lower, Word upper) noexcept {
     return makeLongOrdinal(lower, upper);
 }
 
+constexpr auto RegisterCount = (0xFF + 1);
+
 
 } // end namespace iris
 constexpr iris::RegisterIndex operator "" _reg(unsigned long long int conversion) noexcept { return iris::RegisterIndex{static_cast<iris::RegisterIndexNumericType>(conversion)}; }
