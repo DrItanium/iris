@@ -153,37 +153,40 @@ namespace iris {
         //-----------------------------------------------------------------------------
         // Memory
         //-----------------------------------------------------------------------------
-        // format is: 0b010,L,A,XX
-        // where 
-        // L: Load? else Store
-        // A: Arg1 Is Imm? else register + (offset imm)
-        // XX: bits with special meaning depending on load or store
-        constexpr auto LoadOperation          = 0b00001000_opcode;
-        constexpr auto StoreOperation         = 0b00000000_opcode; 
-        constexpr auto Arg1IsImm              = 0b00000100_opcode; 
-        constexpr auto Arg1IsRegister         = 0b00000000_opcode; 
-        constexpr auto SpaceMask              = 0b00000011_opcode;
+        constexpr auto LoadOperation            = 0b000'1'00'0'0_opcode;
+        constexpr auto StoreOperation           = 0b000'0'00'0'0_opcode;
+        constexpr auto MemoryWidthMask          = 0b000'0'11'0'0_opcode;
+        constexpr auto MemoryWidthWord          = 0b000'0'00'0'0_opcode;
+        constexpr auto MemoryWidthHalf          = 0b000'0'01'0'0_opcode;
+        constexpr auto MemoryWidthByte          = 0b000'0'10'0'0_opcode;
+        constexpr auto MemoryWidthImmediate16   = 0b000'0'11'0'0_opcode;
+        constexpr auto MemoryWidthReserved      = 0b000'0'11'0'0_opcode;
+        constexpr auto DoNotUpdateSource        = 0b000'0'00'0'0_opcode;
+        constexpr auto UpdateSource             = 0b000'0'00'1'0_opcode;
+        constexpr auto TreatArg2AsSignedImm8    = 0b000'0'00'0'0_opcode;
+        constexpr auto TreatArg2AsRegisterIndex = 0b000'0'00'0'1_opcode;
+        constexpr auto DoNotShiftImmediateBy16  = 0b000'0'00'0'0_opcode;
+        constexpr auto ShiftImmediateBy16       = 0b000'0'00'1'0_opcode;
     } // end namespace bits
-    template<EncodedInstruction enc>
-    constexpr auto ArgumentIsImm16 = (IsBitwiseInstruction<enc> && FlagSet<enc, bits::ArgumentIsImm16>) ||
-                                     (IsMemoryInstruction<enc> && FlagSet<enc, bits::Arg1IsImm>);
     template<EncodedInstruction enc>
     constexpr auto IsLoadOperation = IsMemoryInstruction<enc> && FlagSet<enc, bits::LoadOperation>;
     template<EncodedInstruction enc>
     constexpr auto IsStoreOperation = IsMemoryInstruction<enc> && FlagClear<enc, bits::LoadOperation>;
-#define X(op, value) \
-    namespace bits { \
-        constexpr auto Space ## op = value; \
-    } \
-    template<EncodedInstruction enc> \
-    constexpr auto IsSpace ## op = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::SpaceMask, bits::Space ## op >; \
-    template<EncodedInstruction enc> \
-    constexpr auto Is ## op ## Operation = IsSpace ## op < enc > ;
-    X(Code,  0b00_opcode);
-    X(Data,  0b01_opcode);
-    X(Stack, 0b10_opcode);
-    X(IO,    0b11_opcode);
-#undef X
+    template<EncodedInstruction enc>
+    constexpr auto MemoryWidthIsImmediate16 = IsLoadOperation<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthImmediate16>;
+    template<EncodedInstruction enc>
+    constexpr auto ArgumentIsImm16 = (IsBitwiseInstruction<enc> && FlagSet<enc, bits::ArgumentIsImm16>) ||
+                                     MemoryWidthIsImmediate16<enc>;
+    template<EncodedInstruction enc>
+    constexpr auto UpdateSourceRegister = IsMemoryInstruction<enc> && FlagSet<enc, bits::UpdateSource>;
+    template<EncodedInstruction enc>
+    constexpr auto ShouldShiftImmediateBy16 = MemoryWidthIsImmediate16<enc> && FlagSet<enc, bits::ShiftImmediateBy16>;
+    template<EncodedInstruction enc>
+    constexpr auto MemoryWidthIsWord = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthWord>;
+    template<EncodedInstruction enc>
+    constexpr auto MemoryWidthIsHalf = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthHalf>;
+    template<EncodedInstruction enc>
+    constexpr auto MemoryWidthIsByte = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthByte>;
     namespace bits {
         //-----------------------------------------------------------------------------
         // Compare
