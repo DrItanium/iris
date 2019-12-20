@@ -39,9 +39,9 @@ namespace iris {
     constexpr auto GroupArithmetic = 0_group;
     constexpr auto GroupCompare    = 1_group;
     constexpr auto GroupMemory     = 2_group;
-    constexpr auto GroupBranchImm  = 3_group;
-    constexpr auto GroupBranchReg  = 4_group;
     constexpr auto GroupBitwise    = 5_group;
+    constexpr auto GroupBranchImm  = 6_group;
+    constexpr auto GroupBranchReg  = 7_group;
     constexpr auto GroupMask       = 7_group;
     static_assert(GroupMask == 0xE000'0000);
     template<EncodedInstruction group>
