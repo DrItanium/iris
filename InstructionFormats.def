@@ -298,6 +298,12 @@ Operation(CompareInteger,                            GroupCompare    | bits::Kin
    0b110 -> is less than or equal
    0b111 -> is ordered (always branch :D)
 */
+// these code kinds and descriptions are taken from how the i960 works with 
+// conditions. The difference is that iris does not have a single condition code
+// register. Instead one of the gprs is used for that purpose since there is a
+// generous number of registers provided.
+// never branch
+
 // When C is clear the form is (link immediate):
 // 0b01100000
 // there is only one instruction in this format.

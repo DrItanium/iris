@@ -43,9 +43,17 @@ namespace iris {
     constexpr auto GroupBitwise    = 4_group;
     constexpr auto GroupMask       = 7_group;
     static_assert(GroupMask == 0xE000'0000);
+    template<EncodedInstruction mask>
+    constexpr EncodedInstruction extractField(EncodedInstruction enc) noexcept {
+        return enc & mask;
+    }
+    template<EncodedInstruction quantity, EncodedInstruction mask>
+    constexpr auto fieldSetTo(EncodedInstruction enc) noexcept {
+        return extractField<mask>(enc) == quantity;
+    }
     template<EncodedInstruction group>
     constexpr auto isOfGroup(EncodedInstruction enc) noexcept {
-        return (enc & GroupMask) == group;
+        return fieldSetTo<group, GroupMask>(enc);
     }
     constexpr auto isBitwiseInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupBitwise>(enc); }
     constexpr auto isArithmeticInstruction(EncodedInstruction enc) noexcept { return isOfGroup<GroupArithmetic>(enc); }
@@ -56,32 +64,20 @@ namespace iris {
     template<EncodedInstruction enc>
     constexpr auto IsBitwiseInstruction = isBitwiseInstruction(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsLogicalOperation = IsBitwiseInstruction<enc>;
-    template<EncodedInstruction enc>
     constexpr auto IsBranchInstruction = isBranchInstruction(enc);
     template<EncodedInstruction enc>
     constexpr auto IsArithmeticInstruction = isArithmeticInstruction(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsArithmeticOperation = IsArithmeticInstruction<enc>;
-    template<EncodedInstruction enc>
     constexpr auto IsCompareInstruction = isCompareInstruction(enc);
     template<EncodedInstruction enc>
-    constexpr auto IsCompareOperation = IsCompareInstruction<enc>;
-    template<EncodedInstruction enc>
     constexpr auto IsMemoryInstruction = isMemoryInstruction(enc);
-    template<EncodedInstruction enc>
-    constexpr auto IsMemoryOperation = IsMemoryInstruction<enc>;
     template<EncodedInstruction mask>
     constexpr auto flagSet(EncodedInstruction enc) noexcept {
-        return (enc & mask) != 0;
+        return !fieldSetTo<0, mask>(enc);
     }
     template<EncodedInstruction mask>
     constexpr auto flagClear(EncodedInstruction enc) noexcept {
-        return (enc & mask) == 0;
-    }
-    template<EncodedInstruction quantity, EncodedInstruction mask>
-    constexpr auto fieldSetTo(EncodedInstruction enc) noexcept {
-        return (enc & mask) == quantity;
+        return fieldSetTo<0, mask>(enc);
     }
     template<EncodedInstruction enc, EncodedInstruction mask>
     constexpr auto FlagSet = flagSet<mask>(enc);
@@ -93,81 +89,87 @@ namespace iris {
         //-----------------------------------------------------------------------------
         // Arithmetic
         //-----------------------------------------------------------------------------
-        // Fields are: 0b000,0,K,TTT
-        // Where:
-        // C = Major Operation
-        // K = Integer? else Ordinal
-        // T = Operation
         constexpr auto KindOrdinal             = 0b000'0'000'0_opcode;
         constexpr auto KindInteger             = 0b000'0'000'1_opcode;
-        constexpr auto ArithmeticOperationMask = 0b000'0'111'0_opcode;
-    } // end namespace bits
-    template<EncodedInstruction enc>
-    constexpr auto OperationCaresAboutSign = (IsArithmeticInstruction<enc> || IsCompareInstruction<enc>);
-#define X(op, value) \
-    namespace bits { \
-        constexpr auto Operation ## op = value ; \
-    } \
-    template<EncodedInstruction enc> \
-    constexpr auto Is ## op ## Operation = IsArithmeticInstruction<enc> && FieldSetTo<enc, bits::ArithmeticOperationMask, bits::Operation ## op>; 
-    X(Error     , 0b00000000_opcode);
-    X(Add       , 0b00000010_opcode);
-    X(Subtract  , 0b00000100_opcode);
-    X(Multiply  , 0b00000110_opcode);
-    X(Divide    , 0b00001000_opcode);
-    X(Remainder , 0b00001010_opcode);
-    X(ShiftLeft , 0b00001100_opcode);
-    X(ShiftRight, 0b00001110_opcode);
+#define X(op, value) constexpr auto Operation ## op = value
+    X(Error     , 0b000'0'000'0_opcode);
+    X(Add       , 0b000'0'001'0_opcode);
+    X(Subtract  , 0b000'0'010'0_opcode);
+    X(Multiply  , 0b000'0'011'0_opcode);
+    X(Divide    , 0b000'0'100'0_opcode);
+    X(Remainder , 0b000'0'101'0_opcode);
+    X(ShiftLeft , 0b000'0'110'0_opcode);
+    X(ShiftRight, 0b000'0'111'0_opcode);
 #undef X
-    template<EncodedInstruction enc>
-    constexpr auto Src2CannotBeZero = IsDivideOperation<enc> || IsRemainderOperation<enc>;
-    namespace bits {
+        constexpr auto ArithmeticOperationMask = OperationShiftRight;
         //-----------------------------------------------------------------------------
         // Bitwise 
         //-----------------------------------------------------------------------------
-        // format is: 0b101,0,A,N,TT
-        // where:
-        // N: Not the result?
-        // T: The operation
-        // A: Imm16 argument
-        constexpr auto BitwiseOperationMask   = 0b000'000'11_opcode;
-    }
-#define X(op, value) \
-    namespace bits { \
-        constexpr auto Operation ## op = value ; \
-    } \
-    template<EncodedInstruction enc> \
-    constexpr auto Is ## op ## Operation = IsBitwiseInstruction<enc> && FieldSetTo<enc, bits::BitwiseOperationMask, bits::Operation ## op>; 
-    X(Not           , 0b000'0'00'00_opcode);
-    X(And           , 0b000'0'00'01_opcode);
-    X(Or            , 0b000'0'00'10_opcode);
-    X(Xor           , 0b000'0'00'11_opcode);
-#undef X
-    namespace bits {
         constexpr auto NotTheResult           = 0b000'0'0'1'00_opcode;
         constexpr auto ArgumentIsImm16        = 0b000'0'1'0'00_opcode;
-    } // end namespace bits
-    template<EncodedInstruction enc>
-    constexpr auto NotTheResult = IsBitwiseInstruction<enc> && FlagSet<enc, bits::NotTheResult>;
-    namespace bits {
+        constexpr auto OperationNot           = 0b000'0'0'0'00_opcode;
+        constexpr auto OperationAnd           = 0b000'0'0'0'01_opcode;
+        constexpr auto OperationOr            = 0b000'0'0'0'10_opcode;
+        constexpr auto OperationXor           = 0b000'0'0'0'11_opcode;
+        constexpr auto BitwiseOperationMask   = OperationXor;
         //-----------------------------------------------------------------------------
         // Memory
         //-----------------------------------------------------------------------------
         constexpr auto LoadOperation            = 0b000'1'00'0'0_opcode;
         constexpr auto StoreOperation           = 0b000'0'00'0'0_opcode;
-        constexpr auto MemoryWidthMask          = 0b000'0'11'0'0_opcode;
         constexpr auto MemoryWidthWord          = 0b000'0'00'0'0_opcode;
         constexpr auto MemoryWidthHalf          = 0b000'0'01'0'0_opcode;
         constexpr auto MemoryWidthByte          = 0b000'0'10'0'0_opcode;
-        constexpr auto MemoryWidthImmediate16   = 0b000'0'11'0'0_opcode;
         constexpr auto MemoryWidthReserved      = 0b000'0'11'0'0_opcode;
+        constexpr auto MemoryWidthImmediate16   = MemoryWidthReserved;
+        constexpr auto MemoryWidthMask          = MemoryWidthReserved;
         constexpr auto DoNotUpdateSource        = 0b000'0'00'0'0_opcode;
         constexpr auto UpdateSource             = 0b000'0'00'1'0_opcode;
         constexpr auto TreatArg2AsSignedImm8    = 0b000'0'00'0'0_opcode;
         constexpr auto TreatArg2AsRegisterIndex = 0b000'0'00'0'1_opcode;
         constexpr auto DoNotShiftImmediateBy16  = 0b000'0'00'0'0_opcode;
         constexpr auto ShiftImmediateBy16       = 0b000'0'00'1'0_opcode;
+        //-----------------------------------------------------------------------------
+        // Branches
+        //-----------------------------------------------------------------------------
+        constexpr auto BranchIfUnordered      = 0b00000'000_opcode;
+        constexpr auto BranchIfGreater        = 0b00000'001_opcode;
+        constexpr auto BranchIfEqual          = 0b00000'010_opcode;
+        constexpr auto BranchIfGreaterOrEqual = 0b00000'011_opcode;
+        constexpr auto BranchIfLess           = 0b00000'100_opcode;
+        constexpr auto BranchIfNotEqual       = 0b00000'101_opcode;
+        constexpr auto BranchIfLessOrEqual    = 0b00000'110_opcode;
+        constexpr auto BranchIfOrdered        = 0b00000'111_opcode;
+        constexpr auto BranchIfMask           = BranchIfOrdered;
+        //-----------------------------------------------------------------------------
+        // Branch
+        //-----------------------------------------------------------------------------
+        constexpr auto ImmediateBranch             = 0b000'0'0'000_opcode;
+        constexpr auto RegisterBranch              = 0b000'1'0'000_opcode;
+        constexpr auto IsConditional               = 0b000'0'1'000_opcode;
+        constexpr auto IsLink                      = 0b000'0'0'000_opcode;
+        constexpr auto IsConditionalBranchAndLink  = 0b000'0'0'000_opcode;
+        constexpr auto IsSelectOperation           = 0b000'0'1'000_opcode;
     } // end namespace bits
+    constexpr auto getArithmeticOperation(EncodedInstruction enc) noexcept {
+        return extractField<bits::ArithmeticOperationMask>(enc);
+    }
+    template<EncodedInstruction compare>
+    constexpr auto arithmeticOperationIs(EncodedInstruction enc) noexcept {
+        return getArithmeticOperation(enc) == compare;
+    }
+    constexpr auto isDivideOperation(EncodedInstruction enc) noexcept {
+        return arithmeticOperationIs<bits::OperationDivide>(enc);
+    }
+    constexpr auto isRemainderOperation(EncodedInstruction enc) noexcept {
+        return arithmeticOperationIs<bits::OperationRemainder>(enc);
+    }
+    template<EncodedInstruction enc>
+    constexpr auto OperationCaresAboutSign = (IsArithmeticInstruction<enc> || IsCompareInstruction<enc>);
+    template<EncodedInstruction enc>
+    constexpr auto Src2CannotBeZero = isDivideOperation(enc) || isRemainderOperation(enc);
+    template<EncodedInstruction enc>
+    constexpr auto NotTheResult = IsBitwiseInstruction<enc> && FlagSet<enc, bits::NotTheResult>;
     template<EncodedInstruction enc>
     constexpr auto IsLoadOperation = IsMemoryInstruction<enc> && FlagSet<enc, bits::LoadOperation>;
     template<EncodedInstruction enc>
@@ -187,43 +189,8 @@ namespace iris {
     constexpr auto MemoryWidthIsHalf = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthHalf>;
     template<EncodedInstruction enc>
     constexpr auto MemoryWidthIsByte = IsMemoryInstruction<enc> && FieldSetTo<enc, bits::MemoryWidthMask, bits::MemoryWidthByte>;
-    namespace bits {
-        //-----------------------------------------------------------------------------
-        // Compare
-        //-----------------------------------------------------------------------------
-        // Format is 0b001,0000,K
-        // Where K is Integer? else Ordinal
-        //-----------------------------------------------------------------------------
-        // Branches
-        //-----------------------------------------------------------------------------
-        // these code kinds and descriptions are taken from how the i960 works with 
-        // conditions. The difference is that iris does not have a single condition code
-        // register. Instead one of the gprs is used for that purpose since there is a
-        // generous number of registers provided.
-        // never branch
-        constexpr auto BranchIfUnordered      = 0b00000000_opcode;
-        constexpr auto BranchIfGreater        = 0b00000001_opcode;
-        constexpr auto BranchIfEqual          = 0b00000010_opcode;
-        constexpr auto BranchIfGreaterOrEqual = 0b00000011_opcode;
-        constexpr auto BranchIfLess           = 0b00000100_opcode;
-        constexpr auto BranchIfNotEqual       = 0b00000101_opcode;
-        constexpr auto BranchIfLessOrEqual    = 0b00000110_opcode;
-        constexpr auto BranchIfOrdered        = 0b00000111_opcode;
-        constexpr auto BranchIfMask           = BranchIfOrdered;
-    } // end namespace bits
     template<EncodedInstruction enc>
     constexpr auto BranchMask = (enc & bits::BranchIfMask);
-    namespace bits {
-        //-----------------------------------------------------------------------------
-        // Branch
-        //-----------------------------------------------------------------------------
-        constexpr auto ImmediateBranch             = 0b000'0'0'000_opcode;
-        constexpr auto RegisterBranch              = 0b000'1'0'000_opcode;
-        constexpr auto IsConditional               = 0b000'0'1'000_opcode;
-        constexpr auto IsLink                      = 0b000'0'0'000_opcode;
-        constexpr auto IsConditionalBranchAndLink  = 0b000'0'0'000_opcode;
-        constexpr auto IsSelectOperation           = 0b000'0'1'000_opcode;
-    } // end namespace bits
     template<EncodedInstruction enc>
     constexpr auto IsImmediateBranch = IsBranchInstruction<enc> && flagClear<bits::RegisterBranch>;
     template<EncodedInstruction enc>
