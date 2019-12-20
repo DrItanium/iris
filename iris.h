@@ -38,7 +38,7 @@ class Core {
         static void terminateCore(Core&, Word);
         static Word readTerminateCell(Core&);
     public:
-        Core() noexcept;
+        Core() noexcept = default;
         virtual ~Core() = default;
         void run();
         void terminateCycle();
@@ -65,54 +65,45 @@ class Core {
             }
         }
     protected:
-        virtual LongOrdinal loadFromCodeMemory(Address addr) = 0;
-        virtual Ordinal loadFromDataMemory(Address addr) = 0;
-        virtual Ordinal loadFromStackMemory(Address addr) = 0;
-        virtual Ordinal loadFromIOMemory(Address addr) = 0;
-        virtual void storeToCodeMemory(Address addr, LongOrdinal value) = 0;
-        virtual void storeToDataMemory(Address addr, Ordinal value) = 0;
-        virtual void storeToStackMemory(Address addr, Ordinal value) = 0;
-        virtual void storeToIOMemory(Address addr, Ordinal value) = 0;
+        virtual Ordinal loadFromMemory(Address address) noexcept = 0;
+        virtual void storeToMemory(Address address, Ordinal value) noexcept = 0;
+        virtual void storeToMemory(Address address, HalfOrdinal value) noexcept = 0;
+        virtual void storeToMemory(Address address, QuarterOrdinal value) noexcept = 0;
+        virtual void storeToMemory(Address address, Integer value) noexcept;
+        virtual void storeToMemory(Address address, HalfInteger value) noexcept;
+        virtual void storeToMemory(Address address, QuarterInteger value) noexcept;
     public:
         template<typename T>
-        LongOrdinal loadCode(T addr, Address offset = 0) {
-            return loadFromCodeMemory(extractAddress<T>(addr, offset));
-        }
-
-        template<typename T>
-        Word loadIO(T addr, Address offset = 0) {
-             return loadFromIOMemory(extractAddress<T>(addr, offset));
-        }
-        template<typename T>
-        Word loadStack(T addr, Address offset = 0) {
-            return loadFromStackMemory(extractAddress<T>(addr, offset));
-        }
-        template<typename T>
-        Word loadData(T addr, Address offset = 0) {
-            return loadFromDataMemory(extractAddress<T>(addr, offset));
-        }
-        template<typename A, typename V>
-        void storeStack(A address, V value, Address offset = 0) {
-            storeToStackMemory(extractAddress<A>(address, offset), extractValue<V>(value));
-        }
-        template<typename A, typename V>
-        void storeData(A address, V value, Address offset = 0) {
-            storeToDataMemory(extractAddress<A>(address, offset), extractValue<V>(value));
-        }
-        template<typename A, typename V>
-        void storeCode(A address, V value, Address offset = 0) {
-            if constexpr (auto addr = extractAddress<A>(address, offset); std::is_same_v<V, LongOrdinal>) {
-                storeToCodeMemory(addr, value);
-            } else if constexpr (std::is_same_v<V, RegisterIndex>) {
-                storeToCodeMemory(addr, getDoubleRegisterValue(value));
+        T load(Address address) noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (Register temp(loadFromMemory(address)); std::is_same_v<K, Ordinal>) {
+                return temp.get<Ordinal>();
+            } else if constexpr (std::is_same_v<K, Integer>) {
+                return temp.get<Integer>();
+            } else if constexpr (std::is_same_v<K, bool>) {
+                return temp.get<bool>();
+            } else if constexpr (std::is_same_v<K, HalfOrdinal>) {
+                return static_cast<HalfOrdinal>(temp.get<Ordinal>()); 
+            } else if constexpr (std::is_same_v<K, HalfInteger>) {
+                return static_cast<HalfInteger>(temp.get<Integer>()); 
+            } else if constexpr (std::is_same_v<K, QuarterOrdinal>) {
+                return static_cast<QuarterOrdinal>(temp.get<Ordinal>()); 
+            } else if constexpr (std::is_same_v<K, QuarterInteger>) {
+                return static_cast<QuarterInteger>(temp.get<Integer>()); 
             } else {
-                static_assert(false_v<V>, "Bad value kind!");
+                static_assert(false_v<T>, "illegal kind requested!");
             }
         }
-        template<typename A, typename V>
-        void storeIO(A address, V value, Address offset = 0) {
-            storeToIOMemory(extractAddress<A>(address, offset), extractValue<V>(value));
-            //_io.store(extractAddress<A>(address, offset), extractValue<V>(value));
+        template<typename T>
+        void store(Address address, T value) noexcept {
+            using K = std::decay_t<T>;
+            if constexpr (std::is_same_v<K, bool>) {
+                Register temp;
+                temp.put(value);
+                storeToMemory(address, temp.get<Ordinal>());
+            } else {
+                storeToMemory(address, value);
+            }
         }
     private:
         template<typename T, std::enable_if_t<IsErrorOperation<std::decay_t<T>>, int> = 0>
@@ -313,12 +304,8 @@ class Core {
     protected:
         void cycle();
     public:
-        void invoke(LongOrdinal bits);
+        void invoke(EncodedInstruction bits);
     public:
-        virtual void putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept = 0;
-        virtual void putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept = 0;
-        virtual LongOrdinal retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept = 0;
-        virtual LongOrdinal retrieveDoubleRegister(RegisterIndex lower) const noexcept = 0;
         virtual void putRegister(RegisterIndex lower, Ordinal value) noexcept = 0;
         virtual void putRegister(RegisterIndex lower, Integer value) noexcept = 0;
         void putRegister(RegisterIndex lower, bool value) noexcept {

@@ -29,12 +29,30 @@
 
 namespace iris {
 
-Core::Core() noexcept {
+void
+Core::storeToMemory(Address address, Integer value) noexcept {
+    Register temp;
+    temp.put(value);
+    storeToMemory(address, temp.get<Ordinal>());
 }
-
-
-
-
+void
+Core::storeToMemory(Address address, HalfInteger value) noexcept {
+    union {
+        HalfInteger input;
+        HalfOrdinal output;
+    } conv;
+    conv.input = value;
+    storeToMemory(address, conv.output);
+}
+void
+Core::storeToMemory(Address address, QuarterInteger value) noexcept {
+    union {
+        QuarterInteger input;
+        QuarterOrdinal output;
+    } conv;
+    conv.input = value;
+    storeToMemory(address, conv.output);
+}
 void
 Core::cycle() {
     // load an instruction from the current instruction pointer
