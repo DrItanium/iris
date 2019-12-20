@@ -51,10 +51,6 @@ class InMemoryCore : public Core {
         void resetExecutionStatus() noexcept override { _executing = true; }
         bool getExecutingStatus() const noexcept override { return _executing; }
         void setTerminateCell(Ordinal value) noexcept override { _terminateCell = value; }
-        void putDoubleRegister(RegisterIndex lower, RegisterIndex upper, LongOrdinal value) noexcept override;
-        void putDoubleRegister(RegisterIndex lower, LongOrdinal value) noexcept override;
-        LongOrdinal retrieveDoubleRegister(RegisterIndex lower, RegisterIndex upper) const noexcept override;
-        LongOrdinal retrieveDoubleRegister(RegisterIndex lower) const noexcept override;
         void putRegister(RegisterIndex lower, Ordinal value) noexcept override {
             _regs[std::to_integer<Byte>(lower)].put(value);
         }
@@ -83,14 +79,7 @@ class InMemoryCore : public Core {
             return _advanceIP;
         }
     protected:
-        LongOrdinal loadFromCodeMemory(Address addr) override;
-        Ordinal loadFromDataMemory(Address addr) override;
-        Ordinal loadFromStackMemory(Address addr) override;
-        Ordinal loadFromIOMemory(Address addr) override;
-        void storeToCodeMemory(Address addr, LongOrdinal value) override;
-        void storeToDataMemory(Address addr, Ordinal value) override;
-        void storeToStackMemory(Address addr, Ordinal value) override;
-        void storeToIOMemory(Address addr, Ordinal value) override;
+
         void raiseErrorInstruction() override;
         void raiseDivideByZero() override;
         void cycleHandler() override;
@@ -98,10 +87,7 @@ class InMemoryCore : public Core {
 
     private:
         RegisterBank _regs;
-        CodeMemoryBank _code;
-        DataMemoryBank _data;
-        StackMemoryBank _stack;
-        IOMemoryBank _io;
+        NumericalStorageBank<uint8_t, 1048576> _memory; // 1 megabyte
         Register _ip;
         bool _executing = false;
         bool _advanceIP = true;
