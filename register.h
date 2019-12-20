@@ -35,18 +35,16 @@ constexpr auto IsSameOrConvertible = std::is_same_v<T, A> || std::is_convertible
 
 class Register final {
     public:
-        static inline constexpr Ordinal mask = 0xFFFF;
+        static inline constexpr Ordinal mask = 0xFFFF'FFFF;
         static constexpr Ordinal boolToValue(bool value) noexcept {
             return value ? mask : 0;
         }
-        using SignedType = Integer;
-        using UnsignedType = Ordinal;
     public:
-        explicit constexpr Register(Word value = 0) noexcept : _storage(value) { }
+        explicit constexpr Register(Ordinal value = 0) noexcept : _storage(value) { }
         explicit constexpr Register(bool value) noexcept : _storage(boolToValue(value)) { }
         constexpr Register(const Register& other) noexcept = delete;
         constexpr Register(Register&& other) noexcept = delete;
-        ~Register() = default;
+        ~Register() noexcept = default;
         Register& operator=(const Register& other) noexcept = delete;
         Register& operator=(Register&& other) noexcept = delete;
         constexpr Register& operator++() noexcept {
@@ -62,7 +60,7 @@ class Register final {
             return *this;
         }
         constexpr bool IsHardwired() const noexcept { return _hardwired; }
-        void hardwireTo(Word value) noexcept {
+        void hardwireTo(Ordinal value) noexcept {
             _hardwired = true;
             _storage._value = value;
         }
@@ -70,9 +68,9 @@ class Register final {
         template<typename Z = Word>
         constexpr Z get() const noexcept {
             using K = std::decay_t<Z>;
-            if constexpr (std::is_same_v<K, Word>) {
+            if constexpr (std::is_same_v<K, Ordinal>) {
                 return _storage._value;
-            } else if constexpr (std::is_same_v<K, SignedWord>) {
+            } else if constexpr (std::is_same_v<K, Integer>) {
                 return _storage._signedValue;
             } else if constexpr (std::is_same_v<K, bool>) {
                 return _storage._value != 0;
@@ -84,9 +82,9 @@ class Register final {
         constexpr void put(Z value) noexcept {
             using K = std::decay_t<Z>;
             if (!_hardwired) {
-                if constexpr (IsSameOrConvertible<K, Word>) {
+                if constexpr (IsSameOrConvertible<K, Ordinal>) {
                     _storage._value = value;
-                } else if constexpr (IsSameOrConvertible<K, SignedWord>) {
+                } else if constexpr (IsSameOrConvertible<K, Integer>) {
                     _storage._signedValue = value;
                 } else if constexpr (IsSameOrConvertible<K, bool>) {
                     _storage._value = boolToValue(value);
@@ -95,111 +93,19 @@ class Register final {
                 }
             }
         }
-        explicit constexpr operator Word() const noexcept { return get<Word>(); }
-        explicit constexpr operator SignedWord() const noexcept { return get<SignedWord>(); }
+        explicit constexpr operator Ordinal() const noexcept { return get<Ordinal>(); }
+        explicit constexpr operator Integer() const noexcept { return get<Integer>(); }
         constexpr operator bool() const noexcept { return get<bool>(); }
     private:
         bool _hardwired = false;
         union BackingStore {
-            constexpr BackingStore(UnsignedType v) : _value(v) { }
-            UnsignedType _value;
-            SignedType _signedValue;
+            constexpr BackingStore(Ordinal v) : _value(v) { }
+            Ordinal _value;
+            Integer _signedValue;
         } _storage;
 };
 
 using RegisterBank = NumericalStorageBank<Register, RegisterCount>;
 
-template<typename R>
-class GenericDoubleRegister final {
-    public:
-        static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
-            if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
-                return {reg[std::to_integer<Byte>(a)],
-                        reg[std::to_integer<Byte>(b)] };
-            } else {
-                constexpr RegisterIndex registerBankMask = static_cast<RegisterIndex>(0xFF);
-                return {reg[std::to_integer<Byte>(a & registerBankMask)], reg[std::to_integer<Byte>(b & registerBankMask)]};
-            }
-        }
-        static GenericDoubleRegister<R> make(RegisterBank& reg, RegisterIndex a) noexcept {
-            return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
-        }
-        static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a, RegisterIndex b) noexcept {
-            if constexpr (std::is_same_v<Byte, RegisterIndexNumericType>) {
-                return {reg[std::to_integer<Byte>(a)],
-                        reg[std::to_integer<Byte>(b)] };
-            } else {
-                constexpr RegisterIndex registerBankMask = static_cast<RegisterIndex>(0xFF);
-                return {reg[std::to_integer<Byte>(a & registerBankMask)], reg[std::to_integer<Byte>(b & registerBankMask)]};
-            }
-        }
-        static const GenericDoubleRegister<R> make(const RegisterBank& reg, RegisterIndex a) noexcept {
-            return make(reg, a, static_cast<RegisterIndex>(std::to_integer<Byte>(a) + 1));
-        }
-    public:
-        constexpr GenericDoubleRegister(R& lower, R& upper) : _lower(lower), _upper(upper) { }
-        constexpr GenericDoubleRegister(const R& lower, const R& upper) : _lower(const_cast<R&>(lower)), _upper(const_cast<R&>(upper)) { }
-        constexpr Word upperHalf() const noexcept { return _upper.template get<Word>(); }
-        constexpr Word lowerHalf() const noexcept { return _lower.template get<Word>(); }
-        template<typename T = DoubleWord>
-        constexpr T get() const noexcept {
-            if constexpr (std::is_same_v<T, DoubleWord>) {
-                DoubleWord l = lowerHalf();
-                DoubleWord u = upperHalf();
-                return (u << 16) | l;
-            } else if constexpr (std::is_same_v<T, SignedDoubleWord>) {
-                union temporary {
-                    constexpr temporary(DoubleWord v) : _v(v) { }
-                    DoubleWord _v;
-                    SignedDoubleWord _s;
-                };
-                return temporary(get<DoubleWord>())._s;
-            } else if constexpr (std::is_same_v<T, bool>) {
-                return get<DoubleWord>() != 0;
-            } else {
-                static_assert(false_v<T>, "Illegal type requested");
-            }
-        }
-        void put(Word lower, Word upper) noexcept {
-            _lower.put(lower);
-            _upper.put(upper);
-        }
-        template<typename T = DoubleWord>
-        void put(T value) noexcept {
-            if constexpr (std::is_same_v<T, DoubleWord>) {
-                put(Word(value), Word(value >> 16));
-            } else if constexpr (std::is_same_v<T, SignedDoubleWord>) {
-                union temporary {
-                    constexpr temporary(SignedDoubleWord v) : _v(v) { }
-                    SignedDoubleWord _v;
-                    DoubleWord _u;
-                };
-                put<DoubleWord>(temporary(value)._u);
-            } else if constexpr (IsSameOrConvertible<T, bool>) {
-                put(boolToWord(value), boolToWord(value));
-            } else {
-                static_assert(false_v<T>, "Illegal type requested!");
-            }
-        }
-        explicit constexpr operator UnsignedDoubleWord() const noexcept { return get<UnsignedDoubleWord>(); }
-        explicit constexpr operator SignedDoubleWord() const noexcept { return get<SignedDoubleWord>(); }
-        constexpr operator bool() const noexcept { return get<bool>(); }
-        auto& operator++() noexcept {
-            auto value = get();
-            ++value;
-            put(value);
-            return *this;
-        }
-        auto& operator--() noexcept {
-            auto value = get();
-            --value;
-            put(value);
-            return *this;
-        }
-    private:
-        R& _lower;
-        R& _upper;
-};
-using DoubleRegister = GenericDoubleRegister<Register>;
 } // end namespace iris
 #endif // end IRIS_REGISTER_H__

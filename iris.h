@@ -331,13 +331,6 @@ class Core {
         virtual Integer retrieveRegister(RegisterIndex ind, RequestInteger) const noexcept = 0;
         bool retrieveRegister(RegisterIndex ind, RequestBoolean) const noexcept { return retrieveRegister(ind, RequestOrdinal{}) != 0; }
     public:
-        void setDoubleRegisterValue(RegisterIndex lower, LongOrdinal value) noexcept {
-            putDoubleRegister(lower, value);
-        }
-        LongOrdinal getDoubleRegisterValue(RegisterIndex lower) const noexcept {
-            return retrieveDoubleRegister(lower);
-        }
-    public:
         void setRegisterValue(RegisterIndex idx, Integer value) noexcept {
             putRegister(idx, value);
         }
