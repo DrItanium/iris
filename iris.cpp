@@ -83,7 +83,7 @@ Core::readTerminateCell(Core& c) {
 }
 
 void 
-Core::invoke(LongOrdinal ibits) {
+Core::invoke(EncodedInstruction ibits) {
     switch (Instruction inst(ibits); inst.getOpcode()) {
 #define X(t, opcode) case opcode : \
         invoke<opcode>(inst); \
