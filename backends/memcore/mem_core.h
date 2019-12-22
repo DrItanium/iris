@@ -51,6 +51,20 @@ class MemoryMappedDevice {
         virtual void storeHalf(Address address, HalfOrdinal value) noexcept = 0;
         virtual void storeQuarter(Address address, QuarterOrdinal value) noexcept = 0;
 };
+class RangedMemoryMappedDevice : public MemoryMappedDevice {
+    public:
+        RangedMemoryMappedDevice(Address start, Address end) : _start(start), _end(end) { }
+        ~RangedMemoryMappedDevice() override = default;
+        constexpr auto getStart() const noexcept { return _start; }
+        constexpr auto getEnd() const noexcept { return _end; }
+        bool respondsTo(Address addr) const noexcept override {
+            return (_start <= addr) &&
+                   (_end >= addr);
+        }
+    private:
+        Address _start, _end;
+
+}
 class CaptiveMemoryMappedDevice : public MemoryMappedDevice {
     public:
         CaptiveMemoryMappedDevice(const MemoryMappedDevice::Ptr& captive) : _captive(captive) { }
